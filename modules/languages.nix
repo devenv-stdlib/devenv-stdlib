@@ -1,6 +1,11 @@
 _: {
-  # Language toolchains stay off by default. Uncomment what you need, or copy
-  # into gitignored devenv.local.nix for a machine-specific override.
+  # Toolchains stay off in this repo. Enabling a language here (or in
+  # devenv.local.nix) installs matching Cursor/VS Code extensions if they
+  # are missing and writes this project's .vscode recommendations/settings.
+
+  # languages.rust.enable = true;
+
+  # languages.go.enable = true;
 
   # languages.python = {
   #   enable = true;
@@ -8,10 +13,10 @@ _: {
   #   venv.enable = true;
   # };
 
-  # languages.go.enable = true;
-
   # languages.javascript = {
   #   enable = true;
   #   npm.enable = true;
   # };
+
+  # languages.typescript.enable = true;
 }

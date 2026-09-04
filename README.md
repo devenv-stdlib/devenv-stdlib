@@ -63,7 +63,10 @@ Optional auto-activation:
 | `home.nix` | Home Manager entry (username from `$USER` / `$HOME`) |
 | `home/terminal.nix` | Shared options: `terminal.provider` (default `alacritty`), F12, dash pin |
 | `home/alacritty.nix` | Alacritty, Zellij, Quake Terminal, Atuin (daemon-fuzzy), ble.sh |
-| `home/cursor.nix` | Cursor IDE and the devenv VS Code extension |
+| `home/cursor.nix` | Cursor IDE launcher (Mesa/X11/--no-sandbox) |
+| `home/cursor-extensions.nix` | Common Cursor/VS Code extensions (user-global) |
+| `home/vscode-ext-lib.nix` | Shared extension lists (common + Rust/Go/Python/TS) |
+| `modules/cursor-languages.nix` | Generates `.vscode/extensions.json` from `languages.*`; installs missing packs |
 | `home/nano.nix` | User-global nano with all bundled syntax files |
 | `home/neovim.nix` | User-global Neovim (no plugins yet) |
 | `home/bat.nix` | User-global bat, `cat` aliased to `bat` |
@@ -106,6 +109,7 @@ Copy devenv-only options into `devenv.local.nix`:
 { ... }:
 {
   # packages = [ pkgs.hello ];
+  # languages.python.enable = true;
 }
 ```
 
@@ -144,12 +148,20 @@ Home Manager replaces the GNOME `custom-keybindings` array. List any other short
 
 ## Cursor
 
-[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager — no website AppImage. The FHS/bwrap variant is avoided (Ubuntu 24.04 rejects unprivileged uid maps). The launcher always passes `--no-sandbox` (the store `chrome-sandbox` cannot be root-owned 4755). Nix Mesa and `--ozone-platform=x11` are added only when `systemd-detect-virt` reports `vmware`. Extensions are linked into `~/.cursor/extensions`:
+[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager — no website AppImage. The FHS/bwrap variant is avoided (Ubuntu 24.04 rejects unprivileged uid maps). The launcher always passes `--no-sandbox` (the store `chrome-sandbox` cannot be root-owned 4755). Nix Mesa and `--ozone-platform=x11` are added only when `systemd-detect-virt` reports `vmware`. Common editor extensions are linked into `~/.cursor/extensions` (devenv, Nix IDE, EditorConfig, Error Lens, direnv, Even Better TOML, YAML, Code Spell Checker, Prettier, GitLens, Material Icon Theme, Path Intellisense).
 
-- [devenv](https://marketplace.visualstudio.com/items?itemName=datakurre.devenv) — loads `devenv print-dev-env` into the editor
-- [Nix IDE](https://marketplace.visualstudio.com/items?itemName=jnoortheen.nix-ide) — syntax and LSP
+Language packs are **not** user-global. devenv generates `.vscode/extensions.json` from `languages.*` (`files.".vscode/extensions.json"`; gitignored). `devenv shell` also runs `cursor-sync-extensions` to install missing matching extensions and refresh formatter settings.
 
-`.vscode/settings.json` points Nix IDE at `devenv lsp`, which starts a bundled [nixd](https://github.com/nix-community/nixd) already configured for this `devenv.nix`. Cursor user settings are left alone (`programs.cursor` would replace them).
+| `languages.*` | Extensions |
+| --- | --- |
+| `rust` | rust-analyzer, CodeLLDB, Dependi |
+| `go` | official Go |
+| `python` | Python, Pylance, debugpy, Ruff |
+| `javascript` or `typescript` | ESLint, Tailwind, pretty-ts-errors, auto-rename-tag (React/Next) |
+
+This devenv leaves those languages off. Enable them in `devenv.local.nix` (or another project's `devenv.nix`) when you need the compiler and the plugins.
+
+`.vscode/settings.json` always points Nix IDE at `devenv lsp` ([nixd](https://github.com/nix-community/nixd)). Cursor user settings are left alone (`programs.cursor` would replace them).
 
 Set `cursor.enable = false;` in `home.local.nix` to skip the editor install.
 

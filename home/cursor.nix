@@ -37,24 +37,16 @@ let
       exec ${lib.getExe pkgs.code-cursor} --no-sandbox "''${extra[@]}" "$@"
     '';
   };
-
-  devenvExtension = pkgs.vscode-utils.extensionFromVscodeMarketplace {
-    name = "devenv";
-    publisher = "datakurre";
-    version = "0.7.0";
-    sha256 = "1bjmjrg13zynala76vz5vpm4ann1dic6awiv03w2l9rkby4agba7";
-  };
-
-  nixIdeExtension = pkgs.vscode-extensions.jnoortheen.nix-ide;
-
-  extensionRoot = ext: "${ext}/share/vscode/extensions/${ext.vscodeExtUniqueId}";
 in
 {
+  imports = [ ./cursor-extensions.nix ];
+
   options.cursor.enable = lib.mkOption {
     type = lib.types.bool;
     default = true;
     description = ''
-      Install Cursor from nixpkgs, plus the devenv and Nix IDE extensions.
+      Install Cursor from nixpkgs plus common editor extensions.
+      Language packs are installed by devenv when languages.* is enabled.
       programs.cursor is not used: it replaces ~/.config/Cursor/User/settings.json.
     '';
   };
@@ -77,10 +69,5 @@ in
       StartupWMClass=Cursor
       MimeType=text/plain;inode/directory;
     '';
-
-    home.file = {
-      ".cursor/extensions/datakurre.devenv".source = extensionRoot devenvExtension;
-      ".cursor/extensions/jnoortheen.nix-ide".source = extensionRoot nixIdeExtension;
-    };
   };
 }

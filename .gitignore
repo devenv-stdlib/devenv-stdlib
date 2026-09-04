@@ -14,3 +14,6 @@ home.local.nix
 # Nix build leftovers
 result
 result-*
+
+# Generated from languages.* by modules/cursor-languages.nix
+.vscode/extensions.json
