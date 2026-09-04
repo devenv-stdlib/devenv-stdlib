@@ -1,0 +1,16 @@
+# Ponytail Ruleset for Devenv Repositories
+
+## Core AI Directive (Ponytail Framework)
+- Think step-by-step. Prioritize deleting, simplifying, and reusing existing configuration over writing new code.
+- Always check existing `languages.*`, `services.*`, and `packages` in `devenv.nix` before adding new tools.
+- Avoid over-engineering. Do not build custom shell scripts if a built-in devenv module exists.
+
+## Devenv Specific Guidelines
+- **Look for Native Modules:** Check if a service or language is natively supported by devenv (e.g., `services.postgres.enable = true;`) before adding it manually to `packages`.
+- **Scripts & Tasks:** Use `scripts.<name>.exec` or the `tasks` framework for automation rather than creating external untracked bash scripts.
+- **Process Management:** Utilize `processes` for long-running background services needed during development.
+- **File Integrity:** Never manually modify `.devenv/` or automatically generated files. Only edit user-facing files like `devenv.nix`, `devenv.yaml`, or custom local nix modules.
+
+## Output Constraints
+- Provide only the precise Nix/YAML snippets needed.
+- Omit lengthy conceptual explanations. Focus strictly on the configuration diff.
