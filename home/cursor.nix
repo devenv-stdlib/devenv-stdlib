@@ -7,28 +7,34 @@
 let
   cfg = config.cursor;
   mesaDrivers = pkgs.mesa.drivers or pkgs.mesa;
+  glLibs = lib.makeLibraryPath [
+    pkgs.libglvnd
+    mesaDrivers
+    pkgs.libdrm
+    pkgs.wayland
+    pkgs.libxkbcommon
+  ];
 
-  # code-cursor-fhs uses bubblewrap; Ubuntu 24.04 blocks unprivileged uid
-  # maps. chrome-sandbox cannot be root 4755 in the Nix store, so
-  # --no-sandbox is required off NixOS. Mesa + X11 cover VMware GL.
-  cursorPkg = pkgs.symlinkJoin {
+  # chrome-sandbox cannot be root 4755 in the Nix store, so --no-sandbox is
+  # always required off NixOS. Mesa + X11 are only for VMware (SVGA / no
+  # /run/opengl-driver); systemd-detect-virt decides at launch.
+  cursorPkg = pkgs.writeShellApplication {
     name = "cursor";
-    paths = [ pkgs.code-cursor ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/cursor \
-        --prefix LD_LIBRARY_PATH : "${
-          lib.makeLibraryPath [
-            pkgs.libglvnd
-            mesaDrivers
-            pkgs.libdrm
-            pkgs.wayland
-            pkgs.libxkbcommon
-          ]
-        }" \
-        --prefix LIBGL_DRIVERS_PATH : "${mesaDrivers}/lib/dri" \
-        --prefix __EGL_VENDOR_LIBRARY_DIRS : "${mesaDrivers}/share/glvnd/egl_vendor.d" \
-        --add-flags "--ozone-platform=x11 --no-sandbox"
+    text = ''
+      extra=()
+      virt=""
+      if command -v systemd-detect-virt >/dev/null 2>&1; then
+        virt="$(systemd-detect-virt 2>/dev/null || true)"
+      elif [ -x /usr/bin/systemd-detect-virt ]; then
+        virt="$(/usr/bin/systemd-detect-virt 2>/dev/null || true)"
+      fi
+      if [ "$virt" = vmware ]; then
+        export LD_LIBRARY_PATH="${glLibs}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        export LIBGL_DRIVERS_PATH="${mesaDrivers}/lib/dri''${LIBGL_DRIVERS_PATH:+:$LIBGL_DRIVERS_PATH}"
+        export __EGL_VENDOR_LIBRARY_DIRS="${mesaDrivers}/share/glvnd/egl_vendor.d''${__EGL_VENDOR_LIBRARY_DIRS:+:$__EGL_VENDOR_LIBRARY_DIRS}"
+        extra+=(--ozone-platform=x11)
+      fi
+      exec ${lib.getExe pkgs.code-cursor} --no-sandbox "''${extra[@]}" "$@"
     '';
   };
 
