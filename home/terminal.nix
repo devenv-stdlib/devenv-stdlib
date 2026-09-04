@@ -83,12 +83,20 @@ in
   };
 
   config = {
-    # Both providers open a shell that expects Starship. programs.bash stays
-    # off so Home Manager does not replace ~/.bashrc; keep the existing
-    # `eval "$(starship init bash)"` line there.
+    # Own ~/.bashrc so a clean machine matches this one. home-switch -b
+    # backup keeps the previous file as ~/.bashrc.backup.
+    programs.bash = {
+      enable = true;
+      enableCompletion = true;
+      historyControl = [
+        "ignoredups"
+        "ignorespace"
+      ];
+    };
+
     programs.starship = {
       enable = true;
-      enableBashIntegration = false;
+      enableBashIntegration = true;
     };
 
     # Home Manager replaces this array wholesale. Listing only the active

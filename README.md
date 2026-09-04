@@ -109,17 +109,13 @@ The dropdown terminal is user-global via Home Manager, not `devenv shell`. The d
 | Shortcut | F12 (`terminal.quakeKeybinding`) | same option, via a GNOME custom shortcut |
 | Height | 30% (`terminal.heightPercent`) | same option |
 | Dash icon | Alacritty (Zellij) — not the dropdown | Warp logo |
-| Prompt | Starship via existing `~/.bashrc` | Starship + `honor_ps1 = true` |
+| Prompt | Starship via Home Manager `programs.bash` | Starship + `honor_ps1 = true` |
 
 Only the selected provider is installed. Switching also drops the other one's dash icon, desktop file, and shortcut so F12 is not bound twice.
 
 After `home-switch` with Alacritty, **log out and back in once** so GNOME Shell loads the Quake Terminal extension from `~/.local/share/gnome-shell/extensions`. Then F12 drops Alacritty.
 
-`programs.bash` is **not** enabled, so Home Manager does not replace `~/.bashrc`. Keep this line there:
-
-```bash
-eval "$(starship init bash)"
-```
+`programs.bash.enable` is on, so `~/.bashrc` is Home Manager-owned (the previous file is `~/.bashrc.backup`). Starship is declared there — a clean `./setup.sh` gets the same prompt. Extra host-only lines (pyenv, …) go in `programs.bash.initExtra` in `home.local.nix`.
 
 Home Manager replaces the GNOME `custom-keybindings` array. List any other shortcut paths in `terminal.gnomeExtraCustomKeybindings`. Dash favorites are edited in place (`terminal.pinToGnomeDash`), not replaced.
 
