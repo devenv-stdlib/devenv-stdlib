@@ -11,7 +11,7 @@ Clone this repository and run `./setup.sh`. That one command installs or updates
 
 ## Bootstrap on a fresh machine
 
-From the repository root, one command installs or updates Nix, devenv, Cachix, and Home Manager, configures the devenv binary cache as root, applies `home.nix` (Alacritty + Zellij + Quake Terminal, Atuin, Cursor + devenv extension, Starship), and builds this environment:
+From the repository root, one command installs or updates Nix, devenv, Cachix, and Home Manager, configures the devenv binary cache as root, applies `home.nix` (Alacritty + Zellij + Quake Terminal, Atuin + ble.sh, Cursor + devenv extension, Starship), and builds this environment:
 
 ```bash
 ./setup.sh
@@ -62,7 +62,7 @@ Optional auto-activation:
 | `devenv.lock` | Pinned inputs (commit this) |
 | `home.nix` | Home Manager entry (username from `$USER` / `$HOME`) |
 | `home/terminal.nix` | Shared options: `terminal.provider` (default `alacritty`), F12, dash pin |
-| `home/alacritty.nix` | Alacritty, Zellij, Quake Terminal, Atuin (daemon-fuzzy) |
+| `home/alacritty.nix` | Alacritty, Zellij, Quake Terminal, Atuin (daemon-fuzzy), ble.sh |
 | `home/cursor.nix` | Cursor IDE and the devenv VS Code extension |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
@@ -111,12 +111,13 @@ The dropdown terminal is user-global via Home Manager, not `devenv shell`. The d
 | Dash icon | Alacritty (Zellij) — not the dropdown | Warp logo |
 | Prompt | Starship via Home Manager `programs.bash` | Starship + `honor_ps1 = true` |
 | History | Atuin `search_mode = "daemon-fuzzy"`, user-systemd daemon | Warp's own history |
+| Line editor | ble.sh (syntax highlighting), then Atuin | Warp's own editor |
 
 Only the selected provider is installed. Switching also drops the other one's dash icon, desktop file, and shortcut so F12 is not bound twice.
 
 After `home-switch` with Alacritty, **log out and back in once** so GNOME Shell loads the Quake Terminal extension from `~/.local/share/gnome-shell/extensions`. Then F12 drops Alacritty.
 
-`programs.bash.enable` is on, so `~/.bashrc` is Home Manager-owned (the previous file is `~/.bashrc.backup`). Starship and Atuin are declared there — a clean `./setup.sh` gets the same shell. Extra host-only lines (pyenv, …) go in `programs.bash.initExtra` in `home.local.nix`. Warp does not install Atuin.
+`programs.bash.enable` is on, so `~/.bashrc` is Home Manager-owned (the previous file is `~/.bashrc.backup`). Starship, ble.sh, and Atuin are declared there — a clean `./setup.sh` gets the same shell. Extra host-only lines (pyenv, …) go in `programs.bash.initExtra` in `home.local.nix`. Warp does not install Atuin or ble.sh.
 
 Home Manager replaces the GNOME `custom-keybindings` array. List any other shortcut paths in `terminal.gnomeExtraCustomKeybindings`. Dash favorites are edited in place (`terminal.pinToGnomeDash`), not replaced.
 

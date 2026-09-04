@@ -97,10 +97,16 @@ in
         forceOverwriteSettings = true;
         settings.search_mode = "daemon-fuzzy";
       };
+
+      # ble.sh before Atuin/Starship (those land in initExtra at default order).
+      bash.initExtra = lib.mkBefore ''
+        source -- "${pkgs.blesh}/share/blesh/ble.sh"
+      '';
     };
 
     home.packages = [
       pkgs.wl-clipboard
+      pkgs.blesh
       extension
     ];
 
@@ -110,22 +116,29 @@ in
       source = "${extension}/share/gnome-shell/extensions/${terminalLib.quakeExtensionUuid}";
     };
 
-    xdg.dataFile = {
-      "applications/${desktopId}".text = terminalLib.mkDesktopEntry {
-        name = "Alacritty (Zellij)";
-        comment = "Alacritty running Zellij";
-        exec = "${alacrittyExe} --class ${appId} -e ${zellijExe} attach --create ${config.alacritty.zellijGuiSession}";
-        inherit icon;
-        wmClass = appId;
-      };
-      # Hidden from the app grid; the Quake extension launches this by id.
-      "applications/${quakeDesktopId}".text = terminalLib.mkDesktopEntry {
-        name = "Alacritty (Quake)";
-        comment = "Dropdown Alacritty, launched only by the Quake Terminal extension";
-        exec = "${alacrittyExe} --class ${quakeAppId} -o window.decorations=None -e ${zellijExe} attach --create ${config.alacritty.zellijSession}";
-        inherit icon;
-        wmClass = quakeAppId;
-        noDisplay = true;
+    xdg = {
+      # ble.sh highlighting; ~/.blerc would take precedence if present.
+      configFile."blesh/init.sh".text = ''
+        bleopt highlight_syntax=on
+      '';
+
+      dataFile = {
+        "applications/${desktopId}".text = terminalLib.mkDesktopEntry {
+          name = "Alacritty (Zellij)";
+          comment = "Alacritty running Zellij";
+          exec = "${alacrittyExe} --class ${appId} -e ${zellijExe} attach --create ${config.alacritty.zellijGuiSession}";
+          inherit icon;
+          wmClass = appId;
+        };
+        # Hidden from the app grid; the Quake extension launches this by id.
+        "applications/${quakeDesktopId}".text = terminalLib.mkDesktopEntry {
+          name = "Alacritty (Quake)";
+          comment = "Dropdown Alacritty, launched only by the Quake Terminal extension";
+          exec = "${alacrittyExe} --class ${quakeAppId} -o window.decorations=None -e ${zellijExe} attach --create ${config.alacritty.zellijSession}";
+          inherit icon;
+          wmClass = quakeAppId;
+          noDisplay = true;
+        };
       };
     };
 
