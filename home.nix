@@ -12,6 +12,7 @@
     ./home/bat.nix
     ./home/eza.nix
     ./home/cookiecutter.nix
+    ./home/httpie.nix
     ./home/semantic-release.nix
     ./home/pay-respects.nix
   ]
