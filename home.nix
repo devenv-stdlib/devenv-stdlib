@@ -25,6 +25,7 @@
     ./home/direnv.nix
     ./home/ripgrep.nix
     ./home/fd.nix
+    ./home/gh.nix
   ]
   ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
 
