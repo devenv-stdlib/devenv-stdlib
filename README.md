@@ -76,6 +76,7 @@ Optional auto-activation:
 | `home/pay-respects.nix` | User-global `fuck` (pay-respects; nixpkgs dropped thefuck) |
 | `home/usql.nix` | User-global usql, built with the `all` driver tag |
 | `home/zoxide.nix` | User-global `zoxide` (`z`) with bash integration |
+| `home/act.nix` | User-global `act` (nektos/act; GitHub Actions locally) |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
