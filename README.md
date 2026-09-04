@@ -80,6 +80,7 @@ Optional auto-activation:
 | `home/fzf.nix` | User-global fzf with bash integration |
 | `home/delta.nix` | User-global git + delta pager (`programs.git`) |
 | `home/direnv.nix` | User-global direnv + nix-direnv, hooked in bash |
+| `home/ripgrep.nix` | User-global `rg` |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |

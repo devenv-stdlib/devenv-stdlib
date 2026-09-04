@@ -23,6 +23,7 @@
     ./home/fzf.nix
     ./home/delta.nix
     ./home/direnv.nix
+    ./home/ripgrep.nix
   ]
   ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
 
