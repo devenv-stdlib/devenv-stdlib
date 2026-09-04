@@ -21,6 +21,7 @@
     ./home/zoxide.nix
     ./home/act.nix
     ./home/fzf.nix
+    ./home/delta.nix
   ]
   ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
 
