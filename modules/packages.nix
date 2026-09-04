@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 {
   packages = [
     pkgs.git
@@ -12,5 +17,6 @@
     pkgs.shellcheck
     pkgs.home-manager
     pkgs.commitlint
-  ];
+  ]
+  ++ lib.optional config.services.redis.enable pkgs.iredis;
 }
