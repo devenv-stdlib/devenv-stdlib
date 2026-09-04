@@ -9,6 +9,7 @@
     ./home/cursor.nix
     ./home/nano.nix
     ./home/neovim.nix
+    ./home/bat.nix
     ./home/semantic-release.nix
     ./home/pay-respects.nix
   ]

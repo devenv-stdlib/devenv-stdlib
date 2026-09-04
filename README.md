@@ -66,6 +66,7 @@ Optional auto-activation:
 | `home/cursor.nix` | Cursor IDE and the devenv VS Code extension |
 | `home/nano.nix` | User-global nano with all bundled syntax files |
 | `home/neovim.nix` | User-global Neovim (no plugins yet) |
+| `home/bat.nix` | User-global bat, `cat` aliased to `bat` |
 | `home/semantic-release.nix` | User-global `semantic-release` CLI |
 | `home/pay-respects.nix` | User-global `fuck` (pay-respects; nixpkgs dropped thefuck) |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
@@ -123,7 +124,7 @@ Only the selected provider is installed. Switching also drops the other one's da
 
 After `home-switch` with Alacritty, **log out and back in once** so GNOME Shell loads the Quake Terminal extension from `~/.local/share/gnome-shell/extensions`. Then F12 drops Alacritty.
 
-`programs.bash.enable` is on, so `~/.bashrc` is Home Manager-owned (the previous file is `~/.bashrc.backup`). Starship, pay-respects (`fuck`), ble.sh, and Atuin are declared there — a clean `./setup.sh` gets the same shell. Extra host-only lines (pyenv, …) go in `programs.bash.initExtra` in `home.local.nix`. Warp does not install Atuin or ble.sh.
+`programs.bash.enable` is on, so `~/.bashrc` is Home Manager-owned (the previous file is `~/.bashrc.backup`). Starship, pay-respects (`fuck`), ble.sh, Atuin, and `cat` → bat are declared there — a clean `./setup.sh` gets the same shell. Extra host-only lines (pyenv, …) go in `programs.bash.initExtra` in `home.local.nix`. Warp does not install Atuin or ble.sh.
 
 Home Manager replaces the GNOME `custom-keybindings` array. List any other shortcut paths in `terminal.gnomeExtraCustomKeybindings`. Dash favorites are edited in place (`terminal.pinToGnomeDash`), not replaced.
 
