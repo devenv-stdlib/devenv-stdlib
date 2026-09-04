@@ -18,7 +18,7 @@
   # alacritty.zellijSession = "quake";
   # alacritty.zellijGuiSession = "main";
 
-  # Host-only bash (Home Manager owns ~/.bashrc).
+  # Host-only bash (Home Manager owns ~/.bashrc). `fuck` is already global.
   # programs.bash.initExtra = ''
   #   eval "$(pyenv init -)"
   # '';
