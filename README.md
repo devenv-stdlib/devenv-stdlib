@@ -64,6 +64,7 @@ Optional auto-activation:
 | `home/terminal.nix` | Shared options: `terminal.provider` (default `alacritty`), F12, dash pin |
 | `home/alacritty.nix` | Alacritty, Zellij, Quake Terminal, Atuin (daemon-fuzzy), ble.sh |
 | `home/cursor.nix` | Cursor IDE and the devenv VS Code extension |
+| `home/nano.nix` | User-global nano with all bundled syntax files |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
