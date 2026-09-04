@@ -7,6 +7,7 @@
   imports = [
     ./home/terminal.nix
     ./home/cursor.nix
+    ./home/nano.nix
   ]
   ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
 
