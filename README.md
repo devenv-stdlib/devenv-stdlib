@@ -71,6 +71,7 @@ Optional auto-activation:
 | `home/cookiecutter.nix` | User-global `cookiecutter` CLI |
 | `home/httpie.nix` | User-global `http` / httpie CLI |
 | `home/howdoi.nix` | User-global `howdoi` CLI |
+| `home/explainshell.nix` | User-global `tldr` (tealdeer; nixpkgs has no explainshell) |
 | `home/semantic-release.nix` | User-global `semantic-release` CLI |
 | `home/pay-respects.nix` | User-global `fuck` (pay-respects; nixpkgs dropped thefuck) |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
