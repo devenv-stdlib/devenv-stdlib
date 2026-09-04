@@ -17,6 +17,7 @@
     ./home/explainshell.nix
     ./home/semantic-release.nix
     ./home/pay-respects.nix
+    ./home/usql.nix
   ]
   ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
 
