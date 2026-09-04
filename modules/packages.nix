@@ -11,5 +11,6 @@
     pkgs.bats
     pkgs.shellcheck
     pkgs.home-manager
+    pkgs.commitlint
   ];
 }

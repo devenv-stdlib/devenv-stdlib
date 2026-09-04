@@ -121,6 +121,14 @@ tag_exists() {
   tag_exists v1.0.5
 }
 
+@test "CI environment skips the test suite" {
+  stub_bats 1
+  run env PATH="$STUB_DIR:$PATH" CI=true git tag v1.0.8
+  [ "$status" -eq 0 ]
+  [ ! -e "$MARKER" ]
+  tag_exists v1.0.8
+}
+
 @test "the hook reports a real failing suite through git tag" {
   command -v bats >/dev/null || skip "bats not installed"
   cat >"$WORK/tests/broken.bats" <<'BATS'

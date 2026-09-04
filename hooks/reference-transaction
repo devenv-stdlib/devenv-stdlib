@@ -16,6 +16,8 @@ RESET=$'\033[0m'
 state=${1:-}
 [[ $state == prepared ]] || exit 0
 [[ -z ${DEVENV_SKIP_TAG_TESTS:-} ]] || exit 0
+# semantic-release tags from CI; local hook must not block those jobs.
+[[ -z ${CI:-} && -z ${GITHUB_ACTIONS:-} ]] || exit 0
 
 # Fetching or cloning also creates tag refs; only guard tags made here.
 case ${GIT_REFLOG_ACTION:-} in
