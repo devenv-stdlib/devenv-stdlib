@@ -1,7 +1,8 @@
 #!/usr/bin/env bats
-# shellcheck disable=SC2030,SC2031
-# ^ Each @test looks like a subshell, so every SETUP_* export below is reported
-# as leaking or getting lost. Each one is deliberately scoped to its own test.
+# shellcheck disable=SC2016,SC2030,SC2031
+# ^ SC2016: stub bodies are written into files and expand when the stub runs.
+# ^ SC2030/SC2031: each @test looks like a subshell, so SETUP_* exports are
+# reported as leaking or getting lost; they are deliberately per-test.
 #
 # Unit tests for setup.sh. Nothing here touches the real /nix, network, or sudo:
 # setup.sh is sourced (its main guard keeps it inert) and the host paths it looks
@@ -56,6 +57,7 @@ in_setup() {
   stub curl "touch '$BATS_TEST_TMPDIR/curl-ran'"
   stub sudo "touch '$BATS_TEST_TMPDIR/sudo-ran'"
   stub devenv "touch '$BATS_TEST_TMPDIR/devenv-ran'"
+  stub home-manager "touch '$BATS_TEST_TMPDIR/hm-ran'"
 
   in_setup "true"
   [ "$status" -eq 0 ]
@@ -63,6 +65,7 @@ in_setup() {
   [ ! -e "$BATS_TEST_TMPDIR/curl-ran" ]
   [ ! -e "$BATS_TEST_TMPDIR/sudo-ran" ]
   [ ! -e "$BATS_TEST_TMPDIR/devenv-ran" ]
+  [ ! -e "$BATS_TEST_TMPDIR/hm-ran" ]
 }
 
 # --- reporting helpers -------------------------------------------------------
@@ -301,6 +304,77 @@ in_setup() {
   in_setup 'SUDO=(sudo); sudo_with_nix printenv PATH'
   [ "$status" -eq 0 ]
   [[ $output == /nix/var/nix/profiles/default/bin:* ]]
+}
+
+# --- Home Manager ------------------------------------------------------------
+
+@test "ensure_profile_pkg installs home-manager when it is missing" {
+  stub nix 'printf "%s\n" "$*" >"$NIX_ARGS"
+            printf "#!/usr/bin/env bash\nexit 0\n" >"$STUB_DIR/home-manager"
+            chmod +x "$STUB_DIR/home-manager"'
+  NIX_ARGS="$BATS_TEST_TMPDIR/nix-args"
+  export NIX_ARGS STUB_DIR
+  in_setup 'load_nix() { :; }; profile_has() { return 1; }; ensure_profile_pkg home-manager'
+  [ "$status" -eq 0 ]
+  [[ $output == *"install home-manager into the user Nix profile"* ]]
+  run cat "$NIX_ARGS"
+  [[ $output == *"profile add nixpkgs#home-manager"* ]]
+}
+
+@test "ensure_profile_pkg upgrades home-manager when it is already present" {
+  stub home-manager "exit 0"
+  stub nix 'printf "%s\n" "$*" >"$NIX_ARGS"'
+  NIX_ARGS="$BATS_TEST_TMPDIR/nix-args"
+  export NIX_ARGS
+  in_setup 'load_nix() { :; }; ensure_profile_pkg home-manager'
+  [ "$status" -eq 0 ]
+  [[ $output == *"upgrade home-manager to the latest nixpkgs version"* ]]
+  run cat "$NIX_ARGS"
+  [[ $output == *"profile upgrade home-manager"* ]]
+}
+
+@test "apply_home_manager switches with backup against home.nix" {
+  stub home-manager 'printf "%s\n" "$*" >"$HM_ARGS"'
+  HM_ARGS="$BATS_TEST_TMPDIR/hm-args"
+  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  export HM_ARGS
+  : >"$HOME_NIX"
+  in_setup "SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  [ "$status" -eq 0 ]
+  [[ $output == *"apply Home Manager configuration"* ]]
+  run cat "$HM_ARGS"
+  [ "$output" = "switch -b backup -f $HOME_NIX" ]
+}
+
+@test "apply_home_manager fails when home-manager is missing" {
+  link_real bash
+  run env PATH="$STUB_DIR" bash -c "source '$SETUP_SH'; apply_home_manager" </dev/null
+  [ "$status" -eq 1 ]
+  [[ $output == *"home-manager is not on PATH"* ]]
+}
+
+@test "apply_home_manager fails when switch fails" {
+  stub home-manager "exit 1"
+  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  : >"$HOME_NIX"
+  in_setup "SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  [ "$status" -eq 1 ]
+  [[ $output == *"apply Home Manager configuration"* ]]
+}
+
+@test "apply_home_manager fails when home.nix is missing" {
+  stub home-manager "touch '$BATS_TEST_TMPDIR/hm-ran'; exit 0"
+  in_setup "SETUP_HOME_NIX='$BATS_TEST_TMPDIR/missing.nix'; apply_home_manager"
+  [ "$status" -eq 1 ]
+  [[ $output == *"Home Manager config not found"* ]]
+  [ ! -e "$BATS_TEST_TMPDIR/hm-ran" ]
+}
+
+@test "print_notice mentions Home Manager" {
+  in_setup 'print_notice'
+  [ "$status" -eq 0 ]
+  [[ $output == *"Home Manager"* ]]
+  [[ $output == *"will not be added to Nix trusted-users"* ]]
 }
 
 # --- entrypoint --------------------------------------------------------------

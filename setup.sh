@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Bootstrap or update Nix, devenv, and Cachix, then materialize this repo's
-# development environment. Cache configuration is done as root; this script
-# does not add your user to Nix trusted-users.
+# Bootstrap or update Nix, devenv, Cachix, and Home Manager, then materialize
+# this repo's development environment and user-global Warp/Starship config.
+# Cache configuration is done as root; this script does not add your user to
+# Nix trusted-users.
 #
 # Sourcing this file defines the functions without running the installer, which
 # is what tests/setup/setup.bats relies on.
@@ -17,6 +18,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 : "${SETUP_DOCKERENV:=/.dockerenv}"
 : "${SETUP_CONTAINERENV:=/run/.containerenv}"
 : "${SETUP_PROC_CGROUP:=/proc/1/cgroup}"
+: "${SETUP_HOME_NIX:=$REPO_ROOT/home.nix}"
 
 NIX_PROFILE_DIR="${SETUP_NIX_ROOT}/var/nix/profiles/default"
 NIX_DAEMON_PROFILE="${NIX_PROFILE_DIR}/etc/profile.d/nix-daemon.sh"
@@ -227,6 +229,13 @@ ensure_profile_pkg() {
   command -v "$name" >/dev/null 2>&1 || fail "$name is not on PATH after install"
 }
 
+apply_home_manager() {
+  command -v home-manager >/dev/null 2>&1 || fail "home-manager is not on PATH"
+  [[ -f $SETUP_HOME_NIX ]] || fail "Home Manager config not found: $SETUP_HOME_NIX"
+  step "apply Home Manager configuration (Warp, Starship, GNOME shortcut)" \
+    home-manager switch -b backup -f "$SETUP_HOME_NIX"
+}
+
 ensure_sudo() {
   if [[ ${#SUDO[@]} -eq 0 ]]; then
     return 0
@@ -251,8 +260,9 @@ ensure_sudo() {
 
 print_notice() {
   cat <<'EOF'
-This script installs or updates Nix, devenv, and Cachix, configures the
-devenv binary cache, and builds this repository's development environment.
+This script installs or updates Nix, devenv, Cachix, and Home Manager,
+configures the devenv binary cache, applies this repository's Home Manager
+configuration (Warp, Starship, GNOME shortcut), and builds the devenv shell.
 
 Elevated privileges (sudo) are required for:
   - installing or upgrading the Nix daemon
@@ -338,6 +348,7 @@ main() {
 
   ensure_profile_pkg devenv
   ensure_profile_pkg cachix
+  ensure_profile_pkg home-manager
 
   cachix_bin="$(command -v cachix)"
   [[ -n $cachix_bin ]] || fail "cachix binary not found"
@@ -353,6 +364,8 @@ main() {
   else
     printf '%s✗ trust this directory for devenv auto-activation (continuing)%s\n' "$RED" "$RESET" >&2
   fi
+
+  apply_home_manager
 
   step "build this repository's development environment" \
     devenv shell -- true

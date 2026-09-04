@@ -3,6 +3,5 @@ _: {
     ./packages.nix
     ./git-hooks.nix
     ./languages.nix
-    ./warp.nix
   ];
 }

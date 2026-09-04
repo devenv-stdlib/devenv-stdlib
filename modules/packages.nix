@@ -10,5 +10,6 @@
     pkgs.nixfmt-rfc-style
     pkgs.bats
     pkgs.shellcheck
+    pkgs.home-manager
   ];
 }

@@ -3,6 +3,7 @@
 .devenv*
 devenv.local.nix
 devenv.local.yaml
+home.local.nix
 
 # direnv
 .direnv
