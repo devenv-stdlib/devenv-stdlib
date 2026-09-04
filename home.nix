@@ -20,6 +20,7 @@
     ./home/usql.nix
     ./home/zoxide.nix
     ./home/act.nix
+    ./home/fzf.nix
   ]
   ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
 
