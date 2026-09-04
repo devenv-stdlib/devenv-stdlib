@@ -8,5 +8,7 @@
     pkgs.fd
     pkgs.direnv
     pkgs.nixfmt-rfc-style
+    pkgs.bats
+    pkgs.shellcheck
   ];
 }

@@ -2,7 +2,7 @@
 
 Portable [devenv](https://devenv.sh/) configuration for a reproducible Linux development toolchain.
 
-Clone this repository on any Linux machine, install Nix and devenv, then enter the shell. Packages, git hooks, and tests are pinned in `devenv.lock`.
+Clone this repository, run `./setup.sh`, then `devenv shell`. Packages, git hooks, and tests are pinned in `devenv.lock`.
 
 ## Prerequisites
 
@@ -11,49 +11,30 @@ Clone this repository on any Linux machine, install Nix and devenv, then enter t
 
 ## Bootstrap on a fresh machine
 
-### 1. Install Nix
+From the repository root, one command installs or updates Nix, devenv, and Cachix, configures the devenv binary cache as root, and builds this environment:
 
 ```bash
-curl -sSfL https://artifacts.nixos.org/nix-installer | sh -s -- install
+./setup.sh
 ```
 
-Open a new shell so `nix` is on `PATH`, or source the profile the installer prints.
+The script prints a notice that it needs `sudo` for the Nix daemon, flakes (if missing), and `cachix use devenv`. It does **not** add your user to Nix `trusted-users`.
 
-Enable flakes if they are not already on (the installer usually does this):
-
-```bash
-mkdir -p ~/.config/nix
-cat >> ~/.config/nix/nix.conf <<'EOF'
-experimental-features = nix-command flakes
-extra-substituters = https://devenv.cachix.org
-extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
-EOF
-```
-
-### 2. Install devenv
+Then enter the environment:
 
 ```bash
-nix profile install nixpkgs#devenv
-```
-
-### 3. Clone and enter the environment
-
-```bash
-git clone <this-repo-url> ~/Projects/devenv
-cd ~/Projects/devenv
-devenv allow          # trust this directory for devenv's shell hook
-# or, with direnv: direnv allow
 devenv shell
 ```
 
-You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, and `nixfmt` are on `PATH`.
+You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, and `shellcheck` are on `PATH`.
 
 ## Everyday commands
 
 | Command | Purpose |
 | --- | --- |
+| `./setup.sh` | Install or update Nix, devenv, and Cachix; build this environment |
 | `devenv shell` | Enter the environment |
-| `devenv test` | Build the env and run `enterTest` |
+| `devenv test` | Build the env, check the toolchain, and run the BATS suite |
+| `bats tests` | Run the `setup.sh` test suite on its own |
 | `devenv update` | Refresh `devenv.lock` from `devenv.yaml` inputs |
 | `devenv gc` | Delete unused environment generations |
 
@@ -66,12 +47,16 @@ Optional auto-activation:
 
 | Path | Role |
 | --- | --- |
+| `setup.sh` | One-command host bootstrap (Nix, devenv, Cachix, this environment) |
 | `devenv.nix` | Shell banner, Cachix pull, tests |
 | `devenv.yaml` | Inputs, module imports, CLI version pin |
 | `devenv.lock` | Pinned inputs (commit this) |
 | `modules/packages.nix` | Shared CLI packages |
-| `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix` |
+| `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix`, `shellcheck` |
 | `modules/languages.nix` | Commented language examples (off by default) |
+| `tests/setup.bats` | Unit tests for `setup.sh` |
+| `tests/tag-hook.bats` | Tests that a failing suite really blocks `git tag` |
+| `hooks/reference-transaction` | Tag guard, installed into `.git/hooks` on shell entry |
 | `devenv.local.nix` | Gitignored machine-specific overrides |
 
 ## Local overrides
@@ -85,6 +70,34 @@ Copy options you do not want to share into `devenv.local.nix`:
 }
 ```
 
+## Tests
+
+`setup.sh` is covered by [BATS](https://bats-core.readthedocs.io/) tests in `tests/`. They source `setup.sh` (its `main` guard keeps it inert when sourced) and redirect every host path it inspects through the `SETUP_*` variables, so the suite never touches the real `/nix`, the network, or `sudo`:
+
+```bash
+bats tests
+```
+
+## Tag guard
+
+Git has no `pre-tag` hook, but `reference-transaction` runs for every ref update and aborts the transaction when it exits non-zero. `hooks/reference-transaction` uses that to run the test suite whenever a tag is created or force-moved, so a broken `setup.sh` cannot be tagged:
+
+```console
+$ git tag v1.0.0
+→ running the setup.sh test suite before creating tag v1.0.0
+✗ tests failed; refusing to create tag v1.0.0
+fatal: in 'prepared' phase, update aborted by the reference-transaction hook
+```
+
+`enterShell` copies the hook into `.git/hooks/` on every shell entry, so entering the environment once installs it. Deleting a tag and fetching tags from a remote are not gated, and `DEVENV_SKIP_TAG_TESTS=1 git tag ...` bypasses the check.
+
+`prek` handles the `pre-commit` hooks in `modules/git-hooks.nix` and leaves `reference-transaction` alone, so the two coexist.
+
 ## CI
 
-GitHub Actions installs Nix and devenv, then runs `devenv test` on every push and pull request to `main`/`master`.
+| Workflow | Trigger | Runs |
+| --- | --- | --- |
+| `ci.yml` | Push and pull request to `main`/`master` | `devenv test` |
+| `setup-tests.yml` | Changes to `setup.sh`, `tests/`, or `hooks/`, and every tag push | `bats tests` |
+
+`setup-tests.yml` defines no branch or tag filter, which makes it run for branch pushes matching those paths and for all tag pushes — GitHub skips path filters on tag pushes.
