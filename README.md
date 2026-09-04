@@ -81,6 +81,7 @@ Optional auto-activation:
 | `home/delta.nix` | User-global git + delta pager (`programs.git`) |
 | `home/direnv.nix` | User-global direnv + nix-direnv, hooked in bash |
 | `home/ripgrep.nix` | User-global `rg` |
+| `home/fd.nix` | User-global `fd` |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
