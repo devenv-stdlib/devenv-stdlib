@@ -8,7 +8,7 @@
 # at are redirected through the SETUP_* variables.
 
 setup() {
-  REPO_DIR="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+  REPO_DIR="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   SETUP_SH="$REPO_DIR/setup.sh"
   STUB_DIR="$BATS_TEST_TMPDIR/stub-bin"
   mkdir -p "$STUB_DIR"

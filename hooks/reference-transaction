@@ -40,9 +40,9 @@ cd "$repo_root" || exit 0
 [[ -d tests ]] || exit 0
 
 if command -v bats >/dev/null 2>&1; then
-  runner=(bats --print-output-on-failure tests)
+  runner=(bats --print-output-on-failure --recursive tests)
 elif command -v devenv >/dev/null 2>&1; then
-  runner=(devenv shell -- bats --print-output-on-failure tests)
+  runner=(devenv shell -- bats --print-output-on-failure --recursive tests)
 else
   printf '%s✗ cannot verify tag %s: neither bats nor devenv is on PATH%s\n' \
     "$RED" "$new_tag" "$RESET" >&2

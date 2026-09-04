@@ -4,7 +4,7 @@
 # does not add your user to Nix trusted-users.
 #
 # Sourcing this file defines the functions without running the installer, which
-# is what tests/setup.bats relies on.
+# is what tests/setup/setup.bats relies on.
 
 set -u
 

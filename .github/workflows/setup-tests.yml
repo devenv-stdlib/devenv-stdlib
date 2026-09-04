@@ -7,13 +7,15 @@ on:
   push:
     paths:
       - setup.sh
-      - tests/**
+      - tests/setup/**
+      - tests/tag-hook.bats
       - hooks/**
       - .github/workflows/setup-tests.yml
   pull_request:
     paths:
       - setup.sh
-      - tests/**
+      - tests/setup/**
+      - tests/tag-hook.bats
       - hooks/**
       - .github/workflows/setup-tests.yml
 
@@ -26,4 +28,4 @@ jobs:
       - uses: cachix/install-nix-action@v31
 
       - name: Run the setup.sh test suite
-        run: nix shell nixpkgs#bats nixpkgs#shellcheck --command bats --print-output-on-failure tests
+        run: nix shell nixpkgs#bats nixpkgs#shellcheck --command bats --print-output-on-failure tests/setup tests/tag-hook.bats

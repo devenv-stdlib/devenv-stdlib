@@ -34,7 +34,7 @@ You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`,
 | `./setup.sh` | Install or update Nix, devenv, and Cachix; build this environment |
 | `devenv shell` | Enter the environment |
 | `devenv test` | Build the env, check the toolchain, and run the BATS suite |
-| `bats tests` | Run the `setup.sh` test suite on its own |
+| `bats -r tests` | Run the full BATS suite (setup, scripts, tag hook) |
 | `devenv update` | Refresh `devenv.lock` from `devenv.yaml` inputs |
 | `devenv gc` | Delete unused environment generations |
 
@@ -54,9 +54,9 @@ Optional auto-activation:
 | `modules/packages.nix` | Shared CLI packages |
 | `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix`, `shellcheck` |
 | `modules/languages.nix` | Commented language examples (off by default) |
-| `tests/setup.bats` | Unit tests for `setup.sh` |
+| `tests/setup/setup.bats` | Unit tests for `setup.sh` |
+| `tests/scripts/apply-warp.bats` | Unit tests for `scripts/apply-warp.sh` |
 | `tests/tag-hook.bats` | Tests that a failing suite really blocks `git tag` |
-| `tests/warp.bats` | Unit tests for `scripts/apply-warp.sh` |
 | `hooks/reference-transaction` | Tag guard, installed into `.git/hooks` on shell entry |
 | `modules/warp.nix` | Warp + Starship; Quake keybinding defaults to F12 |
 | `scripts/apply-warp.sh` | Writes Warp settings, a Wayland launcher, and the GNOME F12 shortcut |
@@ -103,10 +103,12 @@ Change the shortcut from `devenv.local.nix` without editing the shared module:
 The shell scripts are covered by [BATS](https://bats-core.readthedocs.io/) tests in `tests/`:
 
 ```bash
-bats tests
+bats -r tests           # full suite (setup, scripts, tag hook)
+bats tests/setup        # setup.sh only
+bats tests/scripts      # scripts/ only
 ```
 
-Both suites source the script under test (a `main` guard keeps it inert when sourced) and redirect every host path through environment variables, so they never touch the real `/nix`, the network, `sudo`, `~/.config`, or your GNOME settings. `setup.bats` uses the `SETUP_*` variables; `warp.bats` uses the `WARP_*` variables plus a recording `gsettings` stub.
+The suites source the script under test (a `main` guard keeps it inert when sourced) and redirect every host path through environment variables, so they never touch the real `/nix`, the network, `sudo`, `~/.config`, or your GNOME settings. `setup.bats` uses the `SETUP_*` variables; `apply-warp.bats` uses the `WARP_*` variables plus a recording `gsettings` stub.
 
 ## Tag guard
 
@@ -128,7 +130,7 @@ fatal: in 'prepared' phase, update aborted by the reference-transaction hook
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
 | `ci.yml` | Push and pull request to `main`/`master` | `devenv test` |
-| `setup-tests.yml` | Changes to `setup.sh`, `tests/`, or `hooks/`, and every tag push | `bats tests` |
-| `scripts-tests.yml` | Changes under `scripts/`, and every tag push | `shellcheck scripts/*.sh` and `bats tests/warp.bats` |
+| `setup-tests.yml` | Changes to `setup.sh`, `tests/setup/`, `tests/tag-hook.bats`, or `hooks/`, and every tag push | `bats tests/setup tests/tag-hook.bats` |
+| `scripts-tests.yml` | Changes under `scripts/` or `tests/scripts/`, and every tag push | `shellcheck scripts/*.sh tests/scripts/*.bats` and `bats tests/scripts` |
 
 Neither test workflow defines a branch or tag filter, which makes each run for branch pushes matching its paths and for all tag pushes — GitHub skips path filters on tag pushes.
