@@ -22,6 +22,7 @@
     ./home/act.nix
     ./home/fzf.nix
     ./home/delta.nix
+    ./home/direnv.nix
   ]
   ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
 
