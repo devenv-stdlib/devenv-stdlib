@@ -18,6 +18,7 @@
     ./home/semantic-release.nix
     ./home/pay-respects.nix
     ./home/usql.nix
+    ./home/zoxide.nix
   ]
   ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
 
