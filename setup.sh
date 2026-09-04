@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bootstrap or update Nix, devenv, Cachix, and Home Manager, then materialize
-# this repo's development environment and user-global Warp/Starship config.
+# this repo's development environment and user-global terminal/Cursor/Starship config.
 # Cache configuration is done as root; this script does not add your user to
 # Nix trusted-users.
 #
@@ -229,10 +229,33 @@ ensure_profile_pkg() {
   command -v "$name" >/dev/null 2>&1 || fail "$name is not on PATH after install"
 }
 
+# Flakes-only hosts often have no <nixpkgs> on NIX_PATH; home-manager -f
+# needs it. Keep a user-supplied nixpkgs= entry; otherwise set or prepend
+# nixpkgs=flake:nixpkgs.
+ensure_nixpkgs_on_nix_path() {
+  local rest entry
+  if [[ -z ${NIX_PATH:-} ]]; then
+    export NIX_PATH=nixpkgs=flake:nixpkgs
+    return
+  fi
+  rest=$NIX_PATH
+  while [[ -n $rest ]]; do
+    entry=${rest%%:*}
+    rest=${rest#"$entry"}
+    rest=${rest#:}
+    if [[ $entry == nixpkgs=* ]]; then
+      export NIX_PATH
+      return
+    fi
+  done
+  export NIX_PATH="nixpkgs=flake:nixpkgs:${NIX_PATH}"
+}
+
 apply_home_manager() {
   command -v home-manager >/dev/null 2>&1 || fail "home-manager is not on PATH"
   [[ -f $SETUP_HOME_NIX ]] || fail "Home Manager config not found: $SETUP_HOME_NIX"
-  step "apply Home Manager configuration (Warp, Starship, GNOME shortcut)" \
+  ensure_nixpkgs_on_nix_path
+  step "apply Home Manager configuration (terminal, Cursor, Starship)" \
     home-manager switch -b backup -f "$SETUP_HOME_NIX"
 }
 
@@ -262,7 +285,7 @@ print_notice() {
   cat <<'EOF'
 This script installs or updates Nix, devenv, Cachix, and Home Manager,
 configures the devenv binary cache, applies this repository's Home Manager
-configuration (Warp, Starship, GNOME shortcut), and builds the devenv shell.
+configuration (terminal, Cursor, Starship), and builds the devenv shell.
 
 Elevated privileges (sudo) are required for:
   - installing or upgrading the Nix daemon

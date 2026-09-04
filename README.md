@@ -1,8 +1,8 @@
 # devenv
 
-Portable [devenv](https://devenv.sh/) configuration for a reproducible Linux project toolchain, plus a [Home Manager](https://nix-community.github.io/home-manager/) module for user-global Warp, Starship, and GNOME settings.
+Portable [devenv](https://devenv.sh/) configuration for a reproducible Linux project toolchain, plus a [Home Manager](https://nix-community.github.io/home-manager/) module for a user-global dropdown terminal and Starship.
 
-Clone this repository and run `./setup.sh`. That one command installs or updates Nix, devenv, Cachix, and Home Manager, then applies this repo's user-global Warp/Starship/GNOME config and builds the devenv shell. Warp is **not** part of the devenv PATH: you already have a terminal open to enter it.
+Clone this repository and run `./setup.sh`. That one command installs or updates Nix, devenv, Cachix, and Home Manager, then applies `home.nix` and builds the devenv shell. The dropdown terminal is **not** part of the devenv PATH: you already have a terminal open to enter it.
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ Clone this repository and run `./setup.sh`. That one command installs or updates
 
 ## Bootstrap on a fresh machine
 
-From the repository root, one command installs or updates Nix, devenv, Cachix, and Home Manager, configures the devenv binary cache as root, applies `home.nix` (Warp, Starship, Quake shortcut), and builds this environment:
+From the repository root, one command installs or updates Nix, devenv, Cachix, and Home Manager, configures the devenv binary cache as root, applies `home.nix` (Alacritty + Zellij + Quake Terminal, Cursor + devenv extension, Starship), and builds this environment:
 
 ```bash
 ./setup.sh
@@ -27,13 +27,13 @@ devenv shell
 
 You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, and `home-manager` are on `PATH`.
 
-Re-apply user-global Warp/Starship/GNOME config after editing `home.nix` (also done by `./setup.sh`):
+Re-apply the user-global terminal after editing `home.nix` (also done by `./setup.sh`):
 
 ```bash
 home-switch
 ```
 
-That is `home-manager switch -b backup -f home.nix`. Existing files Home Manager needs to replace are moved aside with a `.backup` suffix.
+That is `home-manager switch -b backup -f home.nix`. Existing files Home Manager needs to replace are moved aside with a `.backup` suffix. On flakes-only hosts, `home-switch` and `setup.sh` set `NIX_PATH=nixpkgs=flake:nixpkgs` when `NIX_PATH` has no `nixpkgs=` entry.
 
 ## Everyday commands
 
@@ -43,7 +43,7 @@ That is `home-manager switch -b backup -f home.nix`. Existing files Home Manager
 | `devenv shell` | Enter the project toolchain |
 | `home-switch` | Re-apply Home Manager after editing `home.nix` (same as the setup.sh HM step) |
 | `devenv test` | Build the env, check the toolchain, and run the BATS suite |
-| `bats -r tests` | Run the full BATS suite (setup, home/warp-lib, tag hook) |
+| `bats -r tests` | Run the full BATS suite (setup, home/terminal-lib, tag hook) |
 | `devenv update` | Refresh `devenv.lock` from `devenv.yaml` inputs |
 | `devenv gc` | Delete unused environment generations |
 
@@ -61,14 +61,17 @@ Optional auto-activation:
 | `devenv.yaml` | Inputs, module imports, CLI version pin |
 | `devenv.lock` | Pinned inputs (commit this) |
 | `home.nix` | Home Manager entry (username from `$USER` / `$HOME`) |
-| `home/warp.nix` | Warp, Starship, Quake settings, desktop entry, GNOME shortcut |
-| `home/warp-lib.nix` | Shared package override, settings.toml, keybinding map |
+| `home/terminal.nix` | Shared options: `terminal.provider` (default `alacritty`), F12, dash pin |
+| `home/alacritty.nix` | Alacritty, Zellij, Quake Terminal GNOME extension |
+| `home/cursor.nix` | Cursor IDE and the devenv VS Code extension |
+| `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
+| `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
 | `modules/packages.nix` | Project CLI packages (includes `home-manager`) |
 | `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix`, `shellcheck` |
 | `modules/languages.nix` | Commented language examples (off by default) |
 | `tests/setup/setup.bats` | Unit tests for `setup.sh` |
-| `tests/home/warp-lib.bats` | Eval tests for `home/warp-lib.nix` |
+| `tests/home/terminal-lib.bats` | Eval tests for `home/terminal-lib.nix` |
 | `tests/tag-hook.bats` | Tests that a failing suite really blocks `git tag` |
 | `hooks/reference-transaction` | Tag guard, installed into `.git/hooks` on shell entry |
 | `devenv.local.nix` | Gitignored devenv overrides |
@@ -89,36 +92,47 @@ Copy Home Manager options into `home.local.nix` (see `home.local.nix.example`):
 
 ```nix
 {
-  warp.quakeKeybinding = "ctrl-`";
+  terminal.provider = "warp";
+  terminal.quakeKeybinding = "ctrl-`";
 }
 ```
 
-`warp.quakeKeybinding` used to live in `devenv.local.nix`; move it if you still have that line.
+## Terminal and Starship
 
-## Warp and Starship
+The dropdown terminal is user-global via Home Manager, not `devenv shell`. The default is [Alacritty](https://alacritty.org/) running [Zellij](https://zellij.dev/), toggled by the [Quake Terminal](https://extensions.gnome.org/extension/6307/quake-terminal/) GNOME extension on **F12**. That stack renders under VMware Workstation; Warp does not.
 
-[Warp](https://www.warp.dev/) and [Starship](https://starship.rs/) are user-global, installed by Home Manager, not by `devenv shell`. `home-switch` applies the equivalent of Warp's Settings UI and a GNOME launcher:
+| Setting | Alacritty (default) | Warp (`terminal.provider = "warp"`) |
+| --- | --- | --- |
+| Binary | `alacritty` + Zellij | `warp-terminal` (Wayland-wrapped) |
+| Dropdown | F12 Quake extension, session `quake`, no decorations | Warp dedicated hotkey window |
+| Sidebar / app grid | Normal window, session `main`, decorations on | Warp logo |
+| Shortcut | F12 (`terminal.quakeKeybinding`) | same option, via a GNOME custom shortcut |
+| Height | 30% (`terminal.heightPercent`) | same option |
+| Dash icon | Alacritty (Zellij) — not the dropdown | Warp logo |
+| Prompt | Starship via existing `~/.bashrc` | Starship + `honor_ps1 = true` |
 
-| Setting | Value |
-| --- | --- |
-| Features → System → native Wayland | on (`WARP_ENABLE_WAYLAND=1` and `force_x11 = false`) |
-| Features → Keys → dedicated hotkey window (Quake) | on, pinned to the top edge |
-| Quake keybinding | `f12` (override with `warp.quakeKeybinding` in `home.local.nix`) |
-| Features → Session → Honor user's custom prompt | on (`honor_ps1 = true`) |
+Only the selected provider is installed. Switching also drops the other one's dash icon, desktop file, and shortcut so F12 is not bound twice.
 
-Warp cannot register its own global hotkey on Wayland, so Home Manager also binds the same shortcut as a GNOME custom shortcut that launches the Wayland-wrapped `warp-terminal`. A second launch focuses the existing window.
+After `home-switch` with Alacritty, **log out and back in once** so GNOME Shell loads the Quake Terminal extension from `~/.local/share/gnome-shell/extensions`. Then F12 drops Alacritty.
 
-`programs.bash` is **not** enabled, so Home Manager does not replace `~/.bashrc`. Keep this line there (already present on this machine):
+`programs.bash` is **not** enabled, so Home Manager does not replace `~/.bashrc`. Keep this line there:
 
 ```bash
 eval "$(starship init bash)"
 ```
 
-`programs.starship.enable` installs Starship into the user profile; `enableBashIntegration` stays off so init is not duplicated.
+Home Manager replaces the GNOME `custom-keybindings` array. List any other shortcut paths in `terminal.gnomeExtraCustomKeybindings`. Dash favorites are edited in place (`terminal.pinToGnomeDash`), not replaced.
 
-`~/.config/warp-terminal/settings.toml` is Home Manager-owned (nix store symlink). Put extra TOML in `warp.extraSettings` instead of the Warp UI if you need it to persist. Home Manager replaces the GNOME `custom-keybindings` array; list any other shortcut paths in `warp.gnomeExtraCustomKeybindings`.
+## Cursor
 
-Host leftovers from the old `apply-warp.sh` path (safe to remove after a successful `home-switch`): `~/.local/bin/warp-terminal`. Keep the Starship line in `~/.bashrc`. The previous GNOME shortcut and desktop entry are replaced by Home Manager.
+[Cursor](https://cursor.com/) is installed user-global via Home Manager (`code-cursor-fhs` on Ubuntu, so it can use the host GPU). Extensions are linked into `~/.cursor/extensions`:
+
+- [devenv](https://marketplace.visualstudio.com/items?itemName=datakurre.devenv) — loads `devenv print-dev-env` into the editor
+- [Nix IDE](https://marketplace.visualstudio.com/items?itemName=jnoortheen.nix-ide) — syntax and LSP
+
+`.vscode/settings.json` points Nix IDE at `devenv lsp`, which starts a bundled [nixd](https://github.com/nix-community/nixd) already configured for this `devenv.nix`. Cursor user settings are left alone (`programs.cursor` would replace them).
+
+Set `cursor.enable = false;` in `home.local.nix` to skip the editor install.
 
 ## Tests
 
@@ -127,10 +141,10 @@ Host leftovers from the old `apply-warp.sh` path (safe to remove after a success
 ```bash
 bats -r tests           # full suite
 bats tests/setup        # setup.sh only
-bats tests/home         # warp-lib.nix only
+bats tests/home         # terminal-lib.nix only
 ```
 
-`setup.bats` sources `setup.sh` (a `main` guard keeps it inert) and redirects host paths through `SETUP_*` variables. `tests/home` only `nix-instantiate`s `home/warp-lib.nix`; it does not run `home-manager switch` or touch `$HOME`.
+`setup.bats` sources `setup.sh` (a `main` guard keeps it inert) and redirects host paths through `SETUP_*` variables. `tests/home` only `nix-instantiate`s `home/terminal-lib.nix`; it does not run `home-manager switch` or touch `$HOME`.
 
 ## Tag guard
 

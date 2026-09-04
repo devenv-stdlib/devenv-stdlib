@@ -3,7 +3,19 @@
   # home.username = "omer";
   # home.homeDirectory = "/home/omer";
 
-  # warp.quakeKeybinding = "ctrl-`";
+  # Default is Alacritty + Zellij + the Quake Terminal GNOME extension.
+  # Warp is optional: it does not start under VMware Workstation.
+  # terminal.provider = "warp";
+
+  # Cursor, the devenv extension, and Nix IDE. Off to skip the unfree download.
+  # cursor.enable = false;
+
+  # terminal.quakeKeybinding = "ctrl-`";
+  # terminal.heightPercent = 40;
+  # terminal.pinToGnomeDash = false;
+
+  # alacritty.zellijSession = "quake";
+  # alacritty.zellijGuiSession = "main";
 
   # warp.extraSettings = ''
   #   [appearance.text]
@@ -11,8 +23,8 @@
   # '';
 
   # Home Manager replaces the GNOME custom-keybindings array. List any other
-  # shortcut paths that should stay next to Warp Quake:
-  # warp.gnomeExtraCustomKeybindings = [
+  # shortcut paths that should stay when Warp is the provider:
+  # terminal.gnomeExtraCustomKeybindings = [
   #   "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
   # ];
 }

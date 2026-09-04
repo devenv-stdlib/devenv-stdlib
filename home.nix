@@ -5,11 +5,10 @@
 }:
 {
   imports = [
-    ./home/warp.nix
+    ./home/terminal.nix
+    ./home/cursor.nix
   ]
   ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
-
-  nixpkgs.config.allowUnfree = true;
 
   home = {
     username = lib.mkDefault (builtins.getEnv "USER");

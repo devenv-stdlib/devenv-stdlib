@@ -370,6 +370,42 @@ in_setup() {
   [ ! -e "$BATS_TEST_TMPDIR/hm-ran" ]
 }
 
+@test "apply_home_manager sets nixpkgs on NIX_PATH when it is empty" {
+  stub home-manager 'printf "%s\n" "$NIX_PATH" >"$HM_NIX_PATH"'
+  HM_NIX_PATH="$BATS_TEST_TMPDIR/hm-nix-path"
+  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  export HM_NIX_PATH
+  : >"$HOME_NIX"
+  in_setup "unset NIX_PATH; SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  [ "$status" -eq 0 ]
+  run cat "$HM_NIX_PATH"
+  [ "$output" = "nixpkgs=flake:nixpkgs" ]
+}
+
+@test "apply_home_manager prepends nixpkgs when NIX_PATH lacks it" {
+  stub home-manager 'printf "%s\n" "$NIX_PATH" >"$HM_NIX_PATH"'
+  HM_NIX_PATH="$BATS_TEST_TMPDIR/hm-nix-path"
+  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  export HM_NIX_PATH
+  : >"$HOME_NIX"
+  in_setup "NIX_PATH='nixos-config=/etc/nixos'; SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  [ "$status" -eq 0 ]
+  run cat "$HM_NIX_PATH"
+  [ "$output" = "nixpkgs=flake:nixpkgs:nixos-config=/etc/nixos" ]
+}
+
+@test "apply_home_manager does not overwrite an existing nixpkgs NIX_PATH entry" {
+  stub home-manager 'printf "%s\n" "$NIX_PATH" >"$HM_NIX_PATH"'
+  HM_NIX_PATH="$BATS_TEST_TMPDIR/hm-nix-path"
+  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  export HM_NIX_PATH
+  : >"$HOME_NIX"
+  in_setup "NIX_PATH='nixpkgs=/custom/nixpkgs:foo=bar'; SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  [ "$status" -eq 0 ]
+  run cat "$HM_NIX_PATH"
+  [ "$output" = "nixpkgs=/custom/nixpkgs:foo=bar" ]
+}
+
 @test "print_notice mentions Home Manager" {
   in_setup 'print_notice'
   [ "$status" -eq 0 ]
