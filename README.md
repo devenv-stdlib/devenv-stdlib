@@ -70,6 +70,7 @@ Optional auto-activation:
 | `home/eza.nix` | User-global eza; bash integration aliases `ls`/`ll`/`la`/`lt`/`lla` |
 | `home/cookiecutter.nix` | User-global `cookiecutter` CLI |
 | `home/httpie.nix` | User-global `http` / httpie CLI |
+| `home/howdoi.nix` | User-global `howdoi` CLI |
 | `home/semantic-release.nix` | User-global `semantic-release` CLI |
 | `home/pay-respects.nix` | User-global `fuck` (pay-respects; nixpkgs dropped thefuck) |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
