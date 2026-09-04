@@ -125,7 +125,7 @@ Home Manager replaces the GNOME `custom-keybindings` array. List any other short
 
 ## Cursor
 
-[Cursor](https://cursor.com/) is installed user-global via Home Manager (`code-cursor-fhs` on Ubuntu, so it can use the host GPU). Extensions are linked into `~/.cursor/extensions`:
+[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager — no website AppImage. The FHS/bwrap variant is avoided (Ubuntu 24.04 rejects unprivileged uid maps). The binary is wrapped with Nix Mesa, `--ozone-platform=x11`, and `--no-sandbox` (the store `chrome-sandbox` cannot be root-owned 4755). Extensions are linked into `~/.cursor/extensions`:
 
 - [devenv](https://marketplace.visualstudio.com/items?itemName=datakurre.devenv) — loads `devenv print-dev-env` into the editor
 - [Nix IDE](https://marketplace.visualstudio.com/items?itemName=jnoortheen.nix-ide) — syntax and LSP

@@ -7,7 +7,7 @@
   # Warp is optional: it does not start under VMware Workstation.
   # terminal.provider = "warp";
 
-  # Cursor, the devenv extension, and Nix IDE. Off to skip the unfree download.
+  # Cursor from nixpkgs, plus the devenv and Nix IDE extensions.
   # cursor.enable = false;
 
   # terminal.quakeKeybinding = "ctrl-`";
