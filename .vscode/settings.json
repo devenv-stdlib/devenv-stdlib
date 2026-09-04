@@ -1,0 +1,9 @@
+{
+  "nix.enableLanguageServer": true,
+  "nix.serverPath": ["devenv", "lsp"],
+  "[nix]": {
+    "editor.defaultFormatter": "jnoortheen.nix-ide",
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2
+  }
+}

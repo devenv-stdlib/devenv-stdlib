@@ -33,6 +33,26 @@ _: {
   '';
 
   scripts.home-switch.exec = ''
+    # Flakes-only hosts often have no <nixpkgs> on NIX_PATH; home-manager -f
+    # needs it. Keep a user-supplied nixpkgs= entry; otherwise set or prepend
+    # nixpkgs=flake:nixpkgs.
+    if [ -z "''${NIX_PATH:-}" ]; then
+      export NIX_PATH=nixpkgs=flake:nixpkgs
+    else
+      rest="''${NIX_PATH}"
+      has_nixpkgs=0
+      while [ -n "$rest" ]; do
+        entry="''${rest%%:*}"
+        rest="''${rest#"$entry"}"
+        rest="''${rest#:}"
+        case "$entry" in
+          nixpkgs=*) has_nixpkgs=1; break ;;
+        esac
+      done
+      if [ "$has_nixpkgs" -eq 0 ]; then
+        export NIX_PATH="nixpkgs=flake:nixpkgs:''${NIX_PATH}"
+      fi
+    fi
     home-manager switch -b backup -f "$DEVENV_ROOT/home.nix" "$@"
   '';
 }
