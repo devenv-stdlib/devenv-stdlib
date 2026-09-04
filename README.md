@@ -74,6 +74,7 @@ Optional auto-activation:
 | `home/explainshell.nix` | User-global `tldr` (tealdeer; nixpkgs has no explainshell) |
 | `home/semantic-release.nix` | User-global `semantic-release` CLI |
 | `home/pay-respects.nix` | User-global `fuck` (pay-respects; nixpkgs dropped thefuck) |
+| `home/usql.nix` | User-global usql, built with the `all` driver tag |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
