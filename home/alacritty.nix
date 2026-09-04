@@ -61,29 +61,41 @@ in
   };
 
   config = lib.mkIf (cfg.provider == "alacritty") {
-    programs.alacritty = {
-      enable = true;
-      package = alacrittyPkg;
-      settings = {
-        # Decorations stay on for dash/app-grid launches. The dropdown
-        # overrides this with -o window.decorations=None on its own Exec.
-        window.padding = {
-          x = 8;
-          y = 8;
+    programs = {
+      alacritty = {
+        enable = true;
+        package = alacrittyPkg;
+        settings = {
+          # Decorations stay on for dash/app-grid launches. The dropdown
+          # overrides this with -o window.decorations=None on its own Exec.
+          window.padding = {
+            x = 8;
+            y = 8;
+          };
+          scrolling.history = 50000;
+          font.size = 11.0;
         };
-        scrolling.history = 50000;
-        font.size = 11.0;
       };
-    };
 
-    programs.zellij = {
-      enable = true;
-      # Shell integration stays off: it would start Zellij in every shell,
-      # including the devenv one. The desktop entry below starts it instead.
-      settings = {
-        default_layout = "compact";
-        copy_command = "wl-copy";
-        show_startup_tips = false;
+      zellij = {
+        enable = true;
+        # Shell integration stays off: it would start Zellij in every shell,
+        # including the devenv one. The desktop entry below starts it instead.
+        settings = {
+          default_layout = "compact";
+          copy_command = "wl-copy";
+          show_startup_tips = false;
+        };
+      };
+
+      atuin = {
+        enable = true;
+        enableBashIntegration = true;
+        # User systemd + socket activation (generic Linux). Do not set
+        # settings.daemon.autostart: it is incompatible with systemd_socket.
+        daemon.enable = true;
+        forceOverwriteSettings = true;
+        settings.search_mode = "daemon-fuzzy";
       };
     };
 
