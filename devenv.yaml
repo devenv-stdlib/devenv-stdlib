@@ -8,9 +8,5 @@ inputs:
 imports:
   - ./modules
 
-# Warp is unfree; this lets nixpkgs evaluate pkgs.warp-terminal.
-nixpkgs:
-  allow_unfree: true
-
 # Keep the devenv CLI aligned with the module set it evaluates.
 require_version: true

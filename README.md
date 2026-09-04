@@ -1,8 +1,8 @@
 # devenv
 
-Portable [devenv](https://devenv.sh/) configuration for a reproducible Linux development toolchain.
+Portable [devenv](https://devenv.sh/) configuration for a reproducible Linux project toolchain, plus a [Home Manager](https://nix-community.github.io/home-manager/) module for user-global Warp, Starship, and GNOME settings.
 
-Clone this repository, run `./setup.sh`, then `devenv shell`. Packages, git hooks, and tests are pinned in `devenv.lock`.
+Clone this repository and run `./setup.sh`. That one command installs or updates Nix, devenv, Cachix, and Home Manager, then applies this repo's user-global Warp/Starship/GNOME config and builds the devenv shell. Warp is **not** part of the devenv PATH: you already have a terminal open to enter it.
 
 ## Prerequisites
 
@@ -11,30 +11,39 @@ Clone this repository, run `./setup.sh`, then `devenv shell`. Packages, git hook
 
 ## Bootstrap on a fresh machine
 
-From the repository root, one command installs or updates Nix, devenv, and Cachix, configures the devenv binary cache as root, and builds this environment:
+From the repository root, one command installs or updates Nix, devenv, Cachix, and Home Manager, configures the devenv binary cache as root, applies `home.nix` (Warp, Starship, Quake shortcut), and builds this environment:
 
 ```bash
 ./setup.sh
 ```
 
-The script prints a notice that it needs `sudo` for the Nix daemon, flakes (if missing), and `cachix use devenv`. It does **not** add your user to Nix `trusted-users`.
+The script prints a notice that it needs `sudo` for the Nix daemon, flakes (if missing), and `cachix use devenv`. It does **not** add your user to Nix `trusted-users`. Home Manager is installed into the user Nix profile and does not need sudo.
 
-Then enter the environment:
+Then enter the project toolchain:
 
 ```bash
 devenv shell
 ```
 
-You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, `starship`, and `warp-terminal` are on `PATH`.
+You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, and `home-manager` are on `PATH`.
+
+Re-apply user-global Warp/Starship/GNOME config after editing `home.nix` (also done by `./setup.sh`):
+
+```bash
+home-switch
+```
+
+That is `home-manager switch -b backup -f home.nix`. Existing files Home Manager needs to replace are moved aside with a `.backup` suffix.
 
 ## Everyday commands
 
 | Command | Purpose |
 | --- | --- |
-| `./setup.sh` | Install or update Nix, devenv, and Cachix; build this environment |
-| `devenv shell` | Enter the environment |
+| `./setup.sh` | Install or update Nix, devenv, Cachix, and Home Manager; apply `home.nix`; build this environment |
+| `devenv shell` | Enter the project toolchain |
+| `home-switch` | Re-apply Home Manager after editing `home.nix` (same as the setup.sh HM step) |
 | `devenv test` | Build the env, check the toolchain, and run the BATS suite |
-| `bats -r tests` | Run the full BATS suite (setup, scripts, tag hook) |
+| `bats -r tests` | Run the full BATS suite (setup, home/warp-lib, tag hook) |
 | `devenv update` | Refresh `devenv.lock` from `devenv.yaml` inputs |
 | `devenv gc` | Delete unused environment generations |
 
@@ -47,72 +56,85 @@ Optional auto-activation:
 
 | Path | Role |
 | --- | --- |
-| `setup.sh` | One-command host bootstrap (Nix, devenv, Cachix, this environment) |
-| `devenv.nix` | Shell banner, Cachix pull, tests |
+| `setup.sh` | One-command host bootstrap (Nix, devenv, Cachix, Home Manager, this environment) |
+| `devenv.nix` | Shell banner, Cachix pull, tests, `home-switch` |
 | `devenv.yaml` | Inputs, module imports, CLI version pin |
 | `devenv.lock` | Pinned inputs (commit this) |
-| `modules/packages.nix` | Shared CLI packages |
+| `home.nix` | Home Manager entry (username from `$USER` / `$HOME`) |
+| `home/warp.nix` | Warp, Starship, Quake settings, desktop entry, GNOME shortcut |
+| `home/warp-lib.nix` | Shared package override, settings.toml, keybinding map |
+| `home.local.nix.example` | Template for gitignored `home.local.nix` |
+| `modules/packages.nix` | Project CLI packages (includes `home-manager`) |
 | `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix`, `shellcheck` |
 | `modules/languages.nix` | Commented language examples (off by default) |
 | `tests/setup/setup.bats` | Unit tests for `setup.sh` |
-| `tests/scripts/apply-warp.bats` | Unit tests for `scripts/apply-warp.sh` |
+| `tests/home/warp-lib.bats` | Eval tests for `home/warp-lib.nix` |
 | `tests/tag-hook.bats` | Tests that a failing suite really blocks `git tag` |
 | `hooks/reference-transaction` | Tag guard, installed into `.git/hooks` on shell entry |
-| `modules/warp.nix` | Warp + Starship; Quake keybinding defaults to F12 |
-| `scripts/apply-warp.sh` | Writes Warp settings, a Wayland launcher, and the GNOME F12 shortcut |
-| `devenv.local.nix` | Gitignored machine-specific overrides |
+| `devenv.local.nix` | Gitignored devenv overrides |
+| `home.local.nix` | Gitignored Home Manager overrides |
 
 ## Local overrides
 
-Copy options you do not want to share into `devenv.local.nix`:
+Copy devenv-only options into `devenv.local.nix`:
 
 ```nix
 { ... }:
 {
   # packages = [ pkgs.hello ];
-  # warp.quakeKeybinding = "ctrl-`";
 }
 ```
 
-## Warp and Starship
-
-Entering the environment installs [Warp](https://www.warp.dev/) (with `WARP_ENABLE_WAYLAND=1`) and [Starship](https://starship.rs/), then applies the equivalent of Warp's Settings UI:
-
-| Setting | Value |
-| --- | --- |
-| Features → System → native Wayland | on (`WARP_ENABLE_WAYLAND=1` and `force_x11 = false`) |
-| Features → Keys → dedicated hotkey window (Quake) | on, pinned to the top edge |
-| Quake keybinding | `f12` (override with `warp.quakeKeybinding`) |
-| Features → Session → Honor user's custom prompt | on (`honor_ps1 = true`) |
-
-Warp cannot register its own global hotkey on Wayland, so `apply-warp.sh` also binds the same shortcut as a GNOME custom shortcut that launches `~/.local/bin/warp-terminal`. A second launch focuses the existing window.
-
-Change the shortcut from `devenv.local.nix` without editing the shared module:
+Copy Home Manager options into `home.local.nix` (see `home.local.nix.example`):
 
 ```nix
-{ ... }:
 {
   warp.quakeKeybinding = "ctrl-`";
 }
 ```
 
-`enterShell` writes `~/.config/warp-terminal/settings.toml` (other keys you add are kept), installs a desktop entry, and appends `eval "$(starship init bash)"` to `~/.bashrc` if it is not already there.
+`warp.quakeKeybinding` used to live in `devenv.local.nix`; move it if you still have that line.
+
+## Warp and Starship
+
+[Warp](https://www.warp.dev/) and [Starship](https://starship.rs/) are user-global, installed by Home Manager, not by `devenv shell`. `home-switch` applies the equivalent of Warp's Settings UI and a GNOME launcher:
+
+| Setting | Value |
+| --- | --- |
+| Features → System → native Wayland | on (`WARP_ENABLE_WAYLAND=1` and `force_x11 = false`) |
+| Features → Keys → dedicated hotkey window (Quake) | on, pinned to the top edge |
+| Quake keybinding | `f12` (override with `warp.quakeKeybinding` in `home.local.nix`) |
+| Features → Session → Honor user's custom prompt | on (`honor_ps1 = true`) |
+
+Warp cannot register its own global hotkey on Wayland, so Home Manager also binds the same shortcut as a GNOME custom shortcut that launches the Wayland-wrapped `warp-terminal`. A second launch focuses the existing window.
+
+`programs.bash` is **not** enabled, so Home Manager does not replace `~/.bashrc`. Keep this line there (already present on this machine):
+
+```bash
+eval "$(starship init bash)"
+```
+
+`programs.starship.enable` installs Starship into the user profile; `enableBashIntegration` stays off so init is not duplicated.
+
+`~/.config/warp-terminal/settings.toml` is Home Manager-owned (nix store symlink). Put extra TOML in `warp.extraSettings` instead of the Warp UI if you need it to persist. Home Manager replaces the GNOME `custom-keybindings` array; list any other shortcut paths in `warp.gnomeExtraCustomKeybindings`.
+
+Host leftovers from the old `apply-warp.sh` path (safe to remove after a successful `home-switch`): `~/.local/bin/warp-terminal`. Keep the Starship line in `~/.bashrc`. The previous GNOME shortcut and desktop entry are replaced by Home Manager.
 
 ## Tests
 
-The shell scripts are covered by [BATS](https://bats-core.readthedocs.io/) tests in `tests/`:
+[BATS](https://bats-core.readthedocs.io/) tests live in `tests/`:
 
 ```bash
-bats -r tests           # full suite (setup, scripts, tag hook)
+bats -r tests           # full suite
 bats tests/setup        # setup.sh only
-bats tests/scripts      # scripts/ only
+bats tests/home         # warp-lib.nix only
 ```
 
-The suites source the script under test (a `main` guard keeps it inert when sourced) and redirect every host path through environment variables, so they never touch the real `/nix`, the network, `sudo`, `~/.config`, or your GNOME settings. `setup.bats` uses the `SETUP_*` variables; `apply-warp.bats` uses the `WARP_*` variables plus a recording `gsettings` stub.
+`setup.bats` sources `setup.sh` (a `main` guard keeps it inert) and redirects host paths through `SETUP_*` variables. `tests/home` only `nix-instantiate`s `home/warp-lib.nix`; it does not run `home-manager switch` or touch `$HOME`.
 
 ## Tag guard
 
-Git has no `pre-tag` hook, but `reference-transaction` runs for every ref update and aborts the transaction when it exits non-zero. `hooks/reference-transaction` uses that to run the test suite whenever a tag is created or force-moved, so a broken `setup.sh` cannot be tagged:
+Git has no `pre-tag` hook, but `reference-transaction` runs for every ref update and aborts the transaction when it exits non-zero. `hooks/reference-transaction` uses that to run the test suite whenever a tag is created or force-moved:
 
 ```console
 $ git tag v1.0.0
@@ -131,6 +153,5 @@ fatal: in 'prepared' phase, update aborted by the reference-transaction hook
 | --- | --- | --- |
 | `ci.yml` | Push and pull request to `main`/`master` | `devenv test` |
 | `setup-tests.yml` | Changes to `setup.sh`, `tests/setup/`, `tests/tag-hook.bats`, or `hooks/`, and every tag push | `bats tests/setup tests/tag-hook.bats` |
-| `scripts-tests.yml` | Changes under `scripts/` or `tests/scripts/`, and every tag push | `shellcheck scripts/*.sh tests/scripts/*.bats` and `bats tests/scripts` |
 
-Neither test workflow defines a branch or tag filter, which makes each run for branch pushes matching its paths and for all tag pushes — GitHub skips path filters on tag pushes.
+`setup-tests.yml` has no branch or tag filter, which makes it run for branch pushes matching its paths and for all tag pushes — GitHub skips path filters on tag pushes.

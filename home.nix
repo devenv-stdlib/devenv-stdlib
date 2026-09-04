@@ -1,0 +1,35 @@
+{
+  config,
+  lib,
+  ...
+}:
+{
+  imports = [
+    ./home/warp.nix
+  ]
+  ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
+
+  nixpkgs.config.allowUnfree = true;
+
+  home = {
+    username = lib.mkDefault (builtins.getEnv "USER");
+    homeDirectory = lib.mkDefault (builtins.getEnv "HOME");
+    stateVersion = "25.05";
+  };
+
+  programs.home-manager.enable = true;
+
+  # Ubuntu / other non-NixOS: export session vars and XDG dirs to GNOME.
+  targets.genericLinux.enable = true;
+
+  assertions = [
+    {
+      assertion = config.home.username != "" && config.home.homeDirectory != "";
+      message = ''
+        home.username / home.homeDirectory are empty. Run `home-switch` from a
+        login shell (USER and HOME set), or copy home.local.nix.example to
+        home.local.nix and set them there.
+      '';
+    }
+  ];
+}

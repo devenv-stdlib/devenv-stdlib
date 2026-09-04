@@ -26,10 +26,13 @@ _: {
     command -v nixfmt
     command -v bats
     command -v shellcheck
-    command -v starship
-    command -v warp-terminal
+    command -v home-manager
     git --version
     jq --version
     bats --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
+  '';
+
+  scripts.home-switch.exec = ''
+    home-manager switch -b backup -f "$DEVENV_ROOT/home.nix" "$@"
   '';
 }

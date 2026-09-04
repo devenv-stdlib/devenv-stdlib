@@ -1,0 +1,18 @@
+{
+  # Required only if USER/HOME are unset during evaluation.
+  # home.username = "omer";
+  # home.homeDirectory = "/home/omer";
+
+  # warp.quakeKeybinding = "ctrl-`";
+
+  # warp.extraSettings = ''
+  #   [appearance.text]
+  #   font_size = 15.0
+  # '';
+
+  # Home Manager replaces the GNOME custom-keybindings array. List any other
+  # shortcut paths that should stay next to Warp Quake:
+  # warp.gnomeExtraCustomKeybindings = [
+  #   "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
+  # ];
+}
