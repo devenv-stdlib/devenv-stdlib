@@ -65,12 +65,15 @@ Optional auto-activation:
 | `home/alacritty.nix` | Alacritty, Zellij, Quake Terminal, Atuin (daemon-fuzzy), ble.sh |
 | `home/cursor.nix` | Cursor IDE and the devenv VS Code extension |
 | `home/nano.nix` | User-global nano with all bundled syntax files |
+| `home/semantic-release.nix` | User-global `semantic-release` CLI |
 | `home/pay-respects.nix` | User-global `fuck` (pay-respects; nixpkgs dropped thefuck) |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
-| `modules/packages.nix` | Project CLI packages (includes `home-manager`) |
-| `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix`, `shellcheck` |
+| `modules/packages.nix` | Project CLI packages (includes `home-manager`, `commitlint`) |
+| `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix`, `shellcheck`, `commitlint` (`commit-msg`) |
+| `commitlint.config.mjs` | Conventional Commits rules for the commitlint hook |
+| `.releaserc.json` | semantic-release plugins (GitHub releases, no npm publish) |
 | `modules/languages.nix` | Commented language examples (off by default) |
 | `tests/setup/setup.bats` | Unit tests for `setup.sh` |
 | `tests/home/terminal-lib.bats` | Eval tests for `home/terminal-lib.nix` |
@@ -157,15 +160,19 @@ $ git tag v1.0.0
 fatal: in 'prepared' phase, update aborted by the reference-transaction hook
 ```
 
-`enterShell` copies the hook into `.git/hooks/` on every shell entry, so entering the environment once installs it. Deleting a tag and fetching tags from a remote are not gated, and `DEVENV_SKIP_TAG_TESTS=1 git tag ...` bypasses the check.
+`enterShell` copies the hook into `.git/hooks/` on every shell entry, so entering the environment once installs it. Deleting a tag and fetching tags from a remote are not gated. `DEVENV_SKIP_TAG_TESTS=1 git tag ...` bypasses the check, and the hook is a no-op when `CI` or `GITHUB_ACTIONS` is set so semantic-release can tag from GitHub Actions.
 
-`prek` handles the `pre-commit` hooks in `modules/git-hooks.nix` and leaves `reference-transaction` alone, so the two coexist.
+`prek` handles the `pre-commit` and `commit-msg` hooks in `modules/git-hooks.nix` and leaves `reference-transaction` alone, so the two coexist.
+
+## Conventional Commits
+
+Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `ci:`, `test:`, `chore:`, …). The `commitlint` **commit-msg** hook (not pre-commit) rejects other subjects. On push to `master` or `main`, CI runs [semantic-release](https://semantic-release.gitbook.io/semantic-release/) to version, tag, and publish a GitHub Release from those commits.
 
 ## CI
 
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
-| `ci.yml` | Push and pull request to `main`/`master` | `devenv test` |
+| `ci.yml` | Push and pull request to `main`/`master` | `devenv test`; on push to `master`/`main` only, `semantic-release` |
 | `setup-tests.yml` | Changes to `setup.sh`, `tests/setup/`, `tests/tag-hook.bats`, or `hooks/`, and every tag push | `bats tests/setup tests/tag-hook.bats` |
 
 `setup-tests.yml` has no branch or tag filter, which makes it run for branch pushes matching its paths and for all tag pushes — GitHub skips path filters on tag pushes.
