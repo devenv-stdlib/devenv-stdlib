@@ -7,12 +7,12 @@ on:
   push:
     paths:
       - scripts/**
-      - tests/warp.bats
+      - tests/scripts/**
       - .github/workflows/scripts-tests.yml
   pull_request:
     paths:
       - scripts/**
-      - tests/warp.bats
+      - tests/scripts/**
       - .github/workflows/scripts-tests.yml
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
 
       # Same files the shellcheck commit hook covers, so CI and the hook agree.
       - name: Lint the scripts and their tests
-        run: nix shell nixpkgs#shellcheck --command shellcheck scripts/*.sh tests/warp.bats
+        run: nix shell nixpkgs#shellcheck --command shellcheck scripts/*.sh tests/scripts/*.bats
 
       - name: Run the scripts test suite
-        run: nix shell nixpkgs#bats nixpkgs#shellcheck --command bats --print-output-on-failure tests/warp.bats
+        run: nix shell nixpkgs#bats nixpkgs#shellcheck --command bats --print-output-on-failure tests/scripts

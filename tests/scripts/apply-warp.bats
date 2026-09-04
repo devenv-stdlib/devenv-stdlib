@@ -7,7 +7,7 @@
 # writes into the real ~/.config or GNOME settings.
 
 setup() {
-  REPO_DIR="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+  REPO_DIR="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   APPLY="$REPO_DIR/scripts/apply-warp.sh"
   HOME="$BATS_TEST_TMPDIR/home"
   export HOME

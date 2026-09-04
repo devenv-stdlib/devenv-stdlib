@@ -30,6 +30,6 @@ _: {
     command -v warp-terminal
     git --version
     jq --version
-    bats --print-output-on-failure "$DEVENV_ROOT/tests"
+    bats --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
   '';
 }
