@@ -11,6 +11,7 @@
     ./home/neovim.nix
     ./home/bat.nix
     ./home/eza.nix
+    ./home/cookiecutter.nix
     ./home/semantic-release.nix
     ./home/pay-respects.nix
   ]
