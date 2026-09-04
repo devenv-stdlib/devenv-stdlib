@@ -65,6 +65,7 @@ Optional auto-activation:
 | `home/alacritty.nix` | Alacritty, Zellij, Quake Terminal, Atuin (daemon-fuzzy), ble.sh |
 | `home/cursor.nix` | Cursor IDE and the devenv VS Code extension |
 | `home/nano.nix` | User-global nano with all bundled syntax files |
+| `home/neovim.nix` | User-global Neovim (no plugins yet) |
 | `home/semantic-release.nix` | User-global `semantic-release` CLI |
 | `home/pay-respects.nix` | User-global `fuck` (pay-respects; nixpkgs dropped thefuck) |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
