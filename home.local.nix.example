@@ -4,8 +4,8 @@
   # home.homeDirectory = "/home/omer";
 
   # Default is Alacritty + Zellij + Quake Terminal, plus Atuin
-  # (daemon-fuzzy). Warp is optional: it does not start under
-  # VMware Workstation, and it skips Atuin.
+  # (daemon-fuzzy) and ble.sh. Warp is optional: it does not start
+  # under VMware Workstation, and it skips Atuin/ble.sh.
   # terminal.provider = "warp";
 
   # Cursor from nixpkgs, plus the devenv and Nix IDE extensions.
