@@ -26,6 +26,8 @@ _: {
     command -v nixfmt
     command -v bats
     command -v shellcheck
+    command -v starship
+    command -v warp-terminal
     git --version
     jq --version
     bats --print-output-on-failure "$DEVENV_ROOT/tests"

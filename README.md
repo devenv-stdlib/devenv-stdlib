@@ -25,7 +25,7 @@ Then enter the environment:
 devenv shell
 ```
 
-You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, and `shellcheck` are on `PATH`.
+You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, `starship`, and `warp-terminal` are on `PATH`.
 
 ## Everyday commands
 
@@ -56,7 +56,10 @@ Optional auto-activation:
 | `modules/languages.nix` | Commented language examples (off by default) |
 | `tests/setup.bats` | Unit tests for `setup.sh` |
 | `tests/tag-hook.bats` | Tests that a failing suite really blocks `git tag` |
+| `tests/warp.bats` | Unit tests for `scripts/apply-warp.sh` |
 | `hooks/reference-transaction` | Tag guard, installed into `.git/hooks` on shell entry |
+| `modules/warp.nix` | Warp + Starship; Quake keybinding defaults to F12 |
+| `scripts/apply-warp.sh` | Writes Warp settings, a Wayland launcher, and the GNOME F12 shortcut |
 | `devenv.local.nix` | Gitignored machine-specific overrides |
 
 ## Local overrides
@@ -67,16 +70,43 @@ Copy options you do not want to share into `devenv.local.nix`:
 { ... }:
 {
   # packages = [ pkgs.hello ];
+  # warp.quakeKeybinding = "ctrl-`";
 }
 ```
 
+## Warp and Starship
+
+Entering the environment installs [Warp](https://www.warp.dev/) (with `WARP_ENABLE_WAYLAND=1`) and [Starship](https://starship.rs/), then applies the equivalent of Warp's Settings UI:
+
+| Setting | Value |
+| --- | --- |
+| Features → System → native Wayland | on (`WARP_ENABLE_WAYLAND=1` and `force_x11 = false`) |
+| Features → Keys → dedicated hotkey window (Quake) | on, pinned to the top edge |
+| Quake keybinding | `f12` (override with `warp.quakeKeybinding`) |
+| Features → Session → Honor user's custom prompt | on (`honor_ps1 = true`) |
+
+Warp cannot register its own global hotkey on Wayland, so `apply-warp.sh` also binds the same shortcut as a GNOME custom shortcut that launches `~/.local/bin/warp-terminal`. A second launch focuses the existing window.
+
+Change the shortcut from `devenv.local.nix` without editing the shared module:
+
+```nix
+{ ... }:
+{
+  warp.quakeKeybinding = "ctrl-`";
+}
+```
+
+`enterShell` writes `~/.config/warp-terminal/settings.toml` (other keys you add are kept), installs a desktop entry, and appends `eval "$(starship init bash)"` to `~/.bashrc` if it is not already there.
+
 ## Tests
 
-`setup.sh` is covered by [BATS](https://bats-core.readthedocs.io/) tests in `tests/`. They source `setup.sh` (its `main` guard keeps it inert when sourced) and redirect every host path it inspects through the `SETUP_*` variables, so the suite never touches the real `/nix`, the network, or `sudo`:
+The shell scripts are covered by [BATS](https://bats-core.readthedocs.io/) tests in `tests/`:
 
 ```bash
 bats tests
 ```
+
+Both suites source the script under test (a `main` guard keeps it inert when sourced) and redirect every host path through environment variables, so they never touch the real `/nix`, the network, `sudo`, `~/.config`, or your GNOME settings. `setup.bats` uses the `SETUP_*` variables; `warp.bats` uses the `WARP_*` variables plus a recording `gsettings` stub.
 
 ## Tag guard
 
@@ -99,5 +129,6 @@ fatal: in 'prepared' phase, update aborted by the reference-transaction hook
 | --- | --- | --- |
 | `ci.yml` | Push and pull request to `main`/`master` | `devenv test` |
 | `setup-tests.yml` | Changes to `setup.sh`, `tests/`, or `hooks/`, and every tag push | `bats tests` |
+| `scripts-tests.yml` | Changes under `scripts/`, and every tag push | `shellcheck scripts/*.sh` and `bats tests/warp.bats` |
 
-`setup-tests.yml` defines no branch or tag filter, which makes it run for branch pushes matching those paths and for all tag pushes — GitHub skips path filters on tag pushes.
+Neither test workflow defines a branch or tag filter, which makes each run for branch pushes matching its paths and for all tag pushes — GitHub skips path filters on tag pushes.
