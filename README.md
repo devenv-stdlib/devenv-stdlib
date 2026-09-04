@@ -79,7 +79,7 @@ Optional auto-activation:
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
-| `modules/packages.nix` | Project CLI packages (includes `home-manager`, `commitlint`) |
+| `modules/packages.nix` | Project CLI packages (includes `home-manager`, `commitlint`; `iredis` when `services.redis.enable`) |
 | `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix`, `shellcheck`, `commitlint` (`commit-msg`) |
 | `commitlint.config.mjs` | Conventional Commits rules for the commitlint hook |
 | `.releaserc.json` | semantic-release plugins (GitHub releases, no npm publish) |
