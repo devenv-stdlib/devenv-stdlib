@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://devenv.sh/devenv.schema.json
+inputs:
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling
+  git-hooks:
+    url: github:cachix/git-hooks.nix
+
+imports:
+  - ./modules
+
+# Keep the devenv CLI aligned with the module set it evaluates.
+require_version: true
