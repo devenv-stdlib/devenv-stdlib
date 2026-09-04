@@ -8,7 +8,8 @@
   # under VMware Workstation, and it skips Atuin/ble.sh.
   # terminal.provider = "warp";
 
-  # Cursor from nixpkgs, plus the devenv and Nix IDE extensions.
+  # Cursor from nixpkgs, plus common editor extensions.
+  # Language packs follow devenv languages.* (see devenv.local.nix).
   # cursor.enable = false;
 
   # terminal.quakeKeybinding = "ctrl-`";
