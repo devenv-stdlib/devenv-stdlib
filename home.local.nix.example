@@ -18,6 +18,10 @@
   # alacritty.zellijSession = "quake";
   # alacritty.zellijGuiSession = "main";
 
+  # Home Manager owns ~/.gitconfig when delta is enabled.
+  # programs.git.userName = "Omer";
+  # programs.git.userEmail = "omer@example.com";
+
   # Host-only bash (Home Manager owns ~/.bashrc). `fuck` is already global.
   # programs.bash.initExtra = ''
   #   eval "$(pyenv init -)"

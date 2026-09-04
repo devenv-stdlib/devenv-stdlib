@@ -78,6 +78,7 @@ Optional auto-activation:
 | `home/zoxide.nix` | User-global `zoxide` (`z`) with bash integration |
 | `home/act.nix` | User-global `act` (nektos/act; GitHub Actions locally) |
 | `home/fzf.nix` | User-global fzf with bash integration |
+| `home/delta.nix` | User-global git + delta pager (`programs.git`) |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
