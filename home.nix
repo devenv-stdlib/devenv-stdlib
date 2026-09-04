@@ -14,6 +14,7 @@
     ./home/cookiecutter.nix
     ./home/httpie.nix
     ./home/howdoi.nix
+    ./home/explainshell.nix
     ./home/semantic-release.nix
     ./home/pay-respects.nix
   ]
