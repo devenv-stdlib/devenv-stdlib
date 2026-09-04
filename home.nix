@@ -8,6 +8,7 @@
     ./home/terminal.nix
     ./home/cursor.nix
     ./home/nano.nix
+    ./home/neovim.nix
     ./home/semantic-release.nix
     ./home/pay-respects.nix
   ]
