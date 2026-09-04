@@ -5,6 +5,14 @@ _: {
 
   enterShell = ''
     echo "devenv ready: ''${USER:-unknown}@$(uname -n)"
+
+    # Git has no pre-tag hook, so the tag guard lives in reference-transaction,
+    # which prek does not manage. Refresh it on every shell entry.
+    hooks_dir=$(git rev-parse --git-path hooks 2>/dev/null || true)
+    if [ -n "$hooks_dir" ] && [ -f "$DEVENV_ROOT/hooks/reference-transaction" ]; then
+      mkdir -p "$hooks_dir"
+      install -m 755 "$DEVENV_ROOT/hooks/reference-transaction" "$hooks_dir/reference-transaction"
+    fi
   '';
 
   enterTest = ''
@@ -16,7 +24,10 @@ _: {
     command -v fd
     command -v direnv
     command -v nixfmt
+    command -v bats
+    command -v shellcheck
     git --version
     jq --version
+    bats --print-output-on-failure "$DEVENV_ROOT/tests"
   '';
 }
