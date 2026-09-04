@@ -3,8 +3,9 @@
   # home.username = "omer";
   # home.homeDirectory = "/home/omer";
 
-  # Default is Alacritty + Zellij + the Quake Terminal GNOME extension.
-  # Warp is optional: it does not start under VMware Workstation.
+  # Default is Alacritty + Zellij + Quake Terminal, plus Atuin
+  # (daemon-fuzzy). Warp is optional: it does not start under
+  # VMware Workstation, and it skips Atuin.
   # terminal.provider = "warp";
 
   # Cursor from nixpkgs, plus the devenv and Nix IDE extensions.
