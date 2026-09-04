@@ -13,6 +13,7 @@
     ./home/eza.nix
     ./home/cookiecutter.nix
     ./home/httpie.nix
+    ./home/howdoi.nix
     ./home/semantic-release.nix
     ./home/pay-respects.nix
   ]
