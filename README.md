@@ -68,6 +68,7 @@ Optional auto-activation:
 | `home/neovim.nix` | User-global Neovim (no plugins yet) |
 | `home/bat.nix` | User-global bat, `cat` aliased to `bat` |
 | `home/eza.nix` | User-global eza; bash integration aliases `ls`/`ll`/`la`/`lt`/`lla` |
+| `home/cookiecutter.nix` | User-global `cookiecutter` CLI |
 | `home/semantic-release.nix` | User-global `semantic-release` CLI |
 | `home/pay-respects.nix` | User-global `fuck` (pay-respects; nixpkgs dropped thefuck) |
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
