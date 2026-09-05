@@ -12,7 +12,7 @@
     pkgs.ripgrep
     pkgs.fd
     pkgs.direnv
-    pkgs.nixfmt-rfc-style
+    pkgs.nixfmt
     pkgs.bats
     pkgs.shellcheck
     pkgs.home-manager

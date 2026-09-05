@@ -27,7 +27,7 @@ rec {
     };
 
   alwaysOnHookNames = [
-    "nixfmt-rfc-style"
+    "nixfmt"
     "statix"
     "deadnix"
     "shellcheck"
