@@ -164,7 +164,7 @@ GPU terminal. Quake session `quake` (no decorations); dash icon opens session `m
 
 ### Zellij
 
-Multiplexer inside Alacritty. Open a pane, then attach again and the layout is still there.
+Multiplexer inside Alacritty. Open a pane, then attach again and the layout is still there. Theme defaults to `dracula` (`alacritty.zellijTheme`).
 
 - Docs: [zellij.dev/documentation](https://zellij.dev/documentation/)
 - Donate: [zellij.dev/stickers](https://zellij.dev/stickers/) (GitHub Sponsors, Ko-fi, Liberapay)
