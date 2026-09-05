@@ -7,6 +7,7 @@ The dropdown terminal is user-global via Home Manager, not `devenv shell`. The d
 | Binary | `alacritty` + Zellij | `warp-terminal` (Wayland-wrapped) |
 | Dropdown | F12 Quake extension, session `quake` | Warp dedicated hotkey window |
 | Height | 30% (`terminal.heightPercent`) | same option |
+| Zellij theme | `dracula` (`alacritty.zellijTheme`) | n/a |
 | Prompt | Starship via Home Manager `programs.bash` | Starship + `honor_ps1 = true` |
 | History | Atuin `daemon-fuzzy` | Warp's own history |
 
@@ -16,10 +17,12 @@ Copy Home Manager options into `home.local.nix`:
 
 ```nix
 {
-  terminal.provider = "warp";
   terminal.quakeKeybinding = "ctrl-`";
+  alacritty.zellijTheme = "nord";
 }
 ```
+
+`alacritty.zellijTheme` is a built-in Zellij name ([theme list](https://zellij.dev/documentation/theme-list)). It applies after `home-switch`; start a new Zellij session to see it.
 
 ## Cursor
 
