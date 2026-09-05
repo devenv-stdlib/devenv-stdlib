@@ -69,6 +69,9 @@ in
 
     ruff.enable = hooks.ruff;
     ruff-format.enable = hooks.ruff-format;
+    check-python.enable = hooks.check-python;
+    python-debug-statements.enable = hooks.python-debug-statements;
+    sort-requirements-txt.enable = hooks.sort-requirements-txt;
     pyright.enable = hooks.pyright;
     ty = {
       enable = hooks.ty;
