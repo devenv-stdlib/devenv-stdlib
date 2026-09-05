@@ -11,7 +11,7 @@
     ./home/neovim.nix
     ./home/bat.nix
     ./home/eza.nix
-    ./home/cookiecutter.nix
+    ./home/copier.nix
     ./home/httpie.nix
     ./home/howdoi.nix
     ./home/explainshell.nix

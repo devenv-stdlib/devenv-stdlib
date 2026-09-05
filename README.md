@@ -73,7 +73,7 @@ Optional auto-activation:
 | `home/neovim.nix` | User-global Neovim (no plugins yet) |
 | `home/bat.nix` | User-global bat, `cat` aliased to `bat` |
 | `home/eza.nix` | User-global eza; bash integration aliases `ls`/`ll`/`la`/`lt`/`lla` |
-| `home/cookiecutter.nix` | User-global `cookiecutter` CLI |
+| `home/copier.nix` | User-global [copier](https://copier.readthedocs.io/en/stable) CLI (`copy` / `update`) |
 | `home/httpie.nix` | User-global `http` / httpie CLI |
 | `home/howdoi.nix` | User-global `howdoi` CLI |
 | `home/explainshell.nix` | User-global `tldr` (tealdeer; nixpkgs has no explainshell) |
