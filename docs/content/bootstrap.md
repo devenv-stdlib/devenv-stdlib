@@ -38,5 +38,5 @@ That is `home-manager switch -b backup -f home.nix`. Existing files Home Manager
 
 Optional auto-activation:
 
-- **devenv hook** (no extra tools): add `eval "$(devenv hook bash)"` to `~/.bashrc`, then `devenv allow` in this repo.
+- **devenv hook** (no extra tools): add `eval "$(devenv hook bash)"` to `~/.bashrc.d/99-devenv-hook.sh` or `programs.bash.initExtra` in `home.local.nix`, then `devenv allow` in this repo.
 - **direnv**: Home Manager installs direnv + nix-direnv and hooks bash. `direnv allow` here (`.envrc` is committed).

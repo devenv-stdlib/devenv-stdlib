@@ -9,7 +9,7 @@ this template  --copier copy/update-->  monorepo working tree
                                               v
                                         project PATH
                                               ^
-host (Ubuntu 22.04)  --home-switch-->  user profile (terminal, Cursor, CLIs)
+host (Ubuntu 24.04 or 26.04 LTS)  --home-switch-->  user profile (terminal, Cursor, CLIs)
 ```
 
 ## Three layers
@@ -18,7 +18,7 @@ host (Ubuntu 22.04)  --home-switch-->  user profile (terminal, Cursor, CLIs)
 
 **Monorepo (the destination).** After `copier copy`, the tree has `devenv.nix`, `devenv.yaml`, `modules/`, `home.nix`, `setup.sh`, and a generated `devenv.local.nix`. `devenv shell` is the project toolchain: git hooks, language versions, generated `.github/workflows/test.yml`. Leaving the directory (or `direnv`) drops that PATH.
 
-**Host (the person).** Home Manager applies `home.nix` into the user profile. The dropdown terminal, Starship, Cursor, `rg`, `fd`, `gh`, and the other user-global CLIs stay available after you `cd` away. `setup.sh` installs Nix, devenv, Cachix, and Home Manager once per machine.
+**Host (the person).** Home Manager applies `home.nix` into the user profile. The dropdown terminal, Starship, Cursor, `rg`, `fd`, `gh`, and the other user-global CLIs stay available after you `cd` away. `setup.sh` installs Nix, devenv, Cachix, and Home Manager once per machine. Supported hosts are the current Ubuntu LTS and the previous one.
 
 The terminal is user-global because you already have a terminal open to run `devenv shell`. Putting Alacritty on the project PATH would hide it the moment you leave the repo.
 
@@ -44,7 +44,7 @@ The terminal is user-global because you already have a terminal open to run `dev
 
 ## How Home Manager stays out of the project PATH
 
-`home.nix` imports `home/*.nix` plus optional `home.local.nix`. `home-switch` is `home-manager switch -b backup -f home.nix`. That is a user profile, not a devenv generation.
+`home.nix` imports `home/*.nix` plus optional `home.local.nix`. `home-switch` is `home-manager switch -b backup -f home.nix`. That is a user profile, not a devenv generation. Bash integrations land in `~/.bashrc.d/`; Ubuntu's `~/.bashrc` only sources that directory so a distro upgrade does not have to be merged by hand.
 
 Language packs are the exception: they are **not** user-global. devenv generates `.vscode/extensions.json` from `languages.*` and `cursor-sync-extensions` installs the matching Cursor extensions when you enter the shell.
 

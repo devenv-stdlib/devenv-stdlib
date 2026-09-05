@@ -6,7 +6,7 @@ Clone this repository only to develop the template. Generated monorepos get a co
 
 ## Prerequisites
 
-- Ubuntu 22.04 LTS (x86_64 or aarch64)
+- Ubuntu 26.04 or 24.04 LTS (x86_64 or aarch64)
 - `curl` and a user that can create `/nix`
 - Host [prek](https://prek.j178.dev/), nixfmt, statix, and deadnix (Homebrew on the host). Commit on the host, not inside Docker — VMware user namespaces make `bwrap` flaky.
 
@@ -76,7 +76,7 @@ bats tests/setup
 bats tests/home
 bats tests/copier.bats
 test-devenv                  # also writes junit/*.xml
-build-act-image              # devenv-act:22.04 for local act
+build-act-image              # devenv-act:24.04 for local act
 ```
 
 | Suite | Role |
@@ -86,10 +86,11 @@ build-act-image              # devenv-act:22.04 for local act
 | `tests/copier.bats` | `copier copy` / `update`; not copied into monorepos |
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
+| `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
 | `tests/tag-hook.bats` | failing suite blocks `git tag` |
-| `tests/integration/` | nixosTest on Ubuntu 22.04 |
+| `tests/integration/` | nixosTest (generated `test.yml` + eval asserts) |
 
-`test-devenv` `actionlint`s generated `test.yml` and fixtures, then `act workflow_call` on the Python fixture. Skip nested act when `ACT` is set. `.actrc` maps `ubuntu-22.04` to `devenv-act:22.04`.
+`test-devenv` `actionlint`s generated `test.yml` and fixtures, then `act workflow_call` on the Python fixture. Skip nested act when `ACT` is set. `.actrc` maps `ubuntu-24.04` and `ubuntu-26.04` to `devenv-act:24.04` (no `act-26.04` image yet). `.github/actionlint.yaml` lists `ubuntu-26.04` until actionlint's built-in runner list includes it.
 
 ## Commits and tags
 
