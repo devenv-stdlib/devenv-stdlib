@@ -25,7 +25,7 @@ Then enter the project toolchain:
 devenv shell
 ```
 
-You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, and `home-manager` are on `PATH`.
+You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, `home-manager`, and `debtmap` are on `PATH`.
 
 Re-apply the user-global terminal after editing `home.nix` (also done by `./setup.sh`):
 
@@ -91,7 +91,11 @@ Optional auto-activation:
 | `home/warp.nix` | Optional Warp provider (VMware-hostile; opt in) |
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
-| `modules/packages.nix` | Project CLI packages (includes `home-manager`, `commitlint`; `iredis` when `services.redis.enable`) |
+| `devenv.local.nix.example` | Template for gitignored `devenv.local.nix` |
+| `modules/packages.nix` | Project CLI packages (includes `home-manager`, `commitlint`, `debtmap`; `iredis` when `services.redis.enable`) |
+| `modules/debtmap-pkg.nix` | [debtmap](https://github.com/iepathos/debtmap) 0.23.0 from official release binaries |
+| `modules/debtmap.nix` | Nix options for thresholds; writes generated `.debtmap.toml` |
+| `modules/debtmap-lib.nix` | Pure `.debtmap.toml` defaults and language-aware ignore/god-object tables (nix-unit) |
 | `modules/git-hooks.nix` | Always: Nix lints, `shellcheck`, `typos`, `proselint`, `lychee`, `actionlint`, `yamlfmt`, `check-json`, `trim-trailing-whitespace`, `end-of-file-fixer`, `check-added-large-files`, `check-case-conflicts`, `gitleaks`, `commitlint`. Language hooks follow `languages.*` |
 | `.yamlfmt` | yamlfmt: keep single blank lines; skip generated pre-commit config |
 | `.proselintrc.json` | proselint: allow straight quotes and `...` in Markdown |
@@ -100,37 +104,22 @@ Optional auto-activation:
 | `modules/languages.nix` | Commented language examples (off by default); optional `python.extensionToolchain`; `pythonTypeChecker` (`pyright` or `ty`); required `typescript.bundler` when TypeScript is on |
 | `modules/language-versions.nix` | Required `supported.<lang>.min` (optional max/unsupported) when a language is on; writes `.github/workflows/test.yml` |
 | `modules/language-versions-lib.nix` | Pure version-policy and `test.yml` generation (nix-unit) |
-| `modules/project-lib.nix` | Pure git-hook, Cursor, and TypeScript bundler policy (nix-unit) |
+| `modules/project-lib.nix` | Pure git-hook, Cursor, debtmap language list, and TypeScript bundler policy (nix-unit) |
 | `modules/test-devenv.nix` | `test-devenv` task/script: nix-unit, BATS, nixosTest, `actionlint`, `act`; writes `junit/*.xml` |
 | `tests/junit-report.py` | JUnit writer for nix-unit, nixosTest, and BATS (`file`/`line` for PR annotations) |
-| `tests/unit/` | nix-unit tests by topic (`versions`, `problems`, `matrices`, `workflow`, `hooks`, `cursor`, `terminal`) |
+| `tests/unit/` | nix-unit tests by topic (`versions`, `problems`, `matrices`, `workflow`, `hooks`, `debtmap`, `cursor`, `terminal`) |
 | `tests/act/Dockerfile` | act job image: `runner` (uid 1000) with passwordless sudo, so Nix is not installed as root |
 | `tests/integration/` | nixosTest (Ubuntu 22.04): workflow contracts, `actionlint` in the guest, plus `workflows.nix` fixtures |
 | `tests/setup/setup.bats` | Unit tests for `setup.sh` |
 | `tests/home/terminal-lib.bats` | Eval tests for `home/terminal-lib.nix` |
 | `tests/tag-hook.bats` | Tests that a failing suite really blocks `git tag` |
 | `hooks/reference-transaction` | Tag guard, installed into `.git/hooks` on shell entry |
-| `devenv.local.nix` | Gitignored devenv overrides |
+| `devenv.local.nix` | Gitignored devenv overrides (copy `devenv.local.nix.example`) |
 | `home.local.nix` | Gitignored Home Manager overrides |
 
 ## Local overrides
 
-Copy devenv-only options into `devenv.local.nix`:
-
-```nix
-{ ... }:
-{
-  # packages = [ pkgs.hello ];
-  # languages.python.enable = true;
-  # supported.python.min = "3.12";
-  # python.extensionToolchain = true; # C/C++/Rust for source builds
-  # pythonTypeChecker = "ty"; # default is pyright
-  # languages.typescript.enable = true;
-  # typescript.bundler = "vite"; # required: vite | turbopack | rspack | tsup | tsdown
-  # supported.javascript.runtimes = [ "nodejs" ];
-  # supported.javascript.nodejs.min = "22";
-}
-```
+Copy devenv-only options into `devenv.local.nix` (see `devenv.local.nix.example`).
 
 `python.extensionToolchain` puts `cc`, `c++`, `make`, `pkg-config`, `rustc`, and `cargo` on PATH so pip/uv can compile extensions when wheels or Homebrew bottles are missing. It does not enable `languages.c` / `languages.rust` (no LSP, Cursor language packs, or rust/c git-hooks).
 
@@ -227,6 +216,9 @@ Language hooks turn on with `languages.*`:
 | `go` | `gofmt`, `golangci-lint` |
 | `python` | `ruff`, `ruff-format`, `check-python`, `python-debug-statements`, `sort-requirements-txt`, plus `pyright` (default) or `ty` via `pythonTypeChecker` |
 | `javascript` or `typescript` | `prettier` (JS/TS files only) |
+| any of `rust`, `python`, `javascript`, `typescript`, `go` | `debtmap` (reads generated `.debtmap.toml`) |
+
+`devenv shell` writes `.debtmap.toml` (gitignored) from `languages.*` and `debtmap.*`. Thresholds, ignore globs, and per-language god-object limits default to the [upstream example](https://github.com/iepathos/debtmap/blob/master/.debtmap.toml). Override them in `devenv.local.nix`; do not edit the generated file.
 
 ## Conventional Commits
 
