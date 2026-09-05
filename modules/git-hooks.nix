@@ -13,5 +13,7 @@
       entry = "${pkgs.commitlint}/bin/commitlint --edit";
       stages = [ "commit-msg" ];
     };
+
+    typos.enable = true;
   };
 }
