@@ -1,0 +1,26 @@
+# Shared fixtures for topic files. Not a nix-unit suite itself.
+{ lib }:
+{
+  inherit lib;
+  versions = import ../../modules/language-versions-lib.nix { inherit lib; };
+  project = import ../../modules/project-lib.nix { inherit lib; };
+  term = import ../../home/terminal-lib.nix { inherit lib; };
+
+  policy =
+    {
+      min,
+      max ? null,
+      versions ? [ ],
+      unsupported ? [ ],
+    }:
+    {
+      inherit
+        min
+        max
+        versions
+        unsupported
+        ;
+    };
+
+  contains = needle: haystack: lib.hasInfix needle haystack;
+}
