@@ -5,5 +5,6 @@ _: {
     ./languages.nix
     ./language-versions.nix
     ./cursor-languages.nix
+    ./test-devenv.nix
   ];
 }
