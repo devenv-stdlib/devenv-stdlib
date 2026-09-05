@@ -34,8 +34,10 @@ stub_bats() {
   chmod +x "$STUB_DIR/bats"
 }
 
+# act and GitHub set CI/GITHUB_ACTIONS; the hook skips in those environments
+# so semantic-release can tag. These tests simulate a local `git tag`.
 git_with_stubs() {
-  run env PATH="$STUB_DIR:$PATH" git "$@"
+  run env -u CI -u GITHUB_ACTIONS -u ACT PATH="$STUB_DIR:$PATH" git "$@"
 }
 
 tag_exists() {
@@ -86,7 +88,7 @@ tag_exists() {
 
 @test "deleting a tag does not run the test suite" {
   stub_bats 0
-  env PATH="$STUB_DIR:$PATH" git tag v1.0.3
+  env -u CI -u GITHUB_ACTIONS -u ACT PATH="$STUB_DIR:$PATH" git tag v1.0.3
   rm -f "$MARKER"
   stub_bats 1
   git_with_stubs tag -d v1.0.3
@@ -96,7 +98,7 @@ tag_exists() {
 
 @test "force-moving a tag is gated on the test suite" {
   stub_bats 0
-  env PATH="$STUB_DIR:$PATH" git tag v1.0.7
+  env -u CI -u GITHUB_ACTIONS -u ACT PATH="$STUB_DIR:$PATH" git tag v1.0.7
   stub_bats 1
   echo more >>file.txt
   git add file.txt
@@ -136,7 +138,7 @@ tag_exists() {
   false
 }
 BATS
-  run env -u BATS_ROOT -u BATS_RUN_TMPDIR git tag v1.0.6
+  run env -u CI -u GITHUB_ACTIONS -u ACT -u BATS_ROOT -u BATS_RUN_TMPDIR git tag v1.0.6
   [ "$status" -ne 0 ]
   [[ $output == *"intentionally failing test"* ]]
   run tag_exists v1.0.6
