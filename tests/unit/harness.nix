@@ -4,6 +4,7 @@
   inherit lib;
   versions = import ../../modules/language-versions-lib.nix { inherit lib; };
   project = import ../../modules/project-lib.nix { inherit lib; };
+  debtmap = import ../../modules/debtmap-lib.nix { inherit lib; };
   term = import ../../home/terminal-lib.nix { inherit lib; };
 
   policy =

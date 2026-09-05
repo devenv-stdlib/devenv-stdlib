@@ -18,6 +18,9 @@ result-*
 # Generated from languages.* by modules/cursor-languages.nix
 .vscode/extensions.json
 
+# Generated from languages.* and debtmap.* by modules/debtmap.nix
+.debtmap.toml
+
 # lychee link-check cache (git-hooks)
 .lycheecache
 

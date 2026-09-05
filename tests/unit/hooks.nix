@@ -19,6 +19,7 @@
       pyright = false;
       ty = false;
       prettier = false;
+      debtmap = false;
     };
   };
 
@@ -37,6 +38,7 @@
       pyright = false;
       ty = false;
       prettier = false;
+      debtmap = true;
     };
   };
 
@@ -60,6 +62,7 @@
       pyright = true;
       ty = false;
       prettier = false;
+      debtmap = true;
     };
   };
 
@@ -81,6 +84,7 @@
       pyright = false;
       ty = true;
       prettier = false;
+      debtmap = true;
     };
   };
 
@@ -92,6 +96,52 @@
   testLanguageHooksTypescriptPrettier = {
     expr = (project.languageHooks { languages.typescript.enable = true; }).prettier;
     expected = true;
+  };
+
+  testDebtmapLanguagesOff = {
+    expr = project.debtmapLanguages { };
+    expected = [ ];
+  };
+
+  testDebtmapLanguagesEnabled = {
+    expr = [
+      (project.debtmapLanguages { python.enable = true; })
+      (project.debtmapLanguages { typescript.enable = true; })
+      (project.debtmapLanguages {
+        rust.enable = true;
+        python.enable = true;
+        javascript.enable = true;
+        typescript.enable = true;
+        go.enable = true;
+      })
+    ];
+    expected = [
+      [ "python" ]
+      [ "typescript" ]
+      [
+        "rust"
+        "python"
+        "javascript"
+        "typescript"
+        "go"
+      ]
+    ];
+  };
+
+  testDebtmapFiles = {
+    expr = [
+      (project.debtmapFiles { })
+      (project.debtmapFiles { python.enable = true; })
+      (project.debtmapFiles {
+        rust.enable = true;
+        go.enable = true;
+      })
+    ];
+    expected = [
+      ""
+      "\\.(py)$"
+      "\\.(rs|go)$"
+    ];
   };
 
   testAlwaysOnHookCount = {

@@ -8,5 +8,6 @@ in
 // (import ./matrices.nix harness)
 // (import ./workflow.nix harness)
 // (import ./hooks.nix harness)
+// (import ./debtmap.nix harness)
 // (import ./cursor.nix harness)
 // (import ./terminal.nix harness)
