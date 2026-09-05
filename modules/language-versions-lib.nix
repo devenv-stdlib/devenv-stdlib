@@ -46,6 +46,70 @@ rec {
     deno = emptyPolicy;
   };
 
+  parseVersion = v: map lib.toInt (lib.splitString "." v);
+
+  formatVersion = components: lib.concatMapStringsSep "." toString components;
+
+  # Inclusive range by stepping the single component that changes (1.80.0–1.85.0
+  # → 1.80.0, 1.81.0, …, 1.85.0). Multiple differing components cannot be
+  # inferred; callers should set `versions` or report a problem.
+  enumerateRange =
+    min: max:
+    if max == null || max == min then
+      {
+        ok = true;
+        versions = [ min ];
+      }
+    else
+      let
+        a = parseVersion min;
+        b = parseVersion max;
+      in
+      if lib.length a != lib.length b then
+        {
+          ok = false;
+          versions = [
+            min
+            max
+          ];
+        }
+      else
+        let
+          diffs = lib.filter (i: lib.elemAt a i != lib.elemAt b i) (lib.range 0 (lib.length a - 1));
+        in
+        if diffs == [ ] then
+          {
+            ok = true;
+            versions = [ min ];
+          }
+        else if lib.length diffs != 1 then
+          {
+            ok = false;
+            versions = [
+              min
+              max
+            ];
+          }
+        else
+          let
+            i = lib.head diffs;
+            from = lib.elemAt a i;
+            to = lib.elemAt b i;
+            nums = if from <= to then lib.range from to else [ ];
+            mk = x: formatVersion (lib.take i a ++ [ x ] ++ lib.drop (i + 1) a);
+          in
+          {
+            ok = true;
+            versions = map mk nums;
+          };
+
+  rangeStepOk =
+    policy:
+    policy.min == null
+    || policy.max == null
+    || policy.versions != [ ]
+    || (enumerateRange policy.min policy.max).ok;
+
   resolvedVersions =
     policy:
     let
@@ -55,7 +119,7 @@ rec {
         else if policy.versions != [ ] then
           policy.versions
         else
-          [ policy.min ] ++ lib.optional (policy.max != null && policy.max != policy.min) policy.max;
+          (enumerateRange policy.min policy.max).versions;
     in
     lib.filter (v: !(lib.elem v policy.unsupported)) raw;
 
@@ -90,6 +154,9 @@ rec {
         pythonOn && python.max != null && python.min != null && lib.versionOlder python.max python.min
       ) "supported.python.max (${python.max}) is older than min (${python.min})")
       (lib.optional (
+        pythonOn && !rangeStepOk python
+      ) "supported.python.min and max must differ in exactly one component (or set versions explicitly)")
+      (lib.optional (
         pythonOn && python.implementations == [ ]
       ) "supported.python.implementations must include cpython and/or pypy")
       (lib.optional (
@@ -101,6 +168,9 @@ rec {
         rustOn && rust.max != null && rust.min != null && lib.versionOlder rust.max rust.min
       ) "supported.rust.max (${rust.max}) is older than min (${rust.min})")
       (lib.optional (
+        rustOn && !rangeStepOk rust
+      ) "supported.rust.min and max must differ in exactly one component (or set versions explicitly)")
+      (lib.optional (
         rustOn && !(lib.elem "stable" rust.channels)
       ) "supported.rust.channels must include stable")
       (lib.optional (
@@ -111,6 +181,9 @@ rec {
       (lib.optional (
         goOn && go.max != null && go.min != null && lib.versionOlder go.max go.min
       ) "supported.go.max (${go.max}) is older than min (${go.min})")
+      (lib.optional (
+        goOn && !rangeStepOk go
+      ) "supported.go.min and max must differ in exactly one component (or set versions explicitly)")
       (lib.optional (
         goOn && go.min != null && !(lib.all (inRange go) (resolvedVersions go))
       ) "supported.go.versions must sit between min and max and omit unsupported")
@@ -129,6 +202,9 @@ rec {
           (lib.optional (
             pol.max != null && pol.min != null && lib.versionOlder pol.max pol.min
           ) "${label}.max (${pol.max}) is older than min (${pol.min})")
+          (lib.optional (
+            !rangeStepOk pol
+          ) "${label}.min and max must differ in exactly one component (or set versions explicitly)")
           (lib.optional (
             pol.min != null && !(lib.all (inRange pol) (resolvedVersions pol))
           ) "${label}.versions must sit between min and max and omit unsupported")

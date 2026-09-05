@@ -60,6 +60,18 @@
       }
       {
         channel = "stable";
+        version = "1.82.0";
+      }
+      {
+        channel = "stable";
+        version = "1.83.0";
+      }
+      {
+        channel = "stable";
+        version = "1.84.0";
+      }
+      {
+        channel = "stable";
         version = "1.85.0";
       }
       {
@@ -79,6 +91,7 @@
     );
     expected = [
       { version = "1.22.0"; }
+      { version = "1.23.0"; }
       { version = "1.24.0"; }
     ];
   };
@@ -91,15 +104,28 @@
           "nodejs"
           "bun"
         ];
-        nodejs = policy { min = "22.11.0"; };
+        nodejs = policy {
+          min = "22";
+          max = "24";
+        };
         bun = policy { min = "1.2.0"; };
       }
     );
     expected = [
       {
         runtime = "nodejs";
-        version = "22.11.0";
+        version = "22";
         pkg = "nodejs_22";
+      }
+      {
+        runtime = "nodejs";
+        version = "23";
+        pkg = "nodejs_23";
+      }
+      {
+        runtime = "nodejs";
+        version = "24";
+        pkg = "nodejs_24";
       }
       {
         runtime = "bun";

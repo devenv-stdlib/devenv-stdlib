@@ -34,7 +34,10 @@ let
       versions = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [ ];
-        description = "Versions to test in CI. Defaults to min and max (if set), minus unsupported.";
+        description = ''
+          Versions to test in CI. Defaults to every release from min through max
+          (stepping the one component that changes), minus unsupported.
+        '';
       };
     }
     // extra;

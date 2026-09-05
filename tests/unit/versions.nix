@@ -37,6 +37,57 @@
     ];
   };
 
+  testResolvedVersionsFillsRustMinors = {
+    expr = versions.resolvedVersions (policy {
+      min = "1.80.0";
+      max = "1.85.0";
+      unsupported = [ "1.81.0" ];
+    });
+    expected = [
+      "1.80.0"
+      "1.82.0"
+      "1.83.0"
+      "1.84.0"
+      "1.85.0"
+    ];
+  };
+
+  testResolvedVersionsFillsGoMinors = {
+    expr = versions.resolvedVersions (policy {
+      min = "1.22.0";
+      max = "1.24.0";
+    });
+    expected = [
+      "1.22.0"
+      "1.23.0"
+      "1.24.0"
+    ];
+  };
+
+  testResolvedVersionsFillsNodeMajors = {
+    expr = versions.resolvedVersions (policy {
+      min = "22";
+      max = "24";
+    });
+    expected = [
+      "22"
+      "23"
+      "24"
+    ];
+  };
+
+  testResolvedVersionsFillsPythonMinors = {
+    expr = versions.resolvedVersions (policy {
+      min = "3.11";
+      max = "3.13";
+    });
+    expected = [
+      "3.11"
+      "3.12"
+      "3.13"
+    ];
+  };
+
   testResolvedVersionsExplicitList = {
     expr = versions.resolvedVersions (policy {
       min = "3.10";
