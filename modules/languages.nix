@@ -53,20 +53,31 @@ in
   # and turns on that language's git-hooks.
 
   # languages.rust.enable = true;
+  # supported.rust.min = "1.80.0";
+  # supported.rust.max = "1.85.0";
+  # supported.rust.unsupported = [ "1.81.0" ];
+  # supported.rust.channels = [ "stable" "beta" ];
 
   # languages.go.enable = true;
+  # supported.go.min = "1.22.0";
+  # supported.go.max = "1.24.0";
 
   # languages.python = {
   #   enable = true;
   #   version = "3.12";
   #   venv.enable = true;
   # };
+  # supported.python.min = "3.12";
+  # supported.python.max = "3.13";
+  # supported.python.implementations = [ "cpython" "pypy" ];
   # python.extensionToolchain = true;
 
   # languages.javascript = {
   #   enable = true;
   #   npm.enable = true;
   # };
+  # supported.javascript.runtimes = [ "nodejs" ]; # nodejs | bun | dyno (Deno)
+  # supported.javascript.nodejs.min = "22";
 
   # languages.typescript.enable = true;
   # typescript.bundler = "vite"; # required: vite | turbopack | rspack | tsup | tsdown
