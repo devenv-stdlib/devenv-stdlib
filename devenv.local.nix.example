@@ -46,7 +46,7 @@
   # debtmap.thresholds.validation.maxAverageComplexity = 10.0;
   # debtmap.thresholds.validation.maxDebtDensity = 40.0;
   # debtmap.thresholds.validation.maxCodebaseRiskScore = 7.0;
-  # debtmap.output.defaultFormat = "markdown"; # json | markdown | terminal
+  # debtmap.output.defaultFormat = "json"; # default is terminal; also markdown
   # debtmap.ignore.patterns = [ "vendor/**" "dist/**" ];
   # debtmap.godObjectDetection.rust.maxMethods = 25;
   # debtmap.godObjectDetection.python.maxMethods = 25;
