@@ -15,6 +15,12 @@
     };
 
     typos.enable = true;
+    proselint = {
+      enable = true;
+      files = "\\.(md|rst|txt)$";
+      # git-hooks.nix still calls `proselint FILE`; 0.16 needs `check`.
+      entry = "${pkgs.proselint}/bin/proselint check";
+    };
     lychee = {
       enable = true;
       files = "\\.(md|html)$";
