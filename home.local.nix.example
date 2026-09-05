@@ -24,9 +24,11 @@
   # programs.git.userName = "Omer";
   # programs.git.userEmail = "omer@example.com";
 
-  # Host-only bash (Home Manager owns ~/.bashrc). `fuck` is already global.
-  # programs.bash.initExtra = ''
-  #   eval "$(pyenv init -)"
+  # Host-only bash. The template writes ~/.bashrc.d/00-nix.sh and
+  # ~/.bashrc.d/90-home-manager.sh only. Add machine-local snippets here
+  # (or drop an unmanaged ~/.bashrc.d/20-local.sh). `fuck` is already global.
+  # home.file.".bashrc.d/10-host.sh".text = ''
+  #   # Homebrew, pyenv, cargo, … — only what this machine actually has.
   # '';
 
   # warp.extraSettings = ''

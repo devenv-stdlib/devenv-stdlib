@@ -5,6 +5,7 @@
 }:
 {
   imports = [
+    ./home/bash.nix
     ./home/terminal.nix
     ./home/cursor.nix
     ./home/nano.nix
