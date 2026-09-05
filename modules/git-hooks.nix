@@ -15,5 +15,10 @@
     };
 
     typos.enable = true;
+    lychee = {
+      enable = true;
+      files = "\\.(md|html)$";
+      settings.flags = "--cache --max-cache-age 2d";
+    };
   };
 }

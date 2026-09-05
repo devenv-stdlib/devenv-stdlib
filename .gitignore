@@ -17,3 +17,6 @@ result-*
 
 # Generated from languages.* by modules/cursor-languages.nix
 .vscode/extensions.json
+
+# lychee link-check cache (git-hooks)
+.lycheecache

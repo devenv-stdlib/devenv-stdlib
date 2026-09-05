@@ -90,7 +90,7 @@ Optional auto-activation:
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
 | `modules/packages.nix` | Project CLI packages (includes `home-manager`, `commitlint`; `iredis` when `services.redis.enable`) |
-| `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix`, `shellcheck`, `typos`, `commitlint` (`commit-msg`) |
+| `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix`, `shellcheck`, `typos`, `lychee`, `commitlint` (`commit-msg`) |
 | `commitlint.config.mjs` | Conventional Commits rules for the commitlint hook |
 | `.releaserc.json` | semantic-release plugins (GitHub releases, no npm publish) |
 | `modules/languages.nix` | Commented language examples (off by default) |
@@ -192,7 +192,7 @@ fatal: in 'prepared' phase, update aborted by the reference-transaction hook
 
 `prek` handles the `pre-commit` and `commit-msg` hooks in `modules/git-hooks.nix` and leaves `reference-transaction` alone, so the two coexist.
 
-Always-on hooks: Nix format/lint (`nixfmt-rfc-style`, `statix`, `deadnix`), `shellcheck`, `typos`, and `commitlint` on `commit-msg`.
+Always-on hooks: Nix format/lint (`nixfmt-rfc-style`, `statix`, `deadnix`), `shellcheck`, `typos`, `lychee` (dead links in Markdown/HTML), and `commitlint` on `commit-msg`.
 
 ## Conventional Commits
 
