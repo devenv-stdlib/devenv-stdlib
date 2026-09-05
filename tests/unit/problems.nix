@@ -35,6 +35,7 @@
     expected = [
       "supported.python.max must be Python 3 or above (got 2.7)"
       "supported.python.max (2.7) is older than min (3.12)"
+      "supported.python.min and max must differ in exactly one component (or set versions explicitly)"
       "supported.python.versions must sit between min and max and omit unsupported"
     ];
   };
@@ -47,10 +48,7 @@
         max = "3.12";
       };
     };
-    expected = [
-      "supported.python.max (3.12) is older than min (3.13)"
-      "supported.python.versions must sit between min and max and omit unsupported"
-    ];
+    expected = [ "supported.python.max (3.12) is older than min (3.13)" ];
   };
 
   testProblemsPythonEmptyImplementations = {
@@ -115,9 +113,19 @@
         max = "1.80.0";
       };
     };
+    expected = [ "supported.rust.max (1.80.0) is older than min (1.85.0)" ];
+  };
+
+  testProblemsRustMultiComponentRange = {
+    expr = versions.problems {
+      rustOn = true;
+      rust = versions.emptyRust // {
+        min = "1.80.0";
+        max = "2.0.0";
+      };
+    };
     expected = [
-      "supported.rust.max (1.80.0) is older than min (1.85.0)"
-      "supported.rust.versions must sit between min and max and omit unsupported"
+      "supported.rust.min and max must differ in exactly one component (or set versions explicitly)"
     ];
   };
 
@@ -134,10 +142,7 @@
         max = "1.22.0";
       };
     };
-    expected = [
-      "supported.go.max (1.22.0) is older than min (1.24.0)"
-      "supported.go.versions must sit between min and max and omit unsupported"
-    ];
+    expected = [ "supported.go.max (1.22.0) is older than min (1.24.0)" ];
   };
 
   testProblemsJavascriptEmptyRuntimes = {
@@ -168,10 +173,7 @@
         };
       };
     };
-    expected = [
-      "supported.javascript.bun.max (1.1.0) is older than min (1.2.0)"
-      "supported.javascript.bun.versions must sit between min and max and omit unsupported"
-    ];
+    expected = [ "supported.javascript.bun.max (1.1.0) is older than min (1.2.0)" ];
   };
 
   testProblemsDenoOk = {
