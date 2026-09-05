@@ -37,6 +37,16 @@ assert hooks.sort-requirements-txt;
 assert hooks.ty;
 assert !hooks.pyright;
 assert hooks.rustfmt;
+assert hooks.debtmap;
+assert
+  project.debtmapLanguages {
+    python.enable = true;
+    rust.enable = true;
+  } == [
+    "rust"
+    "python"
+  ];
 assert !(project.languageHooks { }).prettier;
+assert !(project.languageHooks { }).debtmap;
 assert project.typescriptBundlerMissing true null;
 true

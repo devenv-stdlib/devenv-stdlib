@@ -6,10 +6,12 @@
 }:
 let
   project = import ./project-lib.nix { inherit lib; };
+  languages = config.languages or { };
   hooks = project.languageHooks {
-    languages = config.languages or { };
+    inherit languages;
     inherit (config) pythonTypeChecker;
   };
+  debtmapPkg = import ./debtmap-pkg.nix { inherit pkgs lib; };
 in
 {
   git-hooks.hooks = {
@@ -85,6 +87,16 @@ in
     prettier = {
       enable = hooks.prettier;
       files = "\\.(cjs|js|jsx|mjs|ts|tsx)$";
+    };
+
+    debtmap = {
+      enable = hooks.debtmap;
+      name = "debtmap";
+      description = "Analyze technical debt for enabled languages";
+      package = debtmapPkg;
+      entry = "${debtmapPkg}/bin/debtmap analyze . --no-tui --quiet";
+      files = project.debtmapFiles languages;
+      pass_filenames = false;
     };
   };
 }

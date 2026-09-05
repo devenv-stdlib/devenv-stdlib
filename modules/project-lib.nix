@@ -27,7 +27,32 @@ rec {
       pyright = pythonOn && pythonTypeChecker == "pyright";
       ty = pythonOn && pythonTypeChecker == "ty";
       prettier = tsOn;
+      debtmap = debtmapLanguages languages != [ ];
     };
+
+  # Languages written to generated .debtmap.toml (https://github.com/iepathos/debtmap).
+  # Solidity is unsupported here; this devenv has no languages.solidity.
+  debtmapLanguages =
+    languages:
+    lib.optionals (langOn languages "rust") [ "rust" ]
+    ++ lib.optionals (langOn languages "python") [ "python" ]
+    ++ lib.optionals (langOn languages "javascript") [ "javascript" ]
+    ++ lib.optionals (langOn languages "typescript") [ "typescript" ]
+    ++ lib.optionals (langOn languages "go") [ "go" ];
+
+  debtmapFiles =
+    languages:
+    let
+      exts = {
+        rust = "rs";
+        python = "py";
+        javascript = "js|jsx|mjs|cjs";
+        typescript = "ts|tsx";
+        go = "go";
+      };
+      langs = debtmapLanguages languages;
+    in
+    if langs == [ ] then "" else "\\.(${lib.concatStringsSep "|" (map (name: exts.${name}) langs)})$";
 
   alwaysOnHookNames = [
     "nixfmt"
