@@ -27,6 +27,7 @@ _: {
     command -v bats
     command -v shellcheck
     command -v home-manager
+    command -v debtmap
     git --version
     jq --version
     bats --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
