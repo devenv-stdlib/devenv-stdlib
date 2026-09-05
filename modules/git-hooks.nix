@@ -35,5 +35,13 @@
         configPath = ".yamlfmt";
       };
     };
+    gitleaks = {
+      enable = true;
+      name = "gitleaks";
+      description = "Detect hardcoded secrets";
+      package = pkgs.gitleaks;
+      entry = "${pkgs.gitleaks}/bin/gitleaks protect --staged --redact";
+      pass_filenames = false;
+    };
   };
 }

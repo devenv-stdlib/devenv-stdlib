@@ -90,7 +90,7 @@ Optional auto-activation:
 | `home/terminal-lib.nix` | Keybinding map, desktop entries, Warp settings.toml |
 | `home.local.nix.example` | Template for gitignored `home.local.nix` |
 | `modules/packages.nix` | Project CLI packages (includes `home-manager`, `commitlint`; `iredis` when `services.redis.enable`) |
-| `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix`, `shellcheck`, `typos`, `proselint`, `lychee`, `actionlint`, `yamlfmt`, `commitlint` (`commit-msg`) |
+| `modules/git-hooks.nix` | Always: Nix lints, `shellcheck`, `typos`, `proselint`, `lychee`, `actionlint`, `yamlfmt`, `gitleaks`, `commitlint` |
 | `.yamlfmt` | yamlfmt: keep single blank lines; skip generated pre-commit config |
 | `.proselintrc.json` | proselint: allow straight quotes and `...` in Markdown |
 | `commitlint.config.mjs` | Conventional Commits rules for the commitlint hook |
@@ -194,7 +194,7 @@ fatal: in 'prepared' phase, update aborted by the reference-transaction hook
 
 `prek` handles the `pre-commit` and `commit-msg` hooks in `modules/git-hooks.nix` and leaves `reference-transaction` alone, so the two coexist.
 
-Always-on hooks: Nix format/lint (`nixfmt-rfc-style`, `statix`, `deadnix`), `shellcheck`, `typos`, `proselint` (Markdown/RST/txt), `lychee` (dead links in Markdown/HTML), `actionlint`, `yamlfmt`, and `commitlint` on `commit-msg`.
+Always-on hooks: Nix format/lint (`nixfmt-rfc-style`, `statix`, `deadnix`), `shellcheck`, `typos`, `proselint` (Markdown/RST/txt), `lychee` (dead links in Markdown/HTML), `actionlint`, `yamlfmt`, `gitleaks` (secrets), and `commitlint` on `commit-msg`.
 
 ## Conventional Commits
 
