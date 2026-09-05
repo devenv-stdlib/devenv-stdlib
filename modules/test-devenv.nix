@@ -7,123 +7,130 @@
     pkgs.python3
   ];
 
-  scripts.build-act-image.exec = ''
-    set -euo pipefail
-    docker build \
-      --build-arg UID="$(id -u)" \
-      --build-arg GID="$(id -g)" \
-      -t devenv-act:22.04 \
-      "$DEVENV_ROOT/tests/act"
-  '';
+  scripts = {
+    refresh-toolchain-latest.exec = ''
+      set -euo pipefail
+      python3 "$DEVENV_ROOT/includes/toolchain-latest.py" refresh
+    '';
 
-  scripts.test-devenv.exec = ''
-    set -euo pipefail
-    cd "$DEVENV_ROOT"
-    case ":''${NIX_PATH:-}:" in
-      *:nixpkgs=*) ;;
-      *) export NIX_PATH="nixpkgs=flake:nixpkgs''${NIX_PATH:+:$NIX_PATH}" ;;
-    esac
+    build-act-image.exec = ''
+      set -euo pipefail
+      docker build \
+        --build-arg UID="$(id -u)" \
+        --build-arg GID="$(id -g)" \
+        -t devenv-act:22.04 \
+        "$DEVENV_ROOT/tests/act"
+    '';
 
-    # devenv tasks and act have no TTY; tput/pretty-bats SIGPIPE without TERM.
-    export TERM="''${TERM:-dumb}"
+    test-devenv.exec = ''
+      set -euo pipefail
+      cd "$DEVENV_ROOT"
+      case ":''${NIX_PATH:-}:" in
+        *:nixpkgs=*) ;;
+        *) export NIX_PATH="nixpkgs=flake:nixpkgs''${NIX_PATH:+:$NIX_PATH}" ;;
+      esac
 
-    junit_dir="$DEVENV_ROOT/junit"
-    report="$DEVENV_ROOT/tests/junit-report.py"
-    rm -rf "$junit_dir"
-    mkdir -p "$junit_dir"
-    status=0
+      # devenv tasks and act have no TTY; tput/pretty-bats SIGPIPE without TERM.
+      export TERM="''${TERM:-dumb}"
 
-    echo "==> nix-unit"
-    python3 "$report" nix-unit \
-      --suite "$DEVENV_ROOT/tests/unit/default.nix" \
-      --unit-dir "$DEVENV_ROOT/tests/unit" \
-      --root "$DEVENV_ROOT" \
-      --output "$junit_dir/nix-unit.xml" || status=1
+      junit_dir="$DEVENV_ROOT/junit"
+      report="$DEVENV_ROOT/tests/junit-report.py"
+      rm -rf "$junit_dir"
+      mkdir -p "$junit_dir"
+      status=0
 
-    echo "==> bats"
-    # tap + report-formatter: pretty writes to a pipe and bats-format-junit
-    # exits 141 (SIGPIPE) when stdout is not a TTY (CI, act, devenv tasks).
-    if bats --formatter tap --report-formatter junit --output "$junit_dir" \
-      --print-output-on-failure --recursive "$DEVENV_ROOT/tests"; then
-      :
-    else
-      status=1
-    fi
-    if [ ! -s "$junit_dir/report.xml" ]; then
-      bats --formatter junit --recursive "$DEVENV_ROOT/tests" >"$junit_dir/report.xml" || status=1
-    fi
-    python3 "$report" enrich-bats \
-      --input "$junit_dir/report.xml" \
-      --output "$junit_dir/bats.xml" \
-      --root "$DEVENV_ROOT" || true
-    rm -f "$junit_dir/report.xml"
-
-    echo "==> nixosTest"
-    if [ -n "''${ACT:-}" ]; then
-      echo "skip nixosTest inside act (no /dev/kvm in the act container)"
-      python3 "$report" nixos-test \
-        --skipped \
-        --status 0 \
+      echo "==> nix-unit"
+      python3 "$report" nix-unit \
+        --suite "$DEVENV_ROOT/tests/unit/default.nix" \
+        --unit-dir "$DEVENV_ROOT/tests/unit" \
         --root "$DEVENV_ROOT" \
-        --output "$junit_dir/nixos-test.xml" || true
-    elif nix-build --no-out-link "$DEVENV_ROOT/tests/integration/default.nix" 2>&1 | tee "$junit_dir/nixos-test.log"; then
-      python3 "$report" nixos-test \
-        --status 0 \
-        --log "$junit_dir/nixos-test.log" \
-        --root "$DEVENV_ROOT" \
-        --output "$junit_dir/nixos-test.xml" || true
-    else
-      status=1
-      python3 "$report" nixos-test \
-        --status 1 \
-        --log "$junit_dir/nixos-test.log" \
-        --root "$DEVENV_ROOT" \
-        --output "$junit_dir/nixos-test.xml" || true
-    fi
+        --output "$junit_dir/nix-unit.xml" || status=1
 
-    echo "==> junit reports in $junit_dir"
+      echo "==> bats"
+      # tap + report-formatter: pretty writes to a pipe and bats-format-junit
+      # exits 141 (SIGPIPE) when stdout is not a TTY (CI, act, devenv tasks).
+      if bats --formatter tap --report-formatter junit --output "$junit_dir" \
+        --print-output-on-failure --recursive "$DEVENV_ROOT/tests"; then
+        :
+      else
+        status=1
+      fi
+      if [ ! -s "$junit_dir/report.xml" ]; then
+        bats --formatter junit --recursive "$DEVENV_ROOT/tests" >"$junit_dir/report.xml" || status=1
+      fi
+      python3 "$report" enrich-bats \
+        --input "$junit_dir/report.xml" \
+        --output "$junit_dir/bats.xml" \
+        --root "$DEVENV_ROOT" || true
+      rm -f "$junit_dir/report.xml"
 
-    echo "==> generate test.yml"
-    sync-language-versions-workflow
+      echo "==> nixosTest"
+      if [ -n "''${ACT:-}" ]; then
+        echo "skip nixosTest inside act (no /dev/kvm in the act container)"
+        python3 "$report" nixos-test \
+          --skipped \
+          --status 0 \
+          --root "$DEVENV_ROOT" \
+          --output "$junit_dir/nixos-test.xml" || true
+      elif nix-build --no-out-link "$DEVENV_ROOT/tests/integration/default.nix" 2>&1 | tee "$junit_dir/nixos-test.log"; then
+        python3 "$report" nixos-test \
+          --status 0 \
+          --log "$junit_dir/nixos-test.log" \
+          --root "$DEVENV_ROOT" \
+          --output "$junit_dir/nixos-test.xml" || true
+      else
+        status=1
+        python3 "$report" nixos-test \
+          --status 1 \
+          --log "$junit_dir/nixos-test.log" \
+          --root "$DEVENV_ROOT" \
+          --output "$junit_dir/nixos-test.xml" || true
+      fi
 
-    echo "==> actionlint generated workflows"
-    fixtures="$(nix-build --no-out-link "$DEVENV_ROOT/tests/integration/workflows.nix")"
-    mkdir -p "$junit_dir/workflows"
-    cp -L "$fixtures"/*.yml "$junit_dir/workflows/"
-    if [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
-      actionlint "$DEVENV_ROOT/.github/workflows/test.yml" || status=1
-    fi
-    actionlint "$junit_dir/workflows"/*.yml || status=1
+      echo "==> junit reports in $junit_dir"
 
-    if [ -n "''${ACT:-}" ]; then
-      echo "skip act (already inside act)"
-    elif [ "$status" -ne 0 ]; then
-      echo "skip act (suite already failed)"
-    else
-      command -v docker >/dev/null
-      echo "==> act image"
-      build-act-image
-      docker volume create devenv-act-nix >/dev/null
-      docker volume create devenv-act-nix-cache >/dev/null
-      act_opts="--user runner --env HOME=/home/runner -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix"
-      if [ -z "''${GITHUB_ACTIONS:-}" ] && [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
-        echo "==> act .github/workflows/test.yml"
+      echo "==> generate test.yml"
+      sync-language-versions-workflow
+
+      echo "==> actionlint generated workflows"
+      fixtures="$(nix-build --no-out-link "$DEVENV_ROOT/tests/integration/workflows.nix")"
+      mkdir -p "$junit_dir/workflows"
+      cp -L "$fixtures"/*.yml "$junit_dir/workflows/"
+      if [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
+        actionlint "$DEVENV_ROOT/.github/workflows/test.yml" || status=1
+      fi
+      actionlint "$junit_dir/workflows"/*.yml || status=1
+
+      if [ -n "''${ACT:-}" ]; then
+        echo "skip act (already inside act)"
+      elif [ "$status" -ne 0 ]; then
+        echo "skip act (suite already failed)"
+      else
+        command -v docker >/dev/null
+        echo "==> act image"
+        build-act-image
+        docker volume create devenv-act-nix >/dev/null
+        docker volume create devenv-act-nix-cache >/dev/null
+        act_opts="--user runner --env HOME=/home/runner -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix"
+        if [ -z "''${GITHUB_ACTIONS:-}" ] && [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
+          echo "==> act .github/workflows/test.yml"
+          act workflow_call \
+            --pull=false \
+            --container-options "$act_opts" \
+            -W "$DEVENV_ROOT/.github/workflows/test.yml" \
+            -P ubuntu-22.04=devenv-act:22.04 || status=1
+        fi
+        echo "==> act generated python matrix"
         act workflow_call \
           --pull=false \
           --container-options "$act_opts" \
-          -W "$DEVENV_ROOT/.github/workflows/test.yml" \
+          -W "$junit_dir/workflows/python.yml" \
           -P ubuntu-22.04=devenv-act:22.04 || status=1
       fi
-      echo "==> act generated python matrix"
-      act workflow_call \
-        --pull=false \
-        --container-options "$act_opts" \
-        -W "$junit_dir/workflows/python.yml" \
-        -P ubuntu-22.04=devenv-act:22.04 || status=1
-    fi
 
-    exit "$status"
-  '';
+      exit "$status"
+    '';
+  };
 
   tasks."devenv:test-devenv".exec = "test-devenv";
 }

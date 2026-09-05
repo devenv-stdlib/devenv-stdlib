@@ -1,8 +1,66 @@
 {
+  lib,
   versions,
   policy,
   ...
 }:
+let
+  cataloged = import ../../modules/language-versions-lib.nix {
+    inherit lib;
+    catalog = {
+      python = {
+        latest = "3.14.7";
+        releases = [
+          {
+            cycle = "3.14";
+            latest = "3.14.7";
+            eol = false;
+          }
+          {
+            cycle = "3.13";
+            latest = "3.13.15";
+            eol = false;
+          }
+          {
+            cycle = "3.12";
+            latest = "3.12.14";
+            eol = false;
+          }
+          {
+            cycle = "3.9";
+            latest = "3.9.25";
+            eol = true;
+          }
+        ];
+      };
+      nodejs = {
+        latest = "26.8.1";
+        releases = [
+          {
+            cycle = "26";
+            latest = "26.8.1";
+            eol = false;
+          }
+          {
+            cycle = "24";
+            latest = "24.20.0";
+            eol = false;
+          }
+          {
+            cycle = "23";
+            latest = "23.11.1";
+            eol = true;
+          }
+          {
+            cycle = "22";
+            latest = "22.23.2";
+            eol = false;
+          }
+        ];
+      };
+    };
+  };
+in
 {
   testResolvedVersionsNullMin = {
     expr = versions.resolvedVersions (policy {
@@ -146,6 +204,14 @@
     expected = true;
   };
 
+  testInRangeLatestPatchAtMaxCycle = {
+    expr = versions.inRange (policy {
+      min = "3.12";
+      max = "3.14";
+    }) "3.14.7";
+    expected = true;
+  };
+
   testInRangeBelowMin = {
     expr = versions.inRange (policy { min = "3.12"; }) "3.11";
     expected = false;
@@ -181,5 +247,85 @@
   testNodePackageShort = {
     expr = versions.nodePackage "20";
     expected = "nodejs_20";
+  };
+
+  testHasPatch = {
+    expr = [
+      (versions.hasPatch "1.80.0")
+      (versions.hasPatch "3.12")
+      (versions.hasPatch "22")
+    ];
+    expected = [
+      true
+      false
+      false
+    ];
+  };
+
+  testCatalogLatestPatchOmitsEol = {
+    expr = cataloged.resolvedVersionsFor "python" (policy {
+      min = "3.9";
+      max = "3.14";
+    });
+    expected = [
+      "3.12.14"
+      "3.13.15"
+      "3.14.7"
+    ];
+  };
+
+  testCatalogLatestPatchDropsUnsupportedCycle = {
+    expr = cataloged.resolvedVersionsFor "python" (policy {
+      min = "3.12";
+      max = "3.14";
+      unsupported = [ "3.13" ];
+    });
+    expected = [
+      "3.12.14"
+      "3.14.7"
+    ];
+  };
+
+  testCatalogLatestPatchDropsUnsupportedLatest = {
+    expr = cataloged.resolvedVersionsFor "python" (policy {
+      min = "3.12";
+      max = "3.14";
+      unsupported = [ "3.13.15" ];
+    });
+    expected = [
+      "3.12.14"
+      "3.14.7"
+    ];
+  };
+
+  testCatalogNodeSkipsEolMajors = {
+    expr = cataloged.resolvedVersionsFor "nodejs" (policy {
+      min = "22";
+      max = "26";
+    });
+    expected = [
+      "22.23.2"
+      "24.20.0"
+      "26.8.1"
+    ];
+  };
+
+  testCatalogMinOnlyLatestPatch = {
+    expr = cataloged.resolvedVersionsFor "python" (policy {
+      min = "3.12";
+    });
+    expected = [ "3.12.14" ];
+  };
+
+  testPatchedRangeIgnoresCatalog = {
+    expr = cataloged.resolvedVersionsFor "python" (policy {
+      min = "1.80.0";
+      max = "1.82.0";
+    });
+    expected = [
+      "1.80.0"
+      "1.81.0"
+      "1.82.0"
+    ];
   };
 }

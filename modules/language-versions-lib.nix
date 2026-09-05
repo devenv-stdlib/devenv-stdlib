@@ -1,4 +1,7 @@
-{ lib }:
+{
+  lib,
+  catalog ? { },
+}:
 let
   emptyPolicy = {
     min = null;
@@ -110,6 +113,69 @@ rec {
     || policy.versions != [ ]
     || (enumerateRange policy.min policy.max).ok;
 
+  hasPatch = v: lib.length (parseVersion v) >= 3;
+
+  omitsPatch = v: v != null && !hasPatch v;
+
+  matchesCycle =
+    version: cycle:
+    version == cycle || lib.hasPrefix (cycle + ".") version || lib.hasPrefix (version + ".") cycle;
+
+  findRelease =
+    product: version:
+    let
+      rels = (catalog.${product} or { }).releases or [ ];
+      hits = lib.filter (r: matchesCycle version r.cycle) rels;
+    in
+    if hits == [ ] then
+      null
+    else
+      lib.foldl' (
+        best: r: if lib.stringLength r.cycle > lib.stringLength best.cycle then r else best
+      ) (lib.head hits) (lib.tail hits);
+
+  catalogActive =
+    product: policy:
+    lib.hasAttr product catalog
+    && omitsPatch policy.min
+    && (policy.max == null || omitsPatch policy.max);
+
+  releaseUnsupported =
+    policy: r: lib.elem r.latest policy.unsupported || lib.elem r.cycle policy.unsupported;
+
+  resolveFromCatalog =
+    product: policy:
+    let
+      rels = (catalog.${product} or { }).releases or [ ];
+      inBounds =
+        r:
+        if policy.max == null then
+          matchesCycle policy.min r.cycle
+        else
+          lib.versionAtLeast r.cycle policy.min && lib.versionAtLeast policy.max r.cycle;
+      picked = lib.filter (r: inBounds r && !r.eol && !releaseUnsupported policy r) rels;
+    in
+    map (r: r.latest) (lib.sort (a: b: lib.versionOlder a.cycle b.cycle) picked);
+
+  expandExplicit =
+    product: policy:
+    lib.filter (v: v != null) (
+      map (
+        v:
+        if lib.hasAttr product catalog && !hasPatch v then
+          let
+            r = findRelease product v;
+          in
+          if r == null || r.eol || releaseUnsupported policy r then null else r.latest
+        else if lib.elem v policy.unsupported then
+          null
+        else
+          v
+      ) policy.versions
+    );
+
+  # Step min..max when the patch is specified (1.80.0–1.85.0). When it is
+  # omitted (3.12, 22), use each catalog cycle's latest patch and drop EOL.
   resolvedVersions =
     policy:
     let
@@ -123,11 +189,55 @@ rec {
     in
     lib.filter (v: !(lib.elem v policy.unsupported)) raw;
 
+  resolvedVersionsFor =
+    product: policy:
+    if policy.min == null then
+      [ ]
+    else if policy.versions != [ ] then
+      if lib.hasAttr product catalog then expandExplicit product policy else resolvedVersions policy
+    else if catalogActive product policy then
+      resolveFromCatalog product policy
+    else
+      resolvedVersions policy;
+
+  cycleLabel =
+    v:
+    let
+      parts = parseVersion v;
+    in
+    if lib.length parts >= 2 then formatVersion (lib.take 2 parts) else v;
+
   inRange =
     policy: v:
     lib.versionAtLeast v policy.min
-    && (policy.max == null || lib.versionAtLeast policy.max v)
+    && (policy.max == null || lib.versionAtLeast policy.max v || matchesCycle v policy.max)
     && !(lib.elem v policy.unsupported);
+
+  boundProblems =
+    product: label: pol:
+    let
+      active = catalogActive product pol;
+      rmin = if active && pol.min != null then findRelease product pol.min else null;
+      rmax = if active && pol.max != null then findRelease product pol.max else null;
+      resolved = resolvedVersionsFor product pol;
+    in
+    lib.optionals (pol.min != null) [
+      (lib.optional (active && rmin == null) "${label}.min (${pol.min}) is not in the toolchain catalog")
+      (lib.optional (rmin != null && rmin.eol) "${label}.min (${pol.min}) has reached end of life")
+      (lib.optional (
+        active && pol.max != null && rmax == null
+      ) "${label}.max (${pol.max}) is not in the toolchain catalog")
+      (lib.optional (rmax != null && rmax.eol) "${label}.max (${pol.max}) has reached end of life")
+      (lib.optional (
+        !active && !rangeStepOk pol
+      ) "${label}.min and max must differ in exactly one component (or set versions explicitly)")
+      (lib.optional (
+        !(lib.all (inRange pol) resolved)
+      ) "${label}.versions must sit between min and max and omit unsupported")
+      (lib.optional (
+        resolved == [ ] && rmin != null && !rmin.eol
+      ) "${label} has no supported non-EOL versions between min and max")
+    ];
 
   problems =
     {
@@ -154,39 +264,24 @@ rec {
         pythonOn && python.max != null && python.min != null && lib.versionOlder python.max python.min
       ) "supported.python.max (${python.max}) is older than min (${python.min})")
       (lib.optional (
-        pythonOn && !rangeStepOk python
-      ) "supported.python.min and max must differ in exactly one component (or set versions explicitly)")
-      (lib.optional (
         pythonOn && python.implementations == [ ]
       ) "supported.python.implementations must include cpython and/or pypy")
-      (lib.optional (
-        pythonOn && python.min != null && !(lib.all (inRange python) (resolvedVersions python))
-      ) "supported.python.versions must sit between min and max and omit unsupported")
+      (lib.optionals pythonOn (boundProblems "python" "supported.python" python))
 
       (lib.optional (rustOn && rust.min == null) "languages.rust.enable requires supported.rust.min")
       (lib.optional (
         rustOn && rust.max != null && rust.min != null && lib.versionOlder rust.max rust.min
       ) "supported.rust.max (${rust.max}) is older than min (${rust.min})")
       (lib.optional (
-        rustOn && !rangeStepOk rust
-      ) "supported.rust.min and max must differ in exactly one component (or set versions explicitly)")
-      (lib.optional (
         rustOn && !(lib.elem "stable" rust.channels)
       ) "supported.rust.channels must include stable")
-      (lib.optional (
-        rustOn && rust.min != null && !(lib.all (inRange rust) (resolvedVersions rust))
-      ) "supported.rust.versions must sit between min and max and omit unsupported")
+      (lib.optionals rustOn (boundProblems "rust" "supported.rust" rust))
 
       (lib.optional (goOn && go.min == null) "languages.go.enable requires supported.go.min")
       (lib.optional (
         goOn && go.max != null && go.min != null && lib.versionOlder go.max go.min
       ) "supported.go.max (${go.max}) is older than min (${go.min})")
-      (lib.optional (
-        goOn && !rangeStepOk go
-      ) "supported.go.min and max must differ in exactly one component (or set versions explicitly)")
-      (lib.optional (
-        goOn && go.min != null && !(lib.all (inRange go) (resolvedVersions go))
-      ) "supported.go.versions must sit between min and max and omit unsupported")
+      (lib.optionals goOn (boundProblems "go" "supported.go" go))
 
       (lib.optional (javascriptOn && javascript.runtimes == [ ])
         "languages.javascript or languages.typescript requires supported.javascript.runtimes (nodejs, bun, deno)"
@@ -197,18 +292,15 @@ rec {
           pol = javascript.${runtime};
           label = "supported.javascript.${runtime}";
         in
-        lib.optionals (javascriptOn && lib.elem runtime javascript.runtimes) [
-          (lib.optional (pol.min == null) "${label}.min is required when ${runtime} is selected")
-          (lib.optional (
-            pol.max != null && pol.min != null && lib.versionOlder pol.max pol.min
-          ) "${label}.max (${pol.max}) is older than min (${pol.min})")
-          (lib.optional (
-            !rangeStepOk pol
-          ) "${label}.min and max must differ in exactly one component (or set versions explicitly)")
-          (lib.optional (
-            pol.min != null && !(lib.all (inRange pol) (resolvedVersions pol))
-          ) "${label}.versions must sit between min and max and omit unsupported")
-        ]
+        lib.optionals (javascriptOn && lib.elem runtime javascript.runtimes) (
+          [
+            (lib.optional (pol.min == null) "${label}.min is required when ${runtime} is selected")
+            (lib.optional (
+              pol.max != null && pol.min != null && lib.versionOlder pol.max pol.min
+            ) "${label}.max (${pol.max}) is older than min (${pol.min})")
+          ]
+          ++ boundProblems runtime label pol
+        )
       ) jsRuntimes)
     ];
 
@@ -265,8 +357,8 @@ rec {
         map (version: {
           implementation = impl;
           inherit version;
-          python_version = if impl == "pypy" then "pypy${version}" else version;
-        }) (resolvedVersions py)
+          python_version = if impl == "pypy" then "pypy${cycleLabel version}" else version;
+        }) (resolvedVersionsFor "python" py)
       ) py.implementations
     );
 
@@ -276,14 +368,15 @@ rec {
       map (version: {
         channel = "stable";
         inherit version;
-      }) (resolvedVersions rs)
+      }) (resolvedVersionsFor "rust" rs)
       ++ map (channel: {
         inherit channel;
         version = "latest";
       }) (lib.filter (c: c != "stable") rs.channels)
     );
 
-  goRows = go: withPolicyMin go.min (map (version: { inherit version; }) (resolvedVersions go));
+  goRows =
+    go: withPolicyMin go.min (map (version: { inherit version; }) (resolvedVersionsFor "go" go));
 
   javascriptRows =
     js:
@@ -293,7 +386,7 @@ rec {
         map (version: {
           inherit runtime version;
           pkg = if runtime == "nodejs" then nodePackage version else "";
-        }) (resolvedVersions js.${runtime})
+        }) (resolvedVersionsFor runtime js.${runtime})
       )
     ) js.runtimes;
 
