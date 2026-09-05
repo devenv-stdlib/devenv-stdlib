@@ -1,4 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
+let
+  langOn = name: (config.languages.${name} or { }).enable or false;
+in
 {
   git-hooks.hooks = {
     nixfmt-rfc-style.enable = true;
@@ -43,5 +46,8 @@
       entry = "${pkgs.gitleaks}/bin/gitleaks protect --staged --redact";
       pass_filenames = false;
     };
+
+    rustfmt.enable = langOn "rust";
+    clippy.enable = langOn "rust";
   };
 }

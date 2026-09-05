@@ -1,7 +1,8 @@
 _: {
   # Toolchains stay off in this repo. Enabling a language here (or in
   # devenv.local.nix) installs matching Cursor/VS Code extensions if they
-  # are missing and writes this project's .vscode recommendations/settings.
+  # are missing, writes this project's .vscode recommendations/settings,
+  # and turns on that language's git-hooks.
 
   # languages.rust.enable = true;
 
