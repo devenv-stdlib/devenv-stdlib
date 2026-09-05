@@ -18,6 +18,7 @@
     pkgs.home-manager
     pkgs.commitlint
     pkgs.copier
+    pkgs.nodejs
     (import ./debtmap-pkg.nix { inherit pkgs lib; })
   ]
   ++ lib.optional config.services.redis.enable pkgs.iredis;

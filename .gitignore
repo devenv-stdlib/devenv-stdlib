@@ -31,3 +31,7 @@ result-*
 
 # Local act / test-devenv transcripts
 /act_run.log
+
+# Documentation site
+/docs/node_modules/
+/docs/dist/

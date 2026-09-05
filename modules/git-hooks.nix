@@ -39,7 +39,7 @@ in
     lychee = {
       enable = true;
       files = "\\.(md|html)$";
-      settings.flags = "--cache --max-cache-age 2d";
+      settings.flags = "--cache --max-cache-age 2d --exclude '^https://devenv4monorepo\\.github\\.io'";
     };
     actionlint.enable = true;
     yamlfmt = {

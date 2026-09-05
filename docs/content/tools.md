@@ -1,0 +1,283 @@
+# Tools and CLI
+
+A first-session tour of the programs this template installs, with a command you can run here and a link to that project's own docs. When the project is open source and publishes a donations page, that link is included so you can support it.
+
+Commercial products (Cursor, Warp, Cachix's paid caches, GitHub) have no donation link. Projects without a published donations page are docs-only.
+
+After `./setup.sh` and `home-switch`, the user-global CLIs are on PATH in any directory. After `devenv shell`, the project tools (`nixfmt`, `bats`, `copier`, `debtmap`, `commitlint`, …) join them.
+
+## Platform
+
+### Nix
+
+The package manager everything else is built from. `setup.sh` installs the daemon (needs `sudo` once) and does **not** add your user to `trusted-users`.
+
+```bash
+nix --version
+```
+
+- Docs: [nix.dev](https://nix.dev/) · [Nix manual](https://nixos.org/manual/nix/stable/)
+- Donate: [nixos.org/donate](https://nixos.org/donate/)
+
+### devenv
+
+[devenv](https://devenv.sh/) is the project environment: packages, `languages.*`, processes, git hooks, and tasks. Enter it in a monorepo (or this template) with `devenv shell`. The banner is `devenv4monorepo ready: <user>@<hostname>` in this checkout, or the Copier `name` in a generated monorepo.
+
+```bash
+devenv shell
+devenv test          # enterTest: required binaries + BATS
+devenv tasks run devenv:test-devenv
+```
+
+- Docs: [devenv.sh](https://devenv.sh/) · [Getting started](https://devenv.sh/getting-started/)
+
+### Home Manager
+
+[Home Manager](https://nix-community.github.io/home-manager/) owns the user profile: terminal, Starship, Cursor, bash integrations, and the CLIs under `home/*.nix`. Re-apply after editing `home.nix` or `home.local.nix`:
+
+```bash
+home-switch          # home-manager switch -b backup -f home.nix
+```
+
+Replaced files get a `.backup` suffix. On flakes-only hosts, `home-switch` and `setup.sh` set `NIX_PATH=nixpkgs=flake:nixpkgs` when `NIX_PATH` has no `nixpkgs=` entry.
+
+- Docs: [Home Manager manual](https://nix-community.github.io/home-manager/)
+
+### Copier
+
+[Copier](https://copier.readthedocs.io/en/stable) copies this template into a monorepo and later merges tagged updates. It is on PATH after `home-switch` and inside `devenv shell`.
+
+```bash
+copier copy --vcs-ref HEAD /path/to/devenv4monorepo path/to/monorepo
+copier update
+copier check-update
+```
+
+- Docs: [Copier](https://copier.readthedocs.io/en/stable)
+
+### Cachix
+
+[Cachix](https://docs.cachix.org/) is the binary cache. `setup.sh` runs `cachix use devenv` as root so you substitute devenv builds instead of compiling them. This template sets `cachix.pull = [ "devenv" ]` in `devenv.nix`. Cachix also sells private caches; there is no separate donations page.
+
+```bash
+cachix use devenv    # already done by setup.sh
+```
+
+- Docs: [Cachix](https://docs.cachix.org/)
+
+### direnv
+
+[direnv](https://direnv.net/) loads the devenv when you `cd` into the repo (`.envrc` is committed). Home Manager installs direnv + nix-direnv and hooks bash.
+
+```bash
+direnv allow         # once per clone
+```
+
+Alternatively, without direnv: add `eval "$(devenv hook bash)"` to `programs.bash.initExtra` in `home.local.nix`, then `devenv allow` here.
+
+- Docs: [direnv](https://direnv.net/) · [nix-direnv](https://github.com/nix-community/nix-direnv)
+
+## Everyday CLI
+
+These are user-global (Home Manager) unless noted.
+
+### git
+
+Version control. The tag guard and `prek` hooks wrap `git commit` and `git tag`.
+
+```bash
+git status
+git commit           # pre-commit + commitlint
+```
+
+- Docs: [git-scm.com](https://git-scm.com/doc)
+- Donate: [Git via Software Freedom Conservancy](https://git-scm.com/sfc/)
+
+### gh
+
+[GitHub CLI](https://cli.github.com/manual/) for pull requests, checks, and releases. `semantic-release` in CI uses the GitHub API; `gh` is what you use locally.
+
+```bash
+gh auth login
+gh pr status
+```
+
+- Docs: [GitHub CLI](https://cli.github.com/manual/)
+
+### jq, ripgrep, fd
+
+JSON, search, and find. `rg` respects `.gitignore`. `fd` is the `find` replacement.
+
+```bash
+jq . copier.yml
+rg 'supported.rust.min'
+fd devenv.local.nix
+```
+
+- jq docs: [jqlang.github.io/jq](https://jqlang.github.io/jq/)
+- ripgrep docs: [GUIDE](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md) · Donate: [BurntSushi](https://github.com/sponsors/BurntSushi)
+- fd docs: [sharkdp/fd](https://github.com/sharkdp/fd) · Donate: [sharkdp](https://github.com/sponsors/sharkdp)
+
+### bat, eza, fzf, zoxide, delta
+
+Home Manager aliases `cat` → [bat](https://github.com/sharkdp/bat) and `ls` / `ll` / `la` / `lt` / `lla` → [eza](https://eza.rocks/). [fzf](https://junegunn.github.io/fzf/) is wired into bash. [zoxide](https://github.com/ajeetdsouza/zoxide) (`z`) jumps to frequent directories. [delta](https://dandavison.github.io/delta/) is the git pager (`programs.git`).
+
+```bash
+ll
+z devenv4monorepo
+git diff             # delta
+```
+
+- bat: [sharkdp/bat](https://github.com/sharkdp/bat) · Donate: [sharkdp](https://github.com/sponsors/sharkdp)
+- eza: [eza.rocks](https://eza.rocks/) · Donate: [cafkafk](https://github.com/sponsors/cafkafk)
+- fzf: [junegunn.github.io/fzf](https://junegunn.github.io/fzf/)
+- zoxide: [ajeetdsouza/zoxide](https://github.com/ajeetdsouza/zoxide)
+- delta: [dandavison.github.io/delta](https://dandavison.github.io/delta/)
+
+### httpie, tldr, howdoi, fuck, usql
+
+[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. `howdoi` answers “how do I…” from Stack Overflow ([gleitz/howdoi](https://github.com/gleitz/howdoi); packaged here because nixpkgs dropped it). [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
+
+```bash
+http https://endoflife.date/api/rust.json
+tldr tar
+howdoi reverse a list in python
+# mistype a command, then:
+fuck
+```
+
+- HTTPie: [httpie.io/docs/cli](https://httpie.io/docs/cli)
+- tldr pages: [tldr.sh](https://tldr.sh/) · tealdeer: [tealdeer-rs/tealdeer](https://github.com/tealdeer-rs/tealdeer)
+- howdoi: [gleitz/howdoi](https://github.com/gleitz/howdoi)
+- pay-respects: [codeberg.org/iff/pay-respects](https://codeberg.org/iff/pay-respects)
+- usql: [xo/usql](https://github.com/xo/usql)
+
+## Terminal
+
+The dropdown is Alacritty + Zellij + Quake Terminal on **F12** (default). After the first `home-switch`, log out and back in once so GNOME Shell loads the extension. Details and Warp: [Terminal and Cursor](#terminal).
+
+### Alacritty
+
+GPU terminal. Quake session `quake` (no decorations); dash icon opens session `main`.
+
+- Docs: [alacritty.org](https://alacritty.org/)
+
+### Zellij
+
+Multiplexer inside Alacritty. Open a pane, then attach again and the layout is still there.
+
+- Docs: [zellij.dev/documentation](https://zellij.dev/documentation/)
+- Donate: [zellij.dev/stickers](https://zellij.dev/stickers/) (GitHub Sponsors, Ko-fi, Liberapay)
+
+### Quake Terminal
+
+GNOME extension that drops the terminal from the top of the screen.
+
+- Docs: [extensions.gnome.org](https://extensions.gnome.org/extension/6307/quake-terminal/)
+
+### Starship, Atuin, ble.sh
+
+[Starship](https://starship.rs/) is the prompt (`programs.bash`). [Atuin](https://docs.atuin.sh/) is history search (`search_mode = "daemon-fuzzy"`, user-systemd daemon). [ble.sh](https://github.com/akinomyoga/ble.sh) adds line-editor highlighting, then Atuin. Warp uses its own history and editor instead.
+
+```bash
+# Atuin: Ctrl-R in bash (after home-switch)
+```
+
+- Starship: [starship.rs](https://starship.rs/) · Donate: [Open Collective](https://opencollective.com/starship)
+- Atuin: [docs.atuin.sh](https://docs.atuin.sh/) · Donate: [atuinsh](https://github.com/sponsors/atuinsh)
+- ble.sh: [akinomyoga/ble.sh](https://github.com/akinomyoga/ble.sh)
+
+## Editor
+
+### Cursor
+
+[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager — no website AppImage. The launcher always passes `--no-sandbox`. Common extensions (devenv, Nix IDE, EditorConfig, …) are user-global. Language packs follow `languages.*` and are installed when you `devenv shell`.
+
+```bash
+# skip the editor
+# home.local.nix: cursor.enable = false;
+```
+
+- Docs: [cursor.com/docs](https://cursor.com/docs)
+
+### Neovim and nano
+
+User-global [Neovim](https://neovim.io/) (no plugins yet) and [nano](https://www.nano-editor.org/) with bundled syntax files.
+
+- Neovim: [neovim.io](https://neovim.io/) · Donate: [neovim.io/sponsors](https://neovim.io/sponsors/)
+- nano: [nano-editor.org](https://www.nano-editor.org/)
+
+## Quality and release
+
+### prek
+
+[prek](https://prek.j178.dev/) runs the hooks in `modules/git-hooks.nix` (`pre-commit` and `commit-msg`). devenv generates the config; do not commit a hand-edited `.pre-commit-config.yaml`. `reference-transaction` is installed separately so `git tag` is gated.
+
+```bash
+# hooks run on git commit; devenv shell installs them
+```
+
+- Docs: [prek.j178.dev](https://prek.j178.dev/)
+
+### commitlint and semantic-release
+
+Subjects must be [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `ci:`, `test:`, `chore:`). [commitlint](https://commitlint.js.org/) is the `commit-msg` hook (`commitlint.config.mjs`). On push to `master`/`main`, [semantic-release](https://semantic-release.gitbook.io/semantic-release/) (user-global CLI, CI uses `.releaserc.json`) versions and publishes a GitHub Release. Those tags drive `copier copy` / `copier update`.
+
+- Conventional Commits: [conventionalcommits.org](https://www.conventionalcommits.org/)
+- commitlint: [commitlint.js.org](https://commitlint.js.org/)
+- semantic-release: [handbook](https://semantic-release.gitbook.io/semantic-release/)
+
+### Formatters, linters, and secrets
+
+Always-on in the devenv hook set: [nixfmt](https://github.com/NixOS/nixfmt), [statix](https://github.com/oppiliappan/statix), [deadnix](https://github.com/astro/deadnix), [ShellCheck](https://www.shellcheck.net/), [typos](https://github.com/crate-ci/typos), [proselint](https://github.com/amperser/proselint), [lychee](https://lychee.cli.rs/), [actionlint](https://github.com/rhysd/actionlint), [yamlfmt](https://github.com/google/yamlfmt), [Gitleaks](https://gitleaks.io/). Language hooks (rustfmt, ruff, prettier, …) follow `languages.*`.
+
+- nixfmt: [NixOS/nixfmt](https://github.com/NixOS/nixfmt)
+- ShellCheck: [shellcheck.net](https://www.shellcheck.net/)
+- Gitleaks: [gitleaks.io](https://gitleaks.io/)
+- lychee: [lychee.cli.rs](https://lychee.cli.rs/)
+
+### debtmap
+
+[debtmap](https://github.com/iepathos/debtmap) 0.23.0 (official release binaries in `modules/debtmap-pkg.nix`) runs when any of rust/python/javascript/typescript/go is on. `devenv shell` writes `.debtmap.toml` (gitignored). Override thresholds in `devenv.local.nix`.
+
+```bash
+debtmap --help
+```
+
+- Docs: [iepathos/debtmap](https://github.com/iepathos/debtmap)
+
+### BATS and act
+
+[BATS](https://bats-core.readthedocs.io/) is the shell test runner (`bats -r tests`). [act](https://nektosact.com/) replays GitHub Actions locally; `test-devenv` builds `devenv-act:22.04` and runs `act workflow_call` on generated workflows. `act` is also user-global (`home/act.nix`).
+
+```bash
+bats -r tests
+build-act-image
+```
+
+- BATS: [bats-core.readthedocs.io](https://bats-core.readthedocs.io/)
+- act: [nektosact.com](https://nektosact.com/)
+
+### endoflife.date
+
+The catalog script fetches cycle/EOL data from [endoflife.date](https://endoflife.date). Template authors run:
+
+```bash
+refresh-toolchain-latest
+```
+
+- Docs: [endoflife.date](https://endoflife.date)
+
+## This documentation site
+
+Live site: [devenv4monorepo.github.io](https://devenv4monorepo.github.io/). Vite + React, [Spectrum](https://spectrum.adobe.com/) web components via [`@lit/react`](https://lit.dev/docs/frameworks/react/), and `react-markdown` + `remark-gfm`. Content is `docs/content/*.md` imported with `?raw`. Template-only (not copied into monorepos). How to edit it: [Contribution guide](#contributing).
+
+```bash
+docs-dev             # http://localhost:5173
+docs-build           # docs/dist
+```
+
+- Vite: [vite.dev](https://vite.dev/)
+- React: [react.dev](https://react.dev/)
+- Spectrum: [spectrum.adobe.com](https://spectrum.adobe.com/)
+- Lit + React: [lit.dev](https://lit.dev/docs/frameworks/react/)
