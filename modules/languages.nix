@@ -5,14 +5,9 @@
   ...
 }:
 let
+  project = import ./project-lib.nix { inherit lib; };
   typescriptOn = (config.languages.typescript or { }).enable or false;
-  bundlers = [
-    "vite"
-    "turbopack"
-    "rspack"
-    "tsup"
-    "tsdown"
-  ];
+  bundlers = project.typescriptBundlers;
 in
 {
   options = {
@@ -45,7 +40,7 @@ in
   };
 
   config.packages =
-    lib.throwIf (typescriptOn && config.typescript.bundler == null)
+    lib.throwIf (project.typescriptBundlerMissing typescriptOn config.typescript.bundler)
       ''
         languages.typescript.enable requires typescript.bundler to be one of:
           ${lib.concatStringsSep " | " bundlers}
