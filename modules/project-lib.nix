@@ -70,6 +70,7 @@ rec {
     "end-of-file-fixer"
     "check-added-large-files"
     "check-case-conflicts"
+    "check-merge-conflicts"
     "gitleaks"
   ];
 

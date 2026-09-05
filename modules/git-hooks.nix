@@ -54,6 +54,10 @@ in
     end-of-file-fixer.enable = true;
     check-added-large-files.enable = true;
     check-case-conflicts.enable = true;
+    check-merge-conflicts = {
+      enable = true;
+      args = [ "--assume-in-merge" ];
+    };
     gitleaks = {
       enable = true;
       name = "gitleaks";
