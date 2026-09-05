@@ -1,10 +1,10 @@
 _: {
-  name = "devenv";
+  name = "devenv4monorepo";
 
   cachix.pull = [ "devenv" ];
 
   enterShell = ''
-    echo "devenv ready: ''${USER:-unknown}@$(uname -n)"
+    echo "devenv4monorepo ready: ''${USER:-unknown}@$(uname -n)"
 
     # Git has no pre-tag hook, so the tag guard lives in reference-transaction,
     # which prek does not manage. Refresh it on every shell entry.
