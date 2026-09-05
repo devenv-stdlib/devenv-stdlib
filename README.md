@@ -215,6 +215,7 @@ Language hooks turn on with `languages.*`:
 | --- | --- |
 | `rust` | `rustfmt`, `clippy` |
 | `go` | `gofmt`, `golangci-lint` |
+| `python` | `ruff`, `ruff-format` |
 
 ## Conventional Commits
 
