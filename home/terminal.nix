@@ -83,17 +83,6 @@ in
   };
 
   config = {
-    # Own ~/.bashrc so a clean machine matches this one. home-switch -b
-    # backup keeps the previous file as ~/.bashrc.backup.
-    programs.bash = {
-      enable = true;
-      enableCompletion = true;
-      historyControl = [
-        "ignoredups"
-        "ignorespace"
-      ];
-    };
-
     programs.starship = {
       enable = true;
       enableBashIntegration = true;
