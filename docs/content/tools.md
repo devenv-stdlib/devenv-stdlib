@@ -73,7 +73,7 @@ cachix use devenv    # already done by setup.sh
 direnv allow         # once per clone
 ```
 
-Alternatively, without direnv: add `eval "$(devenv hook bash)"` to `programs.bash.initExtra` in `home.local.nix`, then `devenv allow` here.
+Alternatively, without direnv: add `eval "$(devenv hook bash)"` to `~/.bashrc.d/99-devenv-hook.sh` or `programs.bash.initExtra` in `home.local.nix`, then `devenv allow` here.
 
 - Docs: [direnv](https://direnv.net/) · [nix-direnv](https://github.com/nix-community/nix-direnv)
 
@@ -177,7 +177,7 @@ GNOME extension that drops the terminal from the top of the screen.
 
 ### Starship, Atuin, ble.sh
 
-[Starship](https://starship.rs/) is the prompt (`programs.bash`). [Atuin](https://docs.atuin.sh/) is history search (`search_mode = "daemon-fuzzy"`, user-systemd daemon). [ble.sh](https://github.com/akinomyoga/ble.sh) adds line-editor highlighting, then Atuin. Warp uses its own history and editor instead.
+[Starship](https://starship.rs/) is the prompt (Home Manager writes it to `~/.bashrc.d/`). [Atuin](https://docs.atuin.sh/) is history search (`search_mode = "daemon-fuzzy"`, user-systemd daemon). [ble.sh](https://github.com/akinomyoga/ble.sh) adds line-editor highlighting, then Atuin. Warp uses its own history and editor instead.
 
 ```bash
 # Atuin: Ctrl-R in bash (after home-switch)
@@ -248,7 +248,7 @@ debtmap --help
 
 ### BATS and act
 
-[BATS](https://bats-core.readthedocs.io/) is the shell test runner (`bats -r tests`). [act](https://nektosact.com/) replays GitHub Actions locally; `test-devenv` builds `devenv-act:22.04` and runs `act workflow_call` on generated workflows. `act` is also user-global (`home/act.nix`).
+[BATS](https://bats-core.readthedocs.io/) is the shell test runner (`bats -r tests`). [act](https://nektosact.com/) replays GitHub Actions locally; `test-devenv` builds `devenv-act:24.04` and runs `act workflow_call` on generated workflows. `.actrc` maps both `ubuntu-24.04` and `ubuntu-26.04` to that image. `act` is also user-global (`home/act.nix`).
 
 ```bash
 bats -r tests

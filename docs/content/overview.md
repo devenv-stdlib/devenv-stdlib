@@ -33,6 +33,6 @@ Languages stay **off** in this template repo so work on the skeleton does not pu
 - Always-on git hooks, language-gated hooks, Conventional Commits, and semantic-release tags
 - Per-language version matrices and generated GitHub Actions
 
-## Supported host
+## Supported hosts
 
-Ubuntu 22.04 LTS (x86_64 or aarch64) is the only OS supported in this MVP. You need `curl` and a user that can create `/nix` (the Nix installer typically needs `sudo` once).
+The supported hosts are the **current Ubuntu LTS and the previous one** (today: 26.04 and 24.04; x86_64 or aarch64). You need `curl` and a user that can create `/nix` (the Nix installer typically needs `sudo` once).

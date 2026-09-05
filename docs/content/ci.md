@@ -14,12 +14,14 @@ bats tests/home         # terminal-lib.nix only
 
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
-| `ci.yml` | Push and pull request to `main`/`master` | `test-devenv`; then `test.yml` if it exists; `semantic-release` on push to `master`/`main` |
-| `test.yml` | Called from `ci.yml` | Per-language `devenv test` for each supported version (Ubuntu 22.04) |
-| `setup-tests.yml` | Changes to setup/tag hooks, and every tag push | `bats tests/setup tests/tag-hook.bats` |
+| `ci.yml` | Push and pull request to `main`/`master` | `test-devenv` on Ubuntu 24.04 and 26.04; then `test.yml` if it exists; `semantic-release` on push to `master`/`main` |
+| `test.yml` | Called from `ci.yml` | Per-language `devenv test` for each supported version, on Ubuntu 24.04 and 26.04 |
+| `setup-tests.yml` | Changes to setup/tag hooks, and every tag push | `bats tests/setup tests/tag-hook.bats` on Ubuntu 24.04 and 26.04 |
 | `pages.yml` | Push to `master`/`main`, pull request, or manual | Build the docs site; deploy to [devenv4monorepo.github.io](https://devenv4monorepo.github.io/) on `master`/`main` |
 | `hooks.yml` | Pull request | `prek run --all-files`; comment with the log on failure; [pre-commit.ci lite](https://pre-commit.ci/lite.html) pushes autofixes (including forks) |
 | `update-lock.yml` | Weekly Monday and `workflow_dispatch` | `devenv update git-hooks` only; PR when that input changes |
+
+Host policy is the **current Ubuntu LTS and the previous one** (`modules/language-versions-lib.nix` `ubuntuLts`: 26.04 and 24.04). Language jobs and `test-devenv` / `setup-tests.yml` expand across those runners. `pages.yml`, `hooks.yml`, `update-lock.yml`, and `semantic-release` stay on `ubuntu-24.04`. Local `act` maps both labels to `devenv-act:24.04`. `.github/actionlint.yaml` lists `ubuntu-26.04` so actionlint 1.7.12 accepts the GitHub-hosted image.
 
 `devenv shell` writes `.github/workflows/test.yml` as a reusable workflow (`workflow_call`) that runs `devenv test` per language per version. Cross-language matrices (Rust × Python) are not supported yet.
 
