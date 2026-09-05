@@ -99,6 +99,25 @@ init_dest_git() {
   grep -q 'project_name: shop' "$DEST/.copier-answers.yml"
 }
 
+@test "copier copy rejects rust edition newer than rust_min" {
+  run copy_template "$DEST" -d 'languages=["rust"]' -d 'rust_min=1.80.0'
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"edition 2024 requires rustc 1.85"* ]]
+}
+
+@test "copier copy accepts rust 2021 when rust_min is 1.80.0" {
+  run copy_template "$DEST" -d 'languages=["rust"]' -d 'rust_min=1.80.0' -d 'rust_edition=2021'
+  [ "$status" -eq 0 ]
+  grep -q 'supported.rust.min = "1.80.0";' "$DEST/devenv.local.nix"
+  grep -q 'supported.rust.edition = "2021";' "$DEST/devenv.local.nix"
+}
+
+@test "copier copy rejects rust edition newer than rust_max" {
+  run copy_template "$DEST" -d 'languages=["rust"]' -d 'rust_min=1.80.0' -d 'rust_max=1.84.0'
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"max is 1.84.0"* ]]
+}
+
 @test "copier copy leaves an existing README in place" {
   printf 'keep-readme\n' >"$DEST/README.md"
 

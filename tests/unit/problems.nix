@@ -149,6 +149,17 @@ in
     expected = [ "supported.rust.max (1.80.0) is older than min (1.85.0)" ];
   };
 
+  testProblemsRustEdition2021OlderThanMin = {
+    expr = versions.problems {
+      rustOn = true;
+      rust = versions.emptyRust // {
+        min = "1.50.0";
+        edition = "2021";
+      };
+    };
+    expected = [ "supported.rust.edition 2021 requires rustc 1.56.0 or newer (min is 1.50.0)" ];
+  };
+
   testProblemsRustEditionOlderThanMin = {
     expr = versions.problems {
       rustOn = true;
@@ -160,11 +171,42 @@ in
     expected = [ "supported.rust.edition 2024 requires rustc 1.85.0 or newer (min is 1.80.0)" ];
   };
 
+  testProblemsRustEditionOlderThanMax = {
+    expr = versions.problems {
+      rustOn = true;
+      rust = versions.emptyRust // {
+        min = "1.80.0";
+        max = "1.84.0";
+        edition = "2024";
+      };
+    };
+    expected = [
+      "supported.rust.edition 2024 requires rustc 1.85.0 or newer (min is 1.80.0)"
+      "supported.rust.edition 2024 requires rustc 1.85.0 or newer (max is 1.84.0)"
+    ];
+  };
+
+  testProblemsRustEditionOlderThanMaxOnly = {
+    expr = versions.problems {
+      rustOn = true;
+      rust = versions.emptyRust // {
+        min = "1.90.0";
+        max = "1.80.0";
+        edition = "2024";
+      };
+    };
+    expected = [
+      "supported.rust.max (1.80.0) is older than min (1.90.0)"
+      "supported.rust.edition 2024 requires rustc 1.85.0 or newer (max is 1.80.0)"
+    ];
+  };
+
   testProblemsRustEditionOk = {
     expr = versions.problems {
       rustOn = true;
       rust = versions.emptyRust // {
         min = "1.85.0";
+        max = "1.90.0";
         edition = "2024";
       };
     };

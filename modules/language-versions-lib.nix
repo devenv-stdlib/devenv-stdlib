@@ -49,6 +49,17 @@ rec {
       edition
     ];
 
+  rustEditionTooOld =
+    edition: version:
+    edition != null
+    && version != null
+    && lib.hasAttr edition rustEditionSince
+    && lib.versionOlder version rustEditionSince.${edition};
+
+  rustEditionBoundProblem =
+    label: edition: version:
+    lib.optional (rustEditionTooOld edition version) "supported.rust.edition ${edition} requires rustc ${rustEditionSince.${edition}} or newer (${label} is ${version})";
+
   runner = "ubuntu-22.04";
 
   inherit emptyPolicy;
@@ -294,17 +305,10 @@ rec {
       (lib.optional (
         rustOn && rust.max != null && rust.min != null && lib.versionOlder rust.max rust.min
       ) "supported.rust.max (${rust.max}) is older than min (${rust.min})")
-      (lib.optional
-        (
-          rustOn
-          && rust.edition != null
-          && rust.min != null
-          && lib.versionOlder rust.min rustEditionSince.${rust.edition}
-        )
-        "supported.rust.edition ${rust.edition} requires rustc ${
-          rustEditionSince.${rust.edition}
-        } or newer (min is ${rust.min})"
-      )
+      (lib.optionals rustOn (
+        rustEditionBoundProblem "min" rust.edition rust.min
+        ++ rustEditionBoundProblem "max" rust.edition rust.max
+      ))
       (lib.optional (
         rustOn && !(lib.elem "stable" rust.channels)
       ) "supported.rust.channels must include stable")
