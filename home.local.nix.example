@@ -18,6 +18,7 @@
 
   # alacritty.zellijSession = "quake";
   # alacritty.zellijGuiSession = "main";
+  # alacritty.zellijTheme = "nord";
 
   # Home Manager owns ~/.gitconfig when delta is enabled.
   # programs.git.userName = "Omer";

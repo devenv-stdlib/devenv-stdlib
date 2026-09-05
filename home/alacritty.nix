@@ -42,22 +42,35 @@ let
   };
 in
 {
-  options.alacritty.zellijSession = lib.mkOption {
-    type = lib.types.str;
-    default = "quake";
-    description = ''
-      Zellij session the F12 dropdown attaches to, creating it on first use.
-      Closing the dropdown keeps the panes and scrollback.
-    '';
-  };
+  options.alacritty = {
+    zellijSession = lib.mkOption {
+      type = lib.types.str;
+      default = "quake";
+      description = ''
+        Zellij session the F12 dropdown attaches to, creating it on first use.
+        Closing the dropdown keeps the panes and scrollback.
+      '';
+    };
 
-  options.alacritty.zellijGuiSession = lib.mkOption {
-    type = lib.types.str;
-    default = "main";
-    description = ''
-      Zellij session for Alacritty launched from the dash or app grid. Kept
-      separate from the dropdown so a sidebar window is a normal frame.
-    '';
+    zellijGuiSession = lib.mkOption {
+      type = lib.types.str;
+      default = "main";
+      description = ''
+        Zellij session for Alacritty launched from the dash or app grid. Kept
+        separate from the dropdown so a sidebar window is a normal frame.
+      '';
+    };
+
+    zellijTheme = lib.mkOption {
+      type = lib.types.str;
+      default = "dracula";
+      description = ''
+        Zellij theme name written to `programs.zellij.settings.theme`. Built-in
+        names include `dracula`, `nord`, and `tokyo-night`
+        (https://zellij.dev/documentation/theme-list). Override from
+        home.local.nix.
+      '';
+    };
   };
 
   config = lib.mkIf (cfg.provider == "alacritty") {
@@ -85,6 +98,7 @@ in
           default_layout = "compact";
           copy_command = "wl-copy";
           show_startup_tips = false;
+          theme = config.alacritty.zellijTheme;
         };
       };
 
