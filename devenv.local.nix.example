@@ -1,7 +1,8 @@
 { ... }:
 {
-  # Copy to devenv.local.nix (gitignored). Toolchains stay off in this
-  # repo until you enable them here.
+  # Extra options for devenv.local.nix. Copier already writes `name`
+  # and enabled languages from the questionnaire; add max/unsupported,
+  # debtmap, or packages below that block. Do not edit .copier-answers.yml.
 
   # packages = [ pkgs.hello ];
 

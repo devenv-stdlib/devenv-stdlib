@@ -1,0 +1,226 @@
+# Defining _exclude replaces Copier's defaults; keep the built-in noise
+# filters and add generated or machine-local devenv paths.
+_min_copier_version: "9.4.0"
+
+_exclude:
+  - copier.yml
+  - copier.yaml
+  - "{{ _copier_conf.answers_file }}.jinja"
+  - tests/copier.bats
+  - ~*
+  - "*.py[co]"
+  - __pycache__
+  - .git
+  - .DS_Store
+  - .svn
+  - .devenv
+  - .devenv*
+  - .direnv
+  - devenv.local.yaml
+  - home.local.nix
+  - .pre-commit-config.yaml
+  - result
+  - result-*
+  - .vscode/extensions.json
+  - .debtmap.toml
+  - .lycheecache
+  - /junit/
+  - /act_run.log
+  - includes
+
+# Recreated on update if missing. Existing monorepo README is left alone.
+# devenv.local.nix is generated from the questions below.
+_skip_if_exists:
+  - README.md
+
+# Latest stables shipped with this template (refresh-toolchain-latest).
+# Not a Copier setting: the name must not start with _.
+toolchain_latest:
+  type: yaml
+  when: false
+  default: |
+    {% include 'includes/toolchain-latest.yml' %}
+
+project_name:
+  type: str
+  help: Devenv shell name (banner and `name`)
+  default: "{{ (_copier_conf.dst_path | string).rstrip('/').split('/') | last }}"
+  validator: "{% if not (project_name | regex_search('^[A-Za-z][A-Za-z0-9._-]*$')) %}Start with a letter; use letters, digits, dots, underscores, or dashes.{% endif %}"
+
+languages:
+  type: str
+  help: Languages to enable (toolchain, hooks, Cursor packs, CI matrix)
+  multiselect: true
+  choices:
+    - rust
+    - go
+    - python
+    - javascript
+    - typescript
+  default: []
+
+rust_min:
+  type: str
+  help: Minimum supported Rust version (supported.rust.min)
+  default: "1.80.0"
+  when: "{{ 'rust' in languages }}"
+  validator: "{% if not (rust_min | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version like 1.80.0{% endif %}"
+
+rust_max:
+  type: str
+  help: Maximum supported Rust version (empty = no upper bound). Default is the latest stable in this template.
+  default: "{{ toolchain_latest.rust }}"
+  when: "{{ 'rust' in languages }}"
+  validator: "{% if rust_max and not (rust_max | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version, or leave empty for no upper bound.{% endif %}{% if rust_max and rust_min and (rust_max.split('.') | map('int') | list) < (rust_min.split('.') | map('int') | list) %}max must be at least min ({{ rust_min }}){% endif %}"
+
+go_min:
+  type: str
+  help: Minimum supported Go version (supported.go.min)
+  default: "1.22.0"
+  when: "{{ 'go' in languages }}"
+  validator: "{% if not (go_min | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version like 1.22.0{% endif %}"
+
+go_max:
+  type: str
+  help: Maximum supported Go version (empty = no upper bound). Default is the latest stable in this template.
+  default: "{{ toolchain_latest.go }}"
+  when: "{{ 'go' in languages }}"
+  validator: "{% if go_max and not (go_max | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version, or leave empty for no upper bound.{% endif %}{% if go_max and go_min and (go_max.split('.') | map('int') | list) < (go_min.split('.') | map('int') | list) %}max must be at least min ({{ go_min }}){% endif %}"
+
+python_min:
+  type: str
+  help: Minimum supported Python 3 version (supported.python.min)
+  default: "3.12"
+  when: "{{ 'python' in languages }}"
+  validator: "{% if not (python_min | regex_search('^3(\\.[0-9]+)*$')) %}Use a Python 3 version like 3.12{% endif %}"
+
+python_max:
+  type: str
+  help: Maximum supported Python 3 version (empty = no upper bound). Default is the latest stable in this template.
+  default: "{{ toolchain_latest.python }}"
+  when: "{{ 'python' in languages }}"
+  validator: "{% if python_max and not (python_max | regex_search('^3(\\.[0-9]+)*$')) %}Use a Python 3 version like 3.14, or leave empty for no upper bound.{% endif %}{% if python_max and python_min and (python_max.split('.') | map('int') | list) < (python_min.split('.') | map('int') | list) %}max must be at least min ({{ python_min }}){% endif %}"
+
+python_venv:
+  type: bool
+  help: Create a Python virtualenv (languages.python.venv.enable)
+  default: true
+  when: "{{ 'python' in languages }}"
+
+python_type_checker:
+  type: str
+  help: Python type checker
+  choices:
+    - pyright
+    - ty
+  default: pyright
+  when: "{{ 'python' in languages }}"
+
+python_extension_toolchain:
+  type: bool
+  help: C/C++/Rust compilers for pip/uv source builds (python.extensionToolchain)
+  default: false
+  when: "{{ 'python' in languages }}"
+
+javascript_runtimes:
+  type: str
+  help: JavaScript runtimes to test (supported.javascript.runtimes)
+  multiselect: true
+  choices:
+    - nodejs
+    - bun
+    - deno
+  default:
+    - nodejs
+  when: "{{ 'javascript' in languages or 'typescript' in languages }}"
+  validator: "{% if javascript_runtimes | length == 0 %}Pick at least one of nodejs, bun, or deno.{% endif %}"
+
+nodejs_min:
+  type: str
+  help: Minimum Node.js major version (supported.javascript.nodejs.min)
+  default: "22"
+  when: >-
+    {{ ('javascript' in languages or 'typescript' in languages)
+       and 'nodejs' in javascript_runtimes }}
+  validator: "{% if not (nodejs_min | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a Node.js version like 22{% endif %}"
+
+nodejs_max:
+  type: str
+  help: Maximum Node.js major version (empty = no upper bound). Default is the latest stable in this template.
+  default: "{{ toolchain_latest.nodejs }}"
+  when: >-
+    {{ ('javascript' in languages or 'typescript' in languages)
+       and 'nodejs' in javascript_runtimes }}
+  validator: "{% if nodejs_max and not (nodejs_max | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a Node.js version like 24, or leave empty for no upper bound.{% endif %}{% if nodejs_max and nodejs_min and (nodejs_max.split('.') | map('int') | list) < (nodejs_min.split('.') | map('int') | list) %}max must be at least min ({{ nodejs_min }}){% endif %}"
+
+bun_min:
+  type: str
+  help: Minimum Bun version (supported.javascript.bun.min)
+  default: "1.1.0"
+  when: >-
+    {{ ('javascript' in languages or 'typescript' in languages)
+       and 'bun' in javascript_runtimes }}
+  validator: "{% if not (bun_min | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a Bun version like 1.1.0{% endif %}"
+
+bun_max:
+  type: str
+  help: Maximum Bun version (empty = no upper bound). Default is the latest stable in this template.
+  default: "{{ toolchain_latest.bun }}"
+  when: >-
+    {{ ('javascript' in languages or 'typescript' in languages)
+       and 'bun' in javascript_runtimes }}
+  validator: "{% if bun_max and not (bun_max | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a Bun version like 1.4.0, or leave empty for no upper bound.{% endif %}{% if bun_max and bun_min and (bun_max.split('.') | map('int') | list) < (bun_min.split('.') | map('int') | list) %}max must be at least min ({{ bun_min }}){% endif %}"
+
+deno_min:
+  type: str
+  help: Minimum Deno version (supported.javascript.deno.min)
+  default: "2.0.0"
+  when: >-
+    {{ ('javascript' in languages or 'typescript' in languages)
+       and 'deno' in javascript_runtimes }}
+  validator: "{% if not (deno_min | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a Deno version like 2.0.0{% endif %}"
+
+deno_max:
+  type: str
+  help: Maximum Deno version (empty = no upper bound). Default is the latest stable in this template.
+  default: "{{ toolchain_latest.deno }}"
+  when: >-
+    {{ ('javascript' in languages or 'typescript' in languages)
+       and 'deno' in javascript_runtimes }}
+  validator: "{% if deno_max and not (deno_max | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a Deno version like 2.9.0, or leave empty for no upper bound.{% endif %}{% if deno_max and deno_min and (deno_max.split('.') | map('int') | list) < (deno_min.split('.') | map('int') | list) %}max must be at least min ({{ deno_min }}){% endif %}"
+
+javascript_npm:
+  type: bool
+  help: Enable npm in the devenv (languages.javascript.npm.enable)
+  default: true
+  when: "{{ 'javascript' in languages }}"
+
+typescript_bundler:
+  type: str
+  help: TypeScript bundler (required; the package stays in package.json)
+  choices:
+    - vite
+    - turbopack
+    - rspack
+    - tsup
+    - tsdown
+  default: vite
+  when: "{{ 'typescript' in languages }}"
+
+_message_after_copy: |
+  devenv4monorepo is in {{ _copier_conf.dst_path }}.
+  Languages and the shell name are in devenv.local.nix.
+
+  Next:
+    1. Commit .copier-answers.yml and devenv.local.nix
+    2. Run ./setup.sh, then devenv shell
+    3. Add extra options from devenv.local.nix.example if you need them
+
+  Later: copier update   (latest Git tag) or copier update --vcs-ref HEAD
+  copier update re-asks these questions (defaults are your last answers).
+
+_message_after_update: |
+  devenv4monorepo was updated in {{ _copier_conf.dst_path }}.
+
+  Resolve any inline conflict markers, then commit. Do not edit
+  .copier-answers.yml by hand. copier check-update lists newer tags.
