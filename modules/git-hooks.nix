@@ -48,6 +48,10 @@ in
       };
     };
     check-json.enable = true;
+    trim-trailing-whitespace.enable = true;
+    end-of-file-fixer.enable = true;
+    check-added-large-files.enable = true;
+    check-case-conflicts.enable = true;
     gitleaks = {
       enable = true;
       name = "gitleaks";

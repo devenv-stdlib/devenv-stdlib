@@ -38,6 +38,10 @@ rec {
     "actionlint"
     "yamlfmt"
     "check-json"
+    "trim-trailing-whitespace"
+    "end-of-file-fixer"
+    "check-added-large-files"
+    "check-case-conflicts"
     "gitleaks"
   ];
 
