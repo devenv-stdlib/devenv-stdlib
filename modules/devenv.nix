@@ -3,6 +3,7 @@ _: {
     ./packages.nix
     ./git-hooks.nix
     ./languages.nix
+    ./language-versions.nix
     ./cursor-languages.nix
   ];
 }
