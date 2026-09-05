@@ -95,7 +95,7 @@ Optional auto-activation:
 | `.proselintrc.json` | proselint: allow straight quotes and `...` in Markdown |
 | `commitlint.config.mjs` | Conventional Commits rules for the commitlint hook |
 | `.releaserc.json` | semantic-release plugins (GitHub releases, no npm publish) |
-| `modules/languages.nix` | Commented language examples (off by default) |
+| `modules/languages.nix` | Commented language examples (off by default); optional `python.extensionToolchain` |
 | `tests/setup/setup.bats` | Unit tests for `setup.sh` |
 | `tests/home/terminal-lib.bats` | Eval tests for `home/terminal-lib.nix` |
 | `tests/tag-hook.bats` | Tests that a failing suite really blocks `git tag` |
@@ -112,8 +112,11 @@ Copy devenv-only options into `devenv.local.nix`:
 {
   # packages = [ pkgs.hello ];
   # languages.python.enable = true;
+  # python.extensionToolchain = true; # C/C++/Rust for source builds
 }
 ```
+
+`python.extensionToolchain` puts `cc`, `c++`, `make`, `pkg-config`, `rustc`, and `cargo` on PATH so pip/uv can compile extensions when wheels or Homebrew bottles are missing. It does not enable `languages.c` / `languages.rust` (no LSP, Cursor language packs, or rust/c git-hooks).
 
 Copy Home Manager options into `home.local.nix` (see `home.local.nix.example`):
 
