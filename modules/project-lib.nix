@@ -37,6 +37,7 @@ rec {
     "lychee"
     "actionlint"
     "yamlfmt"
+    "check-json"
     "gitleaks"
   ];
 
