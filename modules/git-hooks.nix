@@ -49,5 +49,8 @@ in
 
     rustfmt.enable = langOn "rust";
     clippy.enable = langOn "rust";
+
+    gofmt.enable = langOn "go";
+    golangci-lint.enable = langOn "go";
   };
 }
