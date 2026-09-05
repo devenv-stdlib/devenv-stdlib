@@ -237,7 +237,7 @@ let
   workflowText =
     if languageJobs == "" then
       ''
-        name: Language versions
+        name: Test
         # TODO: cross-language version matrices (Rust × Python, …) are not supported.
         on:
           push:
@@ -251,7 +251,7 @@ let
       ''
     else
       ''
-        name: Language versions
+        name: Test
         # TODO: cross-language version matrices (Rust × Python, …) are not supported.
         # Each language is tested independently for its supported versions.
         on:
@@ -263,7 +263,7 @@ let
       '';
 
   workflowFile = lib.throwIf (problems != [ ]) (lib.concatStringsSep "\n" problems) (
-    pkgs.writeText "language-versions.yml" workflowText
+    pkgs.writeText "test.yml" workflowText
   );
 in
 {
@@ -326,13 +326,13 @@ in
   config = {
     scripts.sync-language-versions-workflow.exec = ''
       set -euo pipefail
-      dest="$DEVENV_ROOT/.github/workflows/language-versions.yml"
+      dest="$DEVENV_ROOT/.github/workflows/test.yml"
       mkdir -p "$(dirname "$dest")"
       tmp="$(mktemp)"
       cp ${lib.escapeShellArg workflowFile} "$tmp"
       if ! cmp -s "$tmp" "$dest" 2>/dev/null; then
         mv "$tmp" "$dest"
-        echo "wrote .github/workflows/language-versions.yml"
+        echo "wrote .github/workflows/test.yml"
       else
         rm -f "$tmp"
       fi
