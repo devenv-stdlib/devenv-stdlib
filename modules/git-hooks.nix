@@ -52,5 +52,8 @@ in
 
     gofmt.enable = langOn "go";
     golangci-lint.enable = langOn "go";
+
+    ruff.enable = langOn "python";
+    ruff-format.enable = langOn "python";
   };
 }
