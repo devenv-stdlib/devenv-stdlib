@@ -76,7 +76,7 @@ in
   #   enable = true;
   #   npm.enable = true;
   # };
-  # supported.javascript.runtimes = [ "nodejs" ]; # nodejs | bun | dyno (Deno)
+  # supported.javascript.runtimes = [ "nodejs" ]; # nodejs | bun | deno
   # supported.javascript.nodejs.min = "22";
 
   # languages.typescript.enable = true;

@@ -1,4 +1,5 @@
 {
+  pkgs,
   lib,
   config,
   ...
@@ -13,7 +14,7 @@ let
   jsRuntimes = [
     "nodejs"
     "bun"
-    "dyno"
+    "deno"
   ];
 
   pythonImpls = [
@@ -115,7 +116,7 @@ let
     ) "supported.go.versions must sit between min and max and omit unsupported")
 
     (lib.optional (javascriptOn && js.runtimes == [ ])
-      "languages.javascript or languages.typescript requires supported.javascript.runtimes (nodejs, bun, dyno)"
+      "languages.javascript or languages.typescript requires supported.javascript.runtimes (nodejs, bun, deno)"
     )
     (lib.concatMap (
       runtime:
@@ -134,6 +135,136 @@ let
       ]
     ) jsRuntimes)
   ];
+
+  matrixRow =
+    attrs:
+    let
+      names = lib.attrNames attrs;
+      fmt = name: "${name}: \"${toString attrs.${name}}\"";
+    in
+    "        - ${fmt (lib.head names)}"
+    + lib.concatMapStrings (name: "\n          ${fmt name}") (lib.tail names);
+
+  jobYaml = name: rows: testRun: ''
+    ${name}:
+      runs-on: ubuntu-latest
+      strategy:
+        fail-fast: false
+        matrix:
+          include:
+    ${lib.concatMapStringsSep "\n" matrixRow rows}
+      steps:
+        - uses: actions/checkout@v4
+        - uses: cachix/install-nix-action@v31
+          with:
+            extra_nix_config: |
+              extra-substituters = https://devenv.cachix.org
+              extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
+        - uses: cachix/cachix-action@v16
+          with:
+            name: devenv
+        - name: Install devenv
+          run: nix profile install nixpkgs#devenv
+        - name: Test
+          run: ${testRun}
+  '';
+
+  nodePackage = version: "nodejs_${lib.versions.major version}";
+
+  pythonRows = lib.concatMap (
+    impl:
+    map (version: {
+      implementation = impl;
+      inherit version;
+      python_version = if impl == "pypy" then "pypy${version}" else version;
+    }) (resolvedVersions py)
+  ) py.implementations;
+
+  rustRows =
+    map (version: {
+      channel = "stable";
+      inherit version;
+    }) (resolvedVersions rs)
+    ++ map (channel: {
+      inherit channel;
+      version = "latest";
+    }) (lib.filter (c: c != "stable") rs.channels);
+
+  goRows = map (version: { inherit version; }) (resolvedVersions go);
+
+  javascriptRows = lib.concatMap (
+    runtime:
+    map (
+      version:
+      {
+        inherit runtime version;
+      }
+      // lib.optionalAttrs (runtime == "nodejs") { pkg = nodePackage version; }
+    ) (resolvedVersions js.${runtime})
+  ) js.runtimes;
+
+  padJob = text: "  " + lib.replaceStrings [ "\n" ] [ "\n  " ] (lib.removeSuffix "\n" text);
+
+  rawJobs = lib.concatStrings (
+    lib.optional pythonOn (
+      jobYaml "python" pythonRows
+        "devenv --option languages.python.enable:bool true --option languages.python.version:string \${{ matrix.python_version }} test"
+    )
+    ++ lib.optional rustOn (
+      jobYaml "rust" rustRows
+        "devenv --option languages.rust.enable:bool true --option languages.rust.channel:string \${{ matrix.channel }} --option languages.rust.version:string \${{ matrix.version }} test"
+    )
+    ++ lib.optional goOn (
+      jobYaml "go" goRows
+        "devenv --option languages.go.enable:bool true --option languages.go.version:string \${{ matrix.version }} test"
+    )
+    ++ lib.optional javascriptOn (
+      jobYaml "javascript" javascriptRows ''
+        |
+                      if [ "''${{ matrix.runtime }}" = nodejs ]; then
+                        devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ''${{ matrix.pkg }} test
+                      elif [ "''${{ matrix.runtime }}" = bun ]; then
+                        devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
+                      else
+                        devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
+                      fi
+      ''
+    )
+  );
+
+  languageJobs = if rawJobs == "" then "" else padJob rawJobs;
+
+  workflowText =
+    if languageJobs == "" then
+      ''
+        name: Language versions
+        # TODO: cross-language version matrices (Rust × Python, …) are not supported.
+        on:
+          push:
+            branches: [main, master]
+          pull_request:
+        jobs:
+          no-language-matrix:
+            runs-on: ubuntu-latest
+            steps:
+              - run: echo No languages enabled; skipping per-version devenv test.
+      ''
+    else
+      ''
+        name: Language versions
+        # TODO: cross-language version matrices (Rust × Python, …) are not supported.
+        # Each language is tested independently for its supported versions.
+        on:
+          push:
+            branches: [main, master]
+          pull_request:
+        jobs:
+        ${languageJobs}
+      '';
+
+  workflowFile = lib.throwIf (problems != [ ]) (lib.concatStringsSep "\n" problems) (
+    pkgs.writeText "language-versions.yml" workflowText
+  );
 in
 {
   options.supported = {
@@ -171,7 +302,7 @@ in
           runtimes = lib.mkOption {
             type = lib.types.listOf (lib.types.enum jsRuntimes);
             default = [ ];
-            description = "JS runtimes when javascript or typescript is on: nodejs, bun, dyno (Deno).";
+            description = "JS runtimes when javascript or typescript is on: nodejs, bun, deno.";
           };
           nodejs = lib.mkOption {
             type = lib.types.submodule { options = versionPolicy { }; };
@@ -181,7 +312,7 @@ in
             type = lib.types.submodule { options = versionPolicy { }; };
             default = { };
           };
-          dyno = lib.mkOption {
+          deno = lib.mkOption {
             type = lib.types.submodule { options = versionPolicy { }; };
             default = { };
             description = "Deno runtime version policy (languages.deno).";
@@ -192,5 +323,23 @@ in
     };
   };
 
-  config.packages = lib.throwIf (problems != [ ]) (lib.concatStringsSep "\n" problems) [ ];
+  config = {
+    scripts.sync-language-versions-workflow.exec = ''
+      set -euo pipefail
+      dest="$DEVENV_ROOT/.github/workflows/language-versions.yml"
+      mkdir -p "$(dirname "$dest")"
+      tmp="$(mktemp)"
+      cp ${lib.escapeShellArg workflowFile} "$tmp"
+      if ! cmp -s "$tmp" "$dest" 2>/dev/null; then
+        mv "$tmp" "$dest"
+        echo "wrote .github/workflows/language-versions.yml"
+      else
+        rm -f "$tmp"
+      fi
+    '';
+
+    enterShell = ''
+      sync-language-versions-workflow
+    '';
+  };
 }

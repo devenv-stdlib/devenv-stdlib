@@ -1,0 +1,11 @@
+name: Language versions
+# TODO: cross-language version matrices (Rust × Python, …) are not supported.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+jobs:
+  no-language-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo No languages enabled; skipping per-version devenv test.
