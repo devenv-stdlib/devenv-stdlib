@@ -2,6 +2,7 @@
 let
   langOn = name: (config.languages.${name} or { }).enable or false;
   pythonOn = langOn "python";
+  typescriptOn = langOn "javascript" || langOn "typescript";
 in
 {
   git-hooks.hooks = {
@@ -64,6 +65,11 @@ in
       package = pkgs.ty;
       entry = "${pkgs.ty}/bin/ty check";
       files = "\\.py$";
+    };
+
+    prettier = {
+      enable = typescriptOn;
+      files = "\\.(cjs|js|jsx|mjs|ts|tsx)$";
     };
   };
 }

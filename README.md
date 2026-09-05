@@ -217,6 +217,7 @@ Language hooks turn on with `languages.*`:
 | `rust` | `rustfmt`, `clippy` |
 | `go` | `gofmt`, `golangci-lint` |
 | `python` | `ruff`, `ruff-format`, plus `pyright` (default) or `ty` via `pythonTypeChecker` |
+| `javascript` or `typescript` | `prettier` (JS/TS files only) |
 
 ## Conventional Commits
 
