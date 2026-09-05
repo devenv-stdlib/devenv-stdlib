@@ -17,6 +17,7 @@
     pkgs.shellcheck
     pkgs.home-manager
     pkgs.commitlint
+    (import ./debtmap-pkg.nix { inherit pkgs lib; })
   ]
   ++ lib.optional config.services.redis.enable pkgs.iredis;
 }
