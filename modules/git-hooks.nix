@@ -1,6 +1,7 @@
 { pkgs, config, ... }:
 let
   langOn = name: (config.languages.${name} or { }).enable or false;
+  pythonOn = langOn "python";
 in
 {
   git-hooks.hooks = {
@@ -53,8 +54,16 @@ in
     gofmt.enable = langOn "go";
     golangci-lint.enable = langOn "go";
 
-    ruff.enable = langOn "python";
-    ruff-format.enable = langOn "python";
-    pyright.enable = langOn "python";
+    ruff.enable = pythonOn;
+    ruff-format.enable = pythonOn;
+    pyright.enable = pythonOn && config.pythonTypeChecker == "pyright";
+    ty = {
+      enable = pythonOn && config.pythonTypeChecker == "ty";
+      name = "ty";
+      description = "Astral ty type checker (beta)";
+      package = pkgs.ty;
+      entry = "${pkgs.ty}/bin/ty check";
+      files = "\\.py$";
+    };
   };
 }

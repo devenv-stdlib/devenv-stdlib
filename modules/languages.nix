@@ -15,19 +15,33 @@ let
   ];
 in
 {
-  options.python.extensionToolchain = lib.mkEnableOption ''
-    C, C++, and Rust compilers so pip/uv can build Python extensions from
-    source when wheels or Homebrew bottles are missing. Does not enable
-    languages.c, languages.cplusplus, or languages.rust
-  '';
-
-  options.typescript.bundler = lib.mkOption {
-    type = lib.types.nullOr (lib.types.enum bundlers);
-    default = null;
-    description = ''
-      Bundler required when languages.typescript.enable is true.
-      One of: vite, turbopack, rspack (legacy webpack apps), tsup, tsdown.
+  options = {
+    python.extensionToolchain = lib.mkEnableOption ''
+      C, C++, and Rust compilers so pip/uv can build Python extensions from
+      source when wheels or Homebrew bottles are missing. Does not enable
+      languages.c, languages.cplusplus, or languages.rust
     '';
+
+    pythonTypeChecker = lib.mkOption {
+      type = lib.types.enum [
+        "pyright"
+        "ty"
+      ];
+      default = "pyright";
+      description = ''
+        Type annotation checker when languages.python.enable is true.
+        pyright is the default; ty is Astral's faster beta checker.
+      '';
+    };
+
+    typescript.bundler = lib.mkOption {
+      type = lib.types.nullOr (lib.types.enum bundlers);
+      default = null;
+      description = ''
+        Bundler required when languages.typescript.enable is true.
+        One of: vite, turbopack, rspack (legacy webpack apps), tsup, tsdown.
+      '';
+    };
   };
 
   config.packages =
@@ -71,6 +85,7 @@ in
   # supported.python.max = "3.13";
   # supported.python.implementations = [ "cpython" "pypy" ];
   # python.extensionToolchain = true;
+  # pythonTypeChecker = "ty"; # default is pyright; ty is faster (beta)
 
   # languages.javascript = {
   #   enable = true;

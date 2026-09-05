@@ -95,7 +95,7 @@ Optional auto-activation:
 | `.proselintrc.json` | proselint: allow straight quotes and `...` in Markdown |
 | `commitlint.config.mjs` | Conventional Commits rules for the commitlint hook |
 | `.releaserc.json` | semantic-release plugins (GitHub releases, no npm publish) |
-| `modules/languages.nix` | Commented language examples (off by default); optional `python.extensionToolchain`; required `typescript.bundler` when TypeScript is on |
+| `modules/languages.nix` | Commented language examples (off by default); optional `python.extensionToolchain`; `pythonTypeChecker` (`pyright` or `ty`); required `typescript.bundler` when TypeScript is on |
 | `modules/language-versions.nix` | Required `supported.<lang>.min` (optional max/unsupported) when a language is on; writes `.github/workflows/language-versions.yml` |
 | `tests/setup/setup.bats` | Unit tests for `setup.sh` |
 | `tests/home/terminal-lib.bats` | Eval tests for `home/terminal-lib.nix` |
@@ -115,6 +115,7 @@ Copy devenv-only options into `devenv.local.nix`:
   # languages.python.enable = true;
   # supported.python.min = "3.12";
   # python.extensionToolchain = true; # C/C++/Rust for source builds
+  # pythonTypeChecker = "ty"; # default is pyright
   # languages.typescript.enable = true;
   # typescript.bundler = "vite"; # required: vite | turbopack | rspack | tsup | tsdown
   # supported.javascript.runtimes = [ "nodejs" ];
@@ -215,7 +216,7 @@ Language hooks turn on with `languages.*`:
 | --- | --- |
 | `rust` | `rustfmt`, `clippy` |
 | `go` | `gofmt`, `golangci-lint` |
-| `python` | `ruff`, `ruff-format`, `pyright` |
+| `python` | `ruff`, `ruff-format`, plus `pyright` (default) or `ty` via `pythonTypeChecker` |
 
 ## Conventional Commits
 
