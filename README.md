@@ -6,7 +6,7 @@ Clone this repository and run `./setup.sh`. That one command installs or updates
 
 ## Prerequisites
 
-- Linux (x86_64 or aarch64)
+- Ubuntu 22.04 LTS (x86_64 or aarch64) — the only OS supported in this MVP
 - `curl` and a user that can create `/nix` (the Nix installer typically needs `sudo` once)
 
 ## Bootstrap on a fresh machine
@@ -43,7 +43,8 @@ That is `home-manager switch -b backup -f home.nix`. Existing files Home Manager
 | `devenv shell` | Enter the project toolchain |
 | `home-switch` | Re-apply Home Manager after editing `home.nix` (same as the setup.sh HM step) |
 | `devenv test` | Build the env, check the toolchain, and run the BATS suite |
-| `bats -r tests` | Run the full BATS suite (setup, home/terminal-lib, tag hook) |
+| `test-devenv` / `devenv tasks run devenv:test-devenv` | Full suite: nix-unit, BATS, nixosTest, generate `test.yml`, verify it with `act` |
+| `bats -r tests` | Run the BATS suite (setup, home/terminal-lib, tag hook) |
 | `devenv update` | Refresh `devenv.lock` from `devenv.yaml` inputs |
 | `devenv gc` | Delete unused environment generations |
 
@@ -97,6 +98,11 @@ Optional auto-activation:
 | `.releaserc.json` | semantic-release plugins (GitHub releases, no npm publish) |
 | `modules/languages.nix` | Commented language examples (off by default); optional `python.extensionToolchain`; `pythonTypeChecker` (`pyright` or `ty`); required `typescript.bundler` when TypeScript is on |
 | `modules/language-versions.nix` | Required `supported.<lang>.min` (optional max/unsupported) when a language is on; writes `.github/workflows/test.yml` |
+| `modules/language-versions-lib.nix` | Pure version-policy and `test.yml` generation (nix-unit) |
+| `modules/project-lib.nix` | Pure git-hook, Cursor, and TypeScript bundler policy (nix-unit) |
+| `modules/test-devenv.nix` | `test-devenv` task/script: nix-unit, BATS, nixosTest, `act` |
+| `tests/unit/` | nix-unit tests by topic (`versions`, `problems`, `matrices`, `workflow`, `hooks`, `cursor`, `terminal`) |
+| `tests/integration/` | nixosTest (run on Ubuntu 22.04 LTS) |
 | `tests/setup/setup.bats` | Unit tests for `setup.sh` |
 | `tests/home/terminal-lib.bats` | Eval tests for `home/terminal-lib.nix` |
 | `tests/tag-hook.bats` | Tests that a failing suite really blocks `git tag` |
@@ -127,7 +133,7 @@ Copy devenv-only options into `devenv.local.nix`:
 
 `languages.typescript.enable` requires `typescript.bundler`: `vite`, `turbopack`, `rspack` (legacy webpack apps), `tsup`, or `tsdown`. Evaluation fails until one is set. The bundler itself stays a project `package.json` dependency.
 
-Each enabled language also requires `supported.<lang>.min`. Optional `max` and `unsupported` (versions to skip, for example a Rust ICE) bound the range. CI versions default to min and max, minus unsupported; set `versions` to list them explicitly. JavaScript (or TypeScript) must pick at least one of `nodejs`, `bun`, or `deno`. Python is 3+ only, with `cpython` and/or `pypy`. Rust always includes `stable` and may add `beta` / `nightly`. `devenv shell` writes `.github/workflows/test.yml`, which runs `devenv test` per language per version. Cross-language matrices (Rust × Python) are not supported yet.
+Each enabled language also requires `supported.<lang>.min`. Optional `max` and `unsupported` (versions to skip, for example a Rust ICE) bound the range. CI versions default to min and max, minus unsupported; set `versions` to list them explicitly. JavaScript (or TypeScript) must pick at least one of `nodejs`, `bun`, or `deno`. Python is 3+ only, with `cpython` and/or `pypy`. Rust always includes `stable` and may add `beta` / `nightly`. `devenv shell` writes `.github/workflows/test.yml` as a reusable workflow (`workflow_call`) that runs `devenv test` per language per version on Ubuntu 22.04. `ci.yml` runs `test-devenv` first and calls `test.yml` when that file exists. Cross-language matrices (Rust × Python) are not supported yet.
 
 Copy Home Manager options into `home.local.nix` (see `home.local.nix.example`):
 
@@ -227,8 +233,8 @@ Commit messages must follow [Conventional Commits](https://www.conventionalcommi
 
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
-| `ci.yml` | Push and pull request to `main`/`master` | `devenv test`; on push to `master`/`main` only, `semantic-release` |
-| `test.yml` | Push and pull request to `main`/`master` | Per-language `devenv test` for each supported version (generated; no cross-language matrix) |
-| `setup-tests.yml` | Changes to `setup.sh`, `tests/setup/`, `tests/tag-hook.bats`, or `hooks/`, and every tag push | `bats tests/setup tests/tag-hook.bats` |
+| `ci.yml` | Push and pull request to `main`/`master` | `test-devenv` on Ubuntu 22.04; then `test.yml` if it exists; on push to `master`/`main` only, `semantic-release` |
+| `test.yml` | Called from `ci.yml` after `test-devenv` | Per-language `devenv test` for each supported version (generated reusable workflow; Ubuntu 22.04; no cross-language matrix) |
+| `setup-tests.yml` | Changes to `setup.sh`, `tests/setup/`, `tests/tag-hook.bats`, or `hooks/`, and every tag push | `bats tests/setup tests/tag-hook.bats` on Ubuntu 22.04 |
 
 `setup-tests.yml` has no branch or tag filter, which makes it run for branch pushes matching its paths and for all tag pushes — GitHub skips path filters on tag pushes.
