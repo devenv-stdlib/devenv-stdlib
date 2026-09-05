@@ -64,14 +64,14 @@ rust_min:
   help: Minimum supported Rust version (supported.rust.min)
   default: "1.85.0"
   when: "{{ 'rust' in languages }}"
-  validator: "{% if not (rust_min | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version like 1.85.0{% endif %}"
+  validator: "{% if not (rust_min | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version like 1.85.0{% endif %}{% if rust_min | regex_search('^[0-9]+(\\.[0-9]+)*$') %}{% set rust_min_parts = rust_min.split('.') | map('int') | list %}{% if rust_edition == '2024' and rust_min_parts < [1, 85] %}edition 2024 requires rustc 1.85 or newer (min is {{ rust_min }}){% endif %}{% if rust_edition == '2021' and rust_min_parts < [1, 56] %}edition 2021 requires rustc 1.56 or newer (min is {{ rust_min }}){% endif %}{% if rust_edition == '2018' and rust_min_parts < [1, 31] %}edition 2018 requires rustc 1.31 or newer (min is {{ rust_min }}){% endif %}{% endif %}"
 
 rust_max:
   type: str
   help: Maximum supported Rust version (empty = no upper bound). Default is the latest stable in this template.
   default: "{{ toolchain_latest.rust }}"
   when: "{{ 'rust' in languages }}"
-  validator: "{% if rust_max and not (rust_max | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version, or leave empty for no upper bound.{% endif %}{% if rust_max and rust_min and (rust_max.split('.') | map('int') | list) < (rust_min.split('.') | map('int') | list) %}max must be at least min ({{ rust_min }}){% endif %}"
+  validator: "{% if rust_max and not (rust_max | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version, or leave empty for no upper bound.{% endif %}{% if rust_max and rust_min and (rust_max.split('.') | map('int') | list) < (rust_min.split('.') | map('int') | list) %}max must be at least min ({{ rust_min }}){% endif %}{% if rust_max | regex_search('^[0-9]+(\\.[0-9]+)*$') %}{% set rust_max_parts = rust_max.split('.') | map('int') | list %}{% if rust_edition == '2024' and rust_max_parts < [1, 85] %}edition 2024 requires rustc 1.85 or newer (max is {{ rust_max }}){% endif %}{% if rust_edition == '2021' and rust_max_parts < [1, 56] %}edition 2021 requires rustc 1.56 or newer (max is {{ rust_max }}){% endif %}{% if rust_edition == '2018' and rust_max_parts < [1, 31] %}edition 2018 requires rustc 1.31 or newer (max is {{ rust_max }}){% endif %}{% endif %}"
 
 rust_edition:
   type: str
@@ -83,6 +83,7 @@ rust_edition:
     - "2024"
   default: "2024"
   when: "{{ 'rust' in languages }}"
+  validator: "{% if rust_min | regex_search('^[0-9]+(\\.[0-9]+)*$') %}{% set rust_min_parts = rust_min.split('.') | map('int') | list %}{% if rust_edition == '2024' and rust_min_parts < [1, 85] %}edition 2024 requires rustc 1.85 or newer (min is {{ rust_min }}){% endif %}{% if rust_edition == '2021' and rust_min_parts < [1, 56] %}edition 2021 requires rustc 1.56 or newer (min is {{ rust_min }}){% endif %}{% if rust_edition == '2018' and rust_min_parts < [1, 31] %}edition 2018 requires rustc 1.31 or newer (min is {{ rust_min }}){% endif %}{% endif %}{% if rust_max | regex_search('^[0-9]+(\\.[0-9]+)*$') %}{% set rust_max_parts = rust_max.split('.') | map('int') | list %}{% if rust_edition == '2024' and rust_max_parts < [1, 85] %}edition 2024 requires rustc 1.85 or newer (max is {{ rust_max }}){% endif %}{% if rust_edition == '2021' and rust_max_parts < [1, 56] %}edition 2021 requires rustc 1.56 or newer (max is {{ rust_max }}){% endif %}{% if rust_edition == '2018' and rust_max_parts < [1, 31] %}edition 2018 requires rustc 1.31 or newer (max is {{ rust_max }}){% endif %}{% endif %}"
 
 go_min:
   type: str
