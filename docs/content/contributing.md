@@ -49,7 +49,7 @@ Do not edit `.devenv/` or other generated files. User-facing Nix is `devenv.nix`
 
 ## Documentation site
 
-Published at [devenv4monorepo.github.io](https://devenv4monorepo.github.io/). The app lives in `docs/` (Vite, React, Spectrum web components, markdown via `?raw`). Copier does **not** copy `docs/` or `.github/workflows/pages.yml`.
+Published at [devenv4monorepo.github.io](https://devenv4monorepo.github.io/). The app lives in `docs/` (Vite, React, Spectrum web components, markdown via `?raw`, fenced `bash`/`nix` blocks highlighted with [Shiki](https://shiki.style/)). Copier does **not** copy `docs/` or `.github/workflows/pages.yml`.
 
 ```bash
 docs-dev                     # http://localhost:5173

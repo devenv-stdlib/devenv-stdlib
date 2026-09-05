@@ -26,7 +26,20 @@ Copy Home Manager options into `home.local.nix`:
 
 ## Bash
 
-Home Manager does **not** replace Ubuntu's `~/.bashrc`. The template writes only portable fragments: `~/.bashrc.d/00-nix.sh` (Nix installer layout via `NIX_STATE_DIR` / XDG / `~/.nix-profile`) and `~/.bashrc.d/90-home-manager.sh` (Starship, Atuin, ble.sh, direnv, aliases). `home-switch` appends a short `~/.bashrc.d` source loop to the distro file when it is missing, so an Ubuntu upgrade that resets `~/.bashrc` is fixed by running `home-switch` again. Machine-local tools (Homebrew, pyenv) go in `home.local.nix` as `home.file.".bashrc.d/10-….sh"` or an unmanaged `~/.bashrc.d/20-local.sh`.
+Home Manager does **not** replace Ubuntu's `~/.bashrc`. The template writes only portable fragments: `~/.bashrc.d/00-nix.sh` (Nix installer layout via `NIX_STATE_DIR` / XDG / `~/.nix-profile`) and `~/.bashrc.d/90-home-manager.sh` (Starship, Atuin, ble.sh, direnv, aliases). `home-switch` appends a short `~/.bashrc.d` source loop to the distro file when it is missing, so an Ubuntu upgrade that resets `~/.bashrc` is fixed by running `home-switch` again.
+
+Add machine-local snippets with `home.file` in `home.local.nix`. Files in `~/.bashrc.d/` are sourced in name order, so `10-host.sh` runs after Nix and before Starship.
+
+```nix
+{
+  home.file.".bashrc.d/10-host.sh".text = ''
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
+    eval "$(pyenv init -)"
+  '';
+}
+```
+
+Then `home-switch` and open a new terminal. An unmanaged `~/.bashrc.d/20-local.sh` also works; Home Manager will not overwrite it. `programs.bash.initExtra` in `home.local.nix` appends to `90-home-manager.sh` instead.
 
 ## Cursor
 

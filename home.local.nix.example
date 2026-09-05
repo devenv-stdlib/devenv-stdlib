@@ -25,10 +25,10 @@
   # programs.git.userEmail = "omer@example.com";
 
   # Host-only bash. The template writes ~/.bashrc.d/00-nix.sh and
-  # ~/.bashrc.d/90-home-manager.sh only. Add machine-local snippets here
-  # (or drop an unmanaged ~/.bashrc.d/20-local.sh). `fuck` is already global.
+  # ~/.bashrc.d/90-home-manager.sh only. See the docs site Terminal page.
   # home.file.".bashrc.d/10-host.sh".text = ''
-  #   # Homebrew, pyenv, cargo, … — only what this machine actually has.
+  #   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
+  #   eval "$(pyenv init -)"
   # '';
 
   # warp.extraSettings = ''
