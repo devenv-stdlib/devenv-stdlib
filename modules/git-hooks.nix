@@ -21,5 +21,13 @@
       settings.flags = "--cache --max-cache-age 2d";
     };
     actionlint.enable = true;
+    yamlfmt = {
+      enable = true;
+      excludes = [ "^\\.pre-commit-config\\.yaml$" ];
+      settings = {
+        lint-only = false;
+        configPath = ".yamlfmt";
+      };
+    };
   };
 }
