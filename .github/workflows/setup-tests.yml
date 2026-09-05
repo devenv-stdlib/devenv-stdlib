@@ -27,5 +27,12 @@ jobs:
 
       - uses: cachix/install-nix-action@v31
 
+      - name: Cache Nix store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'setup.sh', 'tests/setup/**', 'hooks/**') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ github.job }}-
+          gc-max-store-size-linux: 5G
+
       - name: Run the setup.sh test suite
         run: nix shell nixpkgs#bats nixpkgs#shellcheck --command bats --print-output-on-failure tests/setup tests/tag-hook.bats
