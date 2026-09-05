@@ -309,12 +309,14 @@ in_setup() {
 # --- Home Manager ------------------------------------------------------------
 
 @test "ensure_profile_pkg installs home-manager when it is missing" {
+  link_real bash
   stub nix 'printf "%s\n" "$*" >"$NIX_ARGS"
             printf "#!/usr/bin/env bash\nexit 0\n" >"$STUB_DIR/home-manager"
             chmod +x "$STUB_DIR/home-manager"'
   NIX_ARGS="$BATS_TEST_TMPDIR/nix-args"
   export NIX_ARGS STUB_DIR
-  in_setup 'load_nix() { :; }; profile_has() { return 1; }; ensure_profile_pkg home-manager'
+  # Isolate PATH so devenv's home-manager is not visible.
+  run env PATH="$STUB_DIR" bash -c "source '$SETUP_SH' >/dev/null; load_nix() { :; }; profile_has() { return 1; }; ensure_profile_pkg home-manager" </dev/null
   [ "$status" -eq 0 ]
   [[ $output == *"install home-manager into the user Nix profile"* ]]
   run cat "$NIX_ARGS"
