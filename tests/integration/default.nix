@@ -30,7 +30,7 @@ let
 in
 assert evalOk;
 pkgs.testers.runNixOSTest {
-  name = "devenv";
+  name = "devenv4monorepo";
 
   nodes.machine = {
     virtualisation.memorySize = 1024;

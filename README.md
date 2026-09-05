@@ -1,6 +1,6 @@
-# devenv
+# devenv4monorepo
 
-Portable [devenv](https://devenv.sh/) configuration for a reproducible Linux project toolchain, plus a [Home Manager](https://nix-community.github.io/home-manager/) module for a user-global dropdown terminal and Starship.
+Portable [devenv](https://devenv.sh/) configuration for a Linux monorepo toolchain, plus a [Home Manager](https://nix-community.github.io/home-manager/) module for a user-global dropdown terminal and Starship.
 
 Clone this repository and run `./setup.sh`. That one command installs or updates Nix, devenv, Cachix, and Home Manager, then applies `home.nix` and builds the devenv shell. The dropdown terminal is **not** part of the devenv PATH: you already have a terminal open to enter it.
 
@@ -25,7 +25,7 @@ Then enter the project toolchain:
 devenv shell
 ```
 
-You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, `home-manager`, and `debtmap` are on `PATH`.
+You should see `devenv4monorepo ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, `home-manager`, and `debtmap` are on `PATH`.
 
 Re-apply the user-global terminal after editing `home.nix` (also done by `./setup.sh`):
 
