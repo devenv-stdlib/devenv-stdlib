@@ -1,0 +1,3 @@
+-P ubuntu-22.04=devenv-act:22.04
+--pull=false
+--container-options --user runner --env HOME=/home/runner -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix

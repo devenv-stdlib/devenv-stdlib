@@ -41,6 +41,7 @@ pkgs.testers.runNixOSTest {
         pkgs.jq
         pkgs.python3
         pkgs.nix
+        pkgs.actionlint
       ];
       variables.NIX_PATH = "nixpkgs=${pkgs.path}";
       etc = {
@@ -72,5 +73,7 @@ pkgs.testers.runNixOSTest {
         "python3 -c \"import pathlib; t=pathlib.Path('/etc/devenv/test-empty.yml').read_text(); assert 'name: Test' in t and 'workflow_call' in t\""
     )
     machine.succeed("nix-instantiate --eval --strict /etc/devenv/eval.nix")
+    machine.succeed("actionlint /etc/devenv/test-empty.yml")
+    machine.succeed("actionlint /etc/devenv/test-python.yml")
   '';
 }
