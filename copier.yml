@@ -27,6 +27,8 @@ _exclude:
   - /junit/
   - /act_run.log
   - includes
+  - docs
+  - .github/workflows/pages.yml
 
 # Recreated on update if missing. Existing monorepo README is left alone.
 # devenv.local.nix is generated from the questions below.

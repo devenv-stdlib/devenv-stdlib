@@ -1,0 +1,2 @@
+# The Pages site 404s until the first successful deploy of pages.yml.
+exclude = ['^https://devenv4monorepo\.github\.io']

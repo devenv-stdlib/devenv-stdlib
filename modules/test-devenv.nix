@@ -13,6 +13,22 @@
       python3 "$DEVENV_ROOT/includes/toolchain-latest.py" refresh
     '';
 
+    docs-dev.exec = ''
+      set -euo pipefail
+      cd "$DEVENV_ROOT/docs"
+      if [ ! -d node_modules ]; then
+        npm ci
+      fi
+      npm run dev -- --host
+    '';
+
+    docs-build.exec = ''
+      set -euo pipefail
+      cd "$DEVENV_ROOT/docs"
+      npm ci
+      npm run build
+    '';
+
     build-act-image.exec = ''
       set -euo pipefail
       docker build \

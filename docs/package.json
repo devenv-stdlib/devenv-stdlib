@@ -1,0 +1,30 @@
+{
+  "name": "devenv4monorepo-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@lit/react": "^1.0.8",
+    "@spectrum-web-components/action-button": "1.12.2",
+    "@spectrum-web-components/divider": "1.12.2",
+    "@spectrum-web-components/icons-workflow": "1.12.2",
+    "@spectrum-web-components/link": "1.12.2",
+    "@spectrum-web-components/sidenav": "1.12.2",
+    "@spectrum-web-components/theme": "1.12.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5"
+  }
+}
