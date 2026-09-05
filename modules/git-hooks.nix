@@ -55,5 +55,6 @@ in
 
     ruff.enable = langOn "python";
     ruff-format.enable = langOn "python";
+    pyright.enable = langOn "python";
   };
 }
