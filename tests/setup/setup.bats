@@ -315,8 +315,8 @@ in_setup() {
             chmod +x "$STUB_DIR/home-manager"'
   NIX_ARGS="$BATS_TEST_TMPDIR/nix-args"
   export NIX_ARGS STUB_DIR
-  # Isolate PATH so devenv's home-manager is not visible.
-  run env PATH="$STUB_DIR" bash -c "source '$SETUP_SH' >/dev/null; load_nix() { :; }; profile_has() { return 1; }; ensure_profile_pkg home-manager" </dev/null
+  # Keep coreutils, but drop the devenv profile so its home-manager is hidden.
+  run env PATH="$STUB_DIR:/usr/bin:/bin" bash -c "source '$SETUP_SH' >/dev/null; load_nix() { :; }; profile_has() { return 1; }; ensure_profile_pkg home-manager" </dev/null
   [ "$status" -eq 0 ]
   [[ $output == *"install home-manager into the user Nix profile"* ]]
   run cat "$NIX_ARGS"
