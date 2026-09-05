@@ -1,0 +1,6 @@
+gitignore_excludes: true
+exclude:
+  - .pre-commit-config.yaml
+formatter:
+  type: basic
+  retain_line_breaks_single: true
