@@ -47,6 +47,7 @@ in
         configPath = ".yamlfmt";
       };
     };
+    check-json.enable = true;
     gitleaks = {
       enable = true;
       name = "gitleaks";

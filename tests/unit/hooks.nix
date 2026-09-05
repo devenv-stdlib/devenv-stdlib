@@ -84,7 +84,7 @@
 
   testAlwaysOnHookCount = {
     expr = lib.length project.alwaysOnHookNames;
-    expected = 11;
+    expected = 12;
   };
 
   testTypescriptBundlers = {
