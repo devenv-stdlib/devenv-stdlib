@@ -1,4 +1,4 @@
-# nixosTest integration suite. Run on Ubuntu 22.04 (the MVP host OS).
+# nixosTest integration suite. Host policy is the current Ubuntu LTS and the previous one.
 let
   pkgs = import <nixpkgs> { };
   inherit (pkgs) lib;
@@ -48,6 +48,7 @@ pkgs.testers.runNixOSTest {
         "devenv/test-empty.yml".source = emptyYaml;
         "devenv/test-python.yml".source = pythonYaml;
         "devenv/eval.nix".source = evalNix;
+        "devenv/actionlint.yaml".source = ../../.github/actionlint.yaml;
       };
     };
     nix.settings.experimental-features = [
@@ -62,7 +63,9 @@ pkgs.testers.runNixOSTest {
     machine.succeed("jq --version")
     machine.succeed("test -f /etc/devenv/test-empty.yml")
     machine.succeed("grep -q workflow_call /etc/devenv/test-empty.yml")
-    machine.succeed("grep -q ubuntu-22.04 /etc/devenv/test-empty.yml")
+    machine.succeed("grep -q ubuntu-24.04 /etc/devenv/test-empty.yml")
+    machine.succeed("grep -q ubuntu-26.04 /etc/devenv/test-empty.yml")
+    machine.fail("grep -q ubuntu-22.04 /etc/devenv/test-empty.yml")
     machine.succeed("grep -q no-language-matrix /etc/devenv/test-empty.yml")
     machine.fail("grep -q ubuntu-latest /etc/devenv/test-empty.yml")
     machine.fail("grep -q branches: /etc/devenv/test-empty.yml")
@@ -73,7 +76,7 @@ pkgs.testers.runNixOSTest {
         "python3 -c \"import pathlib; t=pathlib.Path('/etc/devenv/test-empty.yml').read_text(); assert 'name: Test' in t and 'workflow_call' in t\""
     )
     machine.succeed("nix-instantiate --eval --strict /etc/devenv/eval.nix")
-    machine.succeed("actionlint /etc/devenv/test-empty.yml")
-    machine.succeed("actionlint /etc/devenv/test-python.yml")
+    machine.succeed("actionlint -config-file /etc/devenv/actionlint.yaml /etc/devenv/test-empty.yml")
+    machine.succeed("actionlint -config-file /etc/devenv/actionlint.yaml /etc/devenv/test-python.yml")
   '';
 }

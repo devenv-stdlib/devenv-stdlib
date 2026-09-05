@@ -1,6 +1,6 @@
 # act job image: non-root user so the Nix installer is not run as root.
 # UID/GID default to 1000 to match a typical host bind-mount owner.
-FROM ghcr.io/catthehacker/ubuntu:act-22.04
+FROM ghcr.io/catthehacker/ubuntu:act-24.04
 
 ARG USERNAME=runner
 ARG UID=1000

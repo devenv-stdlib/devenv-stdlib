@@ -34,7 +34,7 @@
       docker build \
         --build-arg UID="$(id -u)" \
         --build-arg GID="$(id -g)" \
-        -t devenv-act:22.04 \
+        -t devenv-act:24.04 \
         "$DEVENV_ROOT/tests/act"
     '';
 
@@ -113,9 +113,11 @@
       mkdir -p "$junit_dir/workflows"
       cp -L "$fixtures"/*.yml "$junit_dir/workflows/"
       if [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
-        actionlint "$DEVENV_ROOT/.github/workflows/test.yml" || status=1
+        actionlint -config-file "$DEVENV_ROOT/.github/actionlint.yaml" \
+          "$DEVENV_ROOT/.github/workflows/test.yml" || status=1
       fi
-      actionlint "$junit_dir/workflows"/*.yml || status=1
+      actionlint -config-file "$DEVENV_ROOT/.github/actionlint.yaml" \
+        "$junit_dir/workflows"/*.yml || status=1
 
       if [ -n "''${ACT:-}" ]; then
         echo "skip act (already inside act)"
@@ -134,14 +136,16 @@
             --pull=false \
             --container-options "$act_opts" \
             -W "$DEVENV_ROOT/.github/workflows/test.yml" \
-            -P ubuntu-22.04=devenv-act:22.04 || status=1
+            -P ubuntu-24.04=devenv-act:24.04 \
+            -P ubuntu-26.04=devenv-act:24.04 || status=1
         fi
         echo "==> act generated python matrix"
         act workflow_call \
           --pull=false \
           --container-options "$act_opts" \
           -W "$junit_dir/workflows/python.yml" \
-          -P ubuntu-22.04=devenv-act:22.04 || status=1
+          -P ubuntu-24.04=devenv-act:24.04 \
+          -P ubuntu-26.04=devenv-act:24.04 || status=1
       fi
 
       exit "$status"
