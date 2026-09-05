@@ -1,4 +1,4 @@
-name: Language versions
+name: Test
 # TODO: cross-language version matrices (Rust × Python, …) are not supported.
 on:
   push:

@@ -96,7 +96,7 @@ Optional auto-activation:
 | `commitlint.config.mjs` | Conventional Commits rules for the commitlint hook |
 | `.releaserc.json` | semantic-release plugins (GitHub releases, no npm publish) |
 | `modules/languages.nix` | Commented language examples (off by default); optional `python.extensionToolchain`; `pythonTypeChecker` (`pyright` or `ty`); required `typescript.bundler` when TypeScript is on |
-| `modules/language-versions.nix` | Required `supported.<lang>.min` (optional max/unsupported) when a language is on; writes `.github/workflows/language-versions.yml` |
+| `modules/language-versions.nix` | Required `supported.<lang>.min` (optional max/unsupported) when a language is on; writes `.github/workflows/test.yml` |
 | `tests/setup/setup.bats` | Unit tests for `setup.sh` |
 | `tests/home/terminal-lib.bats` | Eval tests for `home/terminal-lib.nix` |
 | `tests/tag-hook.bats` | Tests that a failing suite really blocks `git tag` |
@@ -127,7 +127,7 @@ Copy devenv-only options into `devenv.local.nix`:
 
 `languages.typescript.enable` requires `typescript.bundler`: `vite`, `turbopack`, `rspack` (legacy webpack apps), `tsup`, or `tsdown`. Evaluation fails until one is set. The bundler itself stays a project `package.json` dependency.
 
-Each enabled language also requires `supported.<lang>.min`. Optional `max` and `unsupported` (versions to skip, for example a Rust ICE) bound the range. CI versions default to min and max, minus unsupported; set `versions` to list them explicitly. JavaScript (or TypeScript) must pick at least one of `nodejs`, `bun`, or `deno`. Python is 3+ only, with `cpython` and/or `pypy`. Rust always includes `stable` and may add `beta` / `nightly`. `devenv shell` writes `.github/workflows/language-versions.yml`, which runs `devenv test` per language per version. Cross-language matrices (Rust × Python) are not supported yet.
+Each enabled language also requires `supported.<lang>.min`. Optional `max` and `unsupported` (versions to skip, for example a Rust ICE) bound the range. CI versions default to min and max, minus unsupported; set `versions` to list them explicitly. JavaScript (or TypeScript) must pick at least one of `nodejs`, `bun`, or `deno`. Python is 3+ only, with `cpython` and/or `pypy`. Rust always includes `stable` and may add `beta` / `nightly`. `devenv shell` writes `.github/workflows/test.yml`, which runs `devenv test` per language per version. Cross-language matrices (Rust × Python) are not supported yet.
 
 Copy Home Manager options into `home.local.nix` (see `home.local.nix.example`):
 
@@ -228,7 +228,7 @@ Commit messages must follow [Conventional Commits](https://www.conventionalcommi
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
 | `ci.yml` | Push and pull request to `main`/`master` | `devenv test`; on push to `master`/`main` only, `semantic-release` |
-| `language-versions.yml` | Push and pull request to `main`/`master` | Per-language `devenv test` for each supported version (generated; no cross-language matrix) |
+| `test.yml` | Push and pull request to `main`/`master` | Per-language `devenv test` for each supported version (generated; no cross-language matrix) |
 | `setup-tests.yml` | Changes to `setup.sh`, `tests/setup/`, `tests/tag-hook.bats`, or `hooks/`, and every tag push | `bats tests/setup tests/tag-hook.bats` |
 
 `setup-tests.yml` has no branch or tag filter, which makes it run for branch pushes matching its paths and for all tag pushes — GitHub skips path filters on tag pushes.
