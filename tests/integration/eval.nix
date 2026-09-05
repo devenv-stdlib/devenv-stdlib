@@ -21,10 +21,17 @@ let
     pythonTypeChecker = "ty";
   };
 in
-assert versions.runner == "ubuntu-22.04";
+assert
+  versions.ubuntuRunners == [
+    "ubuntu-24.04"
+    "ubuntu-26.04"
+  ];
 assert versions.problems { } == [ ];
 assert lib.hasInfix "workflow_call:" emptyYaml;
 assert lib.hasInfix "no-language-matrix:" emptyYaml;
+assert lib.hasInfix "ubuntu-24.04" emptyYaml;
+assert lib.hasInfix "ubuntu-26.04" emptyYaml;
+assert !(lib.hasInfix "ubuntu-22.04" emptyYaml);
 assert !(lib.hasInfix "ubuntu-latest" emptyYaml);
 assert lib.hasInfix "python:" pythonYaml;
 assert lib.hasInfix "3.12" pythonYaml;

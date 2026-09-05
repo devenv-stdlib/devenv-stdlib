@@ -14,17 +14,21 @@
         name = contains "name: Test" yaml;
         call = contains "workflow_call:" yaml;
         push = contains "branches:" yaml;
-        runner = contains "ubuntu-22.04" yaml;
+        runner24 = contains "ubuntu-24.04" yaml;
+        runner26 = contains "ubuntu-26.04" yaml;
         skip = contains "no-language-matrix:" yaml;
         latest = contains "ubuntu-latest" yaml;
+        jammy = contains "ubuntu-22.04" yaml;
       };
     expected = {
       name = true;
       call = true;
       push = false;
-      runner = true;
+      runner24 = true;
+      runner26 = true;
       skip = true;
       latest = false;
+      jammy = false;
     };
   };
 
@@ -42,7 +46,9 @@
         call = contains "workflow_call:" yaml;
         python = contains "python:" yaml;
         skip = contains "no-language-matrix:" yaml;
-        runner = contains "ubuntu-22.04" yaml;
+        runner24 = contains "ubuntu-24.04" yaml;
+        runner26 = contains "ubuntu-26.04" yaml;
+        matrixOs = contains "matrix.os" yaml;
         version = contains "3.12" yaml;
         policyMin = contains "supported.python.min" yaml;
         cache = contains "cache-nix-action" yaml;
@@ -51,7 +57,9 @@
       call = true;
       python = true;
       skip = false;
-      runner = true;
+      runner24 = true;
+      runner26 = true;
+      matrixOs = true;
       version = true;
       policyMin = true;
       cache = true;
@@ -91,8 +99,33 @@
     };
   };
 
-  testRunnerIsUbuntu2204 = {
-    expr = versions.runner;
-    expected = "ubuntu-22.04";
+  testUbuntuLts = {
+    expr = versions.ubuntuLts;
+    expected = {
+      previous = "24.04";
+      current = "26.04";
+    };
+  };
+
+  testUbuntuLtsRunners = {
+    expr = versions.ubuntuRunners;
+    expected = [
+      "ubuntu-24.04"
+      "ubuntu-26.04"
+    ];
+  };
+
+  testCrossOsExpandsRunners = {
+    expr = versions.crossOs [ { version = "3.12"; } ];
+    expected = [
+      {
+        os = "ubuntu-24.04";
+        version = "3.12";
+      }
+      {
+        os = "ubuntu-26.04";
+        version = "3.12";
+      }
+    ];
   };
 }

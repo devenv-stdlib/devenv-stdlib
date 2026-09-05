@@ -14,7 +14,7 @@ A monorepo is several languages and several products in one git history. Per-lap
 - **Home Manager** — Alacritty + Zellij (F12), Cursor, and the CLIs you want everywhere
 - **Copier** — the same answers file so the next tagged release can update the monorepo
 
-Ubuntu 22.04 LTS (x86_64 or aarch64) is the supported host.
+Ubuntu 26.04 LTS and 24.04 LTS (x86_64 or aarch64) are the supported hosts.
 
 ## Start a monorepo
 

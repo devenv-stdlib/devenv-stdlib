@@ -60,7 +60,18 @@ rec {
     label: edition: version:
     lib.optional (rustEditionTooOld edition version) "supported.rust.edition ${edition} requires rustc ${rustEditionSince.${edition}} or newer (${label} is ${version})";
 
-  runner = "ubuntu-22.04";
+  # Host policy: the current Ubuntu LTS and the previous one.
+  ubuntuLts = {
+    previous = "24.04";
+    current = "26.04";
+  };
+
+  ubuntuRunners = [
+    "ubuntu-${ubuntuLts.previous}"
+    "ubuntu-${ubuntuLts.current}"
+  ];
+
+  crossOs = rows: lib.concatMap (os: map (row: { inherit os; } // row) rows) ubuntuRunners;
 
   inherit emptyPolicy;
 
@@ -344,7 +355,7 @@ rec {
   matrixRow =
     attrs:
     let
-      names = lib.attrNames attrs;
+      names = [ "os" ] ++ lib.filter (n: n != "os") (lib.attrNames attrs);
       fmt = name: "${name}: \"${toString attrs.${name}}\"";
     in
     "        - ${fmt (lib.head names)}"
@@ -352,12 +363,12 @@ rec {
 
   jobYaml = name: rows: testRun: ''
     ${name}:
-      runs-on: ${runner}
+      runs-on: ''${{ matrix.os }}
       strategy:
         fail-fast: false
         matrix:
           include:
-    ${lib.concatMapStringsSep "\n" matrixRow rows}
+    ${lib.concatMapStringsSep "\n" matrixRow (crossOs rows)}
       steps:
         - uses: actions/checkout@v4
         - name: Own workspace under act
@@ -370,8 +381,8 @@ rec {
           if: ''${{ !env.ACT }}
           uses: nix-community/cache-nix-action@v7
           with:
-            primary-key: nix-''${{ runner.os }}-''${{ github.job }}-''${{ hashFiles('devenv.lock', 'devenv.yaml') }}
-            restore-prefixes-first-match: nix-''${{ runner.os }}-''${{ github.job }}-
+            primary-key: nix-''${{ matrix.os }}-''${{ github.job }}-''${{ hashFiles('devenv.lock', 'devenv.yaml') }}
+            restore-prefixes-first-match: nix-''${{ matrix.os }}-''${{ github.job }}-
             gc-max-store-size-linux: 5G
         - uses: cachix/cachix-action@v16
           with:
@@ -483,7 +494,11 @@ rec {
           workflow_call:
         jobs:
           no-language-matrix:
-            runs-on: ${runner}
+            strategy:
+              fail-fast: false
+              matrix:
+                os: [${lib.concatStringsSep ", " ubuntuRunners}]
+            runs-on: ''${{ matrix.os }}
             steps:
               - run: echo No languages enabled; skipping per-version devenv test.
       ''

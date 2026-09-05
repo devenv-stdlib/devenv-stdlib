@@ -21,7 +21,11 @@ on:
 
 jobs:
   bats:
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-26.04]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,8 +34,8 @@ jobs:
       - name: Cache Nix store
         uses: nix-community/cache-nix-action@v7
         with:
-          primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'setup.sh', 'tests/setup/**', 'hooks/**') }}
-          restore-prefixes-first-match: nix-${{ runner.os }}-${{ github.job }}-
+          primary-key: nix-${{ matrix.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'setup.sh', 'tests/setup/**', 'hooks/**') }}
+          restore-prefixes-first-match: nix-${{ matrix.os }}-${{ github.job }}-
           gc-max-store-size-linux: 5G
 
       - name: Run the setup.sh test suite
