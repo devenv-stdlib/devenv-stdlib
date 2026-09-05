@@ -231,57 +231,70 @@ rec {
     ${lib.concatMapStringsSep "\n" matrixRow rows}
       steps:
         - uses: actions/checkout@v4
+        - name: Own workspace under act
+          if: ''${{ env.ACT }}
+          run: |
+            sudo mkdir -p /home/runner/.cache/nix
+            sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache
         - uses: cachix/install-nix-action@v31
+        - name: Cache Nix store
+          if: ''${{ !env.ACT }}
+          uses: nix-community/cache-nix-action@v7
           with:
-            extra_nix_config: |
-              extra-substituters = https://devenv.cachix.org
-              extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
+            primary-key: nix-''${{ runner.os }}-''${{ github.job }}-''${{ hashFiles('devenv.lock', 'devenv.yaml') }}
+            restore-prefixes-first-match: nix-''${{ runner.os }}-''${{ github.job }}-
+            gc-max-store-size-linux: 5G
         - uses: cachix/cachix-action@v16
           with:
             name: devenv
         - name: Install devenv
-          run: nix profile install nixpkgs#devenv
+          run: nix profile add nixpkgs#devenv
         - name: Test
           run: ${testRun}
   '';
 
   nodePackage = version: "nodejs_${lib.versions.major version}";
 
+  withPolicyMin = min: map (row: row // { policy_min = min; });
+
   pythonRows =
     py:
-    lib.concatMap (
-      impl:
-      map (version: {
-        implementation = impl;
-        inherit version;
-        python_version = if impl == "pypy" then "pypy${version}" else version;
-      }) (resolvedVersions py)
-    ) py.implementations;
+    withPolicyMin py.min (
+      lib.concatMap (
+        impl:
+        map (version: {
+          implementation = impl;
+          inherit version;
+          python_version = if impl == "pypy" then "pypy${version}" else version;
+        }) (resolvedVersions py)
+      ) py.implementations
+    );
 
   rustRows =
     rs:
-    map (version: {
-      channel = "stable";
-      inherit version;
-    }) (resolvedVersions rs)
-    ++ map (channel: {
-      inherit channel;
-      version = "latest";
-    }) (lib.filter (c: c != "stable") rs.channels);
+    withPolicyMin rs.min (
+      map (version: {
+        channel = "stable";
+        inherit version;
+      }) (resolvedVersions rs)
+      ++ map (channel: {
+        inherit channel;
+        version = "latest";
+      }) (lib.filter (c: c != "stable") rs.channels)
+    );
 
-  goRows = go: map (version: { inherit version; }) (resolvedVersions go);
+  goRows = go: withPolicyMin go.min (map (version: { inherit version; }) (resolvedVersions go));
 
   javascriptRows =
     js:
     lib.concatMap (
       runtime:
-      map (
-        version:
-        {
+      withPolicyMin js.${runtime}.min (
+        map (version: {
           inherit runtime version;
-        }
-        // lib.optionalAttrs (runtime == "nodejs") { pkg = nodePackage version; }
-      ) (resolvedVersions js.${runtime})
+          pkg = if runtime == "nodejs" then nodePackage version else "";
+        }) (resolvedVersions js.${runtime})
+      )
     ) js.runtimes;
 
   padJob = text: "  " + lib.replaceStrings [ "\n" ] [ "\n  " ] (lib.removeSuffix "\n" text);
@@ -301,15 +314,15 @@ rec {
       rawJobs = lib.concatStrings (
         lib.optional pythonOn (
           jobYaml "python" (pythonRows python)
-            "devenv --option languages.python.enable:bool true --option languages.python.version:string \${{ matrix.python_version }} test"
+            "devenv --option languages.python.enable:bool true --option languages.python.version:string \${{ matrix.python_version }} --option supported.python.min:string \${{ matrix.policy_min }} test"
         )
         ++ lib.optional rustOn (
           jobYaml "rust" (rustRows rust)
-            "devenv --option languages.rust.enable:bool true --option languages.rust.channel:string \${{ matrix.channel }} --option languages.rust.version:string \${{ matrix.version }} test"
+            "devenv --option languages.rust.enable:bool true --option languages.rust.channel:string \${{ matrix.channel }} --option languages.rust.version:string \${{ matrix.version }} --option supported.rust.min:string \${{ matrix.policy_min }} test"
         )
         ++ lib.optional goOn (
           jobYaml "go" (goRows go)
-            "devenv --option languages.go.enable:bool true --option languages.go.version:string \${{ matrix.version }} test"
+            "devenv --option languages.go.enable:bool true --option languages.go.version:string \${{ matrix.version }} --option supported.go.min:string \${{ matrix.policy_min }} test"
         )
         ++ lib.optional javascriptOn (
           jobYaml "javascript" (javascriptRows javascript) ''

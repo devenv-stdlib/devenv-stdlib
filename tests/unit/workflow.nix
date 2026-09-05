@@ -44,6 +44,8 @@
         skip = contains "no-language-matrix:" yaml;
         runner = contains "ubuntu-22.04" yaml;
         version = contains "3.12" yaml;
+        policyMin = contains "supported.python.min" yaml;
+        cache = contains "cache-nix-action" yaml;
       };
     expected = {
       call = true;
@@ -51,6 +53,8 @@
       skip = false;
       runner = true;
       version = true;
+      policyMin = true;
+      cache = true;
     };
   };
 

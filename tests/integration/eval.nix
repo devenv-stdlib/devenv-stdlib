@@ -28,6 +28,8 @@ assert lib.hasInfix "no-language-matrix:" emptyYaml;
 assert !(lib.hasInfix "ubuntu-latest" emptyYaml);
 assert lib.hasInfix "python:" pythonYaml;
 assert lib.hasInfix "3.12" pythonYaml;
+assert lib.hasInfix "supported.python.min" pythonYaml;
+assert lib.hasInfix "policy_min:" pythonYaml;
 assert hooks.ruff;
 assert hooks.ty;
 assert !hooks.pyright;
