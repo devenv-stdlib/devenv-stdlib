@@ -48,6 +48,11 @@
     expected = 10;
   };
 
+  testDebtmapOfficialFormat = {
+    expr = (debtmap.sample [ ]).output.default_format;
+    expected = "terminal";
+  };
+
   testDebtmapScoringOmittedByDefault = {
     expr = (debtmap.sample [ ]) ? scoring;
     expected = false;

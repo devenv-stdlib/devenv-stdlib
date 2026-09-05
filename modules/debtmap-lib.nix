@@ -79,7 +79,7 @@ rec {
         maxTotalDebtScore = 10000;
       };
     };
-    defaultFormat = "markdown";
+    defaultFormat = "terminal";
     entropy = {
       enable = true;
       weight = 0.5;
