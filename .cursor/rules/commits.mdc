@@ -1,0 +1,30 @@
+---
+description: Keep commits topical and use Conventional Commits for semantic-release
+alwaysApply: true
+---
+
+# Commits
+
+One topic per commit. Do not mix unrelated features, fixes, chores, CI, tests, and docs.
+
+Subjects must pass `commitlint` (`@commitlint/config-conventional`) so [semantic-release](https://semantic-release.gitbook.io/semantic-release/) can version from `master`/`main`.
+
+```
+<type>: <imperative summary>
+
+Optional body: why, not what. Wrap at 100 characters.
+```
+
+Types: `feat` (minor), `fix` (patch), `docs`, `ci`, `test`, `chore`. Breaking changes use a `BREAKING CHANGE:` footer (major).
+
+```
+# ❌ BAD — one commit, many topics
+feat: add JUnit, fix tag-hook tests, and update the README
+
+# ✅ GOOD — split
+test: write JUnit XML for nix-unit, BATS, and nixosTest
+fix: unset CI variables in tag-hook tests that simulate a local git tag
+docs: document JUnit reports, act, and Nix store caching
+```
+
+If a file spans topics, stage only the hunks that belong in that commit. Commit only when asked.
