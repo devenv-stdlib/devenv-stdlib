@@ -20,5 +20,6 @@
       files = "\\.(md|html)$";
       settings.flags = "--cache --max-cache-age 2d";
     };
+    actionlint.enable = true;
   };
 }
