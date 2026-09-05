@@ -67,6 +67,8 @@ init_dest_git() {
   [ ! -e "$DEST/devenv.local.nix.jinja" ]
   [ ! -e "$DEST/.gitignore.jinja" ]
   [ ! -e "$DEST/includes" ]
+  [ ! -e "$DEST/docs" ]
+  [ ! -e "$DEST/.github/workflows/pages.yml" ]
 }
 
 @test "copier copy writes devenv.local.nix from default answers" {
