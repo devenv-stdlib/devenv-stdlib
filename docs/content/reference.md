@@ -15,6 +15,8 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `modules/toolchain-catalog.json` | Cycle → latest patch and EOL |
 | `hooks/reference-transaction` | Tag guard, installed on `devenv shell` |
 | `.github/workflows/ci.yml` | `test-devenv`, generated `test.yml`, semantic-release |
+| `.github/workflows/hooks.yml` | `prek` on pull requests; failure comment; pre-commit.ci lite autofix |
+| `.github/workflows/update-lock.yml` | Weekly `devenv update git-hooks` pull request |
 | `.github/workflows/test.yml` | Written by devenv on `enterShell`; **commit** this file |
 
 An existing destination `README.md` is left in place. This documentation site is not copied into the monorepo; use [devenv4monorepo.github.io](https://devenv4monorepo.github.io/).

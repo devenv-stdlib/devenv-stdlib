@@ -50,6 +50,6 @@ Language packs are the exception: they are **not** user-global. devenv generates
 
 ## Release loop
 
-Conventional Commits (`commitlint`) on every commit. Push to `master` or `main` runs `ci.yml`: `test-devenv`, then the generated `test.yml` matrix, then [semantic-release](https://semantic-release.gitbook.io/semantic-release/) which versions and tags. Those tags are what `copier copy` and `copier update` use by default.
+Conventional Commits (`commitlint`) on every commit. Pull requests run `hooks.yml` (`prek`; [pre-commit.ci lite](https://pre-commit.ci/lite.html) pushes autofixes, including forks). Push to `master` or `main` runs `ci.yml`: `test-devenv`, then the generated `test.yml` matrix, then [semantic-release](https://semantic-release.gitbook.io/semantic-release/) which versions and tags. Those tags are what `copier copy` and `copier update` use by default.
 
 The tag guard blocks a local `git tag` if tests fail. Semantic-release in GitHub Actions sets `CI` / `GITHUB_ACTIONS`, so the hook is a no-op there.

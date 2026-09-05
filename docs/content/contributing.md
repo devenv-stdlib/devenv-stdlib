@@ -30,6 +30,7 @@ devenv shell                 # or direnv allow once
 # edit modules/, home/, copier.yml, docs/content/, …
 devenv test                  # enterTest + BATS
 test-devenv                  # nix-unit, BATS, nixosTest, actionlint, act
+devenv update git-hooks      # refresh only the git-hooks lock input
 ```
 
 `direnv allow` uses the committed `.envrc`. Alternatively `eval "$(devenv hook bash)"` plus `devenv allow`.
