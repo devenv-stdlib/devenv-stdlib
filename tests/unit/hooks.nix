@@ -13,6 +13,9 @@
       golangci-lint = false;
       ruff = false;
       ruff-format = false;
+      check-python = false;
+      python-debug-statements = false;
+      sort-requirements-txt = false;
       pyright = false;
       ty = false;
       prettier = false;
@@ -28,6 +31,9 @@
       golangci-lint = false;
       ruff = false;
       ruff-format = false;
+      check-python = false;
+      python-debug-statements = false;
+      sort-requirements-txt = false;
       pyright = false;
       ty = false;
       prettier = false;
@@ -48,6 +54,9 @@
       golangci-lint = false;
       ruff = true;
       ruff-format = true;
+      check-python = true;
+      python-debug-statements = true;
+      sort-requirements-txt = true;
       pyright = true;
       ty = false;
       prettier = false;
@@ -66,6 +75,9 @@
       golangci-lint = false;
       ruff = true;
       ruff-format = true;
+      check-python = true;
+      python-debug-statements = true;
+      sort-requirements-txt = true;
       pyright = false;
       ty = true;
       prettier = false;

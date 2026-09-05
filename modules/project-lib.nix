@@ -21,6 +21,9 @@ rec {
       golangci-lint = on "go";
       ruff = pythonOn;
       ruff-format = pythonOn;
+      check-python = pythonOn;
+      python-debug-statements = pythonOn;
+      sort-requirements-txt = pythonOn;
       pyright = pythonOn && pythonTypeChecker == "pyright";
       ty = pythonOn && pythonTypeChecker == "ty";
       prettier = tsOn;
