@@ -8,24 +8,57 @@ on:
 jobs:
   test-devenv:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      issues: read
+      actions: write
+      checks: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
+      - name: Own workspace under act
+        if: ${{ env.ACT }}
+        run: |
+          sudo mkdir -p /home/runner/.cache/nix
+          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}" /home/runner/.cache
+
       - uses: cachix/install-nix-action@v31
+
+      - name: Cache Nix store
+        if: ${{ !env.ACT }}
+        uses: nix-community/cache-nix-action@v7
         with:
-          extra_nix_config: |
-            extra-substituters = https://devenv.cachix.org
-            extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
+          primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ github.job }}-
+          gc-max-store-size-linux: 5G
 
       - uses: cachix/cachix-action@v16
         with:
           name: devenv
 
       - name: Install devenv
-        run: nix profile install nixpkgs#devenv
+        run: nix profile add nixpkgs#devenv
 
       - name: Test devenv
         run: devenv tasks run devenv:test-devenv
+
+      - name: Upload JUnit reports
+        if: ${{ always() && !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-test-devenv
+          path: junit/**/*.xml
+          if-no-files-found: ignore
+
+      - name: Publish test results
+        if: ${{ always() && !env.ACT }}
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: |
+            junit/**/*.xml
+          comment_mode: always
+          check_run_annotations: none
 
   has-test-workflow:
     needs: test-devenv
@@ -61,10 +94,13 @@ jobs:
           fetch-depth: 0
 
       - uses: cachix/install-nix-action@v31
+
+      - name: Cache Nix store
+        uses: nix-community/cache-nix-action@v7
         with:
-          extra_nix_config: |
-            extra-substituters = https://devenv.cachix.org
-            extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
+          primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ github.job }}-
+          gc-max-store-size-linux: 5G
 
       - name: Release
         env:
