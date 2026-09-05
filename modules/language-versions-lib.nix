@@ -28,6 +28,27 @@ rec {
     "nightly"
   ];
 
+  rustEditions = [
+    "2015"
+    "2018"
+    "2021"
+    "2024"
+  ];
+
+  rustEditionSince = {
+    "2015" = "1.0.0";
+    "2018" = "1.31.0";
+    "2021" = "1.56.0";
+    "2024" = "1.85.0";
+  };
+
+  rustfmtEditionArgs =
+    edition:
+    lib.optionals (edition != null) [
+      "--edition"
+      edition
+    ];
+
   runner = "ubuntu-22.04";
 
   inherit emptyPolicy;
@@ -38,6 +59,7 @@ rec {
 
   emptyRust = emptyPolicy // {
     channels = [ "stable" ];
+    edition = null;
   };
 
   emptyGo = emptyPolicy;
@@ -272,6 +294,17 @@ rec {
       (lib.optional (
         rustOn && rust.max != null && rust.min != null && lib.versionOlder rust.max rust.min
       ) "supported.rust.max (${rust.max}) is older than min (${rust.min})")
+      (lib.optional
+        (
+          rustOn
+          && rust.edition != null
+          && rust.min != null
+          && lib.versionOlder rust.min rustEditionSince.${rust.edition}
+        )
+        "supported.rust.edition ${rust.edition} requires rustc ${
+          rustEditionSince.${rust.edition}
+        } or newer (min is ${rust.min})"
+      )
       (lib.optional (
         rustOn && !(lib.elem "stable" rust.channels)
       ) "supported.rust.channels must include stable")

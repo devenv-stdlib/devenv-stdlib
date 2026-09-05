@@ -249,6 +249,20 @@ in
     expected = "nodejs_20";
   };
 
+  testRustfmtEditionArgs = {
+    expr = [
+      (versions.rustfmtEditionArgs null)
+      (versions.rustfmtEditionArgs "2021")
+    ];
+    expected = [
+      [ ]
+      [
+        "--edition"
+        "2021"
+      ]
+    ];
+  };
+
   testHasPatch = {
     expr = [
       (versions.hasPatch "1.80.0")

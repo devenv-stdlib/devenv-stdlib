@@ -3,6 +3,8 @@
 # the real /nix. Builds a throwaway git template from the working tree so
 # uncommitted copier.yml is included.
 
+bats_require_minimum_version 1.5.0
+
 setup() {
   REPO_DIR="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
   command -v copier >/dev/null || skip "copier not installed"
@@ -86,8 +88,9 @@ init_dest_git() {
   grep -q 'languages.rust.enable = true;' "$DEST/devenv.local.nix"
   rust_max=$(sed -n 's/^rust: "\(.*\)"/\1/p' "$REPO_DIR/includes/toolchain-latest.yml")
   python_max=$(sed -n 's/^python: "\(.*\)"/\1/p' "$REPO_DIR/includes/toolchain-latest.yml")
-  grep -q 'supported.rust.min = "1.80.0";' "$DEST/devenv.local.nix"
+  grep -q 'supported.rust.min = "1.85.0";' "$DEST/devenv.local.nix"
   grep -q "supported.rust.max = \"$rust_max\";" "$DEST/devenv.local.nix"
+  grep -q 'supported.rust.edition = "2024";' "$DEST/devenv.local.nix"
   grep -q 'languages.python' "$DEST/devenv.local.nix"
   grep -q 'supported.python.min = "3.12";' "$DEST/devenv.local.nix"
   grep -q "supported.python.max = \"$python_max\";" "$DEST/devenv.local.nix"

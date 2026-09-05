@@ -62,9 +62,9 @@ languages:
 rust_min:
   type: str
   help: Minimum supported Rust version (supported.rust.min)
-  default: "1.80.0"
+  default: "1.85.0"
   when: "{{ 'rust' in languages }}"
-  validator: "{% if not (rust_min | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version like 1.80.0{% endif %}"
+  validator: "{% if not (rust_min | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version like 1.85.0{% endif %}"
 
 rust_max:
   type: str
@@ -72,6 +72,17 @@ rust_max:
   default: "{{ toolchain_latest.rust }}"
   when: "{{ 'rust' in languages }}"
   validator: "{% if rust_max and not (rust_max | regex_search('^[0-9]+(\\.[0-9]+)*$')) %}Use a dotted version, or leave empty for no upper bound.{% endif %}{% if rust_max and rust_min and (rust_max.split('.') | map('int') | list) < (rust_min.split('.') | map('int') | list) %}max must be at least min ({{ rust_min }}){% endif %}"
+
+rust_edition:
+  type: str
+  help: Workspace Rust edition (supported.rust.edition). rustfmt and rust-analyzer use it; Cargo.toml crates should match. 2024 needs rustc 1.85+.
+  choices:
+    - "2015"
+    - "2018"
+    - "2021"
+    - "2024"
+  default: "2024"
+  when: "{{ 'rust' in languages }}"
 
 go_min:
   type: str

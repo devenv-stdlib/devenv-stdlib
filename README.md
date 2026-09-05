@@ -18,7 +18,7 @@ copier copy <template-git-url> path/to/monorepo
 copier copy --vcs-ref HEAD /path/to/devenv4monorepo path/to/monorepo
 ```
 
-Copier asks for the devenv shell name and which languages to enable (Rust, Go, Python, JavaScript, TypeScript), then min/max versions and the options those languages require. Each max defaults to the latest stable shipped in `includes/toolchain-latest.yml` (from [endoflife.date](https://endoflife.date), aligned so min and max differ in one component). Leave a max empty for no upper bound. Answers are written to `devenv.local.nix`.
+Copier asks for the devenv shell name and which languages to enable (Rust, Go, Python, JavaScript, TypeScript), then min/max versions, the Rust edition when Rust is on, and the options those languages require. Each max defaults to the latest stable shipped in `includes/toolchain-latest.yml` (from [endoflife.date](https://endoflife.date), aligned so min and max differ in one component). Leave a max empty for no upper bound. Answers are written to `devenv.local.nix`.
 
 Commit `.copier-answers.yml` and `devenv.local.nix` in the monorepo. Do not edit the answers file by hand. Then `./setup.sh` and `devenv shell`. An existing `README.md` is left in place.
 
@@ -140,7 +140,7 @@ Optional auto-activation:
 | `commitlint.config.mjs` | Conventional Commits rules for the commitlint hook |
 | `.releaserc.json` | semantic-release plugins (GitHub releases, no npm publish) |
 | `modules/languages.nix` | Commented language examples (off by default); optional `python.extensionToolchain`; `pythonTypeChecker` (`pyright` or `ty`); required `typescript.bundler` when TypeScript is on |
-| `modules/language-versions.nix` | Required `supported.<lang>.min` (optional max/unsupported) when a language is on; writes `.github/workflows/test.yml` |
+| `modules/language-versions.nix` | Required `supported.<lang>.min` (optional max/unsupported/rust edition) when a language is on; writes `.github/workflows/test.yml` |
 | `modules/language-versions-lib.nix` | Pure version-policy and `test.yml` generation (nix-unit) |
 | `modules/project-lib.nix` | Pure git-hook, Cursor, debtmap language list, and TypeScript bundler policy (nix-unit) |
 | `modules/test-devenv.nix` | `test-devenv` task/script: nix-unit, BATS, nixosTest, `actionlint`, `act`; writes `junit/*.xml` |
@@ -165,7 +165,7 @@ Optional auto-activation:
 
 `languages.typescript.enable` requires `typescript.bundler`: `vite`, `turbopack`, `rspack` (legacy webpack apps), `tsup`, or `tsdown`. Evaluation fails until one is set. The bundler itself stays a project `package.json` dependency.
 
-Each enabled language also requires `supported.<lang>.min`. Optional `max` and `unsupported` (versions to skip, for example a Rust ICE) bound the range. When min/max omit a patch (`3.12`, `22`), CI uses the latest patch of each non-EOL cycle in that range from `modules/toolchain-catalog.json` (refresh with `refresh-toolchain-latest`). Evaluation fails if min or max is EOL or missing from the catalog. When a patch is set (`1.80.0`–`1.85.0`), CI still steps the one component that changes (1.80.0, 1.81.0, …), minus `unsupported`. Set `versions` to list them explicitly when min and max differ in more than one component. JavaScript (or TypeScript) must pick at least one of `nodejs`, `bun`, or `deno`. Python is 3+ only, with `cpython` and/or `pypy`. Rust always includes `stable` and may add `beta` / `nightly`. `devenv shell` writes `.github/workflows/test.yml` as a reusable workflow (`workflow_call`) that runs `devenv test` per language per version on Ubuntu 22.04. `ci.yml` runs `test-devenv` first and calls `test.yml` when that file exists. Cross-language matrices (Rust × Python) are not supported yet.
+Each enabled language also requires `supported.<lang>.min`. Optional `max` and `unsupported` (versions to skip, for example a Rust ICE) bound the range. When min/max omit a patch (`3.12`, `22`), CI uses the latest patch of each non-EOL cycle in that range from `modules/toolchain-catalog.json` (refresh with `refresh-toolchain-latest`). Evaluation fails if min or max is EOL or missing from the catalog. When a patch is set (`1.80.0`–`1.85.0`), CI still steps the one component that changes (1.80.0, 1.81.0, …), minus `unsupported`. Set `versions` to list them explicitly when min and max differ in more than one component. JavaScript (or TypeScript) must pick at least one of `nodejs`, `bun`, or `deno`. Python is 3+ only, with `cpython` and/or `pypy`. Rust always includes `stable` and may add `beta` / `nightly`. Optional `supported.rust.edition` (`2015`, `2018`, `2021`, `2024`) is the workspace edition for rustfmt and rust-analyzer; set the same value in Cargo.toml. Copier defaults to `2024` and `supported.rust.min = "1.85.0"` (2024 needs rustc 1.85 or newer). `devenv shell` writes `.github/workflows/test.yml` as a reusable workflow (`workflow_call`) that runs `devenv test` per language per version on Ubuntu 22.04. `ci.yml` runs `test-devenv` first and calls `test.yml` when that file exists. Cross-language matrices (Rust × Python) are not supported yet.
 
 Copy Home Manager options into `home.local.nix` (see `home.local.nix.example`):
 

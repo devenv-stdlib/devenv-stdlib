@@ -62,10 +62,11 @@ in
   # and turns on that language's git-hooks.
 
   # languages.rust.enable = true;
-  # supported.rust.min = "1.80.0";
-  # supported.rust.max = "1.85.0";
-  # supported.rust.unsupported = [ "1.81.0" ];
+  # supported.rust.min = "1.85.0";
+  # supported.rust.max = "1.98.0";
+  # supported.rust.unsupported = [ "1.86.0" ];
   # supported.rust.channels = [ "stable" "beta" ];
+  # supported.rust.edition = "2024"; # rustfmt + rust-analyzer; 2024 needs rustc 1.85+
 
   # languages.go.enable = true;
   # supported.go.min = "1.22.0";

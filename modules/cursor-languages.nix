@@ -42,11 +42,19 @@ let
     };
   };
 
+  rustEdition = config.supported.rust.edition or null;
+
   rustSettings = {
     "[rust]" = {
       "editor.defaultFormatter" = "rust-lang.rust-analyzer";
       "editor.formatOnSave" = true;
     };
+  }
+  // lib.optionalAttrs (rustEdition != null) {
+    "rust-analyzer.rustfmt.extraArgs" = [
+      "--edition"
+      rustEdition
+    ];
   };
 
   goSettings = {

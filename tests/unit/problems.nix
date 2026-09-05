@@ -149,6 +149,28 @@ in
     expected = [ "supported.rust.max (1.80.0) is older than min (1.85.0)" ];
   };
 
+  testProblemsRustEditionOlderThanMin = {
+    expr = versions.problems {
+      rustOn = true;
+      rust = versions.emptyRust // {
+        min = "1.80.0";
+        edition = "2024";
+      };
+    };
+    expected = [ "supported.rust.edition 2024 requires rustc 1.85.0 or newer (min is 1.80.0)" ];
+  };
+
+  testProblemsRustEditionOk = {
+    expr = versions.problems {
+      rustOn = true;
+      rust = versions.emptyRust // {
+        min = "1.85.0";
+        edition = "2024";
+      };
+    };
+    expected = [ ];
+  };
+
   testProblemsRustMultiComponentRange = {
     expr = versions.problems {
       rustOn = true;

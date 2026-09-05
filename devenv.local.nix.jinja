@@ -12,6 +12,7 @@
 {%- if rust_max %}
   supported.rust.max = "{{ rust_max }}";
 {%- endif %}
+  supported.rust.edition = "{{ rust_edition }}";
 {%- endif %}
 {%- if "go" in languages %}
 
