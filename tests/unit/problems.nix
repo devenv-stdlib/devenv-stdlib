@@ -1,8 +1,41 @@
 {
+  lib,
   versions,
   policy,
   ...
 }:
+let
+  cataloged = import ../../modules/language-versions-lib.nix {
+    inherit lib;
+    catalog = {
+      python = {
+        latest = "3.14.7";
+        releases = [
+          {
+            cycle = "3.14";
+            latest = "3.14.7";
+            eol = false;
+          }
+          {
+            cycle = "3.13";
+            latest = "3.13.15";
+            eol = true;
+          }
+          {
+            cycle = "3.12";
+            latest = "3.12.14";
+            eol = false;
+          }
+          {
+            cycle = "3.9";
+            latest = "3.9.25";
+            eol = true;
+          }
+        ];
+      };
+    };
+  };
+in
 {
   testProblemsEmptyWhenLanguagesOff = {
     expr = versions.problems { };
@@ -182,6 +215,48 @@
       javascript = versions.emptyJavascript // {
         runtimes = [ "deno" ];
         deno = policy { min = "2.1.0"; };
+      };
+    };
+    expected = [ ];
+  };
+
+  testProblemsPythonMaxEol = {
+    expr = cataloged.problems {
+      pythonOn = true;
+      python = cataloged.emptyPython // {
+        min = "3.12";
+        max = "3.13";
+      };
+    };
+    expected = [ "supported.python.max (3.13) has reached end of life" ];
+  };
+
+  testProblemsPythonMinEol = {
+    expr = cataloged.problems {
+      pythonOn = true;
+      python = cataloged.emptyPython // {
+        min = "3.9";
+      };
+    };
+    expected = [ "supported.python.min (3.9) has reached end of life" ];
+  };
+
+  testProblemsPythonUnknownCycle = {
+    expr = cataloged.problems {
+      pythonOn = true;
+      python = cataloged.emptyPython // {
+        min = "3.99";
+      };
+    };
+    expected = [ "supported.python.min (3.99) is not in the toolchain catalog" ];
+  };
+
+  testProblemsPythonCatalogOk = {
+    expr = cataloged.problems {
+      pythonOn = true;
+      python = cataloged.emptyPython // {
+        min = "3.12";
+        max = "3.14";
       };
     };
     expected = [ ];

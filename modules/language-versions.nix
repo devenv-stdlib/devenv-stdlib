@@ -5,7 +5,12 @@
   ...
 }:
 let
-  versions = import ./language-versions-lib.nix { inherit lib; };
+  catalogFile = ./toolchain-catalog.json;
+  versions = import ./language-versions-lib.nix {
+    inherit lib;
+    catalog =
+      if builtins.pathExists catalogFile then builtins.fromJSON (builtins.readFile catalogFile) else { };
+  };
 
   langOn = name: (config.languages.${name} or { }).enable or false;
   pythonOn = langOn "python";
@@ -35,8 +40,10 @@ let
         type = lib.types.listOf lib.types.str;
         default = [ ];
         description = ''
-          Versions to test in CI. Defaults to every release from min through max
-          (stepping the one component that changes), minus unsupported.
+          Versions to test in CI. When min/max omit a patch (3.12, 22), defaults
+          to each catalog cycle's latest patch between min and max, minus EOL
+          and unsupported. When a patch is set (1.80.0), defaults to stepping
+          the one component that changes, minus unsupported.
         '';
       };
     }

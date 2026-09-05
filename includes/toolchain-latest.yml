@@ -1,0 +1,9 @@
+# Latest non-EOL stables from https://endoflife.date, aligned to the
+# default supported.*.min component counts. Refresh with:
+# refresh-toolchain-latest
+rust: "1.98.0"
+go: "1.27.0"
+python: "3.14"
+nodejs: "26"
+bun: "1.4.0"
+deno: "2.9.0"
