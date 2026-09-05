@@ -92,6 +92,15 @@ in
             default = [ "stable" ];
             description = "Rust channels. stable is required; beta and nightly are optional extras.";
           };
+          edition = lib.mkOption {
+            type = lib.types.nullOr (lib.types.enum versions.rustEditions);
+            default = null;
+            description = ''
+              Optional workspace Rust edition for rustfmt and rust-analyzer.
+              Cargo.toml crates should use the same edition. Copier defaults
+              to 2024, which needs rustc 1.85+.
+            '';
+          };
         };
       };
       default = { };

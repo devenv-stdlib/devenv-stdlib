@@ -6,6 +6,7 @@
 }:
 let
   project = import ./project-lib.nix { inherit lib; };
+  versions = import ./language-versions-lib.nix { inherit lib; };
   languages = config.languages or { };
   hooks = project.languageHooks {
     inherit languages;
@@ -67,7 +68,10 @@ in
       pass_filenames = false;
     };
 
-    rustfmt.enable = hooks.rustfmt;
+    rustfmt = {
+      enable = hooks.rustfmt;
+      args = versions.rustfmtEditionArgs (config.supported.rust.edition or null);
+    };
     clippy.enable = hooks.clippy;
 
     gofmt.enable = hooks.gofmt;

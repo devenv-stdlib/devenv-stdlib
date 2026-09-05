@@ -29,7 +29,7 @@ USER_AGENT = "devenv4monorepo/toolchain-latest"
 
 # product on endoflife.date → default supported.*.min in copier.yml
 PRODUCTS = {
-    "rust": ("rust", "1.80.0"),
+    "rust": ("rust", "1.85.0"),
     "go": ("go", "1.22.0"),
     "python": ("python", "3.12"),
     "nodejs": ("nodejs", "22"),
