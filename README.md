@@ -43,7 +43,8 @@ That is `home-manager switch -b backup -f home.nix`. Existing files Home Manager
 | `devenv shell` | Enter the project toolchain |
 | `home-switch` | Re-apply Home Manager after editing `home.nix` (same as the setup.sh HM step) |
 | `devenv test` | Build the env, check the toolchain, and run the BATS suite |
-| `test-devenv` / `devenv tasks run devenv:test-devenv` | Full suite: nix-unit, BATS, nixosTest, generate `test.yml`, verify it with `act` |
+| `test-devenv` / `devenv tasks run devenv:test-devenv` | Full suite: nix-unit, BATS, nixosTest, generate `test.yml`, `actionlint` it, `act` the empty workflow and a Python version matrix. Writes `junit/*.xml` |
+| `build-act-image` | Build `devenv-act:22.04` (non-root `runner` user) for local `act` |
 | `bats -r tests` | Run the BATS suite (setup, home/terminal-lib, tag hook) |
 | `devenv update` | Refresh `devenv.lock` from `devenv.yaml` inputs |
 | `devenv gc` | Delete unused environment generations |
@@ -100,9 +101,11 @@ Optional auto-activation:
 | `modules/language-versions.nix` | Required `supported.<lang>.min` (optional max/unsupported) when a language is on; writes `.github/workflows/test.yml` |
 | `modules/language-versions-lib.nix` | Pure version-policy and `test.yml` generation (nix-unit) |
 | `modules/project-lib.nix` | Pure git-hook, Cursor, and TypeScript bundler policy (nix-unit) |
-| `modules/test-devenv.nix` | `test-devenv` task/script: nix-unit, BATS, nixosTest, `act` |
+| `modules/test-devenv.nix` | `test-devenv` task/script: nix-unit, BATS, nixosTest, `actionlint`, `act`; writes `junit/*.xml` |
+| `tests/junit-report.py` | JUnit writer for nix-unit, nixosTest, and BATS (`file`/`line` for PR annotations) |
 | `tests/unit/` | nix-unit tests by topic (`versions`, `problems`, `matrices`, `workflow`, `hooks`, `cursor`, `terminal`) |
-| `tests/integration/` | nixosTest (run on Ubuntu 22.04 LTS) |
+| `tests/act/Dockerfile` | act job image: `runner` (uid 1000) with passwordless sudo, so Nix is not installed as root |
+| `tests/integration/` | nixosTest (Ubuntu 22.04): workflow contracts, `actionlint` in the guest, plus `workflows.nix` fixtures |
 | `tests/setup/setup.bats` | Unit tests for `setup.sh` |
 | `tests/home/terminal-lib.bats` | Eval tests for `home/terminal-lib.nix` |
 | `tests/tag-hook.bats` | Tests that a failing suite really blocks `git tag` |
@@ -214,7 +217,7 @@ fatal: in 'prepared' phase, update aborted by the reference-transaction hook
 
 `prek` handles the `pre-commit` and `commit-msg` hooks in `modules/git-hooks.nix` and leaves `reference-transaction` alone, so the two coexist.
 
-Always-on hooks: Nix format/lint (`nixfmt-rfc-style`, `statix`, `deadnix`), `shellcheck`, `typos`, `proselint` (Markdown/RST/txt), `lychee` (dead links in Markdown/HTML), `actionlint`, `yamlfmt`, `gitleaks` (secrets), and `commitlint` on `commit-msg`.
+Always-on hooks: Nix format/lint (`nixfmt`, `statix`, `deadnix`), `shellcheck`, `typos`, `proselint` (Markdown/RST/txt), `lychee` (dead links in Markdown/HTML), `actionlint`, `yamlfmt`, `gitleaks` (secrets), and `commitlint` on `commit-msg`.
 
 Language hooks turn on with `languages.*`:
 
@@ -233,8 +236,14 @@ Commit messages must follow [Conventional Commits](https://www.conventionalcommi
 
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
-| `ci.yml` | Push and pull request to `main`/`master` | `test-devenv` on Ubuntu 22.04; then `test.yml` if it exists; on push to `master`/`main` only, `semantic-release` |
+| `ci.yml` | Push and pull request to `main`/`master` | `test-devenv` on Ubuntu 22.04 (publishes `junit/*.xml` as a PR check and annotations); then `test.yml` if it exists; on push to `master`/`main` only, `semantic-release` |
 | `test.yml` | Called from `ci.yml` after `test-devenv` | Per-language `devenv test` for each supported version (generated reusable workflow; Ubuntu 22.04; no cross-language matrix) |
 | `setup-tests.yml` | Changes to `setup.sh`, `tests/setup/`, `tests/tag-hook.bats`, or `hooks/`, and every tag push | `bats tests/setup tests/tag-hook.bats` on Ubuntu 22.04 |
 
 `setup-tests.yml` has no branch or tag filter, which makes it run for branch pushes matching its paths and for all tag pushes — GitHub skips path filters on tag pushes.
+
+`test-devenv` writes JUnit reports under `junit/` (gitignored): `nix-unit.xml`, `bats.xml`, and `nixos-test.xml`. Each failing case includes a repo-relative `file` and `line` so GitHub can annotate the pull request. `nix-unit` has no native JUnit flag; `tests/junit-report.py` parses its output and maps test names back to `tests/unit/*.nix`. The nixosTest derivation itself discards the driver's XML (`LOGFILE=/dev/null`), so the report is one case pointing at `tests/integration/default.nix`. CI uploads those files and runs [publish-unit-test-result-action](https://github.com/EnricoMi/publish-unit-test-result-action).
+
+`test-devenv` also `actionlint`s `.github/workflows/test.yml` and fixtures from `tests/integration/workflows.nix` (empty, Python 3.12–3.13, Rust, Go, Deno). It then runs `act workflow_call` on the repo `test.yml` (local only; CI already calls that file) and on the Python fixture so the generated `strategy.matrix.include` jobs actually execute. Skip nested `act` when `ACT` is set.
+
+`.actrc` maps `ubuntu-22.04` to `devenv-act:22.04` and runs the container as `runner`. Build that image first (`build-act-image`, or `test-devenv` does it). Local act keeps `/nix` and `~/.cache/nix` in Docker volumes `devenv-act-nix` and `devenv-act-nix-cache`. GitHub Actions uses [cache-nix-action](https://github.com/nix-community/cache-nix-action) (skipped under act; the cache API is not available). Do not run bare `act` / `act pull_request` against `ci.yml` unless you want a full CI replay.
