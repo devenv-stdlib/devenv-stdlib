@@ -1,8 +1,15 @@
-{ pkgs, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 let
-  langOn = name: (config.languages.${name} or { }).enable or false;
-  pythonOn = langOn "python";
-  typescriptOn = langOn "javascript" || langOn "typescript";
+  project = import ./project-lib.nix { inherit lib; };
+  hooks = project.languageHooks {
+    languages = config.languages or { };
+    inherit (config) pythonTypeChecker;
+  };
 in
 {
   git-hooks.hooks = {
@@ -49,17 +56,17 @@ in
       pass_filenames = false;
     };
 
-    rustfmt.enable = langOn "rust";
-    clippy.enable = langOn "rust";
+    rustfmt.enable = hooks.rustfmt;
+    clippy.enable = hooks.clippy;
 
-    gofmt.enable = langOn "go";
-    golangci-lint.enable = langOn "go";
+    gofmt.enable = hooks.gofmt;
+    golangci-lint.enable = hooks.golangci-lint;
 
-    ruff.enable = pythonOn;
-    ruff-format.enable = pythonOn;
-    pyright.enable = pythonOn && config.pythonTypeChecker == "pyright";
+    ruff.enable = hooks.ruff;
+    ruff-format.enable = hooks.ruff-format;
+    pyright.enable = hooks.pyright;
     ty = {
-      enable = pythonOn && config.pythonTypeChecker == "ty";
+      enable = hooks.ty;
       name = "ty";
       description = "Astral ty type checker (beta)";
       package = pkgs.ty;
@@ -68,7 +75,7 @@ in
     };
 
     prettier = {
-      enable = typescriptOn;
+      enable = hooks.prettier;
       files = "\\.(cjs|js|jsx|mjs|ts|tsx)$";
     };
   };

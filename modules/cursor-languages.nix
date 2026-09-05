@@ -6,10 +6,11 @@
 }:
 let
   ext = import ../home/vscode-ext-lib.nix { inherit pkgs; };
+  project = import ./project-lib.nix { inherit lib; };
 
   langOn = name: (config.languages.${name} or { }).enable or false;
 
-  typescriptOn = langOn "javascript" || langOn "typescript";
+  typescriptOn = project.javascriptOn (config.languages or { });
 
   selected =
     lib.optionals (langOn "rust") ext.rust
@@ -18,25 +19,7 @@ let
     ++ lib.optionals typescriptOn ext.typescript;
 
   # Hardcoded ids so disabled packs are not evaluated (Pylance is unfree).
-  unwantedRecommendations =
-    lib.optionals (!langOn "rust") [
-      "rust-lang.rust-analyzer"
-      "vadimcn.vscode-lldb"
-      "fill-labs.dependi"
-    ]
-    ++ lib.optionals (!langOn "go") [ "golang.Go" ]
-    ++ lib.optionals (!langOn "python") [
-      "ms-python.python"
-      "ms-python.vscode-pylance"
-      "ms-python.debugpy"
-      "charliermarsh.ruff"
-    ]
-    ++ lib.optionals (!typescriptOn) [
-      "dbaeumer.vscode-eslint"
-      "bradlc.vscode-tailwindcss"
-      "yoavbls.pretty-ts-errors"
-      "formulahendry.auto-rename-tag"
-    ];
+  unwantedRecommendations = project.cursorUnwanted (config.languages or { });
 
   # devenv + nix-ide are always relevant in this repo; language ids follow
   # languages.*.enable so Cursor only recommends what this project uses.
