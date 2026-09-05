@@ -20,3 +20,9 @@ result-*
 
 # lychee link-check cache (git-hooks)
 .lycheecache
+
+# JUnit reports from test-devenv
+/junit/
+
+# Local act / test-devenv transcripts
+/act_run.log
