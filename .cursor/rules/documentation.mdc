@@ -1,0 +1,45 @@
+---
+description: Keep the docs site current; README is marketing only
+alwaysApply: true
+---
+
+# Documentation stays current
+
+User-facing behavior changes are unfinished until **`docs/content/`** matches. Update those pages in the same session as the code. When committing, keep a separate `docs:` commit (see the commits rule).
+
+`README.md` is marketing for GitHub. It links to [devenv4monorepo.github.io](https://devenv4monorepo.github.io/) and the [contribution guide](https://devenv4monorepo.github.io/#contributing). Do **not** copy option tables, command matrices, or layout dumps into the README. A one-line pitch change does not require a docs edit.
+
+## Where the docs live
+
+| Change | Update |
+| --- | --- |
+| Copier copy/update, answers, `devenv.local.nix` | `docs/content/apply.md` |
+| `setup.sh`, `home-switch`, consumer commands | `docs/content/bootstrap.md` |
+| `languages.*`, `supported.*`, catalog, Rust edition | `docs/content/languages.md` |
+| Git hooks, commitlint, tag guard (user-facing) | `docs/content/hooks.md` |
+| Terminal, Quake, Cursor, Home Manager | `docs/content/terminal.md` |
+| Workflows, BATS, JUnit, Pages URL | `docs/content/ci.md` |
+| What a generated monorepo contains | `docs/content/reference.md` |
+| Architecture / motivation | `docs/content/architecture.md`, `overview.md` |
+| New or retired shipped tool | `docs/content/tools.md` (docs + donate link if the project publishes one) |
+| Template development, tests, catalog, layout, Pages | `docs/content/contributing.md` |
+| New top-level topic | new `docs/content/<id>.md`, import `?raw` in `docs/src/sections.ts` |
+
+## Do
+
+- Name the real option, script, workflow, or file.
+- Add or drop sidenav headings by editing `##` lines; `sections.ts` derives ids from those titles.
+- Leave `docs/` and `.github/workflows/pages.yml` out of generated monorepos (`copier.yml` `_exclude`).
+- Link the live site as `https://devenv4monorepo.github.io/` (section hashes like `#contributing`).
+
+```
+# ❌ BAD — rustc floor changed, languages.md still says 1.80
+# ✅ GOOD — languages.md says 2024 needs rustc 1.85; README stays a pitch
+```
+
+## Do not
+
+- Skip `docs/content/` because the change is “small” if a user would see a different command, option, or default.
+- Sync the README to the docs site.
+- Document internal-only refactors (renames with no user surface, generated files, hook formatting).
+- Enable `languages.javascript` / `languages.typescript` just to work on `docs/`.
