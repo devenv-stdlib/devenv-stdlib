@@ -6,8 +6,8 @@ on:
   pull_request:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  test-devenv:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -24,13 +24,33 @@ jobs:
       - name: Install devenv
         run: nix profile install nixpkgs#devenv
 
-      - name: Test
-        run: devenv test
+      - name: Test devenv
+        run: devenv tasks run devenv:test-devenv
+
+  has-test-workflow:
+    needs: test-devenv
+    runs-on: ubuntu-22.04
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f .github/workflows/test.yml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    needs: has-test-workflow
+    if: needs.has-test-workflow.outputs.exists == 'true'
+    uses: ./.github/workflows/test.yml
 
   release:
-    needs: test
+    needs: test-devenv
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
       issues: write
