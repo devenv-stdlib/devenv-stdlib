@@ -198,7 +198,41 @@ GNOME extension that drops the terminal from the top of the screen.
 # home.local.nix: cursor.enable = false;
 ```
 
+`cursor.llmContext.enable` (default: `cursor.enable`) installs RTK, Serena, and Headroom and merges Cursor hooks/MCP. It does **not** set Override OpenAI Base URL.
+
 - Docs: [cursor.com/docs](https://cursor.com/docs)
+
+### RTK
+
+[RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. Home Manager pins the official release binary and merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`. It does not run `rtk init`.
+
+```bash
+rtk rewrite "git status"
+```
+
+- Docs: [rtk-ai/rtk](https://github.com/rtk-ai/rtk)
+- Donate: [github.com/sponsors/rtk-ai](https://github.com/sponsors/rtk-ai)
+
+### Headroom
+
+[Headroom](https://github.com/headroomlabs-ai/headroom) compresses and retrieves context over MCP. Home Manager installs `headroom-ai[proxy,mcp]` with `uv tool install` and runs `headroom-proxy` (`127.0.0.1:8787`) as a systemd user service. The proxy is for the dashboard and MCP retrieve/stats, not Cursor model traffic.
+
+```bash
+headroom --help
+```
+
+- Docs: [docs.headroomlabs.ai](https://docs.headroomlabs.ai/docs)
+
+### Serena
+
+[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` with `uv tool install` and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide`).
+
+```bash
+serena start-mcp-server --help
+```
+
+- Docs: [oraios.github.io/serena](https://oraios.github.io/serena/)
+- Donate: [github.com/sponsors/oraios](https://github.com/sponsors/oraios)
 
 ### Neovim and nano
 

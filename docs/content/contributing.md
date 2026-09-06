@@ -87,6 +87,7 @@ build-act-image              # devenv-act:24.04 for local act
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
 | `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
+| `tests/home/cursor-llm.bats` | Cursor `hooks.json` / `mcp.json` merge (RTK, Serena, Headroom) |
 | `tests/tag-hook.bats` | failing suite blocks `git tag` |
 | `tests/integration/` | nixosTest (generated `test.yml` + eval asserts) |
 
@@ -122,6 +123,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `docs/` | Pages site (not copied) |
 | `devenv.nix` / `devenv.yaml` / `devenv.lock` | Shell, inputs, lock |
 | `home.nix` / `home/` | Home Manager |
+| `home/llm-context.nix` | Cursor LLM context (RTK, Serena, Headroom) |
 | `modules/` | Packages, languages, versions, hooks, debtmap, tests |
 | `hooks/reference-transaction` | Tag guard |
 | `commitlint.config.mjs` / `.releaserc.json` | Commits and releases |
