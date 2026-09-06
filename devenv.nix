@@ -55,6 +55,10 @@ _: {
         export NIX_PATH="nixpkgs=flake:nixpkgs:''${NIX_PATH}"
       fi
     fi
+    # SecretSpec first (dotenv, keyring, …). .env only if export is unavailable.
+    # shellcheck disable=SC1091
+    . "$DEVENV_ROOT/home/load-secrets.sh"
+    home_load_secrets "$DEVENV_ROOT"
     home-manager switch -b backup -f "$DEVENV_ROOT/home.nix" "$@"
   '';
 }

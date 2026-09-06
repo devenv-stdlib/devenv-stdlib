@@ -10,3 +10,12 @@ imports:
 
 # Keep the devenv CLI aligned with the module set it evaluates.
 require_version: true
+
+# Optional secrets (INITIAL_PASSWORD, Brave, Firecrawl). Never in Nix or
+# .copier-answers.yml. required = false so eval / tests work when unset.
+# Default provider is dotenv (CI-safe). Override with SECRETSPEC_PROVIDER
+# or devenv.local.yaml (keyring, env, onepassword, …). home-switch runs
+# `secretspec export` then falls back to sourcing .env.
+secretspec:
+  enable: true
+  provider: dotenv

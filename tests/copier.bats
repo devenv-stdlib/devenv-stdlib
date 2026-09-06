@@ -132,6 +132,53 @@ init_dest_git() {
   [ -f "$DEST/.copier-answers.yml" ]
 }
 
+@test "copier copy omits secret keys and records crawl MCP booleans" {
+  run copy_template
+  [ "$status" -eq 0 ]
+
+  [ -f "$DEST/.copier-answers.yml" ]
+  run ! grep -q 'brave_api_key' "$DEST/.copier-answers.yml"
+  run ! grep -q 'firecrawl_api_key' "$DEST/.copier-answers.yml"
+  run ! grep -q 'initial_password' "$DEST/.copier-answers.yml"
+  grep -q 'brave_search: false' "$DEST/.copier-answers.yml"
+  grep -q 'firecrawl: false' "$DEST/.copier-answers.yml"
+  grep -q 'ninerouter_password: false' "$DEST/.copier-answers.yml"
+  [ -f "$DEST/secretspec.toml" ]
+  grep -q 'INITIAL_PASSWORD' "$DEST/secretspec.toml"
+  grep -q 'BRAVE_API_KEY' "$DEST/secretspec.toml"
+  grep -q 'FIRECRAWL_API_KEY' "$DEST/secretspec.toml"
+  grep -qxF '.env' "$DEST/.gitignore"
+  if [ -f "$DEST/.env" ]; then
+    run ! grep -q '^BRAVE_API_KEY=' "$DEST/.env"
+    run ! grep -q '^FIRECRAWL_API_KEY=' "$DEST/.env"
+  fi
+}
+
+@test "copier copy with keys writes gitignored .env and true booleans" {
+  run copy_template "$DEST" -d brave_api_key=test-brave -d firecrawl_api_key=test-fire -d initial_password=test-9r
+  [ "$status" -eq 0 ]
+
+  run ! grep -q 'brave_api_key' "$DEST/.copier-answers.yml"
+  run ! grep -q 'firecrawl_api_key' "$DEST/.copier-answers.yml"
+  run ! grep -q 'initial_password' "$DEST/.copier-answers.yml"
+  run ! grep -q 'test-brave' "$DEST/.copier-answers.yml"
+  run ! grep -q 'test-fire' "$DEST/.copier-answers.yml"
+  run ! grep -q 'test-9r' "$DEST/.copier-answers.yml"
+  grep -q 'brave_search: true' "$DEST/.copier-answers.yml"
+  grep -q 'firecrawl: true' "$DEST/.copier-answers.yml"
+  grep -q 'ninerouter_password: true' "$DEST/.copier-answers.yml"
+  [ -f "$DEST/.env" ]
+  grep -qx 'BRAVE_API_KEY=test-brave' "$DEST/.env"
+  grep -qx 'FIRECRAWL_API_KEY=test-fire' "$DEST/.env"
+  grep -qx 'INITIAL_PASSWORD=test-9r' "$DEST/.env"
+  grep -qxF '.env' "$DEST/.gitignore"
+  run ! grep -q 'test-brave' "$DEST/devenv.local.nix"
+  run ! grep -q 'test-fire' "$DEST/devenv.local.nix"
+  run ! grep -q 'test-9r' "$DEST/devenv.local.nix"
+  run ! grep -q 'test-brave' "$DEST/devenv.yaml"
+  run ! grep -q 'test-fire' "$DEST/secretspec.toml"
+}
+
 @test "copier update applies a newer template tag" {
   run copy_template
   [ "$status" -eq 0 ]
