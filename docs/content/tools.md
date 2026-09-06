@@ -213,13 +213,18 @@ GNOME extension that drops the terminal from the top of the screen.
 # home.local.nix: cursor.enable = false;
 ```
 
-`cursor.llmContext.enable` (default: `cursor.enable`) installs RTK, Serena, Headroom, 9Router, and Cursor MCP servers and merges hooks/MCP. It does **not** set Override OpenAI Base URL.
+`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Context7, GitHub, Docker, and optional Brave/Firecrawl MCP and merges hooks/MCP.
+
+`cursor.ninerouter.enable` (default **false**; Copier `ninerouter`) chooses the compaction path:
+
+- **Off (Cursor Pro):** RTK Shell hook, user-global Ponytail rule, official Headroom MCP (`headroom mcp serve`, no `--proxy-url`, no `headroom-proxy`). Do not set Override OpenAI Base URL.
+- **On (gateway):** 9Router only. Built-in RTK / Ponytail via PATCH; `headroomEnabled` is false. No host RTK, Ponytail rule, or Headroom. Cursor Pro hosted models fail while Override OpenAI Base URL is on. After `home-switch`, paste `~/.config/9router/cursor-api-key`, set the base URL to `http://127.0.0.1:20128/v1`, and pick a 9Router model. See `~/.config/9router/cursor-openai.hint`. Home Manager cannot write those GUI fields (`Ctrl+Shift+0` toggles the key).
 
 - Docs: [cursor.com/docs](https://cursor.com/docs)
 
 ### RTK
 
-[RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. Home Manager pins the official release binary and merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`. It does not run `rtk init`.
+[RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. When `cursor.ninerouter.enable` is off, Home Manager pins the official release binary and merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`. It does not run `rtk init`. When 9Router is on, the gateway’s built-in RTK is used and that host hook is removed.
 
 ```bash
 rtk rewrite "git status"
@@ -230,7 +235,7 @@ rtk rewrite "git status"
 
 ### Headroom
 
-[Headroom](https://github.com/headroomlabs-ai/headroom) is a sidecar saver for 9Router plus MCP retrieve/stats. Home Manager installs `headroom-ai[proxy,mcp]` with `uv tool install` and runs `headroom-proxy` (`0.0.0.0:8787` so a rootless container can reach the host LAN IP; host check is still `http://127.0.0.1:8787/livez`). 9Router calls `http://host.docker.internal:8787` from the container when Headroom is up and fail-opens if it is down. Headroom is not Cursor model traffic and must not use 9Router as `--openai-api-url` (loop).
+[Headroom](https://github.com/headroomlabs-ai/headroom) is official MCP (`headroom_compress` / `retrieve` / `stats`) on the Cursor Pro path. Home Manager installs `headroom-ai[mcp]` with `uv tool install` and upserts `headroom mcp serve` (no `--proxy-url`, no `headroom-proxy` unit). The agent must call those tools; nothing runs after every prompt. `.cursor/rules/headroom-compress.mdc` (also `~/.cursor/rules/headroom-compress.mdc` after `home-switch` when 9Router is off) tells the agent to compress only large tool output or pastes. Automatic transcript compaction would need Headroom’s proxy plus Override OpenAI Base URL, which Cursor Pro models refuse. When `cursor.ninerouter.enable` is on, host Headroom is not installed and leftover `mcpServers.headroom` is removed.
 
 ```bash
 headroom --help
@@ -251,7 +256,9 @@ serena start-mcp-server --help
 
 ### 9Router
 
-[9Router](https://github.com/decolua/9router) is the local API gateway (`decolua/9router:0.5.69`). Home Manager starts the `ninerouter` user service with `-p 127.0.0.1:20128:20128` (rootless Docker is the default; not `--network host`) and `--add-host=host.docker.internal:<host IPv4>`. A loopback TCP proxy inside the container forwards that published port to 9Router on `127.0.0.1` so dashboard local-only routes (tunnel enable) do not demand a CLI token. Docker `host-gateway` is the bridge in the rootlesskit netns and does not reach host loopback, so the start script uses the host default-route address (`NINEROUTER_HOST_IP` overrides). It then PATCHes settings (`rtkEnabled`, `headroomEnabled`, `headroomUrl: http://host.docker.internal:8787`, Ponytail on, Caveman off). The host curl to 9Router stays `http://127.0.0.1:20128`. Open that URL to log in with `INITIAL_PASSWORD` from gitignored `.env` (copied to `~/.config/9router/initial-password` **before** the unit starts). The start script hashes `INITIAL_PASSWORD` into settings so the tunnel gate (`hasPassword`) is satisfied. Env-only login is still the default password until that hash exists. A custom hash from Dashboard → Settings is not overwritten. `~/.9router` is rootless-owned `DATA_DIR`. A locked `/api/settings` does not fail `home-switch`.
+[9Router](https://github.com/decolua/9router) is an optional local API gateway (`decolua/9router:0.5.69`). Copier `ninerouter` / `cursor.ninerouter.enable` (default **false**) starts it. Cursor Pro hosted models fail while Override OpenAI Base URL is on; turn the key toggle off (`Ctrl+Shift+0`) to use Pro again.
+
+When enabled, Home Manager starts the `ninerouter` user service with `-p 127.0.0.1:20128:20128` (rootless Docker is the default; not `--network host`) and `--add-host=host.docker.internal:<host IPv4>`. A loopback TCP proxy inside the container forwards that published port to 9Router on `127.0.0.1` so dashboard local-only routes (tunnel enable) do not demand a CLI token. Docker `host-gateway` is the bridge in the rootlesskit netns and does not reach host loopback, so the start script uses the host default-route address (`NINEROUTER_HOST_IP` overrides). It then PATCHes settings (`rtkEnabled` and `ponytailEnabled` on, `headroomEnabled` false, Caveman off) and mints a gateway key named `devenv` once (`~/.config/9router/cursor-api-key`, mode `0600`). The host curl to 9Router stays `http://127.0.0.1:20128`. Open that URL to log in with `INITIAL_PASSWORD` from gitignored `.env` (copied to `~/.config/9router/initial-password` **before** the unit starts). The start script hashes `INITIAL_PASSWORD` into settings so the tunnel gate (`hasPassword`) is satisfied. Env-only login is still the default password until that hash exists. A custom hash from Dashboard → Settings is not overwritten. `~/.9router` is rootless-owned `DATA_DIR`. A locked `/api/settings` does not fail `home-switch`. Host RTK, the Ponytail rule, and Headroom are not installed in this mode.
 
 ```bash
 # after home-switch, with Docker on PATH
@@ -285,13 +292,13 @@ Host Docker Engine tools via `docker run -i --rm -v $XDG_RUNTIME_DIR/docker.sock
 
 ### Brave Search
 
-Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key. Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server@2.1.3` (`npx -y`, STDIO) when `BRAVE_API_KEY` is set. The same key is POSTed to 9Router as a `brave-search` connection named `devenv` after dashboard login (`configure-9router.sh`).
+Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key in both modes. Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server@2.1.3` (`npx -y`, STDIO) when `BRAVE_API_KEY` is set. When `cursor.ninerouter.enable` is on, the same key is POSTed to 9Router as a `brave-search` connection named `devenv` after dashboard login (`configure-9router.sh`).
 
 - Docs: [Brave Search API](https://brave.com/search/api/) · [brave-search-mcp-server](https://github.com/brave/brave-search-mcp-server)
 
 ### Firecrawl
 
-Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (free tier). Empty skips the MCP. Same SecretSpec / `.env` path as Brave. Home Manager upserts `firecrawl-mcp@3.24.0` (`npx -y`) when `FIRECRAWL_API_KEY` is set. The same key is upserted into 9Router as a `firecrawl` connection named `devenv`.
+Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (free tier) in both modes. Empty skips the MCP. Same SecretSpec / `.env` path as Brave. Home Manager upserts `firecrawl-mcp@3.24.0` (`npx -y`) when `FIRECRAWL_API_KEY` is set. When `cursor.ninerouter.enable` is on, the same key is upserted into 9Router as a `firecrawl` connection named `devenv`.
 
 - Docs: [Firecrawl](https://www.firecrawl.dev/) · [MCP](https://docs.firecrawl.dev/mcp-server)
 

@@ -102,16 +102,16 @@ build-act-image              # devenv-act:24.04 for local act
 | --- | --- |
 | `tests/unit/` | nix-unit (versions, hooks, debtmap, Cursor, Serena, terminal, …) |
 | `tests/setup/setup.bats` | `setup.sh` (sources the script; `main` guard) |
-| `tests/copier.bats` | `copier copy` / `update`; answers omit secret keys; not copied into monorepos |
+| `tests/copier.bats` | `copier copy` / `update`; `ninerouter` default false; answers omit secret keys; not copied into monorepos |
 | `tests/update.bats` | `update` template vs consumer; pin helpers; no live registry |
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
 | `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
-| `tests/home/cursor-llm.bats` | Cursor `hooks.json` / `mcp.json` merge (RTK, Serena, Headroom, Context7, GitHub, Docker, optional Brave/Firecrawl) |
-| `tests/home/configure-9router.bats` | 9Router settings + Brave/Firecrawl provider upsert (fake curl) |
+| `tests/home/cursor-llm.bats` | Cursor `hooks.json` / `mcp.json` merge (RTK add/remove, Serena, Headroom MCP without proxy URL, Context7, GitHub, Docker, optional Brave/Firecrawl) |
+| `tests/home/configure-9router.bats` | 9Router settings (`headroomEnabled` false) + Brave/Firecrawl upsert + devenv gateway key (fake curl) |
 | `tests/home/ninerouter-start.bats` | persist INITIAL_PASSWORD as a 9Router bcrypt hash (tunnel gate); in-container loopback proxy for local-only dashboard routes |
 | `tests/home/load-secrets.bats` | `home-switch` SecretSpec export vs `.env` fallback |
-| `tests/home/watch-9router-secrets.bats` | secret fingerprint skip / upsert (9Router + Cursor `mcp.json`) |
+| `tests/home/watch-9router-secrets.bats` | secret fingerprint skip / upsert (Cursor `mcp.json`; skip `configure_9router` when 9Router is off) |
 | `tests/home/docker-rootless.bats` | `DOCKER_HOST` defaults to the rootless socket; CI is a no-op |
 | `tests/tag-hook.bats` | failing suite blocks `git tag` |
 | `tests/integration/` | nixosTest (generated `test.yml` + eval asserts) |
@@ -146,12 +146,14 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `includes/` | Catalog refresh, Copier max YAML, and pin refreshers (`includes/update/`; not copied) |
 | `modules/update.nix` | `update` script (template pins vs consumer lock; copied) |
 | `.cursor/rules/update.mdc` | Consumer rule: `update` vs `copier update` (copied) |
+| `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large blobs (copied; `~/.cursor/rules/` after `home-switch` when 9Router is off) |
 | `.cursor/rules/non-nix-update.mdc` | Author pin/refresher rule (not copied) |
 | `modules/toolchain-catalog.json` | Cycle → latest patch and EOL (copied) |
 | `docs/` | Pages site (not copied) |
 | `devenv.nix` / `devenv.yaml` / `devenv.lock` | Shell, inputs, lock |
 | `home.nix` / `home/` | Home Manager |
-| `home/llm-context.nix` | Cursor LLM context (RTK, Serena, Headroom, 9Router, MCP wrappers) |
+| `home/llm-context.nix` | Cursor LLM context (Pro: RTK + Ponytail + Headroom MCP; optional 9Router) |
+| `home/copier-llm.nix.jinja` | Renders `home/copier-llm.nix` (`cursor.ninerouter.enable`) |
 | `secretspec.toml` | Optional `INITIAL_PASSWORD` / `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` (copied) |
 | `home/load-secrets.sh` | `secretspec export` then `.env`; used by `home-switch` |
 | `home/docker-rootless.sh` | Default `DOCKER_HOST` to `$XDG_RUNTIME_DIR/docker.sock` |
@@ -166,4 +168,4 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 
 In **this** repo, `devenv.local.nix` and `home.local.nix` stay gitignored. Put host-only Home Manager lines in `home.local.nix`. Do not commit language enables here.
 
-In a **generated** monorepo, commit `devenv.local.nix` and add extras below the Copier block (`devenv.local.nix.example`).
+In a **generated** monorepo, commit `devenv.local.nix` and `home/copier-llm.nix`, and add extras below the Copier block (`devenv.local.nix.example`).
