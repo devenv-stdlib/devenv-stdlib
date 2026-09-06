@@ -22,6 +22,7 @@
     ./home/usql.nix
     ./home/zoxide.nix
     ./home/act.nix
+    ./home/docker.nix
     ./home/fzf.nix
     ./home/delta.nix
     ./home/direnv.nix

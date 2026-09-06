@@ -287,6 +287,10 @@ This script installs or updates Nix, devenv, Cachix, and Home Manager,
 configures the devenv binary cache, applies this repository's Home Manager
 configuration (terminal, Cursor, Starship), and builds the devenv shell.
 
+This stack expects rootless Docker on the host (local act, 9Router, Docker
+MCP). It does not install Docker. See
+https://docs.docker.com/engine/security/rootless/
+
 Elevated privileges (sudo) are required for:
   - installing or upgrading the Nix daemon
   - enabling the flakes experimental feature in /etc/nix (if missing)
@@ -302,6 +306,31 @@ EOF
 
 print_host_next_steps() {
   printf 'Enter it with: cd %s && devenv shell\n' "$REPO_ROOT"
+  print_rootless_docker_hint
+}
+
+print_rootless_docker_hint() {
+  local runtime sock
+  if running_in_docker; then
+    return 0
+  fi
+  runtime=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+  sock=$runtime/docker.sock
+  if [[ -S $sock ]]; then
+    ok "rootless Docker socket $sock"
+    return 0
+  fi
+  cat <<EOF
+This template defaults to rootless Docker (act, 9Router, Docker MCP).
+The user socket is missing ($sock). Install Engine extras, then:
+
+  dockerd-rootless-setuptool.sh install
+  systemctl --user enable --now docker
+  loginctl enable-linger "\$USER"
+
+Docs: https://docs.docker.com/engine/security/rootless/
+Override with DOCKER_HOST=unix:///var/run/docker.sock for a rootful daemon.
+EOF
 }
 
 print_docker_next_steps() {

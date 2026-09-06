@@ -229,6 +229,24 @@ in_setup() {
   [[ $output == *"$REPO_DIR"* ]]
 }
 
+@test "print_rootless_docker_hint explains a missing socket" {
+  export XDG_RUNTIME_DIR="$BATS_TEST_TMPDIR/xdg-run"
+  mkdir -p "$XDG_RUNTIME_DIR"
+  export SETUP_DOCKERENV="$BATS_TEST_TMPDIR/absent-dockerenv"
+  in_setup 'print_rootless_docker_hint'
+  [ "$status" -eq 0 ]
+  [[ $output == *"dockerd-rootless-setuptool.sh"* ]]
+  [[ $output == *"$XDG_RUNTIME_DIR/docker.sock"* ]]
+}
+
+@test "print_rootless_docker_hint is silent inside a container" {
+  export SETUP_DOCKERENV="$BATS_TEST_TMPDIR/.dockerenv"
+  touch "$SETUP_DOCKERENV"
+  in_setup 'print_rootless_docker_hint'
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
 @test "container guidance points at an entrypoint instead of an interactive shell" {
   in_setup 'print_docker_next_steps'
   [ "$status" -eq 0 ]
@@ -413,6 +431,12 @@ in_setup() {
   [ "$status" -eq 0 ]
   [[ $output == *"Home Manager"* ]]
   [[ $output == *"will not be added to Nix trusted-users"* ]]
+}
+
+@test "print_notice mentions rootless Docker" {
+  in_setup 'print_notice'
+  [ "$status" -eq 0 ]
+  [[ $output == *"rootless Docker"* ]]
 }
 
 # --- entrypoint --------------------------------------------------------------

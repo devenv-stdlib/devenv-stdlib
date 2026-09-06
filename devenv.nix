@@ -6,6 +6,11 @@ _: {
   enterShell = ''
     echo "devenv4monorepo ready: ''${USER:-unknown}@$(uname -n)"
 
+    # Rootless Docker is the default for act and 9Router. CI keeps the runner daemon.
+    # shellcheck disable=SC1091
+    . "$DEVENV_ROOT/home/docker-rootless.sh"
+    docker_rootless_env
+
     # Git has no pre-tag hook, so the tag guard lives in reference-transaction,
     # which prek does not manage. Refresh it on every shell entry.
     hooks_dir=$(git rev-parse --git-path hooks 2>/dev/null || true)
