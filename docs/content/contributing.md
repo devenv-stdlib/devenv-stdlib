@@ -37,15 +37,34 @@ devenv update git-hooks      # refresh only the git-hooks lock input
 
 Do not edit `.devenv/` or other generated files. User-facing Nix is `devenv.nix`, `devenv.yaml`, `home.nix`, `modules/`, and `home/`.
 
+## Maintainer workflow
+
+Clone this repo only to change the template. Bumping a shipped pin here is how the **next tag** (semantic-release) gives users a newer tool via `copier update`.
+
+```bash
+devenv shell
+update                    # rewrite in-tree pins + hashes from GitHub/npm/PyPI/Docker
+# review the diff, test, commit (feat/chore), push; do not mix with docs
+devenv update git-hooks   # lock only; weekly CI already does this
+# devenv update nixpkgs   # only when you intend to move nixpkgs-based hook binaries
+refresh-toolchain-latest  # endoflife catalog; separate from update
+```
+
+`update` in this checkout does **not** run a full `devenv update`. Lock policy stays: `git-hooks` weekly; nixpkgs only when intended.
+
+When adding a tool Nix does not package: pin in one place, add `includes/update/<name>.sh`, document it. The author Cursor rule enforces that. Consumers still get the new pin only after a release + `copier update`.
+
 ## Generated files
 
 | File | Writer | Git |
 | --- | --- | --- |
 | `.github/workflows/test.yml` | `modules/language-versions.nix` | committed |
 | `.vscode/extensions.json` | `modules/cursor-languages.nix` | gitignored |
+| `.serena/project.yml` | `modules/serena-languages.nix` | gitignored |
 | `.vscode/settings.json` | `cursor-sync-extensions` | committed when it changes |
 | `.debtmap.toml` | `modules/debtmap.nix` | gitignored |
 | `.pre-commit-config.yaml` | git-hooks.nix / prek | gitignored |
+| `.env` | Copier from `.env.jinja` when keys were pasted | gitignored |
 
 ## Documentation site
 
@@ -81,13 +100,19 @@ build-act-image              # devenv-act:24.04 for local act
 
 | Suite | Role |
 | --- | --- |
-| `tests/unit/` | nix-unit (versions, hooks, debtmap, Cursor, terminal, …) |
+| `tests/unit/` | nix-unit (versions, hooks, debtmap, Cursor, Serena, terminal, …) |
 | `tests/setup/setup.bats` | `setup.sh` (sources the script; `main` guard) |
-| `tests/copier.bats` | `copier copy` / `update`; not copied into monorepos |
+| `tests/copier.bats` | `copier copy` / `update`; answers omit secret keys; not copied into monorepos |
+| `tests/update.bats` | `update` template vs consumer; pin helpers; no live registry |
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
 | `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
-| `tests/home/cursor-llm.bats` | Cursor `hooks.json` / `mcp.json` merge (RTK, Serena, Headroom) |
+| `tests/home/cursor-llm.bats` | Cursor `hooks.json` / `mcp.json` merge (RTK, Serena, Headroom, Context7, GitHub, Docker, optional Brave/Firecrawl) |
+| `tests/home/configure-9router.bats` | 9Router settings + Brave/Firecrawl provider upsert (fake curl) |
+| `tests/home/ninerouter-start.bats` | persist INITIAL_PASSWORD as a 9Router bcrypt hash (tunnel gate); in-container loopback proxy for local-only dashboard routes |
+| `tests/home/load-secrets.bats` | `home-switch` SecretSpec export vs `.env` fallback |
+| `tests/home/watch-9router-secrets.bats` | secret fingerprint skip / upsert (9Router + Cursor `mcp.json`) |
+| `tests/home/docker-rootless.bats` | `DOCKER_HOST` defaults to the rootless socket; CI is a no-op |
 | `tests/tag-hook.bats` | failing suite blocks `git tag` |
 | `tests/integration/` | nixosTest (generated `test.yml` + eval asserts) |
 
@@ -107,7 +132,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 
 ## Copier exclusions
 
-`copier.yml` `_exclude` replaces Copier’s defaults. Keep generated noise **and** template-only paths: `includes`, `docs`, `tests/copier.bats`, `.github/workflows/pages.yml`. If you add another template-only path, exclude it and assert that in `tests/copier.bats`.
+`copier.yml` `_exclude` replaces Copier’s defaults. Keep generated noise **and** template-only paths: `includes`, `docs`, `tests/copier.bats`, `.github/workflows/pages.yml`, `.cursor/rules/non-nix-update.mdc`. If you add another template-only path, exclude it and assert that in `tests/copier.bats`.
 
 `_skip_if_exists` leaves a destination `README.md` alone. Questionnaire output is `devenv.local.nix`, not a Jinja `devenv.nix`.
 
@@ -118,12 +143,19 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `setup.sh` | Host bootstrap (Nix, devenv, Cachix, Home Manager) |
 | `copier.yml` | Questions and `_exclude` (not copied) |
 | `devenv.local.nix.jinja` | Renders consumer `devenv.local.nix` |
-| `includes/` | Catalog refresh script and Copier max YAML (not copied) |
+| `includes/` | Catalog refresh, Copier max YAML, and pin refreshers (`includes/update/`; not copied) |
+| `modules/update.nix` | `update` script (template pins vs consumer lock; copied) |
+| `.cursor/rules/update.mdc` | Consumer rule: `update` vs `copier update` (copied) |
+| `.cursor/rules/non-nix-update.mdc` | Author pin/refresher rule (not copied) |
 | `modules/toolchain-catalog.json` | Cycle → latest patch and EOL (copied) |
 | `docs/` | Pages site (not copied) |
 | `devenv.nix` / `devenv.yaml` / `devenv.lock` | Shell, inputs, lock |
 | `home.nix` / `home/` | Home Manager |
-| `home/llm-context.nix` | Cursor LLM context (RTK, Serena, Headroom) |
+| `home/llm-context.nix` | Cursor LLM context (RTK, Serena, Headroom, 9Router, MCP wrappers) |
+| `secretspec.toml` | Optional `INITIAL_PASSWORD` / `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` (copied) |
+| `home/load-secrets.sh` | `secretspec export` then `.env`; used by `home-switch` |
+| `home/docker-rootless.sh` | Default `DOCKER_HOST` to `$XDG_RUNTIME_DIR/docker.sock` |
+| `.env.jinja` | Renders gitignored `.env` when Copier was given those keys |
 | `modules/` | Packages, languages, versions, hooks, debtmap, tests |
 | `hooks/reference-transaction` | Tag guard |
 | `commitlint.config.mjs` / `.releaserc.json` | Commits and releases |

@@ -18,7 +18,7 @@ host (Ubuntu 24.04 or 26.04 LTS)  --home-switch-->  user profile (terminal, Curs
 
 **Monorepo (the destination).** After `copier copy`, the tree has `devenv.nix`, `devenv.yaml`, `modules/`, `home.nix`, `setup.sh`, and a generated `devenv.local.nix`. `devenv shell` is the project toolchain: git hooks, language versions, generated `.github/workflows/test.yml`. Leaving the directory (or `direnv`) drops that PATH.
 
-**Host (the person).** Home Manager applies `home.nix` into the user profile. The dropdown terminal, Starship, Cursor, `rg`, `fd`, `gh`, and the other user-global CLIs stay available after you `cd` away. `setup.sh` installs Nix, devenv, Cachix, and Home Manager once per machine. Supported hosts are the current Ubuntu LTS and the previous one.
+**Host (the person).** Home Manager applies `home.nix` into the user profile. The dropdown terminal, Starship, Cursor, `rg`, `fd`, `gh`, and the other user-global CLIs stay available after you `cd` away. `setup.sh` installs Nix, devenv, Cachix, and Home Manager once per machine. Supported hosts are the current Ubuntu LTS and the previous one, with **rootless Docker** as the default Engine (local `act`, 9Router). GitHub Actions keeps the runner’s rootful daemon.
 
 The terminal is user-global because you already have a terminal open to run `devenv shell`. Putting Alacritty on the project PATH would hide it the moment you leave the repo.
 
@@ -26,9 +26,9 @@ The terminal is user-global because you already have a terminal open to run `dev
 
 1. `copier copy` (latest tag, or `--vcs-ref HEAD` for this checkout) asks for the devenv shell name, which languages to enable, min/max versions, the Rust edition when Rust is on, and the options those languages require.
 2. `devenv.local.nix.jinja` renders `devenv.local.nix`. That file is **committed in the monorepo** and **gitignored in this template repo**, so the template itself never enables a language by accident.
-3. `.copier-answers.yml` is rendered from `{{_copier_conf.answers_file}}.jinja`. Do not edit it by hand; `copier update` needs it.
+3. `.copier-answers.yml` is rendered from `{{_copier_conf.answers_file}}.jinja`. Brave/Firecrawl keys are omitted; the file stores `brave_search` / `firecrawl` booleans instead. Do not edit it by hand; `copier update` needs it.
 4. An existing destination `README.md` is left in place (`_skip_if_exists`).
-5. `copier.yml`, `includes/`, `docs/`, `tests/copier.bats`, and `pages.yml` are in `_exclude` and do not land in the copy.
+5. `copier.yml`, `includes/`, `docs/`, `tests/copier.bats`, `pages.yml`, and `.cursor/rules/non-nix-update.mdc` are in `_exclude` and do not land in the copy.
 
 `devenv.nix` stays a real Nix file (not Jinja). Questionnaire answers only write `devenv.local.nix`. Extra options (debtmap thresholds, extra packages, `supported.*.max`) go below the generated block; see `devenv.local.nix.example`.
 
@@ -38,15 +38,15 @@ The terminal is user-global because you already have a terminal open to run `dev
 
 `devenv.yaml` pins inputs and imports `modules/`. Evaluation reads `languages.*` and `supported.*` from `devenv.local.nix` (when the file exists):
 
-- Language packs, Cursor `.vscode/extensions.json`, and language git hooks follow `languages.*`.
+- Language packs, Cursor `.vscode/extensions.json`, Serena `.serena/project.yml` `language_servers`, and language git hooks follow `languages.*`.
 - CI versions follow `supported.<lang>.min` / `max` / `unsupported` / `versions`. When min/max omit a patch (`3.12`, `22`), `modules/toolchain-catalog.json` supplies the latest **non-EOL** patch of each cycle in range. `refresh-toolchain-latest` rebuilds that catalog from [endoflife.date](https://endoflife.date).
-- `enterShell` writes `.github/workflows/test.yml` (**committed**), `.debtmap.toml` and `.vscode/extensions.json` (gitignored), installs `hooks/reference-transaction`, and runs `cursor-sync-extensions`. [prek](https://prek.j178.dev/) manages `pre-commit` and `commit-msg` only (generated `.pre-commit-config.yaml` is gitignored).
+- `enterShell` writes `.github/workflows/test.yml` (**committed**), `.debtmap.toml`, `.vscode/extensions.json`, and `.serena/project.yml` (gitignored), installs `hooks/reference-transaction`, and runs `cursor-sync-extensions`. [prek](https://prek.j178.dev/) manages `pre-commit` and `commit-msg` only (generated `.pre-commit-config.yaml` is gitignored).
 
 ## How Home Manager stays out of the project PATH
 
-`home.nix` imports `home/*.nix` plus optional `home.local.nix`. `home-switch` is `home-manager switch -b backup -f home.nix`. That is a user profile, not a devenv generation. Bash integrations land in `~/.bashrc.d/`; Ubuntu's `~/.bashrc` only sources that directory so a distro upgrade does not have to be merged by hand. When `cursor.llmContext.enable` is on, the same switch installs RTK, Serena, and Headroom and merges Cursor hooks/MCP without replacing the rest of those files.
+`home.nix` imports `home/*.nix` plus optional `home.local.nix`. `home-switch` is `home-manager switch -b backup -f home.nix`. That is a user profile, not a devenv generation. Bash integrations land in `~/.bashrc.d/`; Ubuntu's `~/.bashrc` only sources that directory so a distro upgrade does not have to be merged by hand. When `cursor.llmContext.enable` is on, the same switch installs RTK, Serena, Headroom, and 9Router, merges Cursor hooks/MCP (Context7, GitHub, Docker, optional Brave/Firecrawl), and starts 9Router as the local API gateway with Headroom as a fail-open sidecar saver. `ninerouter-secrets-watch` re-upserts Brave/Firecrawl into 9Router and `~/.cursor/mcp.json` when SecretSpec keys change.
 
-Language packs are the exception: they are **not** user-global. devenv generates `.vscode/extensions.json` from `languages.*` and `cursor-sync-extensions` installs the matching Cursor extensions when you enter the shell.
+Language packs are the exception: they are **not** user-global. devenv generates `.vscode/extensions.json` and `.serena/project.yml` from `languages.*`. `cursor-sync-extensions` installs the matching Cursor extensions when you enter the shell. Serena reads `language_servers` and starts its own LSPs.
 
 ## Release loop
 
