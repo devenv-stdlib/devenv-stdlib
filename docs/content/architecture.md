@@ -44,7 +44,7 @@ The terminal is user-global because you already have a terminal open to run `dev
 
 ## How Home Manager stays out of the project PATH
 
-`home.nix` imports `home/*.nix` plus optional `home.local.nix`. `home-switch` is `home-manager switch -b backup -f home.nix`. That is a user profile, not a devenv generation. Bash integrations land in `~/.bashrc.d/`; Ubuntu's `~/.bashrc` only sources that directory so a distro upgrade does not have to be merged by hand.
+`home.nix` imports `home/*.nix` plus optional `home.local.nix`. `home-switch` is `home-manager switch -b backup -f home.nix`. That is a user profile, not a devenv generation. Bash integrations land in `~/.bashrc.d/`; Ubuntu's `~/.bashrc` only sources that directory so a distro upgrade does not have to be merged by hand. When `cursor.llmContext.enable` is on, the same switch installs RTK, Serena, and Headroom and merges Cursor hooks/MCP without replacing the rest of those files.
 
 Language packs are the exception: they are **not** user-global. devenv generates `.vscode/extensions.json` from `languages.*` and `cursor-sync-extensions` installs the matching Cursor extensions when you enter the shell.
 

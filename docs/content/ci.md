@@ -5,7 +5,7 @@
 ```bash
 bats -r tests           # full suite
 bats tests/setup        # setup.sh only
-bats tests/home         # terminal-lib.nix only
+bats tests/home         # terminal-lib, bashrc.d, Cursor LLM merge
 ```
 
 `tests/copier.bats` copies this template into a throwaway directory and checks `copier update`; it is excluded from generated monorepos.

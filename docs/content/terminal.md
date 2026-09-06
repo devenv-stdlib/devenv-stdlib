@@ -53,3 +53,5 @@ Then `home-switch` and open a new terminal. An unmanaged `~/.bashrc.d/20-local.s
 | `javascript` or `typescript` | ESLint, Tailwind, pretty-ts-errors, auto-rename-tag |
 
 Set `cursor.enable = false;` in `home.local.nix` to skip the editor install.
+
+When `cursor.llmContext.enable` is on (default: `cursor.enable`), `home-switch` also installs RTK, Serena, and Headroom (`uv tool install` needs network the first time), merges `~/.cursor/hooks.json` and `~/.cursor/mcp.json` without replacing other entries, and starts the `headroom-proxy` systemd user service on `127.0.0.1:8787`. MCP entries use Nix-store wrappers so Cursor can load `libstdc++` for the uv tools. The merge does **not** set Cursor Override OpenAI Base URL — inference stays on Cursor/xAI. Set `cursor.llmContext.enable = false;` to skip this stack.
