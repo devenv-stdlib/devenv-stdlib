@@ -126,4 +126,18 @@ rec {
     ++ lib.optionals (langOn languages "go") cursorLanguageIds.go
     ++ lib.optionals (langOn languages "python") cursorLanguageIds.python
     ++ lib.optionals (javascriptOn languages) cursorLanguageIds.typescript;
+
+  # Always-on Serena language_servers id for this template (Nix).
+  serenaAlwaysLanguageServers = [ "nix" ];
+
+  # Ids written to generated .serena/project.yml. javascript and
+  # typescript both use Serena's typescript server (once). Deno is a
+  # JS runtime here, not a separate Cursor language pack.
+  serenaLanguageServers =
+    languages:
+    serenaAlwaysLanguageServers
+    ++ lib.optionals (langOn languages "rust") [ "rust" ]
+    ++ lib.optionals (langOn languages "go") [ "go" ]
+    ++ lib.optionals (langOn languages "python") [ "python" ]
+    ++ lib.optionals (javascriptOn languages) [ "typescript" ];
 }

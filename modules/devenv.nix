@@ -5,6 +5,7 @@ _: {
     ./languages.nix
     ./language-versions.nix
     ./cursor-languages.nix
+    ./serena-languages.nix
     ./debtmap.nix
     ./update.nix
     ./test-devenv.nix

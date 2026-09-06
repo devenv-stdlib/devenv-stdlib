@@ -10,4 +10,5 @@ in
 // (import ./hooks.nix harness)
 // (import ./debtmap.nix harness)
 // (import ./cursor.nix harness)
+// (import ./serena.nix harness)
 // (import ./terminal.nix harness)
