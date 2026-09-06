@@ -179,6 +179,17 @@ init_dest_git() {
   run ! grep -q 'test-fire' "$DEST/secretspec.toml"
 }
 
+@test "copier copy ships consumer update rule and module, omits author pin rule" {
+  run copy_template
+  [ "$status" -eq 0 ]
+
+  [ -f "$DEST/.cursor/rules/update.mdc" ]
+  [ -f "$DEST/modules/update.nix" ]
+  [ -f "$DEST/modules/update.sh" ]
+  [ ! -e "$DEST/.cursor/rules/non-nix-update.mdc" ]
+  [ ! -e "$DEST/includes" ]
+}
+
 @test "copier update applies a newer template tag" {
   run copy_template
   [ "$status" -eq 0 ]

@@ -10,6 +10,9 @@ home.local.nix
 # SecretSpec dotenv (9Router password, Brave / Firecrawl). Copier may write this.
 .env
 
+# Consumer hook for `update` (uv/npx extras). Template pins stay in-tree.
+update.local.sh
+
 # direnv
 .direnv
 
