@@ -285,7 +285,7 @@ Host Docker Engine tools via `docker run -i --rm -v $XDG_RUNTIME_DIR/docker.sock
 
 ### Brave Search
 
-Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key (free tier). Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server@2.1.3` (`npx -y`, STDIO) when `BRAVE_API_KEY` is set. The same key is POSTed to 9Router as a `brave-search` connection named `devenv` after dashboard login (`configure-9router.sh`).
+Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key. Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server@2.1.3` (`npx -y`, STDIO) when `BRAVE_API_KEY` is set. The same key is POSTed to 9Router as a `brave-search` connection named `devenv` after dashboard login (`configure-9router.sh`).
 
 - Docs: [Brave Search API](https://brave.com/search/api/) · [brave-search-mcp-server](https://github.com/brave/brave-search-mcp-server)
 
