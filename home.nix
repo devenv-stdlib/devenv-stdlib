@@ -8,6 +8,7 @@
     ./home/bash.nix
     ./home/terminal.nix
     ./home/cursor.nix
+    ./home/llm-context.nix
     ./home/nano.nix
     ./home/neovim.nix
     ./home/bat.nix

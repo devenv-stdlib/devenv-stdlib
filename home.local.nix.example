@@ -12,6 +12,9 @@
   # Language packs follow devenv languages.* (see devenv.local.nix).
   # cursor.enable = false;
 
+  # RTK / Serena / Headroom for Cursor (default: cursor.enable).
+  # cursor.llmContext.enable = false;
+
   # terminal.quakeKeybinding = "ctrl-`";
   # terminal.heightPercent = 40;
   # terminal.pinToGnomeDash = false;
