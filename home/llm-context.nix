@@ -38,15 +38,14 @@ in
     type = lib.types.bool;
     default = config.cursor.enable;
     description = ''
-      Install RTK, Serena, and Headroom on the user profile, merge Cursor
-      hooks and MCP config, and run the Headroom proxy as a systemd user
-      service. Defaults to cursor.enable.
+      Install RTK, Serena, Headroom, and 9Router. Defaults to cursor.enable.
     '';
   };
 
   config = lib.mkIf cfg.enable {
     # Do not set Cursor Override OpenAI Base URL: inference stays on
-    # Cursor/xAI. The Headroom proxy is dashboard + MCP retrieve/stats only.
+    # Cursor/xAI. 9Router is the local API gateway; Headroom is a sidecar
+    # 9Router calls when it is up (fail-open if Headroom is down).
     # TODO: Claude Code / Cortex wrap when we support those agents
 
     home = {
@@ -76,6 +75,21 @@ in
             ${lib.escapeShellArg (toString serenaWrapped)} \
             ${lib.escapeShellArg (toString headroomWrapped)}
         '';
+
+        # Before units start: systemd does not load .env. The start script
+        # hashes INITIAL_PASSWORD so the tunnel gate sees hasPassword.
+        writeNineRouterPassword = lib.hm.dag.entryBefore [ "reloadSystemd" ] ''
+          mkdir -p "$HOME/.config/9router"
+          passfile="$HOME/.config/9router/initial-password"
+          if [ -n "''${INITIAL_PASSWORD:-}" ]; then
+            umask 077
+            printf '%s' "$INITIAL_PASSWORD" >"$passfile"
+            chmod 600 "$passfile"
+          fi
+          if [ -n "''${DEVENV_ROOT:-}" ]; then
+            printf '%s\n' "$DEVENV_ROOT" >"$HOME/.config/9router/devenv-root"
+          fi
+        '';
       };
     };
 
@@ -83,10 +97,34 @@ in
       startServices = "sd-switch";
       services.headroom-proxy = {
         Unit = {
-          Description = "Headroom proxy (dashboard and MCP retrieve/stats)";
+          Description = "Headroom sidecar (9Router saver + MCP retrieve/stats)";
         };
         Service = {
-          ExecStart = "${headroomWrapped} proxy --host 127.0.0.1 --port 8787";
+          # Do not point Headroom at 9Router (loop). 9Router calls this URL.
+          # 0.0.0.0 so a rootless container can reach the host LAN IP as
+          # host.docker.internal. Host livez stays http://127.0.0.1:8787.
+          ExecStart = "${headroomWrapped} proxy --host 0.0.0.0 --port 8787";
+          Restart = "on-failure";
+          RestartSec = "5s";
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
+        };
+      };
+      services.ninerouter = {
+        Unit = {
+          Description = "9Router API gateway (Headroom saver fail-open)";
+          Wants = [ "headroom-proxy.service" ];
+          After = [ "headroom-proxy.service" ];
+        };
+        Service = {
+          Environment = [
+            "PATH=${config.home.profileDirectory}/bin:/usr/local/bin:/usr/bin:/bin"
+            "DOCKER_ROOTLESS_SH=${./docker-rootless.sh}"
+            "NINEROUTER_LOOPBACK_PROXY=${./ninerouter-loopback-proxy.js}"
+            "NINEROUTER_PYTHON=${lib.getExe (pkgs.python313.withPackages (p: [ p.bcrypt ]))}"
+          ];
+          ExecStart = "${pkgs.runtimeShell} ${./ninerouter-start.sh}";
           Restart = "on-failure";
           RestartSec = "5s";
         };
