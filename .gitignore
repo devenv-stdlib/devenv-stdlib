@@ -26,6 +26,11 @@ result-*
 # Generated from languages.* by modules/cursor-languages.nix
 .vscode/extensions.json
 
+# Generated from languages.* by modules/serena-languages.nix
+.serena/project.yml
+# User override (Serena merges this over project.yml)
+.serena/project.local.yml
+
 # Generated from languages.* and debtmap.* by modules/debtmap.nix
 .debtmap.toml
 

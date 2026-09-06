@@ -22,6 +22,7 @@ _exclude:
   - result
   - result-*
   - .vscode/extensions.json
+  - .serena/project.yml
   - .debtmap.toml
   - .lycheecache
   - /junit/
