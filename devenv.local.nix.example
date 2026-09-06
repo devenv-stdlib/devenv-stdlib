@@ -3,6 +3,11 @@
   # Extra options for devenv.local.nix. Copier already writes `name`
   # and enabled languages from the questionnaire; add max/unsupported,
   # debtmap, or packages below that block. Do not edit .copier-answers.yml.
+  #
+  # After devenv shell, `update` runs devenv update then update.local.sh
+  # if that file is executable (gitignored). Put your uv/npx bumps there.
+  # Do not edit home/llm-context.nix version strings; those pins move
+  # with copier update.
 
   # packages = [ pkgs.hello ];
 

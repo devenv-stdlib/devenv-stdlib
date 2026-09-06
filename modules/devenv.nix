@@ -6,6 +6,7 @@ _: {
     ./language-versions.nix
     ./cursor-languages.nix
     ./debtmap.nix
+    ./update.nix
     ./test-devenv.nix
   ];
 }

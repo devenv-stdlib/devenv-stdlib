@@ -1,0 +1,24 @@
+---
+description: update refreshes your lock; template tools use copier update
+alwaysApply: true
+---
+
+# update vs copier update
+
+`update` / `devenv update` refresh **your** `devenv.lock` and optional
+`update.local.sh`. Template tools (RTK, Serena, Headroom, 9Router, MCP
+pins, debtmap) move only with `copier update`.
+
+```
+# ❌ BAD — fighting the next copier update
+# home/llm-context.nix
+braveSearchMcpVersion = "9.9.9";
+
+# ✅ GOOD
+copier update
+# or bump *your* uv/npx tools in gitignored update.local.sh
+```
+
+Do not edit shipped `home/*-pkg.nix` or `home/llm-context.nix` version
+strings to "upgrade" the stack. `devenv update` is the devenv CLI (flake
+inputs). `update` is our script; it does not wrap that CLI.

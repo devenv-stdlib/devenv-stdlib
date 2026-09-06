@@ -20,6 +20,9 @@
   # or turn the helper off:
   # docker.rootless.enable = false;
 
+  # Bump your own uv/npx tools in gitignored update.local.sh (repo root).
+  # Template pins (RTK, Serena, Brave, …) move with copier update.
+
   # terminal.quakeKeybinding = "ctrl-`";
   # terminal.heightPercent = 40;
   # terminal.pinToGnomeDash = false;

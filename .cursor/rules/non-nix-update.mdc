@@ -1,0 +1,24 @@
+---
+description: Pin non-Nix tools once and add an includes/update refresher
+globs: home/**,modules/**/*.nix,includes/update/**
+alwaysApply: false
+---
+
+# Non-Nix pins (template authors)
+
+When adding a tool Nix does not package: pin it in one file, add
+`includes/update/<name>.sh`, and do not teach consumers to bump the copy.
+
+```
+# ❌ BAD — consumers "upgrade" by editing the copied pin
+# home/llm-context.nix
+serenaVersion = "1.8.0";
+
+# ✅ GOOD — pin here, refresher owns the bump, users get it via copier update
+# home/llm-context.nix
+serenaVersion = "1.7.0";
+# includes/update/pypi-llm.sh  →  replace_nix_string_assign … serenaVersion
+```
+
+`update` in this checkout runs those refreshers. It does not run
+`devenv update` or `refresh-toolchain-latest`. Copier excludes this rule.
