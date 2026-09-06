@@ -110,6 +110,8 @@ in
         pkgs.uv
         pkgs.python313
         pkgs.nodejs
+        pkgs.curl
+        pkgs.inotify-tools
       ];
 
       sessionVariables.UV_TOOL_BIN_DIR = uvBinDir;
@@ -183,46 +185,78 @@ in
             printf '%s\n' "$DEVENV_ROOT" >"$HOME/.config/9router/devenv-root"
           fi
         '';
+
+        configureNineRouter = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+          export PATH=${
+            lib.escapeShellArg (
+              lib.makeBinPath [
+                pkgs.curl
+                pkgs.jq
+              ]
+            )
+          }:$PATH
+          ${pkgs.runtimeShell} ${./configure-9router.sh} http://127.0.0.1:20128 http://host.docker.internal:8787 || true
+        '';
       };
     };
 
     systemd.user = {
       startServices = "sd-switch";
-      services.headroom-proxy = {
-        Unit = {
-          Description = "Headroom sidecar (9Router saver + MCP retrieve/stats)";
+      services = {
+        headroom-proxy = {
+          Unit = {
+            Description = "Headroom sidecar (9Router saver + MCP retrieve/stats)";
+          };
+          Service = {
+            # Do not point Headroom at 9Router (loop). 9Router calls this URL.
+            # 0.0.0.0 so a rootless container can reach the host LAN IP as
+            # host.docker.internal. Host livez stays http://127.0.0.1:8787.
+            ExecStart = "${headroomWrapped} proxy --host 0.0.0.0 --port 8787";
+            Restart = "on-failure";
+            RestartSec = "5s";
+          };
+          Install = {
+            WantedBy = [ "default.target" ];
+          };
         };
-        Service = {
-          # Do not point Headroom at 9Router (loop). 9Router calls this URL.
-          # 0.0.0.0 so a rootless container can reach the host LAN IP as
-          # host.docker.internal. Host livez stays http://127.0.0.1:8787.
-          ExecStart = "${headroomWrapped} proxy --host 0.0.0.0 --port 8787";
-          Restart = "on-failure";
-          RestartSec = "5s";
+        ninerouter = {
+          Unit = {
+            Description = "9Router API gateway (Headroom saver fail-open)";
+            Wants = [ "headroom-proxy.service" ];
+            After = [ "headroom-proxy.service" ];
+          };
+          Service = {
+            Environment = [
+              "PATH=${config.home.profileDirectory}/bin:/usr/local/bin:/usr/bin:/bin"
+              "DOCKER_ROOTLESS_SH=${./docker-rootless.sh}"
+              "NINEROUTER_LOOPBACK_PROXY=${./ninerouter-loopback-proxy.js}"
+              "NINEROUTER_PYTHON=${lib.getExe (pkgs.python313.withPackages (p: [ p.bcrypt ]))}"
+            ];
+            ExecStart = "${pkgs.runtimeShell} ${./ninerouter-start.sh}";
+            Restart = "on-failure";
+            RestartSec = "5s";
+          };
+          Install = {
+            WantedBy = [ "default.target" ];
+          };
         };
-        Install = {
-          WantedBy = [ "default.target" ];
-        };
-      };
-      services.ninerouter = {
-        Unit = {
-          Description = "9Router API gateway (Headroom saver fail-open)";
-          Wants = [ "headroom-proxy.service" ];
-          After = [ "headroom-proxy.service" ];
-        };
-        Service = {
-          Environment = [
-            "PATH=${config.home.profileDirectory}/bin:/usr/local/bin:/usr/bin:/bin"
-            "DOCKER_ROOTLESS_SH=${./docker-rootless.sh}"
-            "NINEROUTER_LOOPBACK_PROXY=${./ninerouter-loopback-proxy.js}"
-            "NINEROUTER_PYTHON=${lib.getExe (pkgs.python313.withPackages (p: [ p.bcrypt ]))}"
-          ];
-          ExecStart = "${pkgs.runtimeShell} ${./ninerouter-start.sh}";
-          Restart = "on-failure";
-          RestartSec = "5s";
-        };
-        Install = {
-          WantedBy = [ "default.target" ];
+        ninerouter-secrets-watch = {
+          Unit = {
+            Description = "Sync 9Router and Cursor MCP keys when SecretSpec changes";
+            After = [ "ninerouter.service" ];
+            Wants = [ "ninerouter.service" ];
+          };
+          Service = {
+            Environment = [
+              "PATH=${config.home.profileDirectory}/bin:/usr/local/bin:/usr/bin:/bin"
+            ];
+            ExecStart = "${pkgs.runtimeShell} ${./watch-9router-secrets.sh} watch";
+            Restart = "on-failure";
+            RestartSec = "10s";
+          };
+          Install = {
+            WantedBy = [ "default.target" ];
+          };
         };
       };
     };
