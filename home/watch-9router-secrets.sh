@@ -32,17 +32,29 @@ nine_router_secrets_fingerprint() {
     sha256sum | awk '{print $1}'
 }
 
+# ${./watch-9router-secrets.sh} is a single Nix store file, so dirname is
+# /nix/store. Home Manager passes the sibling scripts as env paths.
+nine_router_source_home() {
+  local name=$1
+  local override=$2
+  local here path
+  if [[ -n $override && -f $override ]]; then
+    path=$override
+  else
+    here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    path=$here/$name
+  fi
+  # shellcheck disable=SC1090
+  . "$path"
+}
+
 nine_router_sync_secrets() {
   local root=$1
-  local here hash prev wrappers
+  local hash prev wrappers
 
-  here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-  # shellcheck disable=SC1091
-  . "$here/load-secrets.sh"
-  # shellcheck disable=SC1091
-  . "$here/configure-9router.sh"
-  # shellcheck disable=SC1091
-  . "$here/merge-cursor-llm.sh"
+  nine_router_source_home load-secrets.sh "${NINEROUTER_LOAD_SECRETS_SH-}"
+  nine_router_source_home configure-9router.sh "${NINEROUTER_CONFIGURE_SH-}"
+  nine_router_source_home merge-cursor-llm.sh "${NINEROUTER_MERGE_CURSOR_SH-}"
   home_load_secrets "$root"
 
   hash=$(nine_router_secrets_fingerprint)
@@ -62,7 +74,9 @@ nine_router_sync_secrets() {
     fi
   fi
 
-  if [[ -n ${NINEROUTER_SYNC_HOOK:-} ]]; then
+  if [[ ${NINEROUTER_ENABLE:-1} == 0 ]]; then
+    :
+  elif [[ -n ${NINEROUTER_SYNC_HOOK:-} ]]; then
     # Tests replace the live POST. Production leaves this unset.
     if ! ${NINEROUTER_SYNC_HOOK}; then
       return 1

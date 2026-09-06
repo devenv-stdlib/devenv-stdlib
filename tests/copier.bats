@@ -142,7 +142,10 @@ init_dest_git() {
   run ! grep -q 'initial_password' "$DEST/.copier-answers.yml"
   grep -q 'brave_search: false' "$DEST/.copier-answers.yml"
   grep -q 'firecrawl: false' "$DEST/.copier-answers.yml"
+  grep -q 'ninerouter: false' "$DEST/.copier-answers.yml"
   grep -q 'ninerouter_password: false' "$DEST/.copier-answers.yml"
+  [ -f "$DEST/home/copier-llm.nix" ]
+  grep -q 'cursor.ninerouter.enable = false;' "$DEST/home/copier-llm.nix"
   [ -f "$DEST/secretspec.toml" ]
   grep -q 'INITIAL_PASSWORD' "$DEST/secretspec.toml"
   grep -q 'BRAVE_API_KEY' "$DEST/secretspec.toml"
@@ -151,13 +154,16 @@ init_dest_git() {
   if [ -f "$DEST/.env" ]; then
     run ! grep -q '^BRAVE_API_KEY=' "$DEST/.env"
     run ! grep -q '^FIRECRAWL_API_KEY=' "$DEST/.env"
+    run ! grep -q '^INITIAL_PASSWORD=' "$DEST/.env"
   fi
 }
 
 @test "copier copy with keys writes gitignored .env and true booleans" {
-  run copy_template "$DEST" -d brave_api_key=test-brave -d firecrawl_api_key=test-fire -d initial_password=test-9r
+  run copy_template "$DEST" -d ninerouter=true -d brave_api_key=test-brave -d firecrawl_api_key=test-fire -d initial_password=test-9r
   [ "$status" -eq 0 ]
 
+  grep -q 'ninerouter: true' "$DEST/.copier-answers.yml"
+  grep -q 'cursor.ninerouter.enable = true;' "$DEST/home/copier-llm.nix"
   run ! grep -q 'brave_api_key' "$DEST/.copier-answers.yml"
   run ! grep -q 'firecrawl_api_key' "$DEST/.copier-answers.yml"
   run ! grep -q 'initial_password' "$DEST/.copier-answers.yml"
@@ -177,6 +183,21 @@ init_dest_git() {
   run ! grep -q 'test-9r' "$DEST/devenv.local.nix"
   run ! grep -q 'test-brave' "$DEST/devenv.yaml"
   run ! grep -q 'test-fire' "$DEST/secretspec.toml"
+}
+
+@test "copier copy with ninerouter writes copier-llm.nix and still omits secret keys" {
+  run copy_template "$DEST" -d ninerouter=true
+  [ "$status" -eq 0 ]
+
+  grep -q 'ninerouter: true' "$DEST/.copier-answers.yml"
+  grep -q 'cursor.ninerouter.enable = true;' "$DEST/home/copier-llm.nix"
+  run ! grep -q 'initial_password' "$DEST/.copier-answers.yml"
+  run ! grep -q 'brave_api_key' "$DEST/.copier-answers.yml"
+  run ! grep -q 'firecrawl_api_key' "$DEST/.copier-answers.yml"
+  grep -q 'ninerouter_password: false' "$DEST/.copier-answers.yml"
+  if [ -f "$DEST/.env" ]; then
+    run ! grep -q '^INITIAL_PASSWORD=' "$DEST/.env"
+  fi
 }
 
 @test "copier copy ships consumer update rule and module, omits author pin rule" {

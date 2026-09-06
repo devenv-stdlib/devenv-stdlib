@@ -42,6 +42,28 @@ merge_cursor_hooks() {
   mv -f "$tmp" "$hooks_json"
 }
 
+# Drop managed RTK Shell hooks. Other preToolUse entries stay.
+merge_cursor_hooks_remove() {
+  local hooks_json=$1
+  local jq=${JQ:-jq}
+  local tmp
+
+  [[ -s $hooks_json ]] || return 0
+
+  tmp=$(mktemp "$hooks_json.XXXXXX")
+  if ! "$jq" '
+    .hooks = (.hooks // {})
+    | .hooks.preToolUse = [
+        ((.hooks.preToolUse // [])[])
+        | select((.command // "") | (contains("rtk-rewrite") or contains("rtk hook")) | not)
+      ]
+  ' "$hooks_json" >"$tmp"; then
+    rm -f "$tmp"
+    return 1
+  fi
+  mv -f "$tmp" "$hooks_json"
+}
+
 # Upsert servers from a JSON object; delete keys listed in a JSON array.
 # Usage: merge_cursor_mcp <mcp.json> <upsert.json> [remove.json]
 merge_cursor_mcp() {
@@ -136,10 +158,11 @@ if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
   shift || true
   case $cmd in
     hooks) merge_cursor_hooks "$@" ;;
+    hooks-remove) merge_cursor_hooks_remove "$@" ;;
     mcp) merge_cursor_mcp "$@" ;;
     mcp-secrets) merge_cursor_mcp_secrets "$@" ;;
     *)
-      echo "usage: $0 hooks <hooks.json> <rtk-rewrite> | mcp <mcp.json> <upsert.json> [remove.json] | mcp-secrets <mcp.json> <brave-cmd> <firecrawl-cmd>" >&2
+      echo "usage: $0 hooks <hooks.json> <rtk-rewrite> | hooks-remove <hooks.json> | mcp <mcp.json> <upsert.json> [remove.json] | mcp-secrets <mcp.json> <brave-cmd> <firecrawl-cmd>" >&2
       exit 2
       ;;
   esac

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Point 9Router at Headroom and upsert Brave/Firecrawl from .env.
+# Point 9Router at Headroom, upsert Brave/Firecrawl, mint a devenv gateway key.
 # Sourced by tests; executed from home.activation after 9router is up.
 # 9Router has no separate "raw terminal regex" setting; RTK's JS filters
 # stay on via rtkEnabled. Ponytail is on; Caveman stays off.
@@ -50,10 +50,9 @@ nine_router_post_settings() {
   local headroom_url=$3
   local json
   json=$(
-    jq -n --arg url "$headroom_url" '{
+    jq -n '{
       rtkEnabled: true,
-      headroomEnabled: true,
-      headroomUrl: $url,
+      headroomEnabled: false,
       cavemanEnabled: false,
       ponytailEnabled: true,
       ponytailLevel: "full"
@@ -107,6 +106,46 @@ nine_router_upsert_apikey() {
     -d "$body" >/dev/null
 }
 
+# Create a gateway key named devenv once. Cursor cannot read this from
+# settings.json; paste it under Models → Override OpenAI Base URL.
+nine_router_ensure_gateway_key() {
+  local base=$1
+  local cookie=$2
+  local dest=${NINEROUTER_CURSOR_KEY_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/9router/cursor-api-key}
+  local hint=${NINEROUTER_CURSOR_HINT_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/9router/cursor-openai.hint}
+  local curl_auth=(-c "$cookie" -b "$cookie")
+  local list exists body key
+
+  mkdir -p "$(dirname "$dest")"
+  printf '%s\n' \
+    "Cursor Settings → Models → Advanced (API Keys)" \
+    "  Override OpenAI Base URL: http://127.0.0.1:20128/v1" \
+    "  OpenAI API Key: contents of $dest" \
+    "Then pick a 9Router model or combo (not Auto / Cursor Grok)." \
+    "Built-in Cursor models skip 9Router, so Headroom cannot compact them." \
+    "If that file is missing, copy a key from Dashboard → Keys (plaintext is shown only at create time)." \
+    >"$hint"
+
+  list=$(curl -fsS --max-time 5 "${curl_auth[@]}" "$base/api/keys") || return 1
+  exists=$(jq -r '[.keys[]? | select(.name == "devenv")] | length' <<<"$list")
+  if [[ $exists != 0 ]]; then
+    return 0
+  fi
+  if [[ -s $dest ]]; then
+    return 0
+  fi
+  body=$(jq -n '{name: "devenv"}') || return 1
+  key=$(
+    curl -fsS --max-time 5 "${curl_auth[@]}" -X POST "$base/api/keys" \
+      -H 'Content-Type: application/json' \
+      -d "$body" | jq -r '.key // empty'
+  ) || return 1
+  [[ -n $key ]] || return 1
+  umask 077
+  printf '%s' "$key" >"$dest"
+  chmod 600 "$dest"
+}
+
 configure_9router() {
   local base=${1:-http://127.0.0.1:20128}
   local headroom_url=${2:-http://host.docker.internal:8787}
@@ -134,6 +173,10 @@ configure_9router() {
       return 1
     }
     nine_router_upsert_apikey "$base" "$cookie" firecrawl devenv "${FIRECRAWL_API_KEY:-}" || {
+      rm -f "$cookie"
+      return 1
+    }
+    nine_router_ensure_gateway_key "$base" "$cookie" || {
       rm -f "$cookie"
       return 1
     }

@@ -224,10 +224,17 @@ typescript_bundler:
   default: vite
   when: "{{ 'typescript' in languages }}"
 
+ninerouter:
+  type: bool
+  default: false
+  help: >-
+    Enable 9Router (routes Cursor through a custom OpenAI base URL; Cursor Pro models will not work while that override is on). Default is off: RTK, a Ponytail rule, and Headroom MCP keep Cursor Pro and compact tool output.
+
 initial_password:
   type: str
   secret: true
   default: ""
+  when: "{{ ninerouter }}"
   help: >-
     9Router dashboard password (INITIAL_PASSWORD). Empty keeps the image default (123456) until you set it in gitignored .env. Not written to .copier-answers.yml.
 
@@ -250,7 +257,7 @@ _message_after_copy: |
   Languages and the shell name are in devenv.local.nix.
 
   Next:
-    1. Commit .copier-answers.yml and devenv.local.nix
+    1. Commit .copier-answers.yml, devenv.local.nix, and home/copier-llm.nix
        (do not commit .env — it is gitignored)
     2. Run ./setup.sh, then devenv shell
     3. Add extra options from devenv.local.nix.example if you need them

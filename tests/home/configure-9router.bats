@@ -57,6 +57,16 @@ case $method:$url in
   GET:*/api/providers)
     cat "${FAKE_PROVIDERS:-/dev/null}"
     ;;
+  GET:*/api/keys)
+    if [[ -n ${FAKE_KEYS:-} && -s $FAKE_KEYS ]]; then
+      cat "$FAKE_KEYS"
+    else
+      echo '{"keys":[]}'
+    fi
+    ;;
+  POST:*/api/keys)
+    echo '{"key":"sk-test-devenv","name":"devenv","id":"1"}'
+    ;;
   POST:*/api/auth/login | PATCH:*/api/settings | POST:*/api/providers | PUT:*/api/providers/*)
     echo '{"ok":true}'
     ;;
@@ -97,13 +107,39 @@ teardown() {
   [ "$status" -eq 0 ]
   grep -q 'POST http://127.0.0.1:20128/api/auth/login' "$CURL_LOG"
   grep -q 'PATCH http://127.0.0.1:20128/api/settings' "$CURL_LOG"
-  grep -q 'headroomUrl' "$CURL_LOG"
+  grep -qE '"headroomEnabled":[[:space:]]*false' "$CURL_LOG"
+  run ! grep -q 'headroomUrl' "$CURL_LOG"
   grep -q 'ponytailEnabled' "$CURL_LOG"
   grep -q 'brave-search' "$CURL_LOG"
   grep -q 'firecrawl' "$CURL_LOG"
   grep -q 'test-brave' "$CURL_LOG"
   grep -q 'test-fire' "$CURL_LOG"
+  grep -q 'POST http://127.0.0.1:20128/api/keys' "$CURL_LOG"
+  [ "$(cat "$HOME/.config/9router/cursor-api-key")" = "sk-test-devenv" ]
+  grep -q 'Override OpenAI Base URL' "$HOME/.config/9router/cursor-openai.hint"
   run ! grep -q 'test-9r' "$CURL_LOG"
+}
+
+@test "configure_9router skips creating a gateway key when devenv exists" {
+  export INITIAL_PASSWORD=test-9r
+  unset BRAVE_API_KEY FIRECRAWL_API_KEY
+  printf '%s\n' '{"keys":[{"name":"devenv","id":"1"}]}' >"$TMP/http/keys.json"
+  export FAKE_KEYS="$TMP/http/keys.json"
+  run configure_9router http://127.0.0.1:20128
+  [ "$status" -eq 0 ]
+  run ! grep -q 'POST http://127.0.0.1:20128/api/keys' "$CURL_LOG"
+  [ ! -f "$HOME/.config/9router/cursor-api-key" ]
+  grep -q 'Override OpenAI Base URL' "$HOME/.config/9router/cursor-openai.hint"
+}
+
+@test "configure_9router skips creating a gateway key when the local file exists" {
+  export INITIAL_PASSWORD=test-9r
+  unset BRAVE_API_KEY FIRECRAWL_API_KEY
+  printf '%s' 'sk-already' >"$HOME/.config/9router/cursor-api-key"
+  run configure_9router http://127.0.0.1:20128
+  [ "$status" -eq 0 ]
+  run ! grep -q 'POST http://127.0.0.1:20128/api/keys' "$CURL_LOG"
+  [ "$(cat "$HOME/.config/9router/cursor-api-key")" = "sk-already" ]
 }
 
 @test "configure_9router PUTs when a devenv connection already exists" {
