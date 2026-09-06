@@ -42,52 +42,92 @@ merge_cursor_hooks() {
   mv -f "$tmp" "$hooks_json"
 }
 
+# Upsert servers from a JSON object; delete keys listed in a JSON array.
+# Usage: merge_cursor_mcp <mcp.json> <upsert.json> [remove.json]
 merge_cursor_mcp() {
   local mcp_json=$1
-  local serena_command=$2
-  local headroom_command=$3
+  local upsert_json=$2
+  local remove_json=${3:-}
   local jq=${JQ:-jq}
-  local dir tmp
+  local dir tmp remove_arg
 
   dir=$(dirname "$mcp_json")
   mkdir -p "$dir"
 
+  if [[ -n $remove_json ]]; then
+    remove_arg=$remove_json
+  else
+    remove_arg=$(mktemp)
+    echo '[]' >"$remove_arg"
+  fi
+
   tmp=$(mktemp "$mcp_json.XXXXXX")
   if [[ -s "$mcp_json" ]]; then
-    if ! "$jq" --arg serena "$serena_command" --arg headroom "$headroom_command" '
+    if ! "$jq" --slurpfile up "$upsert_json" --slurpfile rm "$remove_arg" '
       .mcpServers = (.mcpServers // {})
-      | .mcpServers.serena = {
-          command: $serena,
-          args: ["start-mcp-server", "--context", "ide"]
-        }
-      | .mcpServers.headroom = {
-          command: $headroom,
-          args: ["mcp", "serve", "--proxy-url", "http://127.0.0.1:8787"]
-        }
+      | .mcpServers = (.mcpServers + ($up[0] // {}))
+      | reduce (($rm[0] // [])[]) as $k (.; del(.mcpServers[$k]))
     ' "$mcp_json" >"$tmp"; then
       rm -f "$tmp"
+      [[ -z $remove_json ]] && rm -f "$remove_arg"
       return 1
     fi
   else
-    if ! "$jq" --null-input --arg serena "$serena_command" --arg headroom "$headroom_command" '
-      {
-        mcpServers: {
-          serena: {
-            command: $serena,
-            args: ["start-mcp-server", "--context", "ide"]
-          },
-          headroom: {
-            command: $headroom,
-            args: ["mcp", "serve", "--proxy-url", "http://127.0.0.1:8787"]
-          }
-        }
-      }
+    if ! "$jq" --null-input --slurpfile up "$upsert_json" --slurpfile rm "$remove_arg" '
+      { mcpServers: ($up[0] // {}) }
+      | reduce (($rm[0] // [])[]) as $k (.; del(.mcpServers[$k]))
     ' >"$tmp"; then
       rm -f "$tmp"
+      [[ -z $remove_json ]] && rm -f "$remove_arg"
       return 1
     fi
   fi
+  [[ -z $remove_json ]] && rm -f "$remove_arg"
   mv -f "$tmp" "$mcp_json"
+}
+
+# Add or drop brave-search / firecrawl from env keys. Other servers stay.
+# Usage: merge_cursor_mcp_secrets <mcp.json> <brave-cmd> <firecrawl-cmd>
+merge_cursor_mcp_secrets() {
+  local mcp_json=$1
+  local brave_cmd=$2
+  local firecrawl_cmd=$3
+  local jq=${JQ:-jq}
+  local upsert remove rc
+
+  upsert=$(mktemp)
+  remove=$(mktemp)
+  if ! "$jq" -n \
+    --arg brave "$brave_cmd" \
+    --arg firecrawl "$firecrawl_cmd" \
+    --arg brave_key "${BRAVE_API_KEY:-}" \
+    --arg firecrawl_key "${FIRECRAWL_API_KEY:-}" \
+    '
+      {}
+      | (if $brave_key != "" then
+          . + { "brave-search": { command: $brave, env: { BRAVE_API_KEY: $brave_key } } }
+        else . end)
+      | (if $firecrawl_key != "" then
+          . + { firecrawl: { command: $firecrawl, env: { FIRECRAWL_API_KEY: $firecrawl_key } } }
+        else . end)
+    ' >"$upsert"; then
+    rm -f "$upsert" "$remove"
+    return 1
+  fi
+  if ! "$jq" -n \
+    --arg brave_key "${BRAVE_API_KEY:-}" \
+    --arg firecrawl_key "${FIRECRAWL_API_KEY:-}" \
+    '
+      [ (if $brave_key == "" then "brave-search" else empty end),
+        (if $firecrawl_key == "" then "firecrawl" else empty end) ]
+    ' >"$remove"; then
+    rm -f "$upsert" "$remove"
+    return 1
+  fi
+  merge_cursor_mcp "$mcp_json" "$upsert" "$remove"
+  rc=$?
+  rm -f "$upsert" "$remove"
+  return "$rc"
 }
 
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
@@ -97,8 +137,9 @@ if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
   case $cmd in
     hooks) merge_cursor_hooks "$@" ;;
     mcp) merge_cursor_mcp "$@" ;;
+    mcp-secrets) merge_cursor_mcp_secrets "$@" ;;
     *)
-      echo "usage: $0 hooks <hooks.json> <rtk-rewrite> | mcp <mcp.json> <serena> <headroom>" >&2
+      echo "usage: $0 hooks <hooks.json> <rtk-rewrite> | mcp <mcp.json> <upsert.json> [remove.json] | mcp-secrets <mcp.json> <brave-cmd> <firecrawl-cmd>" >&2
       exit 2
       ;;
   esac

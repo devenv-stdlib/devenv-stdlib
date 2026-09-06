@@ -1,4 +1,7 @@
 #!/usr/bin/env bats
+# shellcheck disable=SC2030,SC2031
+# ^ SC2030/SC2031: each @test looks like a subshell, so API key exports are
+# reported as leaking or getting lost; they are deliberately per-test.
 # Exercises home/merge-cursor-llm.sh. Does not run home-manager switch,
 # the Headroom proxy, or `uv tool install`.
 
@@ -13,6 +16,27 @@ setup() {
   RTK_CMD="/nix/store/rtk-rewrite-test/bin/rtk-rewrite.sh"
   SERENA_CMD="$TMP/.local/bin/serena"
   HEADROOM_CMD="$TMP/.local/bin/headroom"
+  GITHUB_CMD="$TMP/.local/bin/github-mcp"
+  DOCKER_CMD="$TMP/.local/bin/docker-mcp"
+  BRAVE_CMD="$TMP/.local/bin/brave-search-mcp"
+  FIRECRAWL_CMD="$TMP/.local/bin/firecrawl-mcp"
+  UPSERT="$TMP/upsert.json"
+  REMOVE="$TMP/remove.json"
+}
+
+write_core_upsert() {
+  jq -n \
+    --arg serena "$SERENA_CMD" \
+    --arg headroom "$HEADROOM_CMD" \
+    --arg github "$GITHUB_CMD" \
+    --arg docker "$DOCKER_CMD" \
+    '{
+      serena: { command: $serena, args: ["start-mcp-server", "--context", "ide"] },
+      headroom: { command: $headroom, args: ["mcp", "serve", "--proxy-url", "http://127.0.0.1:8787"] },
+      context7: { url: "https://mcp.context7.com/mcp" },
+      github: { command: $github },
+      docker: { command: $docker }
+    }' >"$UPSERT"
 }
 
 teardown() {
@@ -70,23 +94,30 @@ EOF
   [ "$(jq -r '.hooks.preToolUse[] | select(.command == "echo foreign").matcher' "$HOOKS")" = "Read" ]
 }
 
-@test "creates mcp.json with serena and headroom only" {
-  merge_cursor_mcp "$MCP" "$SERENA_CMD" "$HEADROOM_CMD"
+@test "creates mcp.json with core servers and no optional crawl MCPs" {
+  write_core_upsert
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
   [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
   [ "$(jq -r '.mcpServers.serena.args | join(" ")' "$MCP")" = "start-mcp-server --context ide" ]
   [ "$(jq -r '.mcpServers.headroom.command' "$MCP")" = "$HEADROOM_CMD" ]
   [ "$(jq -r '.mcpServers.headroom.args | join(" ")' "$MCP")" = "mcp serve --proxy-url http://127.0.0.1:8787" ]
-  [ "$(jq -r '.mcpServers | keys | length' "$MCP")" -eq 2 ]
+  [ "$(jq -r '.mcpServers.context7.url' "$MCP")" = "https://mcp.context7.com/mcp" ]
+  [ "$(jq -r '.mcpServers.github.command' "$MCP")" = "$GITHUB_CMD" ]
+  [ "$(jq -r '.mcpServers.docker.command' "$MCP")" = "$DOCKER_CMD" ]
+  [ "$(jq -r '.mcpServers["brave-search"] // empty' "$MCP")" = "" ]
+  [ "$(jq -r '.mcpServers.firecrawl // empty' "$MCP")" = "" ]
+  [ "$(jq -r '.mcpServers | keys | length' "$MCP")" -eq 5 ]
 }
 
-@test "preserves foreign MCP servers and upserts serena and headroom" {
+@test "preserves foreign MCP servers and upserts managed ones" {
   mkdir -p "$(dirname "$MCP")"
   cat >"$MCP" <<'EOF'
 {
   "mcpServers": {
-    "github": {
+    "user-notes": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"]
+      "args": ["-y", "notes-mcp"]
     },
     "serena": {
       "command": "/old/serena",
@@ -95,17 +126,92 @@ EOF
   }
 }
 EOF
-  merge_cursor_mcp "$MCP" "$SERENA_CMD" "$HEADROOM_CMD"
-  [ "$(jq -r '.mcpServers.github.command' "$MCP")" = "npx" ]
-  [ "$(jq -r '.mcpServers.github.args[1]' "$MCP")" = "@modelcontextprotocol/server-github" ]
+  write_core_upsert
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  [ "$(jq -r '.mcpServers["user-notes"].command' "$MCP")" = "npx" ]
+  [ "$(jq -r '.mcpServers["user-notes"].args[1]' "$MCP")" = "notes-mcp" ]
   [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
   [ "$(jq -r '.mcpServers.serena.args[2]' "$MCP")" = "ide" ]
   [ "$(jq -r '.mcpServers.headroom.command' "$MCP")" = "$HEADROOM_CMD" ]
+  [ "$(jq -r '.mcpServers.context7.url' "$MCP")" = "https://mcp.context7.com/mcp" ]
+  [ "$(jq -r '.mcpServers.github.command' "$MCP")" = "$GITHUB_CMD" ]
 }
 
 @test "MCP merge is idempotent" {
-  merge_cursor_mcp "$MCP" "$SERENA_CMD" "$HEADROOM_CMD"
+  write_core_upsert
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
   first=$(jq -cS . "$MCP")
-  merge_cursor_mcp "$MCP" "$SERENA_CMD" "$HEADROOM_CMD"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
   [ "$(jq -cS . "$MCP")" = "$first" ]
+}
+
+@test "upserts Brave and Firecrawl from JSON without real secrets" {
+  write_core_upsert
+  jq --arg brave "$BRAVE_CMD" --arg firecrawl "$FIRECRAWL_CMD" \
+    '. + {
+      "brave-search": { command: $brave, env: { BRAVE_API_KEY: "REDACTED" } },
+      firecrawl: { command: $firecrawl, env: { FIRECRAWL_API_KEY: "REDACTED" } }
+    }' "$UPSERT" >"$UPSERT.next"
+  mv -f "$UPSERT.next" "$UPSERT"
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  [ "$(jq -r '.mcpServers["brave-search"].command' "$MCP")" = "$BRAVE_CMD" ]
+  [ "$(jq -r '.mcpServers["brave-search"].env.BRAVE_API_KEY' "$MCP")" = "REDACTED" ]
+  [ "$(jq -r '.mcpServers.firecrawl.command' "$MCP")" = "$FIRECRAWL_CMD" ]
+  [ "$(jq -r '.mcpServers.firecrawl.env.FIRECRAWL_API_KEY' "$MCP")" = "REDACTED" ]
+}
+
+@test "removes Brave and Firecrawl when listed in remove.json" {
+  write_core_upsert
+  jq --arg brave "$BRAVE_CMD" --arg firecrawl "$FIRECRAWL_CMD" \
+    '. + {
+      "brave-search": { command: $brave, env: { BRAVE_API_KEY: "REDACTED" } },
+      firecrawl: { command: $firecrawl, env: { FIRECRAWL_API_KEY: "REDACTED" } }
+    }' "$UPSERT" >"$UPSERT.next"
+  mv -f "$UPSERT.next" "$UPSERT"
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+
+  write_core_upsert
+  printf '%s\n' '["brave-search","firecrawl"]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  [ "$(jq -r '.mcpServers["brave-search"] // empty' "$MCP")" = "" ]
+  [ "$(jq -r '.mcpServers.firecrawl // empty' "$MCP")" = "" ]
+  [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
+  [ "$(jq -r '.mcpServers.context7.url' "$MCP")" = "https://mcp.context7.com/mcp" ]
+}
+
+@test "mcp CLI upserts from JSON files" {
+  write_core_upsert
+  echo '[]' >"$REMOVE"
+  "$REPO_DIR/home/merge-cursor-llm.sh" mcp "$MCP" "$UPSERT" "$REMOVE"
+  [ "$(jq -r '.mcpServers.github.command' "$MCP")" = "$GITHUB_CMD" ]
+  [ "$(jq -r '.mcpServers.docker.command' "$MCP")" = "$DOCKER_CMD" ]
+}
+
+@test "mcp-secrets upserts Brave and Firecrawl from env keys" {
+  write_core_upsert
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  export BRAVE_API_KEY=test-brave FIRECRAWL_API_KEY=test-fire
+  merge_cursor_mcp_secrets "$MCP" "$BRAVE_CMD" "$FIRECRAWL_CMD"
+  [ "$(jq -r '.mcpServers["brave-search"].command' "$MCP")" = "$BRAVE_CMD" ]
+  [ "$(jq -r '.mcpServers["brave-search"].env.BRAVE_API_KEY' "$MCP")" = "test-brave" ]
+  [ "$(jq -r '.mcpServers.firecrawl.env.FIRECRAWL_API_KEY' "$MCP")" = "test-fire" ]
+  [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
+}
+
+@test "mcp-secrets removes Brave and Firecrawl when keys are empty" {
+  write_core_upsert
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  export BRAVE_API_KEY=keep FIRECRAWL_API_KEY=keep
+  merge_cursor_mcp_secrets "$MCP" "$BRAVE_CMD" "$FIRECRAWL_CMD"
+  unset BRAVE_API_KEY FIRECRAWL_API_KEY
+  merge_cursor_mcp_secrets "$MCP" "$BRAVE_CMD" "$FIRECRAWL_CMD"
+  [ "$(jq -r '.mcpServers["brave-search"] // empty' "$MCP")" = "" ]
+  [ "$(jq -r '.mcpServers.firecrawl // empty' "$MCP")" = "" ]
+  [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
 }
