@@ -54,6 +54,24 @@ teardown() {
   [ ! -f "$NINEROUTER_SECRETS_FINGERPRINT" ]
 }
 
+@test "sync sources Home Manager store paths when siblings are missing" {
+  export NINEROUTER_LOAD_SECRETS_SH="$TMP/load.sh"
+  export NINEROUTER_CONFIGURE_SH="$TMP/configure.sh"
+  export NINEROUTER_MERGE_CURSOR_SH="$TMP/merge.sh"
+  printf 'home_load_secrets() { :; }\n' >"$NINEROUTER_LOAD_SECRETS_SH"
+  printf 'configure_9router() { :; }\n' >"$NINEROUTER_CONFIGURE_SH"
+  printf 'merge_cursor_mcp_secrets() { echo sourced-from-env >>"%s"; }\n' "$TMP/mark" >"$NINEROUTER_MERGE_CURSOR_SH"
+  mkdir -p "$HOME/.config/9router"
+  : >"$HOME/.config/9router/mcp-wrappers.env"
+  export BRAVE_API_KEY=k
+  printf '#!/bin/sh\nexit 0\n' >"$TMP/hook"
+  chmod +x "$TMP/hook"
+  export NINEROUTER_SYNC_HOOK="$TMP/hook"
+  run nine_router_sync_secrets "$TMP/proj"
+  [ "$status" -eq 0 ]
+  grep -q sourced-from-env "$TMP/mark"
+}
+
 @test "sync upserts Brave into mcp.json when wrappers exist" {
   command -v jq >/dev/null || skip "jq not installed"
   mkdir -p "$HOME/.cursor" "$HOME/.config/9router"
@@ -69,4 +87,16 @@ teardown() {
   [ "$(jq -r '.mcpServers["brave-search"].env.BRAVE_API_KEY' "$HOME/.cursor/mcp.json")" = "secret-brave" ]
   [ "$(jq -r '.mcpServers.firecrawl // empty' "$HOME/.cursor/mcp.json")" = "" ]
   [ "$(jq -r '.mcpServers.serena.command' "$HOME/.cursor/mcp.json")" = "/old/serena" ]
+}
+
+@test "sync skips configure when NINEROUTER_ENABLE is 0" {
+  export NINEROUTER_ENABLE=0
+  export BRAVE_API_KEY=new
+  printf '#!/bin/sh\necho ran >>"%s.ran"\n' "$NINEROUTER_SECRETS_FINGERPRINT" >"$TMP/hook"
+  chmod +x "$TMP/hook"
+  export NINEROUTER_SYNC_HOOK="$TMP/hook"
+  run nine_router_sync_secrets "$TMP/proj"
+  [ "$status" -eq 0 ]
+  [ ! -f "$NINEROUTER_SECRETS_FINGERPRINT.ran" ]
+  [ -s "$NINEROUTER_SECRETS_FINGERPRINT" ]
 }

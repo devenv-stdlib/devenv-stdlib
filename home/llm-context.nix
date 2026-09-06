@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.cursor.llmContext;
+  nine = config.cursor.ninerouter.enable;
   rtkPkg = import ./rtk-pkg.nix { inherit pkgs lib; };
   githubMcpPkg = import ./github-mcp-pkg.nix { inherit pkgs lib; };
   headroomVersion = "0.37.0";
@@ -91,139 +92,250 @@ in
     type = lib.types.bool;
     default = config.cursor.enable;
     description = ''
-      Install RTK, Serena, Headroom, 9Router, and Cursor MCP servers.
+      Install Serena, Context7, GitHub, Docker, and optional Brave/Firecrawl MCP.
+      Default path also installs RTK, a Ponytail rule, and Headroom MCP.
+      9Router is opt-in via cursor.ninerouter.enable.
       Defaults to cursor.enable.
     '';
   };
 
-  config = lib.mkIf cfg.enable {
-    # Do not set Cursor Override OpenAI Base URL: inference stays on
-    # Cursor/xAI. 9Router is the local API gateway; Headroom is a sidecar
-    # 9Router calls when it is up (fail-open if Headroom is down).
-    # TODO: Claude Code / Cortex wrap when we support those agents
+  options.cursor.ninerouter.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = false;
+    description = ''
+      Start 9Router and point Cursor at its OpenAI-compatible gateway.
+      Cursor Pro hosted models will not work while Override OpenAI Base URL is on.
+    '';
+  };
 
-    home = {
-      packages = [
-        rtkPkg
-        githubMcpPkg
-        pkgs.jq
-        pkgs.uv
-        pkgs.python313
-        pkgs.nodejs
-        pkgs.curl
-        pkgs.inotify-tools
-      ];
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        home = {
+          packages = [
+            githubMcpPkg
+            pkgs.jq
+            pkgs.uv
+            pkgs.python313
+            pkgs.nodejs
+            pkgs.curl
+            pkgs.inotify-tools
+          ]
+          ++ lib.optionals (!nine) [ rtkPkg ];
 
-      sessionVariables.UV_TOOL_BIN_DIR = uvBinDir;
+          sessionVariables.UV_TOOL_BIN_DIR = uvBinDir;
 
-      file.".cursor/rules/web-crawl-fallback.mdc".text = ''
-        ---
-        description: Fall back to Cursor's browser when crawl MCPs hit quota
-        ---
+          # First home-switch needs network. `uv tool install` with a pin is
+          # idempotent on later switches.
+          activation = {
+            installLlmContextUvTools = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+              export UV_TOOL_BIN_DIR=${lib.escapeShellArg uvBinDir}
+              mkdir -p "$UV_TOOL_BIN_DIR"
+              ${uv} tool install --python ${python} "serena-agent==${serenaVersion}"
+              ${lib.optionalString (!nine) ''
+                ${uv} tool install --python ${python} "headroom-ai[mcp]==${headroomVersion}"
+              ''}
+            '';
 
-        If Brave Search or Firecrawl returns a quota, 429, or auth error, use
-        Cursor's built-in browser instead of retrying that MCP. This is
-        guidance only; Cursor does not auto-switch tools.
-      '';
-
-      # First home-switch needs network. `uv tool install` with a pin is
-      # idempotent on later switches.
-      activation = {
-        installLlmContextUvTools = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          export UV_TOOL_BIN_DIR=${lib.escapeShellArg uvBinDir}
-          mkdir -p "$UV_TOOL_BIN_DIR"
-          ${uv} tool install --python ${python} "headroom-ai[proxy,mcp]==${headroomVersion}"
-          ${uv} tool install --python ${python} "serena-agent==${serenaVersion}"
-        '';
-
-        mergeCursorLlm = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-          export JQ=${lib.escapeShellArg jq}
-          ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} hooks "$HOME/.cursor/hooks.json" ${lib.escapeShellArg (toString rtkRewrite)}
-
-          # Host-owned paths. ~/.9router is the container DATA_DIR (rootless uid).
-          mkdir -p "$HOME/.config/9router"
-          umask 077
-          printf 'BRAVE_MCP=%s\nFIRECRAWL_MCP=%s\n' \
-            ${lib.escapeShellArg (toString braveMcp)} \
-            ${lib.escapeShellArg (toString firecrawlMcp)} \
-            >"$HOME/.config/9router/mcp-wrappers.env"
-          chmod 600 "$HOME/.config/9router/mcp-wrappers.env"
-
-          upsert=$(mktemp)
-          ${jq} -n \
-            --arg serena ${lib.escapeShellArg (toString serenaWrapped)} \
-            --arg headroom ${lib.escapeShellArg (toString headroomWrapped)} \
-            --arg github ${lib.escapeShellArg (toString githubMcp)} \
-            --arg docker ${lib.escapeShellArg (toString dockerMcp)} \
-            '
-              {
-                serena: { command: $serena, args: ["start-mcp-server", "--context", "ide"] },
-                headroom: { command: $headroom, args: ["mcp", "serve", "--proxy-url", "http://127.0.0.1:8787"] },
-                context7: { url: "https://mcp.context7.com/mcp" },
-                github: { command: $github },
-                docker: { command: $docker }
+            mergeCursorLlm = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+              export JQ=${lib.escapeShellArg jq}
+              ${
+                if nine then
+                  ''
+                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} hooks-remove "$HOME/.cursor/hooks.json"
+                    rm -f "$HOME/.cursor/rules/ponytail.mdc" "$HOME/.cursor/rules/headroom-compress.mdc"
+                  ''
+                else
+                  ''
+                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} hooks "$HOME/.cursor/hooks.json" ${lib.escapeShellArg (toString rtkRewrite)}
+                  ''
               }
-            ' >"$upsert"
-          ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} mcp "$HOME/.cursor/mcp.json" "$upsert"
-          rm -f "$upsert"
-          ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} mcp-secrets "$HOME/.cursor/mcp.json" \
-            ${lib.escapeShellArg (toString braveMcp)} \
-            ${lib.escapeShellArg (toString firecrawlMcp)}
-        '';
 
-        # Before units start: systemd does not load .env. The start script
-        # hashes INITIAL_PASSWORD so the tunnel gate sees hasPassword.
-        writeNineRouterPassword = lib.hm.dag.entryBefore [ "reloadSystemd" ] ''
-          mkdir -p "$HOME/.config/9router"
-          passfile="$HOME/.config/9router/initial-password"
-          if [ -n "''${INITIAL_PASSWORD:-}" ]; then
-            umask 077
-            printf '%s' "$INITIAL_PASSWORD" >"$passfile"
-            chmod 600 "$passfile"
-          fi
-          if [ -n "''${DEVENV_ROOT:-}" ]; then
-            printf '%s\n' "$DEVENV_ROOT" >"$HOME/.config/9router/devenv-root"
-          fi
-        '';
+              # Host-owned paths. ~/.9router is the container DATA_DIR (rootless uid).
+              mkdir -p "$HOME/.config/9router"
+              umask 077
+              printf 'BRAVE_MCP=%s\nFIRECRAWL_MCP=%s\n' \
+                ${lib.escapeShellArg (toString braveMcp)} \
+                ${lib.escapeShellArg (toString firecrawlMcp)} \
+                >"$HOME/.config/9router/mcp-wrappers.env"
+              chmod 600 "$HOME/.config/9router/mcp-wrappers.env"
 
-        configureNineRouter = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
-          export PATH=${
-            lib.escapeShellArg (
-              lib.makeBinPath [
-                pkgs.curl
-                pkgs.jq
-              ]
-            )
-          }:$PATH
-          ${pkgs.runtimeShell} ${./configure-9router.sh} http://127.0.0.1:20128 http://host.docker.internal:8787 || true
-        '';
-      };
-    };
+              upsert=$(mktemp)
+              remove=$(mktemp)
+              ${
+                if nine then
+                  ''
+                    ${jq} -n \
+                      --arg serena ${lib.escapeShellArg (toString serenaWrapped)} \
+                      --arg github ${lib.escapeShellArg (toString githubMcp)} \
+                      --arg docker ${lib.escapeShellArg (toString dockerMcp)} \
+                      '
+                        {
+                          serena: { command: $serena, args: ["start-mcp-server", "--context", "ide"] },
+                          context7: { url: "https://mcp.context7.com/mcp" },
+                          github: { command: $github },
+                          docker: { command: $docker }
+                        }
+                      ' >"$upsert"
+                    printf '%s\n' '["headroom"]' >"$remove"
+                  ''
+                else
+                  ''
+                    ${jq} -n \
+                      --arg serena ${lib.escapeShellArg (toString serenaWrapped)} \
+                      --arg headroom ${lib.escapeShellArg (toString headroomWrapped)} \
+                      --arg github ${lib.escapeShellArg (toString githubMcp)} \
+                      --arg docker ${lib.escapeShellArg (toString dockerMcp)} \
+                      '
+                        {
+                          serena: { command: $serena, args: ["start-mcp-server", "--context", "ide"] },
+                          headroom: { command: $headroom, args: ["mcp", "serve"] },
+                          context7: { url: "https://mcp.context7.com/mcp" },
+                          github: { command: $github },
+                          docker: { command: $docker }
+                        }
+                      ' >"$upsert"
+                    printf '%s\n' '[]' >"$remove"
+                  ''
+              }
+              ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} mcp "$HOME/.cursor/mcp.json" "$upsert" "$remove"
+              rm -f "$upsert" "$remove"
+              ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} mcp-secrets "$HOME/.cursor/mcp.json" \
+                ${lib.escapeShellArg (toString braveMcp)} \
+                ${lib.escapeShellArg (toString firecrawlMcp)}
+            '';
 
-    systemd.user = {
-      startServices = "sd-switch";
-      services = {
-        headroom-proxy = {
-          Unit = {
-            Description = "Headroom sidecar (9Router saver + MCP retrieve/stats)";
-          };
-          Service = {
-            # Do not point Headroom at 9Router (loop). 9Router calls this URL.
-            # 0.0.0.0 so a rootless container can reach the host LAN IP as
-            # host.docker.internal. Host livez stays http://127.0.0.1:8787.
-            ExecStart = "${headroomWrapped} proxy --host 0.0.0.0 --port 8787";
-            Restart = "on-failure";
-            RestartSec = "5s";
-          };
-          Install = {
-            WantedBy = [ "default.target" ];
+            writeDevenvRoot = lib.hm.dag.entryBefore [ "reloadSystemd" ] ''
+              mkdir -p "$HOME/.config/9router"
+              if [ -n "''${DEVENV_ROOT:-}" ]; then
+                printf '%s\n' "$DEVENV_ROOT" >"$HOME/.config/9router/devenv-root"
+              fi
+            '';
           };
         };
-        ninerouter = {
+
+        systemd.user = {
+          startServices = "sd-switch";
+          services.ninerouter-secrets-watch = {
+            Unit = {
+              Description = "Sync Cursor MCP keys when SecretSpec changes";
+            }
+            // lib.optionalAttrs nine {
+              After = [ "ninerouter.service" ];
+              Wants = [ "ninerouter.service" ];
+            };
+            Service = {
+              Environment = [
+                "PATH=${config.home.profileDirectory}/bin:/usr/local/bin:/usr/bin:/bin"
+                "NINEROUTER_LOAD_SECRETS_SH=${./load-secrets.sh}"
+                "NINEROUTER_CONFIGURE_SH=${./configure-9router.sh}"
+                "NINEROUTER_MERGE_CURSOR_SH=${./merge-cursor-llm.sh}"
+                "NINEROUTER_ENABLE=${if nine then "1" else "0"}"
+              ];
+              ExecStart = "${pkgs.runtimeShell} ${./watch-9router-secrets.sh} watch";
+              Restart = "on-failure";
+              RestartSec = "10s";
+            };
+            Install = {
+              WantedBy = [ "default.target" ];
+            };
+          };
+        };
+      }
+
+      (lib.mkIf (!nine) {
+        # Do not write Override OpenAI Base URL. Compaction is RTK + Ponytail
+        # rule + official Headroom MCP (no proxy, no headroom-proxy unit).
+        home.file = {
+          ".cursor/rules/ponytail.mdc".text = ''
+            ---
+            description: Prefer short diffs and YAGNI (Ponytail)
+            alwaysApply: true
+            ---
+
+            # Ponytail
+
+            Prefer the shortest working change. Delete unused code. Do not add
+            abstractions, helpers, or files the user did not ask for. Keep security
+            and error handling. Standard library over new dependencies.
+          '';
+
+          ".cursor/rules/headroom-compress.mdc".source = ../.cursor/rules/headroom-compress.mdc;
+
+          ".cursor/rules/web-crawl-fallback.mdc".text = ''
+            ---
+            description: Fall back to Cursor's browser when crawl MCPs hit quota
+            ---
+
+            If Brave Search or Firecrawl returns a quota, 429, or auth error, use
+            Cursor's built-in browser instead of retrying that MCP. This is
+            guidance only; Cursor does not auto-switch tools.
+          '';
+        };
+      })
+
+      (lib.mkIf nine {
+        # Cursor stores Override OpenAI Base URL in the Models GUI, not
+        # settings.json. configure-9router.sh writes ~/.config/9router/cursor-api-key
+        # and cursor-openai.hint. Built-in Cursor/Grok models refuse that override.
+        # TODO: Claude Code / Cortex wrap when we support those agents
+        home = {
+          file = {
+            ".config/9router/cursor-openai.hint".text = ''
+              Cursor Settings → Models → Advanced (API Keys)
+                Override OpenAI Base URL: http://127.0.0.1:20128/v1
+                OpenAI API Key: contents of ~/.config/9router/cursor-api-key
+              Then pick a 9Router model or combo (not Auto / Cursor Grok).
+              Built-in Cursor Pro models fail while that override is on.
+              If that key file is missing, copy a key from Dashboard → Keys (plaintext is shown only at create time).
+              Turn the key toggle off (Ctrl+Shift+0) to use Pro models again.
+            '';
+
+            ".cursor/rules/web-crawl-fallback.mdc".text = ''
+              ---
+              description: Fall back to Cursor's browser when crawl MCPs hit quota
+              ---
+
+              Prefer a 9Router model (Override OpenAI Base URL
+              http://127.0.0.1:20128/v1) so 9Router can fall back across
+              Brave/Firecrawl. Auto, Cursor Grok, and Cursor WebSearch skip
+              that gateway. Cursor Pro models fail while the key toggle is on.
+
+              If Brave Search or Firecrawl returns a quota, 429, or auth error, use
+              Cursor's built-in browser instead of retrying that MCP. This is
+              guidance only; Cursor does not auto-switch tools.
+            '';
+          };
+
+          activation = {
+            writeNineRouterPassword = lib.hm.dag.entryBefore [ "reloadSystemd" ] ''
+              mkdir -p "$HOME/.config/9router"
+              passfile="$HOME/.config/9router/initial-password"
+              if [ -n "''${INITIAL_PASSWORD:-}" ]; then
+                umask 077
+                printf '%s' "$INITIAL_PASSWORD" >"$passfile"
+                chmod 600 "$passfile"
+              fi
+            '';
+
+            configureNineRouter = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+              export PATH=${
+                lib.escapeShellArg (
+                  lib.makeBinPath [
+                    pkgs.curl
+                    pkgs.jq
+                  ]
+                )
+              }:$PATH
+              ${pkgs.runtimeShell} ${./configure-9router.sh} http://127.0.0.1:20128 http://host.docker.internal:8787 || true
+              echo "9Router: set Cursor Override OpenAI Base URL — see $HOME/.config/9router/cursor-openai.hint" >&2
+            '';
+          };
+        };
+
+        systemd.user.services.ninerouter = {
           Unit = {
-            Description = "9Router API gateway (Headroom saver fail-open)";
-            Wants = [ "headroom-proxy.service" ];
-            After = [ "headroom-proxy.service" ];
+            Description = "9Router API gateway (built-in RTK + Ponytail)";
           };
           Service = {
             Environment = [
@@ -240,25 +352,7 @@ in
             WantedBy = [ "default.target" ];
           };
         };
-        ninerouter-secrets-watch = {
-          Unit = {
-            Description = "Sync 9Router and Cursor MCP keys when SecretSpec changes";
-            After = [ "ninerouter.service" ];
-            Wants = [ "ninerouter.service" ];
-          };
-          Service = {
-            Environment = [
-              "PATH=${config.home.profileDirectory}/bin:/usr/local/bin:/usr/bin:/bin"
-            ];
-            ExecStart = "${pkgs.runtimeShell} ${./watch-9router-secrets.sh} watch";
-            Restart = "on-failure";
-            RestartSec = "10s";
-          };
-          Install = {
-            WantedBy = [ "default.target" ];
-          };
-        };
-      };
-    };
-  };
+      })
+    ]
+  );
 }

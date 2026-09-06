@@ -32,7 +32,7 @@ write_core_upsert() {
     --arg docker "$DOCKER_CMD" \
     '{
       serena: { command: $serena, args: ["start-mcp-server", "--context", "ide"] },
-      headroom: { command: $headroom, args: ["mcp", "serve", "--proxy-url", "http://127.0.0.1:8787"] },
+      headroom: { command: $headroom, args: ["mcp", "serve"] },
       context7: { url: "https://mcp.context7.com/mcp" },
       github: { command: $github },
       docker: { command: $docker }
@@ -101,7 +101,7 @@ EOF
   [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
   [ "$(jq -r '.mcpServers.serena.args | join(" ")' "$MCP")" = "start-mcp-server --context ide" ]
   [ "$(jq -r '.mcpServers.headroom.command' "$MCP")" = "$HEADROOM_CMD" ]
-  [ "$(jq -r '.mcpServers.headroom.args | join(" ")' "$MCP")" = "mcp serve --proxy-url http://127.0.0.1:8787" ]
+  [ "$(jq -r '.mcpServers.headroom.args | join(" ")' "$MCP")" = "mcp serve" ]
   [ "$(jq -r '.mcpServers.context7.url' "$MCP")" = "https://mcp.context7.com/mcp" ]
   [ "$(jq -r '.mcpServers.github.command' "$MCP")" = "$GITHUB_CMD" ]
   [ "$(jq -r '.mcpServers.docker.command' "$MCP")" = "$DOCKER_CMD" ]
@@ -201,6 +201,45 @@ EOF
   [ "$(jq -r '.mcpServers["brave-search"].env.BRAVE_API_KEY' "$MCP")" = "test-brave" ]
   [ "$(jq -r '.mcpServers.firecrawl.env.FIRECRAWL_API_KEY' "$MCP")" = "test-fire" ]
   [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
+}
+
+@test "hooks-remove drops RTK entries and keeps other preToolUse hooks" {
+  mkdir -p "$(dirname "$HOOKS")"
+  cat >"$HOOKS" <<'EOF'
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      { "matcher": "Read", "command": "/usr/local/bin/audit-read" },
+      { "matcher": "Shell", "command": "/nix/store/rtk-rewrite-test/bin/rtk-rewrite.sh" },
+      { "matcher": "Shell", "command": "rtk hook cursor" }
+    ]
+  }
+}
+EOF
+  merge_cursor_hooks_remove "$HOOKS"
+  [ "$(jq -r '.hooks.preToolUse | length' "$HOOKS")" -eq 1 ]
+  [ "$(jq -r '.hooks.preToolUse[0].command' "$HOOKS")" = "/usr/local/bin/audit-read" ]
+}
+
+@test "hooks-remove CLI is a no-op when hooks.json is missing" {
+  "$REPO_DIR/home/merge-cursor-llm.sh" hooks-remove "$HOOKS"
+  [ ! -e "$HOOKS" ]
+}
+
+@test "removes Headroom MCP when switching to gateway mode" {
+  write_core_upsert
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  [ "$(jq -r '.mcpServers.headroom.command' "$MCP")" = "$HEADROOM_CMD" ]
+
+  jq 'del(.headroom)' "$UPSERT" >"$UPSERT.next"
+  mv -f "$UPSERT.next" "$UPSERT"
+  printf '%s\n' '["headroom"]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  [ "$(jq -r '.mcpServers.headroom // empty' "$MCP")" = "" ]
+  [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
+  [ "$(jq -r '.mcpServers.context7.url' "$MCP")" = "https://mcp.context7.com/mcp" ]
 }
 
 @test "mcp-secrets removes Brave and Firecrawl when keys are empty" {

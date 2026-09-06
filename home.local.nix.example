@@ -15,6 +15,10 @@
   # RTK / Serena / Headroom for Cursor (default: cursor.enable).
   # cursor.llmContext.enable = false;
 
+  # 9Router gateway (default: false). Copier writes home/copier-llm.nix.
+  # Cursor Pro models fail while Override OpenAI Base URL is on.
+  # cursor.ninerouter.enable = true;
+
   # Rootless Docker is the default (act, 9Router, Docker MCP).
   # export DOCKER_HOST=unix:///var/run/docker.sock to use a rootful daemon,
   # or turn the helper off:
