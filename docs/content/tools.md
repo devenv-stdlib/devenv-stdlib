@@ -53,6 +53,8 @@ copier update
 copier check-update
 ```
 
+`copier update` is how generated monorepos receive newer RTK/Serena/Headroom/9Router/MCP/debtmap pins. `update` / `devenv update` do not rewrite those files. See [Apply](#apply) and [Contribution guide](#contributing).
+
 - Docs: [Copier](https://copier.readthedocs.io/en/stable)
 
 ### Cachix
@@ -64,6 +66,19 @@ cachix use devenv    # already done by setup.sh
 ```
 
 - Docs: [Cachix](https://docs.cachix.org/)
+
+### Docker (rootless)
+
+This stack defaults to **rootless Docker**. `devenv shell` and `~/.bashrc.d/20-docker-rootless.sh` set `DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock` so `docker`, `act`, 9Router, and the Docker MCP talk to the user daemon even if a rootful Engine is also installed. GitHub Actions leaves `DOCKER_HOST` unset (`CI` / `GITHUB_ACTIONS`). `setup.sh` does not install Docker.
+
+```bash
+echo "$DOCKER_HOST"    # unix:///run/user/$(id -u)/docker.sock
+docker info
+```
+
+Install: [Rootless mode](https://docs.docker.com/engine/security/rootless/). Then `dockerd-rootless-setuptool.sh install`, `systemctl --user enable --now docker`, and `loginctl enable-linger "$USER"`. Override with `DOCKER_HOST=unix:///var/run/docker.sock` or `docker.rootless.enable = false;` in `home.local.nix`.
+
+- Docs: [docs.docker.com/engine/security/rootless](https://docs.docker.com/engine/security/rootless/)
 
 ### direnv
 
@@ -198,7 +213,7 @@ GNOME extension that drops the terminal from the top of the screen.
 # home.local.nix: cursor.enable = false;
 ```
 
-`cursor.llmContext.enable` (default: `cursor.enable`) installs RTK, Serena, and Headroom and merges Cursor hooks/MCP. It does **not** set Override OpenAI Base URL.
+`cursor.llmContext.enable` (default: `cursor.enable`) installs RTK, Serena, Headroom, 9Router, and Cursor MCP servers and merges hooks/MCP. It does **not** set Override OpenAI Base URL.
 
 - Docs: [cursor.com/docs](https://cursor.com/docs)
 
@@ -215,7 +230,7 @@ rtk rewrite "git status"
 
 ### Headroom
 
-[Headroom](https://github.com/headroomlabs-ai/headroom) compresses and retrieves context over MCP. Home Manager installs `headroom-ai[proxy,mcp]` with `uv tool install` and runs `headroom-proxy` (`127.0.0.1:8787`) as a systemd user service. The proxy is for the dashboard and MCP retrieve/stats, not Cursor model traffic.
+[Headroom](https://github.com/headroomlabs-ai/headroom) is a sidecar saver for 9Router plus MCP retrieve/stats. Home Manager installs `headroom-ai[proxy,mcp]` with `uv tool install` and runs `headroom-proxy` (`0.0.0.0:8787` so a rootless container can reach the host LAN IP; host check is still `http://127.0.0.1:8787/livez`). 9Router calls `http://host.docker.internal:8787` from the container when Headroom is up and fail-opens if it is down. Headroom is not Cursor model traffic and must not use 9Router as `--openai-api-url` (loop).
 
 ```bash
 headroom --help
@@ -225,7 +240,7 @@ headroom --help
 
 ### Serena
 
-[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` with `uv tool install` and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide`).
+[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` with `uv tool install` and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide`). devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override in `.serena/project.local.yml`.
 
 ```bash
 serena start-mcp-server --help
@@ -233,6 +248,52 @@ serena start-mcp-server --help
 
 - Docs: [oraios.github.io/serena](https://oraios.github.io/serena/)
 - Donate: [github.com/sponsors/oraios](https://github.com/sponsors/oraios)
+
+### 9Router
+
+[9Router](https://github.com/decolua/9router) is the local API gateway (`decolua/9router:0.5.69`). Home Manager starts the `ninerouter` user service with `-p 127.0.0.1:20128:20128` (rootless Docker is the default; not `--network host`) and `--add-host=host.docker.internal:<host IPv4>`. A loopback TCP proxy inside the container forwards that published port to 9Router on `127.0.0.1` so dashboard local-only routes (tunnel enable) do not demand a CLI token. Docker `host-gateway` is the bridge in the rootlesskit netns and does not reach host loopback, so the start script uses the host default-route address (`NINEROUTER_HOST_IP` overrides). It then PATCHes settings (`rtkEnabled`, `headroomEnabled`, `headroomUrl: http://host.docker.internal:8787`, Ponytail on, Caveman off). The host curl to 9Router stays `http://127.0.0.1:20128`. Open that URL to log in with `INITIAL_PASSWORD` from gitignored `.env` (copied to `~/.config/9router/initial-password` **before** the unit starts). The start script hashes `INITIAL_PASSWORD` into settings so the tunnel gate (`hasPassword`) is satisfied. Env-only login is still the default password until that hash exists. A custom hash from Dashboard → Settings is not overwritten. `~/.9router` is rootless-owned `DATA_DIR`. A locked `/api/settings` does not fail `home-switch`.
+
+```bash
+# after home-switch, with Docker on PATH
+curl -fsS http://127.0.0.1:20128/livez || curl -fsS http://127.0.0.1:20128/
+```
+
+- Docs: [github.com/decolua/9router](https://github.com/decolua/9router) · [9router.com](https://9router.com)
+
+### Context7
+
+[Context7](https://github.com/upstash/context7) is a remote MCP for up-to-date library docs. Home Manager upserts `https://mcp.context7.com/mcp` into `~/.cursor/mcp.json`. No API key is asked at copy time.
+
+- Docs: [github.com/upstash/context7](https://github.com/upstash/context7)
+- Donate: [github.com/sponsors/upstash](https://github.com/sponsors/upstash)
+
+### GitHub MCP
+
+The official [github-mcp-server](https://github.com/github/github-mcp-server) (1.11.0) runs over stdio. A wrapper sets `GITHUB_PERSONAL_ACCESS_TOKEN` from `gh auth token` and warns if you have not logged in.
+
+```bash
+gh auth login
+```
+
+- Docs: [github/github-mcp-server](https://github.com/github/github-mcp-server)
+
+### Docker Engine MCP
+
+Host Docker Engine tools via `docker run -i --rm -v $XDG_RUNTIME_DIR/docker.sock:/var/run/docker.sock mcp/docker:0.0.19` — not the Docker MCP Gateway. The wrapper uses the rootless socket (`DOCKER_HOST` if you set it). It warns if `docker` or that socket is missing.
+
+- Docs: [hub.docker.com/r/mcp/docker](https://hub.docker.com/r/mcp/docker)
+
+### Brave Search
+
+Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key (free tier). Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server@2.1.3` (`npx -y`, STDIO) when `BRAVE_API_KEY` is set. The same key is POSTed to 9Router as a `brave-search` connection named `devenv` after dashboard login (`configure-9router.sh`).
+
+- Docs: [Brave Search API](https://brave.com/search/api/) · [brave-search-mcp-server](https://github.com/brave/brave-search-mcp-server)
+
+### Firecrawl
+
+Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (free tier). Empty skips the MCP. Same SecretSpec / `.env` path as Brave. Home Manager upserts `firecrawl-mcp@3.24.0` (`npx -y`) when `FIRECRAWL_API_KEY` is set. The same key is upserted into 9Router as a `firecrawl` connection named `devenv`.
+
+- Docs: [Firecrawl](https://www.firecrawl.dev/) · [MCP](https://docs.firecrawl.dev/mcp-server)
 
 ### Neovim and nano
 
@@ -282,7 +343,7 @@ debtmap --help
 
 ### BATS and act
 
-[BATS](https://bats-core.readthedocs.io/) is the shell test runner (`bats -r tests`). [act](https://nektosact.com/) replays GitHub Actions locally; `test-devenv` builds `devenv-act:24.04` and runs `act workflow_call` on generated workflows. `.actrc` maps both `ubuntu-24.04` and `ubuntu-26.04` to that image. `act` is also user-global (`home/act.nix`).
+[BATS](https://bats-core.readthedocs.io/) is the shell test runner (`bats -r tests`). [act](https://nektosact.com/) replays GitHub Actions locally; `test-devenv` builds `devenv-act:24.04` and runs `act workflow_call` on generated workflows. `.actrc` maps both `ubuntu-24.04` and `ubuntu-26.04` to that image. `act` is also user-global (`home/act.nix`). Local act uses the rootless Engine (`DOCKER_HOST`).
 
 ```bash
 bats -r tests

@@ -9,9 +9,13 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `devenv.yaml` / `devenv.lock` | Inputs and pinned lock |
 | `devenv.local.nix` | Questionnaire output (`name`, `languages.*`, `supported.*`) |
 | `devenv.local.nix.example` | Extra options to append (debtmap, packages, `supported.*.max`) |
-| `home.nix` / `home/` | Home Manager (terminal, Cursor, user-global CLIs) |
+| `update.local.sh` | Gitignored consumer hook; `update` runs it after `devenv update` |
+| `.cursor/rules/update.mdc` | `update` is your lock + hook; template tools use `copier update` |
+| `home.nix` / `home/` | Home Manager (terminal, Cursor, user-global CLIs, rootless Docker `DOCKER_HOST`) |
 | `home.local.nix` | Gitignored host overrides |
-| `modules/` | Languages, versions, hooks, debtmap, packages |
+| `secretspec.toml` | Optional Brave / Firecrawl secret names (values stay out of git) |
+| `.env` | Gitignored dotenv; Copier writes keys when you pasted them |
+| `modules/` | Languages, versions, hooks, debtmap, packages, `update` |
 | `modules/toolchain-catalog.json` | Cycle → latest patch and EOL |
 | `hooks/reference-transaction` | Tag guard, installed on `devenv shell` |
 | `.github/workflows/ci.yml` | `test-devenv`, generated `test.yml`, semantic-release |

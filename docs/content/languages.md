@@ -1,6 +1,8 @@
 # Languages and versions
 
-Languages stay off in this template repo. Generated monorepos enable them through the Copier questionnaire (`devenv.local.nix`). That also installs matching Cursor extensions, writes this project's `.vscode` recommendations, and turns on that language's git hooks.
+Languages stay off in this template repo. Generated monorepos enable them through the Copier questionnaire (`devenv.local.nix`). That also installs matching Cursor extensions, writes this project's `.vscode` recommendations, generates `.serena/project.yml` `language_servers` for Serena (Serena starts its own LSPs, not Cursor's), and turns on that language's git hooks.
+
+`devenv shell` writes `.serena/project.yml` (gitignored) from `languages.*`. This template keeps languages off, so the list is `[nix]` only. A generated monorepo with rust on gets `[nix, rust]`. JavaScript and TypeScript both map to Serena's `typescript` id (once). Override in `.serena/project.local.yml` (already gitignored). There is no committed stub; the file appears after the first `devenv shell`.
 
 `copier copy` writes `name`, `languages.*`, and `supported.*`. `copier update` re-asks those questions. Add extra options from `devenv.local.nix.example` (debtmap, packages, `supported.*.max`) below the generated block.
 
