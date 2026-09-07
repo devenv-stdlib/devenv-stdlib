@@ -107,7 +107,7 @@ build-act-image              # devenv-act:24.04 for local act
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
 | `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
-| `tests/home/cursor-llm.bats` | Cursor `hooks.json` / `mcp.json` merge (RTK add/remove, Serena, Headroom MCP without proxy URL, Context7, GitHub, Docker, optional Brave/Firecrawl) |
+| `tests/home/cursor-llm.bats` | Cursor `hooks.json` / `mcp.json` / `permissions.json` merge (RTK add/remove, `rtk` allowlist upsert, Serena, Headroom MCP without proxy URL, Context7, GitHub, Docker, optional Brave/Firecrawl) |
 | `tests/home/configure-9router.bats` | 9Router settings (`headroomEnabled` false) + Brave/Firecrawl upsert + devenv gateway key (fake curl) |
 | `tests/home/ninerouter-start.bats` | persist INITIAL_PASSWORD as a 9Router bcrypt hash (tunnel gate); in-container loopback proxy for local-only dashboard routes |
 | `tests/home/load-secrets.bats` | `home-switch` SecretSpec export vs `.env` fallback |
@@ -147,6 +147,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `modules/update.nix` | `update` script (template pins vs consumer lock; copied) |
 | `.cursor/rules/update.mdc` | Consumer rule: `update` vs `copier update` (copied) |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large blobs (copied; `~/.cursor/rules/` after `home-switch` when 9Router is off) |
+| `.cursor/rules/rtk-passthrough.mdc` | Retry once without RTK compaction when a detail is missing (copied; `~/.cursor/rules/` when 9Router is off) |
 | `.cursor/rules/non-nix-update.mdc` | Author pin/refresher rule (not copied) |
 | `modules/toolchain-catalog.json` | Cycle → latest patch and EOL (copied) |
 | `docs/` | Pages site (not copied) |
