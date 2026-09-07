@@ -224,7 +224,7 @@ GNOME extension that drops the terminal from the top of the screen.
 
 ### RTK
 
-[RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. When `cursor.ninerouter.enable` is off, Home Manager pins the official release binary and merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`. It does not run `rtk init`. When 9Router is on, the gateway’s built-in RTK is used and that host hook is removed.
+[RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. When `cursor.ninerouter.enable` is off, Home Manager pins the official release binary, merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`, and upserts `rtk` into `~/.cursor/permissions.json` `terminalAllowlist` (other prefixes stay; this key replaces the in-app terminal allowlist). It does not run `rtk init`. `.cursor/rules/rtk-passthrough.mdc` (also `~/.cursor/rules/` after `home-switch`) tells the agent to retry once with `RTK_DISABLED=1` or `--no-compact` only when a needed detail is missing. When 9Router is on, the gateway’s built-in RTK is used and that host hook and rule are removed.
 
 ```bash
 rtk rewrite "git status"

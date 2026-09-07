@@ -12,6 +12,7 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `update.local.sh` | Gitignored consumer hook; `update` runs it after `devenv update` |
 | `.cursor/rules/update.mdc` | `update` is your lock + hook; template tools use `copier update` |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large tool output or pastes |
+| `.cursor/rules/rtk-passthrough.mdc` | Retry once without RTK compaction when a needed detail is missing |
 | `home.nix` / `home/` | Home Manager (terminal, Cursor, user-global CLIs, rootless Docker `DOCKER_HOST`) |
 | `home/copier-llm.nix` | Copier `ninerouter` → `cursor.ninerouter.enable` (default false) |
 | `home.local.nix` | Gitignored host overrides |
