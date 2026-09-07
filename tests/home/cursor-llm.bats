@@ -254,3 +254,45 @@ EOF
   [ "$(jq -r '.mcpServers.firecrawl // empty' "$MCP")" = "" ]
   [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
 }
+
+@test "permissions merge creates terminalAllowlist with rtk" {
+  PERM="$TMP/.cursor/permissions.json"
+  merge_cursor_permissions "$PERM"
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "rtk" ]
+}
+
+@test "permissions merge upserts rtk without dropping other prefixes or keys" {
+  PERM="$TMP/.cursor/permissions.json"
+  mkdir -p "$(dirname "$PERM")"
+  cat >"$PERM" <<'EOF'
+{
+  "mcpAllowlist": ["github:*"],
+  "terminalAllowlist": ["git", "npm"]
+}
+EOF
+  merge_cursor_permissions "$PERM"
+  merge_cursor_permissions "$PERM"
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "git npm rtk" ]
+  [ "$(jq -r '.mcpAllowlist[0]' "$PERM")" = "github:*" ]
+}
+
+@test "permissions merge accepts JSONC line comments" {
+  PERM="$TMP/.cursor/permissions.json"
+  mkdir -p "$(dirname "$PERM")"
+  cat >"$PERM" <<'EOF'
+{
+  // host allowlist
+  "terminalAllowlist": [
+    "git" // prefix
+  ]
+}
+EOF
+  merge_cursor_permissions "$PERM"
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "git rtk" ]
+}
+
+@test "permissions CLI upserts rtk" {
+  PERM="$TMP/.cursor/permissions.json"
+  "$REPO_DIR/home/merge-cursor-llm.sh" permissions "$PERM"
+  [ "$(jq -r '.terminalAllowlist[0]' "$PERM")" = "rtk" ]
+}

@@ -205,6 +205,7 @@ init_dest_git() {
   [ "$status" -eq 0 ]
 
   [ -f "$DEST/.cursor/rules/update.mdc" ]
+  [ -f "$DEST/.cursor/rules/rtk-passthrough.mdc" ]
   [ -f "$DEST/modules/update.nix" ]
   [ -f "$DEST/modules/update.sh" ]
   [ ! -e "$DEST/.cursor/rules/non-nix-update.mdc" ]
