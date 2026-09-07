@@ -143,11 +143,14 @@ in
                 if nine then
                   ''
                     ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} hooks-remove "$HOME/.cursor/hooks.json"
-                    rm -f "$HOME/.cursor/rules/ponytail.mdc" "$HOME/.cursor/rules/headroom-compress.mdc"
+                    rm -f "$HOME/.cursor/rules/ponytail.mdc" \
+                      "$HOME/.cursor/rules/headroom-compress.mdc" \
+                      "$HOME/.cursor/rules/rtk-passthrough.mdc"
                   ''
                 else
                   ''
                     ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} hooks "$HOME/.cursor/hooks.json" ${lib.escapeShellArg (toString rtkRewrite)}
+                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} permissions "$HOME/.cursor/permissions.json"
                   ''
               }
 
@@ -261,6 +264,8 @@ in
           '';
 
           ".cursor/rules/headroom-compress.mdc".source = ../.cursor/rules/headroom-compress.mdc;
+
+          ".cursor/rules/rtk-passthrough.mdc".source = ../.cursor/rules/rtk-passthrough.mdc;
 
           ".cursor/rules/web-crawl-fallback.mdc".text = ''
             ---

@@ -108,6 +108,47 @@ merge_cursor_mcp() {
   mv -f "$tmp" "$mcp_json"
 }
 
+# Cursor JSONC: drop // line comments so jq can parse. Other keys stay.
+merge_cursor_jsonc_strip() {
+  sed -E '/^[[:space:]]*\/\//d; s/[[:space:]]+\/\/.*$//'
+}
+
+# Upsert "rtk" into terminalAllowlist. Does not replace other prefixes or keys.
+# Usage: merge_cursor_permissions <permissions.json>
+merge_cursor_permissions() {
+  local perm_json=$1
+  local jq=${JQ:-jq}
+  local dir tmp stripped
+
+  dir=$(dirname "$perm_json")
+  mkdir -p "$dir"
+
+  tmp=$(mktemp "$perm_json.XXXXXX")
+  if [[ -s $perm_json ]]; then
+    stripped=$(mktemp)
+    if ! merge_cursor_jsonc_strip <"$perm_json" >"$stripped"; then
+      rm -f "$tmp" "$stripped"
+      return 1
+    fi
+    if ! "$jq" '
+      .terminalAllowlist = (
+        (.terminalAllowlist // []) as $a
+        | $a + if ($a | index("rtk")) then [] else ["rtk"] end
+      )
+    ' "$stripped" >"$tmp"; then
+      rm -f "$tmp" "$stripped"
+      return 1
+    fi
+    rm -f "$stripped"
+  else
+    if ! "$jq" -n '{terminalAllowlist: ["rtk"]}' >"$tmp"; then
+      rm -f "$tmp"
+      return 1
+    fi
+  fi
+  mv -f "$tmp" "$perm_json"
+}
+
 # Add or drop brave-search / firecrawl from env keys. Other servers stay.
 # Usage: merge_cursor_mcp_secrets <mcp.json> <brave-cmd> <firecrawl-cmd>
 merge_cursor_mcp_secrets() {
@@ -161,8 +202,9 @@ if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
     hooks-remove) merge_cursor_hooks_remove "$@" ;;
     mcp) merge_cursor_mcp "$@" ;;
     mcp-secrets) merge_cursor_mcp_secrets "$@" ;;
+    permissions) merge_cursor_permissions "$@" ;;
     *)
-      echo "usage: $0 hooks <hooks.json> <rtk-rewrite> | hooks-remove <hooks.json> | mcp <mcp.json> <upsert.json> [remove.json] | mcp-secrets <mcp.json> <brave-cmd> <firecrawl-cmd>" >&2
+      echo "usage: $0 hooks <hooks.json> <rtk-rewrite> | hooks-remove <hooks.json> | mcp <mcp.json> <upsert.json> [remove.json] | mcp-secrets <mcp.json> <brave-cmd> <firecrawl-cmd> | permissions <permissions.json>" >&2
       exit 2
       ;;
   esac

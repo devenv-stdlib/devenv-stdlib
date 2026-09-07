@@ -1,0 +1,20 @@
+---
+description: Retry once without RTK compaction when a needed detail is missing
+alwaysApply: true
+---
+
+# When to bypass RTK compaction
+
+The Shell hook rewrites `git diff` to `rtk git diff`. Keep that compact output.
+
+If a specific line, path, or hunk is missing, retry **once**. Do not disable RTK for ordinary status or diff.
+
+```
+# ❌ BAD — RTK_DISABLED=1 on every git status
+# ✅ GOOD — compact first; if a hunk is missing:
+RTK_DISABLED=1 git diff
+# or: rtk git diff --no-compact
+# or: Read / Grep a known file (those tools skip the Shell hook)
+```
+
+`RTK_DISABLED=1 <cmd>` makes `rtk rewrite` pass through (our hook then runs the original). Failures may print a tee path under `~/.local/share/rtk/tee/` — read that before re-running. Do not loop.
