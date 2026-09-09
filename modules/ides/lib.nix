@@ -4,7 +4,7 @@
   config,
 }:
 let
-  ext = import ../../home/vscode-ext-lib.nix { inherit pkgs; };
+  ext = import ../../home/ides/ext-lib.nix { inherit pkgs; };
   project = import ../lib/project.nix { inherit lib; };
 
   languages = config.languages or { };

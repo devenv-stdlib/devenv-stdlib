@@ -7,11 +7,9 @@
   imports = [
     ./home/bash.nix
     ./home/terminal.nix
-    ./home/cursor.nix
+    ./home/ides
     ./home/mise.nix
     ./home/llm-context.nix
-    ./home/nano.nix
-    ./home/neovim.nix
     ./home/bat.nix
     ./home/eza.nix
     ./home/copier.nix
