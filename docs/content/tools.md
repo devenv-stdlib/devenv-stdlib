@@ -292,7 +292,7 @@ headroom --help
 
 ### Serena
 
-[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` via mise (`pipx`) from the non-Nix catalog and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide`). devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override in `.serena/project.local.yml`.
+[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` via mise (`pipx`) from the non-Nix catalog and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide --open-web-dashboard false` so the dashboard stays available but does not open a browser tab on every MCP start). devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override in `.serena/project.local.yml`.
 
 ```bash
 serena start-mcp-server --help
