@@ -16,7 +16,7 @@ import json
 import sys
 import urllib.error
 import urllib.request
-from datetime import date
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 
@@ -102,12 +102,12 @@ def fetch_rows(product: str, *, opener=None) -> list:
     with openurl(req) as resp:
         payload = json.load(resp)
     if not isinstance(payload, list):
-        raise ValueError(f"{product}: expected a JSON list")
+        raise TypeError(f"{product}: expected a JSON list")
     return payload
 
 
 def collect(*, opener=None, today: str | None = None) -> tuple[dict, dict[str, str]]:
-    today = today or date.today().isoformat()
+    today = today or datetime.now(tz=timezone.utc).date().isoformat()
     catalog = {}
     latest = {}
     for name, (product, min_v) in PRODUCTS.items():
@@ -199,7 +199,7 @@ def _self_test() -> None:
 
 def main(argv: list[str]) -> int:
     if not argv or argv[0] in ("-h", "--help"):
-        print(__doc__.strip(), file=sys.stderr)
+        print((__doc__ or "").strip(), file=sys.stderr)
         return 2
     cmd, *rest = argv
     if cmd == "self-test":
