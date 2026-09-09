@@ -3,4 +3,4 @@
 --pull=false
 # Shared devenv-act-nix volume: parallel matrix jobs race install-nix into /nix.
 --concurrent-jobs 1
---container-options --user runner --env HOME=/home/runner -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix
+--container-options --user runner --env HOME=/home/runner --env TMPDIR=/tmp --env RUNNER_TEMP=/tmp --env RUNNER_TOOL_CACHE=/tmp/toolcache -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix
