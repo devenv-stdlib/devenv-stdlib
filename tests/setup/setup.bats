@@ -426,6 +426,19 @@ in_setup() {
   [ "$output" = "nixpkgs=/custom/nixpkgs:foo=bar" ]
 }
 
+@test "apply_home_manager drops NIX_PATH directories that do not exist" {
+  stub home-manager 'printf "%s\n" "$NIX_PATH" >"$HM_NIX_PATH"'
+  HM_NIX_PATH="$BATS_TEST_TMPDIR/hm-nix-path"
+  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  export HM_NIX_PATH
+  : >"$HOME_NIX"
+  mkdir -p "$BATS_TEST_TMPDIR/channels"
+  in_setup "NIX_PATH='$BATS_TEST_TMPDIR/missing:$BATS_TEST_TMPDIR/channels:foo=/missing'; SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  [ "$status" -eq 0 ]
+  run cat "$HM_NIX_PATH"
+  [ "$output" = "nixpkgs=flake:nixpkgs:$BATS_TEST_TMPDIR/channels:foo=/missing" ]
+}
+
 @test "print_notice mentions Home Manager" {
   in_setup 'print_notice'
   [ "$status" -eq 0 ]

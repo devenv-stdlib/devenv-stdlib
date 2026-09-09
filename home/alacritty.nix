@@ -22,10 +22,11 @@ let
 
   # Nix Alacritty cannot see Ubuntu/VMware Mesa. Point it at Nix's EGL
   # and DRI drivers instead of mixing host libc into LD_LIBRARY_PATH.
-  mesaDrivers = pkgs.mesa.drivers or pkgs.mesa;
+  mesaDrivers = pkgs.mesa;
   alacrittyPkg = pkgs.symlinkJoin {
     name = "alacritty";
     paths = [ pkgs.alacritty ];
+    meta.mainProgram = "alacritty";
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/alacritty \
