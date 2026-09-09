@@ -26,7 +26,7 @@ npm_pkg() {
 }
 
 bump_cli() {
-  local name=$1 mise=$2 current latest owner repo
+  local name=$1 mise=$2 current latest owner repo pkg
   current=$(catalog_read_pin "$name")
   case $mise in
     ubi:*)
@@ -34,7 +34,27 @@ bump_cli() {
       latest=$(github_latest_version "$owner" "$repo")
       ;;
     pipx:*)
-      latest=$(pypi_latest "$(pipx_pkg "$mise")")
+      pkg=$(pipx_pkg "$mise")
+      # GitHub shorthand (owner/repo) or git+ URL — not on PyPI.
+      if [[ $pkg == git+https://github.com/* ]]; then
+        rest=${pkg#git+https://github.com/}
+        rest=${rest%.git*}
+        rest=${rest%%@*}
+        owner=${rest%%/*}
+        repo=${rest#*/}
+        repo=${repo%%/*}
+        if ! latest=$(github_latest_version "$owner" "$repo" 2>/dev/null); then
+          latest=$(github_default_branch_sha "$owner" "$repo")
+        fi
+      elif [[ $pkg == */* ]]; then
+        owner=${pkg%%/*}
+        repo=${pkg#*/}
+        if ! latest=$(github_latest_version "$owner" "$repo" 2>/dev/null); then
+          latest=$(github_default_branch_sha "$owner" "$repo")
+        fi
+      else
+        latest=$(pypi_latest "$pkg")
+      fi
       ;;
     npm:*)
       latest=$(npm_latest "$(npm_pkg "$mise")")

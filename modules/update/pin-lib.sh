@@ -36,6 +36,14 @@ github_latest_version() {
   printf '%s\n' "${tag#v}"
 }
 
+# Default-branch tip SHA when a repo has no GitHub Releases (e.g. git-rebase-mcp).
+github_default_branch_sha() {
+  local owner=$1 repo=$2 branch
+  branch=$(http_get "https://api.github.com/repos/${owner}/${repo}" | jq -er '.default_branch')
+  http_get "https://api.github.com/repos/${owner}/${repo}/commits/${branch}" \
+    | jq -er '.sha'
+}
+
 npm_registry_path() {
   local pkg=$1
   if [[ $pkg == @*/* ]]; then

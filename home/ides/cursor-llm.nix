@@ -42,6 +42,8 @@ let
     githubMcpBin = cliExe "github-mcp-server";
     braveMcpBin = cliExe "brave-search-mcp";
     firecrawlMcpBin = cliExe "firecrawl-mcp";
+    gitConflictMcp = cliExe "git-conflict-mcp";
+    gitRebaseMcp = cliExe "git-rebase-mcp";
   };
 
   upsertJson = mcp.mkUpsertJson { includeHeadroom = !nine; };

@@ -84,6 +84,22 @@ scope = "project"
 pin = "1.5.25"
 mise = "npm:skills"
 
+# Merge-conflict MCP (WebUI + agent tools). Docs: https://github.com/mattyatea/git-conflict-mcp
+[[tool]]
+name = "git-conflict-mcp"
+kind = "cli"
+scope = "user"
+pin = "1.12.5"
+mise = "npm:git-conflict-mcp"
+
+# Agent-safe rebase / conflict driver (not on PyPI). Docs: https://github.com/aaron-riact/git-rebase-mcp
+[[tool]]
+name = "git-rebase-mcp"
+kind = "cli"
+scope = "user"
+pin = "4d65fcbab0e528db4a2caf6d0d4230e4c717a647"
+mise = "pipx:aaron-riact/git-rebase-mcp"
+
 # Optional 9Router API gateway image. Docs: https://github.com/decolua/9router
 [[tool]]
 name = "ninerouter"

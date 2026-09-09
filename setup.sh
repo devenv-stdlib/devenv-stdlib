@@ -399,6 +399,10 @@ main() {
 
   cd "$REPO_ROOT" || fail "cannot enter $REPO_ROOT"
 
+  # shellcheck disable=SC1091
+  . "$REPO_ROOT/home/ensure-git-rerere.sh"
+  ensure_git_rerere
+
   printf '→ trust this directory for devenv auto-activation\n'
   if devenv allow; then
     ok "trusted this directory for devenv auto-activation"
