@@ -43,7 +43,7 @@ Then `home-switch` and open a new terminal. An unmanaged `~/.bashrc.d/20-local.s
 
 ## Cursor
 
-[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager — no website AppImage. The FHS/bwrap variant is avoided (Ubuntu 24.04 rejects unprivileged uid maps). The launcher always passes `--no-sandbox` (the store `chrome-sandbox` cannot be root-owned 4755). Nix Mesa and `--ozone-platform=x11` are added only when `systemd-detect-virt` reports `vmware`. Language packs are **not** user-global: devenv generates `.vscode/extensions.json` from `languages.*`.
+[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager — no website AppImage. The FHS/bwrap variant is avoided (Ubuntu 24.04 rejects unprivileged uid maps). The launcher always passes `--no-sandbox` (the store `chrome-sandbox` cannot be root-owned 4755). That flag is **Chromium only**, not the Agent terminal sandbox. On Ubuntu with `kernel.apparmor_restrict_unprivileged_userns=1` (default), Agent Shell needs AppArmor profiles so `cursorsandbox` can create a user namespace and configure loopback; `./setup.sh` installs [`includes/cursor-agent-sandbox/`](../../includes/cursor-agent-sandbox/) as root (`sudo includes/cursor-agent-sandbox/install.sh` to re-apply after a Cursor upgrade). Nix Mesa and `--ozone-platform=x11` are added only when `systemd-detect-virt` reports `vmware`. Language packs are **not** user-global: devenv generates `.vscode/extensions.json` from `languages.*`.
 
 | `languages.*` | Extensions |
 | --- | --- |
