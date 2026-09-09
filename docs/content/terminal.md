@@ -43,7 +43,7 @@ Then `home-switch` and open a new terminal. An unmanaged `~/.bashrc.d/20-local.s
 
 ## Cursor
 
-[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager — no website AppImage. The FHS/bwrap variant is avoided (Ubuntu 24.04 rejects unprivileged uid maps). The launcher always passes `--no-sandbox` (the store `chrome-sandbox` cannot be root-owned 4755). That flag is **Chromium only**, not the Agent terminal sandbox. On Ubuntu with `kernel.apparmor_restrict_unprivileged_userns=1` (default), Agent Shell needs AppArmor profiles so `cursorsandbox` can create a user namespace and configure loopback; `./setup.sh` installs [`includes/cursor-agent-sandbox/`](../../includes/cursor-agent-sandbox/) as root (`sudo includes/cursor-agent-sandbox/install.sh` to re-apply after a Cursor upgrade). Nix Mesa and `--ozone-platform=x11` are added only when `systemd-detect-virt` reports `vmware`. Language packs are **not** user-global: devenv generates `.vscode/extensions.json` from `languages.*`.
+[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager (`home/ides/`) — no website AppImage. The FHS/bwrap variant is avoided (Ubuntu 24.04 rejects unprivileged uid maps). The launcher always passes `--no-sandbox` (the store `chrome-sandbox` cannot be root-owned 4755). That flag is **Chromium only**, not the Agent terminal sandbox. On Ubuntu with `kernel.apparmor_restrict_unprivileged_userns=1` (default), Agent Shell needs AppArmor profiles so `cursorsandbox` can create a user namespace and configure loopback; `./setup.sh` installs [`includes/cursor-agent-sandbox/`](../../includes/cursor-agent-sandbox/) as root (`sudo includes/cursor-agent-sandbox/install.sh` to re-apply after a Cursor upgrade). Nix Mesa and `--ozone-platform=x11` are added only when `systemd-detect-virt` reports `vmware`. Language packs are **not** user-global: devenv (`modules/ides`) generates `.vscode/extensions.json` from `languages.*`.
 
 | `languages.*` | Extensions |
 | --- | --- |
@@ -52,9 +52,9 @@ Then `home-switch` and open a new terminal. An unmanaged `~/.bashrc.d/20-local.s
 | `python` | Python, Pylance, debugpy, Ruff |
 | `javascript` or `typescript` | ESLint, Tailwind, pretty-ts-errors, auto-rename-tag |
 
-Set `cursor.enable = false;` in `home.local.nix` to skip the editor install.
+Set `cursor.enable = false;` in `home.local.nix` to skip the editor install. Set `vscode.enable = true;` to opt into the VS Code app (off by default).
 
-When `cursor.llmContext.enable` is on (default: `cursor.enable`), `home-switch` loads SecretSpec (any provider; `.env` fallback), merges `~/.cursor/hooks.json` and `~/.cursor/mcp.json` without replacing other entries, runs `mise install` for user-scope catalog CLIs, and starts `ninerouter-secrets-watch` (Cursor Brave/Firecrawl only unless 9Router is on). First install needs network.
+When `cursor.llmContext.enable` is on (default: `cursor.enable`), `home-switch` loads SecretSpec (any provider; `.env` fallback), merges `~/.cursor/hooks.json` and `~/.cursor/mcp.json` from the shared MCP catalog without replacing other entries, runs `mise install` for user-scope catalog CLIs, and starts `ninerouter-secrets-watch` (Cursor Brave/Firecrawl only unless 9Router is on). First install needs network.
 
 `cursor.ninerouter.enable` (default **false**; Copier `ninerouter`) is the Pro vs gateway switch:
 
