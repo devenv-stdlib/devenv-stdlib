@@ -41,7 +41,11 @@ function HighlightedPre({ children }: { children?: ReactNode }) {
   }
   const props = child.props as { className?: string; children?: ReactNode };
   const lang = fenceLanguage(props.className);
-  if (!highlighter || !lang || !fenceLangs.includes(lang as (typeof fenceLangs)[number])) {
+  if (
+    !highlighter ||
+    !lang ||
+    !fenceLangs.includes(lang as (typeof fenceLangs)[number])
+  ) {
     return <pre>{children}</pre>;
   }
   const code = String(props.children ?? "").replace(/\n$/, "");
@@ -68,10 +72,17 @@ function headingId(sectionId: string, children: ReactNode): string {
 export function markdownComponents(sectionId: string): Components {
   return {
     h1: ({ children }) => <h1>{children}</h1>,
-    h2: ({ children }) => <h2 id={headingId(sectionId, children)}>{children}</h2>,
-    h3: ({ children }) => <h3 id={headingId(sectionId, children)}>{children}</h3>,
+    h2: ({ children }) => (
+      <h2 id={headingId(sectionId, children)}>{children}</h2>
+    ),
+    h3: ({ children }) => (
+      <h3 id={headingId(sectionId, children)}>{children}</h3>
+    ),
     a: ({ href, children }) => (
-      <SpLink href={href} target={href?.startsWith("http") ? "_blank" : undefined}>
+      <SpLink
+        href={href}
+        target={href?.startsWith("http") ? "_blank" : undefined}
+      >
         {children}
       </SpLink>
     ),
