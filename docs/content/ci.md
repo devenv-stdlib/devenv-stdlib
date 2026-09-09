@@ -27,4 +27,4 @@ Host policy is the **current Ubuntu LTS and the previous one** (`modules/languag
 
 ## JUnit
 
-`test-devenv` writes JUnit reports under `junit/` (gitignored). CI uploads those files and runs [publish-unit-test-result-action](https://github.com/EnricoMi/publish-unit-test-result-action).
+`test-devenv` writes JUnit reports under `junit/` (gitignored). While building those reports it still streams the original runner output to STDOUT (nix-unit via `junit-report.py`, BATS TAP / `tee` on the JUnit fallback) so CI logs stay live. CI uploads those files and runs [publish-unit-test-result-action](https://github.com/EnricoMi/publish-unit-test-result-action).
