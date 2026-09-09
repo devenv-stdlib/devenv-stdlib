@@ -144,10 +144,12 @@
           devenv-act:24.04 \
           chown -R "$(id -u):$(id -g)" /nix /home/runner/.cache/nix
         act_opts="--user runner --env HOME=/home/runner -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix"
+        # One job at a time: matrix jobs share devenv-act-nix and race install-nix otherwise.
         if [ -z "''${GITHUB_ACTIONS:-}" ] && [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
           echo "==> act .github/workflows/test.yml"
           act workflow_call \
             --pull=false \
+            --concurrent-jobs 1 \
             --container-options "$act_opts" \
             -W "$DEVENV_ROOT/.github/workflows/test.yml" \
             -P ubuntu-24.04=devenv-act:24.04 \
@@ -156,6 +158,7 @@
         echo "==> act generated python matrix"
         act workflow_call \
           --pull=false \
+          --concurrent-jobs 1 \
           --container-options "$act_opts" \
           -W "$junit_dir/workflows/python.yml" \
           -P ubuntu-24.04=devenv-act:24.04 \
