@@ -93,11 +93,11 @@ Fetches [endoflife.date](https://endoflife.date) into `modules/languages/catalog
 ## Tests
 
 ```bash
-bats -r tests
+bats -r --jobs "$(nproc)" tests
 bats tests/setup
 bats tests/home
 bats tests/copier.bats
-test-devenv                  # also writes junit/*.xml
+test-devenv                  # also writes junit/*.xml; runs bats with --jobs
 build-act-image              # devenv-act:24.04 for local act
 ```
 

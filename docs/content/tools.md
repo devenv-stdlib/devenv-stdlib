@@ -393,10 +393,10 @@ debtmap --help
 
 ### BATS and act
 
-[BATS](https://bats-core.readthedocs.io/) is the shell test runner (`bats -r tests`). [act](https://nektosact.com/) replays GitHub Actions locally; `test-devenv` builds `devenv-act:24.04` and runs `act workflow_call` on generated workflows. `.actrc` maps both `ubuntu-24.04` and `ubuntu-26.04` to that image. `act` is also user-global (`home/act.nix`). Local act uses the rootless Engine (`DOCKER_HOST`).
+[BATS](https://bats-core.readthedocs.io/) is the shell test runner (`bats -r --jobs "$(nproc)" tests`; GNU `parallel` required for `--jobs`). [act](https://nektosact.com/) replays GitHub Actions locally; `test-devenv` builds `devenv-act:24.04` and runs `act workflow_call` on generated workflows. `.actrc` maps both `ubuntu-24.04` and `ubuntu-26.04` to that image. `act` is also user-global (`home/act.nix`). Local act uses the rootless Engine (`DOCKER_HOST`).
 
 ```bash
-bats -r tests
+bats -r --jobs "$(nproc)" tests
 build-act-image
 ```
 
