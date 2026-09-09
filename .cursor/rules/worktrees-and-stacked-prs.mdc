@@ -10,7 +10,7 @@ That keeps the main checkout clean so subagents can implement unrelated work in
 parallel without fighting the same index.
 
 **Integration branch (until first release):** `initial-development`.
-Create worktrees and open PRs against that branch, not `master`/`main`.
+Create worktrees and open PRs against that branch, not `main`.
 
 ## Starting work
 
@@ -44,7 +44,7 @@ When the user asks to push / open PRs:
 
 1. Push each feature branch with `-u`.
 2. Open one PR per branch into **`initial-development`** (or the previous
-   stack branch). Do not target `master`/`main` until a release cut says so.
+   stack branch). Do not target `main` until a release cut says so.
 3. If several PRs share one topic, **stack** them: each PR’s base is the
    previous branch in the stack (bottom of stack bases on `initial-development`).
 4. Say in each PR body which PR it stacks on and which depend on it.
