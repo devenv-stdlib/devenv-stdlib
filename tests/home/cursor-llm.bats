@@ -2,13 +2,13 @@
 # shellcheck disable=SC2030,SC2031
 # ^ SC2030/SC2031: each @test looks like a subshell, so API key exports are
 # reported as leaking or getting lost; they are deliberately per-test.
-# Exercises home/merge-cursor-llm.sh. Does not run home-manager switch
+# Exercises home/ides/merge-cursor-llm.sh. Does not run home-manager switch
 # or `mise install`.
 
 setup() {
   REPO_DIR="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   # shellcheck disable=SC1091
-  source "$REPO_DIR/home/merge-cursor-llm.sh"
+  source "$REPO_DIR/home/ides/merge-cursor-llm.sh"
   command -v jq >/dev/null || skip "jq not installed"
   TMP=$(mktemp -d)
   HOOKS="$TMP/.cursor/hooks.json"
@@ -186,7 +186,7 @@ EOF
 @test "mcp CLI upserts from JSON files" {
   write_core_upsert
   echo '[]' >"$REMOVE"
-  "$REPO_DIR/home/merge-cursor-llm.sh" mcp "$MCP" "$UPSERT" "$REMOVE"
+  "$REPO_DIR/home/ides/merge-cursor-llm.sh" mcp "$MCP" "$UPSERT" "$REMOVE"
   [ "$(jq -r '.mcpServers.github.command' "$MCP")" = "$GITHUB_CMD" ]
   [ "$(jq -r '.mcpServers.docker.command' "$MCP")" = "$DOCKER_CMD" ]
 }
@@ -223,7 +223,7 @@ EOF
 }
 
 @test "hooks-remove CLI is a no-op when hooks.json is missing" {
-  "$REPO_DIR/home/merge-cursor-llm.sh" hooks-remove "$HOOKS"
+  "$REPO_DIR/home/ides/merge-cursor-llm.sh" hooks-remove "$HOOKS"
   [ ! -e "$HOOKS" ]
 }
 
@@ -298,7 +298,7 @@ EOF
 @test "permissions CLI sets absolute rtk allowlist" {
   PERM="$TMP/.cursor/permissions.json"
   RTK_BIN="$TMP/.cursor/bin/rtk"
-  "$REPO_DIR/home/merge-cursor-llm.sh" permissions "$PERM" "$RTK_BIN"
+  "$REPO_DIR/home/ides/merge-cursor-llm.sh" permissions "$PERM" "$RTK_BIN"
   [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "$RTK_BIN rtk" ]
 }
 
@@ -317,7 +317,7 @@ EOF
   RTK_BIN="$TMP/.cursor/bin/rtk"
   mkdir -p "$(dirname "$PERM")"
   jq -n --arg rtk "$RTK_BIN" '{terminalAllowlist: [$rtk, "rtk"]}' >"$PERM"
-  "$REPO_DIR/home/merge-cursor-llm.sh" permissions-clear-rtk "$PERM" "$RTK_BIN"
+  "$REPO_DIR/home/ides/merge-cursor-llm.sh" permissions-clear-rtk "$PERM" "$RTK_BIN"
   [ "$(jq -r 'has("terminalAllowlist")' "$PERM")" = "false" ]
 }
 

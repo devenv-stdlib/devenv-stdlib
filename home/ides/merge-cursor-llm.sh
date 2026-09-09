@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
-# Merge Cursor hooks.json / mcp.json without replacing user entries.
+# Merge Cursor hooks.json / mcp.json / permissions.json without replacing
+# user entries. MCP upsert core lives in mcp/merge-lib.sh (harness-agnostic).
 # Sourced by tests; executed from home.activation.
-# shellcheck disable=SC2016
+# shellcheck disable=SC1091,SC2016
+
+_MERGE_CURSOR_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=mcp/merge-lib.sh
+source "$_MERGE_CURSOR_DIR/mcp/merge-lib.sh"
 
 merge_cursor_hooks() {
   local hooks_json=$1
@@ -67,45 +72,7 @@ merge_cursor_hooks_remove() {
 # Upsert servers from a JSON object; delete keys listed in a JSON array.
 # Usage: merge_cursor_mcp <mcp.json> <upsert.json> [remove.json]
 merge_cursor_mcp() {
-  local mcp_json=$1
-  local upsert_json=$2
-  local remove_json=${3:-}
-  local jq=${JQ:-jq}
-  local dir tmp remove_arg
-
-  dir=$(dirname "$mcp_json")
-  mkdir -p "$dir"
-
-  if [[ -n $remove_json ]]; then
-    remove_arg=$remove_json
-  else
-    remove_arg=$(mktemp)
-    echo '[]' >"$remove_arg"
-  fi
-
-  tmp=$(mktemp "$mcp_json.XXXXXX")
-  if [[ -s "$mcp_json" ]]; then
-    if ! "$jq" --slurpfile up "$upsert_json" --slurpfile rm "$remove_arg" '
-      .mcpServers = (.mcpServers // {})
-      | .mcpServers = (.mcpServers + ($up[0] // {}))
-      | reduce (($rm[0] // [])[]) as $k (.; del(.mcpServers[$k]))
-    ' "$mcp_json" >"$tmp"; then
-      rm -f "$tmp"
-      [[ -z $remove_json ]] && rm -f "$remove_arg"
-      return 1
-    fi
-  else
-    if ! "$jq" --null-input --slurpfile up "$upsert_json" --slurpfile rm "$remove_arg" '
-      { mcpServers: ($up[0] // {}) }
-      | reduce (($rm[0] // [])[]) as $k (.; del(.mcpServers[$k]))
-    ' >"$tmp"; then
-      rm -f "$tmp"
-      [[ -z $remove_json ]] && rm -f "$remove_arg"
-      return 1
-    fi
-  fi
-  [[ -z $remove_json ]] && rm -f "$remove_arg"
-  mv -f "$tmp" "$mcp_json"
+  merge_mcp "$@"
 }
 
 # Cursor JSONC: drop // line comments so jq can parse. Other keys stay.
