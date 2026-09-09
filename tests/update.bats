@@ -8,7 +8,7 @@ bats_require_minimum_version 1.5.0
 
 setup() {
   REPO_DIR="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
-  UPDATE_SH="$REPO_DIR/modules/update.sh"
+  UPDATE_SH="$REPO_DIR/modules/update/update.sh"
   FIXTURE=$(mktemp -d)
   BIN=$(mktemp -d)
   ORIG_PATH=$PATH
@@ -140,6 +140,39 @@ EOF
   grep -q 'braveSearchMcpVersion = "8.8.8"' "$FIXTURE/home/llm-context.nix"
   grep -q 'firecrawlMcpVersion = "9.9.9"' "$FIXTURE/home/llm-context.nix"
   grep -q '@brave/brave-search-mcp-server' "$FIXTURE/home/llm-context.nix"
+}
+
+@test "skills refresher runs the CLI update in the repo root through npx" {
+  printf '{"version":1,"skills":{}}\n' >"$FIXTURE/skills-lock.json"
+  cat >"$BIN/npx" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n%s\n' "$PWD" "$*" >"$STUB_LOG"
+EOF
+  chmod +x "$BIN/npx"
+
+  UPDATE_ROOT=$FIXTURE PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/skills.sh"
+  [ "$status" -eq 0 ]
+  run cat "$STUB_LOG"
+  [ "${lines[0]}" = "$FIXTURE" ]
+  [ "${lines[1]}" = "-y skills@latest update -y -p" ]
+}
+
+@test "skills refresher needs skills-lock.json and honors UPDATE_DRY_RUN" {
+  cat >"$BIN/npx" <<'EOF'
+#!/usr/bin/env bash
+printf 'ran\n' >"$STUB_LOG"
+EOF
+  chmod +x "$BIN/npx"
+
+  UPDATE_ROOT=$FIXTURE PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/skills.sh"
+  [ "$status" -eq 1 ]
+  [[ $output == *"no skills-lock.json"* ]]
+
+  printf '{"version":1,"skills":{}}\n' >"$FIXTURE/skills-lock.json"
+  UPDATE_ROOT=$FIXTURE UPDATE_DRY_RUN=1 PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/skills.sh"
+  [ "$status" -eq 0 ]
+  [[ $output == *dry-run* ]]
+  [ ! -e "$STUB_LOG" ]
 }
 
 @test "npm-mcp refresher honors UPDATE_DRY_RUN" {
