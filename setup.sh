@@ -229,27 +229,9 @@ ensure_profile_pkg() {
   command -v "$name" >/dev/null 2>&1 || fail "$name is not on PATH after install"
 }
 
-# Flakes-only hosts often have no <nixpkgs> on NIX_PATH; home-manager -f
-# needs it. Keep a user-supplied nixpkgs= entry; otherwise set or prepend
-# nixpkgs=flake:nixpkgs.
-ensure_nixpkgs_on_nix_path() {
-  local rest entry
-  if [[ -z ${NIX_PATH:-} ]]; then
-    export NIX_PATH=nixpkgs=flake:nixpkgs
-    return
-  fi
-  rest=$NIX_PATH
-  while [[ -n $rest ]]; do
-    entry=${rest%%:*}
-    rest=${rest#"$entry"}
-    rest=${rest#:}
-    if [[ $entry == nixpkgs=* ]]; then
-      export NIX_PATH
-      return
-    fi
-  done
-  export NIX_PATH="nixpkgs=flake:nixpkgs:${NIX_PATH}"
-}
+# ensure_nixpkgs_on_nix_path: shared with home-switch and test-devenv.
+# shellcheck disable=SC1091
+. "$REPO_ROOT/home/nix-path.sh"
 
 apply_home_manager() {
   command -v home-manager >/dev/null 2>&1 || fail "home-manager is not on PATH"

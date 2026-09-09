@@ -1,7 +1,9 @@
 _: {
   name = "devenv4monorepo";
 
-  cachix.pull = [ "devenv" ];
+  # devenv.cachix.org is already in nix.conf (setup.sh: cachix use devenv;
+  # CI: cachix-action). devenv's own pull would add it again and Nix warns.
+  cachix.enable = false;
 
   enterShell = ''
     echo "devenv4monorepo ready: ''${USER:-unknown}@$(uname -n)"
@@ -40,26 +42,9 @@ _: {
   '';
 
   scripts.home-switch.exec = ''
-    # Flakes-only hosts often have no <nixpkgs> on NIX_PATH; home-manager -f
-    # needs it. Keep a user-supplied nixpkgs= entry; otherwise set or prepend
-    # nixpkgs=flake:nixpkgs.
-    if [ -z "''${NIX_PATH:-}" ]; then
-      export NIX_PATH=nixpkgs=flake:nixpkgs
-    else
-      rest="''${NIX_PATH}"
-      has_nixpkgs=0
-      while [ -n "$rest" ]; do
-        entry="''${rest%%:*}"
-        rest="''${rest#"$entry"}"
-        rest="''${rest#:}"
-        case "$entry" in
-          nixpkgs=*) has_nixpkgs=1; break ;;
-        esac
-      done
-      if [ "$has_nixpkgs" -eq 0 ]; then
-        export NIX_PATH="nixpkgs=flake:nixpkgs:''${NIX_PATH}"
-      fi
-    fi
+    # shellcheck disable=SC1091
+    . "$DEVENV_ROOT/home/nix-path.sh"
+    ensure_nixpkgs_on_nix_path
     # SecretSpec first (dotenv, keyring, …). .env only if export is unavailable.
     # shellcheck disable=SC1091
     . "$DEVENV_ROOT/home/load-secrets.sh"

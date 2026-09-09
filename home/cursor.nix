@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.cursor;
-  mesaDrivers = pkgs.mesa.drivers or pkgs.mesa;
+  mesaDrivers = pkgs.mesa;
   glLibs = lib.makeLibraryPath [
     pkgs.libglvnd
     mesaDrivers
