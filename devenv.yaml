@@ -4,6 +4,12 @@ inputs:
     url: github:cachix/devenv-nixpkgs/rolling
   git-hooks:
     url: github:cachix/git-hooks.nix
+  # Required by generated test.yml when languages.python.version is set (act + CI).
+  nixpkgs-python:
+    url: github:cachix/nixpkgs-python
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
 
 imports:
   - ./modules
