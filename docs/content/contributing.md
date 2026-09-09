@@ -111,7 +111,7 @@ build-act-image              # devenv-act:24.04 for local act
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
 | `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
-| `tests/home/cursor-llm.bats` | Cursor `hooks.json` / `mcp.json` / `permissions.json` merge (RTK add/remove, `rtk` allowlist upsert, Serena, Headroom MCP without proxy URL, Context7, GitHub, Docker, optional Brave/Firecrawl) |
+| `tests/home/cursor-llm.bats` | Cursor `hooks.json` / `mcp.json` / `permissions.json` merge (RTK add/remove, `rtk`-only allowlist, hook rewrite/allow/`rtk run` wrap, Serena, Headroom MCP without proxy URL, Context7, GitHub, Docker, optional Brave/Firecrawl) |
 | `tests/home/configure-9router.bats` | 9Router settings (`headroomEnabled` false) + Brave/Firecrawl upsert + devenv gateway key (fake curl) |
 | `tests/home/ninerouter-start.bats` | persist INITIAL_PASSWORD as a 9Router bcrypt hash (tunnel gate); in-container loopback proxy for local-only dashboard routes |
 | `tests/home/load-secrets.bats` | `home-switch` SecretSpec export vs `.env` fallback |
