@@ -374,8 +374,9 @@ rec {
         - name: Own workspace under act
           if: ''${{ env.ACT }}
           run: |
-            sudo mkdir -p /home/runner/.cache/nix
-            sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache
+            sudo mkdir -p /home/runner/.cache/nix /nix
+            # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
+            sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache /nix
         - uses: cachix/install-nix-action@v31
         - name: Cache Nix store
           if: ''${{ !env.ACT }}
