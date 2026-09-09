@@ -49,7 +49,15 @@ let
   upsertJson = mcp.mkUpsertJson { includeHeadroom = !nine; };
   removeJson = mcp.mkRemoveJson { removeHeadroom = nine; };
 
-  mergeCursor = ./merge-cursor-llm.sh;
+  # Copy wrapper + merge-lib together. A lone `./merge-cursor-llm.sh` store
+  # path makes dirname=/nix/store and `source …/mcp/merge-lib.sh` miss.
+  mergeCursorPkg = pkgs.runCommand "merge-cursor-llm" { } ''
+    mkdir -p $out/mcp
+    cp ${./merge-cursor-llm.sh} $out/merge-cursor-llm.sh
+    cp ${./mcp/merge-lib.sh} $out/mcp/merge-lib.sh
+    chmod +x $out/merge-cursor-llm.sh
+  '';
+  mergeCursor = "${mergeCursorPkg}/merge-cursor-llm.sh";
   loadSecrets = ../load-secrets.sh;
   configureNine = ../configure-9router.sh;
   watchNine = ../watch-9router-secrets.sh;
