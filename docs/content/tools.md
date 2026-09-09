@@ -151,7 +151,7 @@ git diff             # delta
 
 ### httpie, tldr, howdoi, fuck, usql
 
-[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. `howdoi` answers “how do I…” from Stack Overflow ([gleitz/howdoi](https://github.com/gleitz/howdoi); pin in `modules/non-nix/catalog.json`, Nix when promotable else mise). [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
+[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. `howdoi` answers “how do I…” from Stack Overflow ([gleitz/howdoi](https://github.com/gleitz/howdoi); pin in `modules/non-nix/catalog.toml`, Nix when promotable else mise). [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
 
 ```bash
 http https://endoflife.date/api/rust.json
@@ -224,14 +224,32 @@ GNOME extension that drops the terminal from the top of the screen.
 
 ### Non-Nix catalog and mise
 
-Pins for tools that are not (yet) taken from nixpkgs live in `modules/non-nix/catalog.json`. At eval time, CLI entries promote to a Nix package when the attr exists, `lib.versionAtLeast` meets the pin, and `homepage`/`pname` matches `homepageContains`. Otherwise [mise](https://mise.jdx.dev/) installs them.
+Pins for tools that are not (yet) taken from nixpkgs live in `modules/non-nix/catalog.toml` (each `[[tool]]` has a one-line comment pointing at upstream docs). Monorepos add team tools in `modules/non-nix/catalog.local.toml` (same shape; committed; copy from root `catalog.local.toml.example`). At eval time, CLI entries promote to a Nix package when the attr exists, `lib.versionAtLeast` meets the pin, and `homepage`/`pname` matches `homepageContains`. Otherwise [mise](https://mise.jdx.dev/) installs them. Duplicate names across the two files fail evaluation.
+
+Add or remove entries with flag-first tasks (creates `catalog.local.toml` from root `catalog.local.toml.example` when missing):
+
+```bash
+# Team / monorepo (catalog.local.toml)
+devenv tasks run non-nix:add-local -- --name example-cli --kind cli --scope project \
+  --pin 1.0.0 --mise ubi:owner/example-cli \
+  --docs 'Example CLI. Docs: https://example.com'
+devenv tasks run non-nix:remove-local -- --name example-cli
+
+# Template authors only (catalog.toml; refuses without includes/update/)
+devenv tasks run non-nix:add -- --name example-cli --kind cli --scope project \
+  --pin 1.0.0 --mise ubi:owner/example-cli \
+  --docs 'Example CLI. Docs: https://example.com'
+devenv tasks run non-nix:remove -- --name example-cli
+```
+
+Pass `--dry-run` to preview. Each command’s `--help` includes copy-pasteable Examples.
 
 | Scope | Config | Install |
 | --- | --- | --- |
-| Project (`debtmap`, `skills`) | generated `mise.toml` (gitignored) | `mise:install` after `devenv:files` |
+| Project (`debtmap`, `skills`, plus `catalog.local.toml` project-scope) | generated `mise.toml` (gitignored) | `mise:install` after `devenv:files` |
 | User (RTK, Serena, Headroom, MCP CLIs, howdoi, …) | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation |
 
-Docker images (`decolua/9router`, `mcp/docker`) and the devenv VS Code extension share the same catalog but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools. Template authors bump pins with `update` → `includes/update/non-nix.sh` (consumers get them via `copier update`).
+Docker images (`decolua/9router`, `mcp/docker`) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools. Template authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a monorepo, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get shipped pin moves via `copier update`.
 
 ### Agent skills
 
@@ -356,7 +374,7 @@ Subjects must be [Conventional Commits](https://www.conventionalcommits.org/) (`
 
 ### Formatters, linters, and secrets
 
-Always-on in the devenv hook set: [nixfmt](https://github.com/NixOS/nixfmt), [statix](https://github.com/oppiliappan/statix), [deadnix](https://github.com/astro/deadnix), [ShellCheck](https://www.shellcheck.net/), [typos](https://github.com/crate-ci/typos), [proselint](https://github.com/amperser/proselint), [lychee](https://lychee.cli.rs/), [actionlint](https://github.com/rhysd/actionlint), [yamlfmt](https://github.com/google/yamlfmt), [Gitleaks](https://gitleaks.io/). Language hooks (rustfmt, ruff, prettier, …) follow `languages.*`.
+Always-on in the devenv hook set: [nixfmt](https://github.com/NixOS/nixfmt), [statix](https://github.com/oppiliappan/statix), [deadnix](https://github.com/astro/deadnix), [ShellCheck](https://www.shellcheck.net/), [typos](https://github.com/crate-ci/typos), [proselint](https://github.com/amperser/proselint), [lychee](https://lychee.cli.rs/), [actionlint](https://github.com/rhysd/actionlint), [yamlfmt](https://github.com/google/yamlfmt), [Taplo](https://taplo.tamasfe.dev/) (`check-toml`, `taplo` fmt, `taplo-lint`), [Gitleaks](https://gitleaks.io/). Language hooks (rustfmt, ruff, prettier, …) follow `languages.*`. Taplo is also user-global via Home Manager (`home/taplo.nix`).
 
 - nixfmt: [NixOS/nixfmt](https://github.com/NixOS/nixfmt)
 - ShellCheck: [shellcheck.net](https://www.shellcheck.net/)
@@ -365,7 +383,7 @@ Always-on in the devenv hook set: [nixfmt](https://github.com/NixOS/nixfmt), [st
 
 ### debtmap
 
-[debtmap](https://github.com/iepathos/debtmap) (pin in `modules/non-nix/catalog.json`; Nix when promotable else project mise) runs when any of rust/python/javascript/typescript/go is on. `devenv shell` writes `.debtmap.toml` (gitignored). Override thresholds in `devenv.local.nix`.
+[debtmap](https://github.com/iepathos/debtmap) (pin in `modules/non-nix/catalog.toml`; Nix when promotable else project mise) runs when any of rust/python/javascript/typescript/go is on. `devenv shell` writes `.debtmap.toml` (gitignored). Override thresholds in `devenv.local.nix`.
 
 ```bash
 debtmap --help

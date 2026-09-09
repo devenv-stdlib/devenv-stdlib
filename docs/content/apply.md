@@ -39,7 +39,11 @@ A generated monorepo is a **copy** of the template, plus your `devenv.local.nix`
    ```
 
    After a lock change, re-enter the shell (or `direnv reload`). If Home Manager files changed, `home-switch`.
-   `update.local.sh` (gitignored) is the only place for *your* extra tools. Do not edit `modules/non-nix/catalog.json` pins to “upgrade” RTK/Serena/Brave.
+   `update.local.sh` (gitignored) is for host-only extras. Team-required tools go in
+   `modules/non-nix/catalog.local.toml` (committed; copy from root
+   `catalog.local.toml.example`).
+   `update` bumps those pins and installs via Nix when promotable, otherwise mise.
+   Do not edit `modules/non-nix/catalog.toml` pins to “upgrade” RTK/Serena/Brave.
 
 2. **Template-shipped tools** (RTK, Serena, Headroom, 9Router image, GitHub/Docker/Brave/Firecrawl MCP pins, debtmap, vendored agent skills, …):
 

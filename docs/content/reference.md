@@ -9,7 +9,9 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `devenv.yaml` / `devenv.lock` | Inputs and pinned lock |
 | `devenv.local.nix` | Questionnaire output (`name`, `languages.*`, `supported.*`) |
 | `devenv.local.nix.example` | Extra options to append (debtmap, packages, `supported.*.max`) |
-| `update.local.sh` | Gitignored consumer hook; `update` runs it after `devenv update` |
+| `update.local.sh` | Gitignored consumer hook; `update` runs it after local-catalog refresh |
+| `catalog.local.toml.example` | Template for team tools; copy to `modules/non-nix/catalog.local.toml` |
+| `modules/non-nix/catalog.local.toml` | Team tools (committed in monorepos; copy from root `.example`) |
 | `.cursor/rules/update.mdc` | `update` is your lock + hook; template tools use `copier update` |
 | `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules under `modules/` / `home/` |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large tool output or pastes |
