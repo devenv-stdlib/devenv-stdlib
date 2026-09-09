@@ -378,13 +378,13 @@ rec {
             # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
             sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache /nix
         - uses: cachix/install-nix-action@v31
-        - name: Cache Nix store
+        - name: Restore Nix store
+          id: nix-cache
           if: ''${{ !env.ACT }}
-          uses: nix-community/cache-nix-action@v7
+          uses: nix-community/cache-nix-action/restore@v7
           with:
             primary-key: nix-''${{ matrix.os }}-''${{ github.job }}-''${{ hashFiles('devenv.lock', 'devenv.yaml') }}
             restore-prefixes-first-match: nix-''${{ matrix.os }}-''${{ github.job }}-
-            gc-max-store-size-linux: 5G
         - uses: cachix/cachix-action@v16
           with:
             name: devenv
@@ -392,6 +392,12 @@ rec {
           run: nix profile add nixpkgs#devenv
         - name: Test
           run: ${testRun}
+        - name: Save Nix store
+          if: ''${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+          uses: nix-community/cache-nix-action/save@v7
+          with:
+            primary-key: ''${{ steps.nix-cache.outputs.primary-key }}
+            gc-max-store-size-linux: 5G
   '';
 
   nodePackage = version: "nodejs_${lib.versions.major version}";
