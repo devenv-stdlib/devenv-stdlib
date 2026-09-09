@@ -14,6 +14,11 @@ inputs:
 imports:
   - ./modules
 
+# Pylance (and other Cursor language packs) are unfree; enabling Python
+# evaluates those packs for .vscode / cursor-sync.
+nixpkgs:
+  allow_unfree: true
+
 # Keep the devenv CLI aligned with the module set it evaluates.
 require_version: true
 
