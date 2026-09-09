@@ -8,6 +8,7 @@
     ./home/bash.nix
     ./home/terminal.nix
     ./home/cursor.nix
+    ./home/mise.nix
     ./home/llm-context.nix
     ./home/nano.nix
     ./home/neovim.nix
@@ -15,7 +16,6 @@
     ./home/eza.nix
     ./home/copier.nix
     ./home/httpie.nix
-    ./home/howdoi.nix
     ./home/explainshell.nix
     ./home/semantic-release.nix
     ./home/pay-respects.nix

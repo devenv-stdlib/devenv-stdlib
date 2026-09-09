@@ -13,7 +13,7 @@ home.local.nix
 # SecretSpec dotenv (9Router password, Brave / Firecrawl). Copier may write this.
 .env
 
-# Consumer hook for `update` (uv/npx extras). Template pins stay in-tree.
+# Consumer hook for `update` (host extras). Template pins stay in-tree.
 update.local.sh
 
 # direnv
@@ -34,8 +34,11 @@ result-*
 # User override (Serena merges this over project.yml)
 .serena/project.local.yml
 
-# Generated from languages.* and debtmap.* by modules/debtmap.nix
+# Generated from languages.* and debtmap.* by modules/debtmap/
 .debtmap.toml
+
+# Generated from modules/non-nix/catalog.json by modules/mise/
+mise.toml
 
 # lychee link-check cache (git-hooks)
 .lycheecache

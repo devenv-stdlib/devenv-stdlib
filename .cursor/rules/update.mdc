@@ -11,14 +11,14 @@ pins, debtmap, vendored `.agents/skills/`) move only with `copier update`.
 
 ```
 # ❌ BAD — fighting the next copier update
-# home/llm-context.nix
-braveSearchMcpVersion = "9.9.9";
+# modules/non-nix/catalog.json
+"pin": "9.9.9"
 
 # ✅ GOOD
 copier update
-# or bump *your* uv/npx tools in gitignored update.local.sh
+# or bump *your* extras in gitignored update.local.sh
 ```
 
-Do not edit shipped `home/*-pkg.nix` or `home/llm-context.nix` version
-strings to "upgrade" the stack. `devenv update` is the devenv CLI (flake
-inputs). `update` is our script; it does not wrap that CLI.
+Do not edit `modules/non-nix/catalog.json` pins (or generated `mise.toml`)
+to "upgrade" the stack. `devenv update` is the devenv CLI (flake inputs).
+`update` is our script; it does not wrap that CLI.

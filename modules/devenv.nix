@@ -12,6 +12,7 @@ _: {
     ./languages/cursor.nix
     ./languages/serena.nix
     ./debtmap
+    ./mise
     ./update
     ./test/devenv.nix
   ];

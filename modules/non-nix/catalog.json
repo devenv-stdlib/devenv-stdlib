@@ -1,0 +1,116 @@
+[
+  {
+    "name": "rtk",
+    "kind": "cli",
+    "scope": "user",
+    "pin": "0.48.0",
+    "mise": "ubi:rtk-ai/rtk",
+    "nixAttr": ["rtk"],
+    "homepageContains": "rtk-ai/rtk"
+  },
+  {
+    "name": "github-mcp-server",
+    "kind": "cli",
+    "scope": "user",
+    "pin": "1.11.0",
+    "mise": "ubi:github/github-mcp-server",
+    "nixAttr": ["github-mcp-server"],
+    "homepageContains": "github/github-mcp-server"
+  },
+  {
+    "name": "serena",
+    "kind": "cli",
+    "scope": "user",
+    "pin": "1.7.0",
+    "mise": "pipx:serena-agent",
+    "nixAttr": null,
+    "homepageContains": null
+  },
+  {
+    "name": "headroom",
+    "kind": "cli",
+    "scope": "user",
+    "pin": "0.37.0",
+    "mise": "pipx:headroom-ai[mcp]",
+    "nixAttr": null,
+    "homepageContains": null
+  },
+  {
+    "name": "brave-search-mcp",
+    "kind": "cli",
+    "scope": "user",
+    "pin": "2.1.3",
+    "mise": "npm:@brave/brave-search-mcp-server",
+    "bin": "brave-search-mcp-server",
+    "nixAttr": null,
+    "homepageContains": null
+  },
+  {
+    "name": "firecrawl-mcp",
+    "kind": "cli",
+    "scope": "user",
+    "pin": "3.24.0",
+    "mise": "npm:firecrawl-mcp",
+    "bin": "firecrawl-mcp",
+    "nixAttr": null,
+    "homepageContains": null
+  },
+  {
+    "name": "howdoi",
+    "kind": "cli",
+    "scope": "user",
+    "pin": "2.0.20",
+    "mise": "pipx:howdoi",
+    "nixAttr": ["python313Packages", "howdoi"],
+    "homepageContains": "gleitz/howdoi"
+  },
+  {
+    "name": "debtmap",
+    "kind": "cli",
+    "scope": "project",
+    "pin": "0.23.0",
+    "mise": "ubi:iepathos/debtmap",
+    "nixAttr": ["debtmap"],
+    "homepageContains": "iepathos/debtmap"
+  },
+  {
+    "name": "skills",
+    "kind": "cli",
+    "scope": "project",
+    "pin": "1.5.25",
+    "mise": "npm:skills",
+    "nixAttr": null,
+    "homepageContains": null
+  },
+  {
+    "name": "ninerouter",
+    "kind": "docker-image",
+    "scope": "user",
+    "pin": "0.5.69",
+    "image": "decolua/9router",
+    "mise": null,
+    "nixAttr": null,
+    "homepageContains": null
+  },
+  {
+    "name": "docker-mcp",
+    "kind": "docker-image",
+    "scope": "user",
+    "pin": "0.0.19",
+    "image": "mcp/docker",
+    "mise": null,
+    "nixAttr": null,
+    "homepageContains": null
+  },
+  {
+    "name": "devenv-vscode",
+    "kind": "vscode-extension",
+    "scope": "user",
+    "pin": "0.7.0",
+    "publisher": "datakurre",
+    "extension": "devenv",
+    "mise": null,
+    "nixAttr": null,
+    "homepageContains": null
+  }
+]

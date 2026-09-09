@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Refresh vendored agent skills (.agents/skills, skills-lock.json) with the
-# Vercel skills CLI. Add or remove skills from the repo root with
-# `npx skills add <owner/repo> --skill <name> -a cursor -y` / `npx skills remove`;
+# Vercel skills CLI (project-scope mise tool from modules/non-nix/catalog.json).
+# Add or remove skills from the repo root with `skills add …` / `skills remove`;
 # this only pulls newer upstream copies. Review the diff before committing.
 set -euo pipefail
 
@@ -16,10 +16,14 @@ refresh_skills() {
     return 1
   fi
   if update_dry_run; then
-    echo "dry-run: npx skills update -y -p (in $root)"
+    echo "dry-run: skills update -y -p (in $root)"
     return 0
   fi
-  (cd "$root" && npx -y skills@latest update -y -p)
+  if ! command -v skills >/dev/null 2>&1; then
+    echo "skills: install the project mise tool (devenv shell / mise install)" >&2
+    return 1
+  fi
+  (cd "$root" && skills update -y -p)
 }
 
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
