@@ -47,6 +47,8 @@
 
       # devenv tasks and act have no TTY; tput/pretty-bats SIGPIPE without TERM.
       export TERM="''${TERM:-dumb}"
+      # junit-report.py tees nix-unit to STDOUT; keep that line-buffered under pipes.
+      export PYTHONUNBUFFERED=1
 
       junit_dir="$DEVENV_ROOT/junit"
       report="$DEVENV_ROOT/tests/junit-report.py"
@@ -71,7 +73,9 @@
         status=1
       fi
       if [ ! -s "$junit_dir/report.xml" ]; then
-        bats --formatter junit --recursive "$DEVENV_ROOT/tests" >"$junit_dir/report.xml" || status=1
+        # Still stream progress to the log: capture for JUnit and mirror to STDOUT.
+        bats --formatter junit --recursive "$DEVENV_ROOT/tests" \
+          | tee "$junit_dir/report.xml" || status=1
       fi
       python3 "$report" enrich-bats \
         --input "$junit_dir/report.xml" \

@@ -192,11 +192,23 @@ def failed(cases: list[dict]) -> bool:
 
 
 def run_nix_unit(cmd: list[str]) -> tuple[int, str]:
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    """Run nix-unit, keep a transcript for JUnit, and mirror every line to STDOUT.
+
+    CI (and devenv tasks) often pipe our stdout, so Python would block-buffer
+    without an explicit flush — looking like a hung job with no log output.
+    """
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
     assert proc.stdout is not None
     chunks: list[str] = []
     for line in proc.stdout:
         sys.stdout.write(line)
+        sys.stdout.flush()
         chunks.append(line)
     return proc.wait(), "".join(chunks)
 
