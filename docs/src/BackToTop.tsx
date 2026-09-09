@@ -8,7 +8,10 @@ export function BackToTop({ root }: { root: HTMLElement | null }) {
 
   useEffect(() => {
     const update = () => {
-      setVisible((root?.scrollTop ?? 0) > SHOW_AFTER_PX || window.scrollY > SHOW_AFTER_PX);
+      setVisible(
+        (root?.scrollTop ?? 0) > SHOW_AFTER_PX ||
+          window.scrollY > SHOW_AFTER_PX,
+      );
     };
     update();
     root?.addEventListener("scroll", update, { passive: true });

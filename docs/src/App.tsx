@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { BackToTop } from "./BackToTop";
 import { MarkdownSection } from "./markdown";
 import { sections } from "./sections";
-import { SpDivider, SpSidenav, SpSidenavHeading, SpSidenavItem, SpTheme } from "./spectrum";
+import {
+  SpDivider,
+  SpSidenav,
+  SpSidenavHeading,
+  SpSidenavItem,
+  SpTheme,
+} from "./spectrum";
 import { useActiveSection } from "./useActiveSection";
 
 function scrollToId(id: string, root: HTMLElement | null) {
@@ -12,7 +18,9 @@ function scrollToId(id: string, root: HTMLElement | null) {
   }
   if (root) {
     const offset =
-      el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop;
+      el.getBoundingClientRect().top -
+      root.getBoundingClientRect().top +
+      root.scrollTop;
     root.scrollTo({ top: Math.max(0, offset - 8), behavior: "smooth" });
   } else {
     el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -20,18 +28,26 @@ function scrollToId(id: string, root: HTMLElement | null) {
   history.replaceState(null, "", `#${id}`);
 }
 
-function sidenavItemFromEvent(event: React.MouseEvent): HTMLElement | undefined {
-  return event.nativeEvent.composedPath().find(
-    (node): node is HTMLElement =>
-      node instanceof HTMLElement && node.localName === "sp-sidenav-item",
-  );
+function sidenavItemFromEvent(
+  event: React.MouseEvent,
+): HTMLElement | undefined {
+  return event.nativeEvent
+    .composedPath()
+    .find(
+      (node): node is HTMLElement =>
+        node instanceof HTMLElement && node.localName === "sp-sidenav-item",
+    );
 }
 
 export function App() {
   const [scrollerEl, setScrollerEl] = useState<HTMLElement | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const navIds = useMemo(
-    () => sections.flatMap((section) => [section.id, ...section.headings.map((h) => h.id)]),
+    () =>
+      sections.flatMap((section) => [
+        section.id,
+        ...section.headings.map((h) => h.id),
+      ]),
     [],
   );
   const active = useActiveSection(navIds, scrollerEl);
@@ -83,7 +99,11 @@ export function App() {
             goTo(id);
           }}
         >
-          <SpSidenav label="On this page" variant="multilevel" value={highlight}>
+          <SpSidenav
+            label="On this page"
+            variant="multilevel"
+            value={highlight}
+          >
             <SpSidenavHeading label="Contents">Contents</SpSidenavHeading>
             {sections.map((section) => (
               <SpSidenavItem
@@ -113,7 +133,11 @@ export function App() {
         </aside>
         <main className="docs-main" ref={setScrollerEl}>
           {sections.map((section) => (
-            <MarkdownSection key={section.id} id={section.id} source={section.source} />
+            <MarkdownSection
+              key={section.id}
+              id={section.id}
+              source={section.source}
+            />
           ))}
         </main>
         <BackToTop root={scrollerEl} />
