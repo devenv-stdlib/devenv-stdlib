@@ -42,10 +42,10 @@ Examples:
   ${cmd} --name my-ext --kind vscode-extension --scope user --pin 1.2.3 \\
     --publisher acme --extension my-ext \\
     --docs 'Acme extension. Docs: https://marketplace.visualstudio.com/items?itemName=acme.my-ext'
-  ${cmd} --name howdoi --kind cli --scope user --pin 2.0.20 \\
-    --mise pipx:howdoi --nix-attr python313Packages,howdoi \\
-    --homepage-contains gleitz/howdoi --dry-run \\
-    --docs 'Stack Overflow answers. Docs: https://github.com/gleitz/howdoi'
+  ${cmd} --name navi --kind cli --scope user --pin 2.24.0 \\
+    --mise ubi:denisidoro/navi --nix-attr navi \\
+    --homepage-contains denisidoro/navi --dry-run \\
+    --docs 'Interactive cheatsheets. Docs: https://github.com/denisidoro/navi'
 EOF
 }
 
