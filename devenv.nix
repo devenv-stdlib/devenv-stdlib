@@ -18,6 +18,11 @@ _: {
     . "$DEVENV_ROOT/home/docker-rootless.sh"
     docker_rootless_env
 
+    # Remember merge resolutions and auto-stage them on later conflicts.
+    # shellcheck disable=SC1091
+    . "$DEVENV_ROOT/home/ensure-git-rerere.sh"
+    ensure_git_rerere
+
     # Git has no pre-tag hook, so the tag guard lives in reference-transaction,
     # which prek does not manage. Refresh it on every shell entry.
     hooks_dir=$(git rev-parse --git-path hooks 2>/dev/null || true)

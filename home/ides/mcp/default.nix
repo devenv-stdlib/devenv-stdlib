@@ -9,6 +9,8 @@
   githubMcpBin,
   braveMcpBin,
   firecrawlMcpBin,
+  gitConflictMcp,
+  gitRebaseMcp,
   dockerMcpImage,
   rtk,
   jq,
@@ -78,6 +80,7 @@ let
 
   # Core servers shared across harnesses. includeHeadroom=false drops headroom
   # from the upsert (gateway path) so the harness can remove the key.
+  # User-added mcpServers keys are preserved by merge_mcp.
   mkCoreServers =
     {
       includeHeadroom ? true,
@@ -99,6 +102,12 @@ let
       };
       docker = {
         command = toString dockerMcp;
+      };
+      "git-conflict-mcp" = {
+        command = toString gitConflictMcp;
+      };
+      "git-rebase-mcp" = {
+        command = toString gitRebaseMcp;
       };
     }
     // lib.optionalAttrs includeHeadroom {
