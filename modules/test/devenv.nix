@@ -64,9 +64,13 @@
         --output "$junit_dir/nix-unit.xml" || status=1
 
       echo "==> bats"
+      # GNU parallel prompts once for a citation; silence that in CI/noninteractive.
+      mkdir -p "''${HOME}/.parallel"
+      touch "''${HOME}/.parallel/will-cite"
+      bats_jobs="$(nproc 2>/dev/null || echo 2)"
       # tap + report-formatter: pretty writes to a pipe and bats-format-junit
       # exits 141 (SIGPIPE) when stdout is not a TTY (CI, act, devenv tasks).
-      if bats --formatter tap --report-formatter junit --output "$junit_dir" \
+      if bats --jobs "$bats_jobs" --formatter tap --report-formatter junit --output "$junit_dir" \
         --print-output-on-failure --recursive "$DEVENV_ROOT/tests"; then
         :
       else
@@ -74,7 +78,7 @@
       fi
       if [ ! -s "$junit_dir/report.xml" ]; then
         # Still stream progress to the log: capture for JUnit and mirror to STDOUT.
-        bats --formatter junit --recursive "$DEVENV_ROOT/tests" \
+        bats --jobs "$bats_jobs" --formatter junit --recursive "$DEVENV_ROOT/tests" \
           | tee "$junit_dir/report.xml" || status=1
       fi
       python3 "$report" enrich-bats \
