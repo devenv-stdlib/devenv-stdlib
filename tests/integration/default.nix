@@ -43,7 +43,7 @@ pkgs.testers.runNixOSTest {
         pkgs.nix
         pkgs.actionlint
       ];
-      variables.NIX_PATH = "nixpkgs=${pkgs.path}";
+      variables.NIX_PATH = lib.mkForce "nixpkgs=${pkgs.path}";
       etc = {
         "devenv/test-empty.yml".source = emptyYaml;
         "devenv/test-python.yml".source = pythonYaml;
