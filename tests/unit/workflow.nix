@@ -51,7 +51,8 @@
         matrixOs = contains "matrix.os" yaml;
         version = contains "3.12" yaml;
         policyMin = contains "supported.python.min" yaml;
-        cache = contains "cache-nix-action" yaml;
+        cache = contains "cache-nix-action/restore" yaml;
+        cacheSave = contains "cache-nix-action/save" yaml;
       };
     expected = {
       call = true;
@@ -63,6 +64,7 @@
       version = true;
       policyMin = true;
       cache = true;
+      cacheSave = true;
     };
   };
 
