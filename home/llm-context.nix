@@ -37,7 +37,13 @@ let
   firecrawlMcpBin = cliExe "firecrawl-mcp";
 
   rtkRewrite = pkgs.writeShellScript "rtk-rewrite.sh" ''
-    export RTK=${lib.escapeShellArg rtk}
+    set -euo pipefail
+    stable="$HOME/.cursor/bin/rtk"
+    if [ -x "$stable" ]; then
+      export RTK="$stable"
+    else
+      export RTK=${lib.escapeShellArg rtk}
+    fi
     export JQ=${lib.escapeShellArg jq}
     exec ${pkgs.runtimeShell} ${./rtk-rewrite.sh}
   '';
@@ -126,14 +132,20 @@ in
                 if nine then
                   ''
                     ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} hooks-remove "$HOME/.cursor/hooks.json"
+                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} permissions-clear-rtk \
+                      "$HOME/.cursor/permissions.json" "$HOME/.cursor/bin/rtk"
                     rm -f "$HOME/.cursor/rules/ponytail.mdc" \
                       "$HOME/.cursor/rules/headroom-compress.mdc" \
                       "$HOME/.cursor/rules/rtk-passthrough.mdc"
                   ''
                 else
                   ''
-                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} hooks "$HOME/.cursor/hooks.json" ${lib.escapeShellArg (toString rtkRewrite)}
-                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} permissions "$HOME/.cursor/permissions.json"
+                    mkdir -p "$HOME/.cursor/bin"
+                    ln -sfn ${lib.escapeShellArg (toString rtk)} "$HOME/.cursor/bin/rtk"
+                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} permissions \
+                      "$HOME/.cursor/permissions.json" "$HOME/.cursor/bin/rtk"
+                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} hooks \
+                      "$HOME/.cursor/hooks.json" ${lib.escapeShellArg (toString rtkRewrite)}
                   ''
               }
 
