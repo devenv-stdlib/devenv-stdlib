@@ -39,7 +39,7 @@ devenv tasks run devenv:test-devenv
 home-switch          # home-manager switch -b backup -f home.nix
 ```
 
-Replaced files get a `.backup` suffix. On flakes-only hosts, `home-switch` and `setup.sh` set `NIX_PATH=nixpkgs=flake:nixpkgs` when `NIX_PATH` has no `nixpkgs=` entry.
+Replaced files get a `.backup` suffix. On flakes-only hosts, `home-switch` and `setup.sh` set `NIX_PATH=nixpkgs=flake:nixpkgs` when `NIX_PATH` has no `nixpkgs=` entry, and drop search-path directories that do not exist (such as `~/.nix-defexpr/channels` without channels), which Nix would otherwise warn about on every evaluation.
 
 - Docs: [Home Manager manual](https://nix-community.github.io/home-manager/)
 
@@ -59,7 +59,7 @@ copier check-update
 
 ### Cachix
 
-[Cachix](https://docs.cachix.org/) is the binary cache. `setup.sh` runs `cachix use devenv` as root so you substitute devenv builds instead of compiling them. This template sets `cachix.pull = [ "devenv" ]` in `devenv.nix`. Cachix also sells private caches; there is no separate donations page.
+[Cachix](https://docs.cachix.org/) is the binary cache. `setup.sh` runs `cachix use devenv` as root so you substitute devenv builds instead of compiling them; CI gets the same cache from `cachix-action`. `devenv.nix` sets `cachix.enable = false` because the cache is already in `nix.conf` and devenv's own pull would add it a second time, which Nix reports as a warning. Cachix also sells private caches; there is no separate donations page.
 
 ```bash
 cachix use devenv    # already done by setup.sh
@@ -222,6 +222,20 @@ GNOME extension that drops the terminal from the top of the screen.
 
 - Docs: [cursor.com/docs](https://cursor.com/docs)
 
+### Agent skills
+
+`.agents/skills/` ships 54 upstream Cursor skills (project scope; Cursor reads that directory natively), vendored with the [Vercel skills CLI](https://github.com/vercel-labs/skills). `skills-lock.json` records each skill's source and content hash. Only a skill's name and description sit in context until the agent decides it is relevant; bodies load on demand. Sources: [obra/superpowers](https://github.com/obra/superpowers) (brainstorming, plans, TDD, debugging, code review, worktrees), [mattpocock/skills](https://github.com/mattpocock/skills) (spec/tickets/triage, codebase design, grill-me, handoff), [cursor/plugins](https://github.com/cursor/plugins) (`cursor-team-kit` PR/CI flows, `pstack` unslop/no-comments/principles, `cli-for-agents`), [trailofbits/skills](https://github.com/trailofbits/skills) (Python/Rust review, property-based and mutation testing, differential review, supply-chain and Actions auditors, second opinion), and Anthropic's `mcp-builder`. The per-skill table with licenses (MIT, CC-BY-SA-4.0, Apache-2.0) is `.agents/skills/README.md`.
+
+```bash
+npx skills add owner/repo --skill <name> -a cursor -y   # add one (repo root)
+npx skills remove <name>
+npx skills list
+```
+
+In this template, `update` runs `includes/update/skills.sh` (`npx skills update -y -p`); review the diff before committing, since skills run with the agent's permissions. Generated monorepos receive skill changes through `copier update`. Git hooks skip `.agents/skills/` (vendored text). Excluded on purpose: duplicate TDD/debugging skills, Claude-Code-only bootstrap and subagent skills, hook-driven plugins (`ralph-loop`, `advisor`, `continual-learning`), Anthropic document/Claude-API skills, vendor-product skills, smart-contract and fuzzing suites, and rule bundles such as awesome-cursorrules (always-apply, stale).
+
+- Docs: [Cursor skills](https://cursor.com/docs/skills), [agentskills.io](https://agentskills.io), [skills.sh](https://skills.sh/)
+
 ### RTK
 
 [RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. When `cursor.ninerouter.enable` is off, Home Manager pins the official release binary, merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`, and upserts `rtk` into `~/.cursor/permissions.json` `terminalAllowlist` (other prefixes stay; this key replaces the in-app terminal allowlist). It does not run `rtk init`. `.cursor/rules/rtk-passthrough.mdc` (also `~/.cursor/rules/` after `home-switch`) tells the agent to retry once with `RTK_DISABLED=1` or `--no-compact` only when a needed detail is missing. When 9Router is on, the gateway’s built-in RTK is used and that host hook and rule are removed.
@@ -313,7 +327,7 @@ User-global [Neovim](https://neovim.io/) (no plugins yet) and [nano](https://www
 
 ### prek
 
-[prek](https://prek.j178.dev/) runs the hooks in `modules/git-hooks.nix` (`pre-commit` and `commit-msg`). devenv generates the config; do not commit a hand-edited `.pre-commit-config.yaml`. `reference-transaction` is installed separately so `git tag` is gated.
+[prek](https://prek.j178.dev/) runs the hooks in `modules/hooks/` (`pre-commit` and `commit-msg`). devenv generates the config; do not commit a hand-edited `.pre-commit-config.yaml`. `reference-transaction` is installed separately so `git tag` is gated.
 
 ```bash
 # hooks run on git commit; devenv shell installs them
@@ -340,7 +354,7 @@ Always-on in the devenv hook set: [nixfmt](https://github.com/NixOS/nixfmt), [st
 
 ### debtmap
 
-[debtmap](https://github.com/iepathos/debtmap) 0.23.0 (official release binaries in `modules/debtmap-pkg.nix`) runs when any of rust/python/javascript/typescript/go is on. `devenv shell` writes `.debtmap.toml` (gitignored). Override thresholds in `devenv.local.nix`.
+[debtmap](https://github.com/iepathos/debtmap) 0.23.0 (official release binaries in `modules/debtmap/pkg.nix`) runs when any of rust/python/javascript/typescript/go is on. `devenv shell` writes `.debtmap.toml` (gitignored). Override thresholds in `devenv.local.nix`.
 
 ```bash
 debtmap --help
