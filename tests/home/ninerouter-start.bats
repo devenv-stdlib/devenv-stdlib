@@ -9,8 +9,9 @@ setup() {
   source "$REPO_DIR/home/ninerouter-start.sh"
   TMP=$(mktemp -d)
   export HOME="$TMP/home"
+  export XDG_CONFIG_HOME="$HOME/.config"
   export NINEROUTER_PYTHON="$TMP/bin/py"
-  mkdir -p "$HOME/.9router/db" "$TMP/bin"
+  mkdir -p "$HOME/.9router/db" "$HOME/.config" "$TMP/bin"
   printf '#!/bin/sh\nprintf "hashed\\n"\n' >"$NINEROUTER_PYTHON"
   chmod +x "$NINEROUTER_PYTHON"
 }
