@@ -7,7 +7,8 @@ setup() {
 }
 
 @test "terminal-lib.nix maps keybindings, Warp TOML, and desktop entries" {
-  if ! NIX_PATH="${NIX_PATH:-nixpkgs=flake:nixpkgs}" nix eval --impure --expr 'import <nixpkgs> { }' >/dev/null 2>&1; then
+  # Resolve <nixpkgs> only — do not `import <nixpkgs> { }` (full package-set eval).
+  if ! NIX_PATH="${NIX_PATH:-nixpkgs=flake:nixpkgs}" nix eval --impure --expr 'builtins.toString <nixpkgs>' >/dev/null 2>&1; then
     skip "nixpkgs not on NIX_PATH"
   fi
   run env NIX_PATH="${NIX_PATH:-nixpkgs=flake:nixpkgs}" nix-instantiate --eval --strict "$EVAL"

@@ -1,6 +1,8 @@
 # Pure checks for home/terminal-lib.nix. Needs <nixpkgs> only for lib.
+# Import lib alone — `import <nixpkgs> { }` evaluates the whole package set and
+# can hang for many minutes on flake:nixpkgs (CI looks stuck, then cancelled).
 let
-  inherit ((import <nixpkgs> { })) lib;
+  lib = import <nixpkgs/lib>;
   term = import ../../home/terminal-lib.nix { inherit lib; };
 
   must = name: cond: if cond then true else throw "terminal-lib: ${name}";
