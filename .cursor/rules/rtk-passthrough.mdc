@@ -5,12 +5,14 @@ alwaysApply: true
 
 # Shell goes through RTK
 
-`terminalAllowlist` is the absolute **`$HOME/.cursor/bin/rtk`** (plus bare
-`rtk`). The `preToolUse` Shell hook rewrites known commands
-(`git status` → `$HOME/.cursor/bin/rtk git status`) or wraps the rest as
-`$HOME/.cursor/bin/rtk run -c '…'`. Prefer that path. Do not invent bare
-non-`rtk` shell commands to "skip" the hook. Do not run `rtk init` or install
-the marketplace RTK extension — `home-switch` owns hooks and permissions.
+`terminalAllowlist` always includes the absolute **`$HOME/.cursor/bin/rtk`**
+(plus bare `rtk`); `home-switch` keeps any other prefixes already in
+`~/.cursor/permissions.json`. The `preToolUse` Shell hook rewrites known
+commands (`git status` → `$HOME/.cursor/bin/rtk git status`) or wraps the
+rest as `$HOME/.cursor/bin/rtk run -c '…'`. Prefer that path. Do not invent
+bare non-`rtk` shell commands to "skip" the hook. Do not run `rtk init` or
+install the marketplace RTK extension — `home-switch` owns hooks and
+permissions.
 
 ## When you need full (uncompacted) output
 
