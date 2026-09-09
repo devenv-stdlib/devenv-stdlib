@@ -46,5 +46,6 @@ fi
 cat <<'EOF'
 Template-shipped tools (RTK, Serena, Headroom, 9Router, GitHub/Docker/Brave/Firecrawl
 MCP pins, debtmap, vendored .agents/skills, …) move only via copier update.
-Do not edit home/*-pkg.nix or home/llm-context.nix version strings to upgrade them.
+Do not edit modules/non-nix/catalog.json pins by hand to "upgrade" them; run
+`update` (template mode) or wait for the next copier update.
 EOF

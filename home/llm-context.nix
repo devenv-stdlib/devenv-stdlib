@@ -7,34 +7,35 @@
 let
   cfg = config.cursor.llmContext;
   nine = config.cursor.ninerouter.enable;
-  rtkPkg = import ./rtk-pkg.nix { inherit pkgs lib; };
-  githubMcpPkg = import ./github-mcp-pkg.nix { inherit pkgs lib; };
-  headroomVersion = "0.37.0";
-  serenaVersion = "1.7.0";
-  # Official Brave package (not @modelcontextprotocol/server-brave-search).
-  # 9Router's Brave Search API is a separate dashboard provider.
-  braveSearchMcpVersion = "2.1.3";
-  firecrawlMcpVersion = "3.24.0";
-  dockerMcpImage = "mcp/docker:0.0.19";
-  uvBinDir = "${config.home.homeDirectory}/.local/bin";
-  python = lib.getExe pkgs.python313;
-  uv = lib.getExe pkgs.uv;
+  nonNix = import ../modules/non-nix/lib.nix { inherit lib; };
+  resolved = nonNix.resolve pkgs;
+  entry = name: lib.findFirst (e: e.name == name) null resolved;
+  mise = lib.getExe pkgs.mise;
   jq = lib.getExe pkgs.jq;
-  rtk = lib.getExe rtkPkg;
-  npx = lib.getExe' pkgs.nodejs "npx";
-  # uv tools use Nix CPython; native wheels need libstdc++ from the same gcc.
-  uvLibPath = lib.makeLibraryPath [
-    pkgs.stdenv.cc.cc
-    pkgs.zlib
-  ];
-  wrapUvTool =
+  dockerMcpImage = nonNix.imageRef "docker-mcp";
+  ninerouterImage = nonNix.imageRef "ninerouter";
+
+  # Nix package when promoted; otherwise a thin mise shim (conf.d pins).
+  cliExe =
     name:
-    pkgs.writeShellScript name ''
-      export LD_LIBRARY_PATH=${lib.escapeShellArg uvLibPath}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-      exec ${uvBinDir}/${name} "$@"
-    '';
-  headroomWrapped = wrapUvTool "headroom";
-  serenaWrapped = wrapUvTool "serena";
+    let
+      e = entry name;
+      bin = if e == null then name else nonNix.binName e;
+    in
+    if e != null && e.via == "nix" then
+      lib.getExe e.package
+    else
+      pkgs.writeShellScript bin ''
+        exec ${mise} exec -- ${bin} "$@"
+      '';
+
+  rtk = cliExe "rtk";
+  serena = cliExe "serena";
+  headroom = cliExe "headroom";
+  githubMcpBin = cliExe "github-mcp-server";
+  braveMcpBin = cliExe "brave-search-mcp";
+  firecrawlMcpBin = cliExe "firecrawl-mcp";
+
   rtkRewrite = pkgs.writeShellScript "rtk-rewrite.sh" ''
     export RTK=${lib.escapeShellArg rtk}
     export JQ=${lib.escapeShellArg jq}
@@ -48,7 +49,7 @@ let
       exit 1
     fi
     export GITHUB_PERSONAL_ACCESS_TOKEN="$token"
-    exec ${lib.getExe githubMcpPkg} stdio
+    exec ${githubMcpBin} stdio
   '';
   dockerMcp = pkgs.writeShellScript "docker-mcp" ''
     set -euo pipefail
@@ -81,10 +82,10 @@ let
       ${lib.escapeShellArg dockerMcpImage}
   '';
   braveMcp = pkgs.writeShellScript "brave-search-mcp" ''
-    exec ${npx} -y @brave/brave-search-mcp-server@${braveSearchMcpVersion}
+    exec ${braveMcpBin}
   '';
   firecrawlMcp = pkgs.writeShellScript "firecrawl-mcp" ''
-    exec ${npx} -y firecrawl-mcp@${firecrawlMcpVersion}
+    exec ${firecrawlMcpBin}
   '';
 in
 {
@@ -113,31 +114,13 @@ in
       {
         home = {
           packages = [
-            githubMcpPkg
             pkgs.jq
-            pkgs.uv
-            pkgs.python313
-            pkgs.nodejs
             pkgs.curl
             pkgs.inotify-tools
-          ]
-          ++ lib.optionals (!nine) [ rtkPkg ];
+          ];
 
-          sessionVariables.UV_TOOL_BIN_DIR = uvBinDir;
-
-          # First home-switch needs network. `uv tool install` with a pin is
-          # idempotent on later switches.
           activation = {
-            installLlmContextUvTools = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-              export UV_TOOL_BIN_DIR=${lib.escapeShellArg uvBinDir}
-              mkdir -p "$UV_TOOL_BIN_DIR"
-              ${uv} tool install --python ${python} "serena-agent==${serenaVersion}"
-              ${lib.optionalString (!nine) ''
-                ${uv} tool install --python ${python} "headroom-ai[mcp]==${headroomVersion}"
-              ''}
-            '';
-
-            mergeCursorLlm = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+            mergeCursorLlm = lib.hm.dag.entryAfter [ "miseInstallNonNix" ] ''
               export JQ=${lib.escapeShellArg jq}
               ${
                 if nine then
@@ -169,7 +152,7 @@ in
                 if nine then
                   ''
                     ${jq} -n \
-                      --arg serena ${lib.escapeShellArg (toString serenaWrapped)} \
+                      --arg serena ${lib.escapeShellArg (toString serena)} \
                       --arg github ${lib.escapeShellArg (toString githubMcp)} \
                       --arg docker ${lib.escapeShellArg (toString dockerMcp)} \
                       '
@@ -185,8 +168,8 @@ in
                 else
                   ''
                     ${jq} -n \
-                      --arg serena ${lib.escapeShellArg (toString serenaWrapped)} \
-                      --arg headroom ${lib.escapeShellArg (toString headroomWrapped)} \
+                      --arg serena ${lib.escapeShellArg (toString serena)} \
+                      --arg headroom ${lib.escapeShellArg (toString headroom)} \
                       --arg github ${lib.escapeShellArg (toString githubMcp)} \
                       --arg docker ${lib.escapeShellArg (toString dockerMcp)} \
                       '
@@ -348,6 +331,7 @@ in
               "DOCKER_ROOTLESS_SH=${./docker-rootless.sh}"
               "NINEROUTER_LOOPBACK_PROXY=${./ninerouter-loopback-proxy.js}"
               "NINEROUTER_PYTHON=${lib.getExe (pkgs.python313.withPackages (p: [ p.bcrypt ]))}"
+              "NINEROUTER_IMAGE=${ninerouterImage}"
             ];
             ExecStart = "${pkgs.runtimeShell} ${./ninerouter-start.sh}";
             Restart = "on-failure";

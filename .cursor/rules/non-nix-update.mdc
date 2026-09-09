@@ -1,24 +1,24 @@
 ---
-description: Pin non-Nix tools once and add an includes/update refresher
-globs: home/**,modules/**/*.nix,includes/update/**
+description: Pin non-Nix tools in the catalog and refresh with non-nix.sh
+globs: home/**,modules/non-nix/**,modules/mise/**,includes/update/**
 alwaysApply: false
 ---
 
 # Non-Nix pins (template authors)
 
-When adding a tool Nix does not package: pin it in one file, add
-`includes/update/<name>.sh`, and do not teach consumers to bump the copy.
+One catalog: `modules/non-nix/catalog.json`. CLI tools install via mise (or
+Nix when `versionAtLeast` + homepage identity match). Docker images and the
+devenv VS Code extension share the same catalog but are not mise `[tools]`.
 
 ```
-# ❌ BAD — consumers "upgrade" by editing the copied pin
+# ❌ BAD — consumers "upgrade" by editing generated mise.toml or HM wrappers
 # home/llm-context.nix
 serenaVersion = "1.8.0";
 
-# ✅ GOOD — pin here, refresher owns the bump, users get it via copier update
-# home/llm-context.nix
-serenaVersion = "1.7.0";
-# includes/update/pypi-llm.sh  →  replace_nix_string_assign … serenaVersion
+# ✅ GOOD — bump the catalog pin; `update` runs includes/update/non-nix.sh
+# modules/non-nix/catalog.json  →  "name": "serena", "pin": "1.7.0"
 ```
 
 `update` in this checkout runs those refreshers. It does not run
 `devenv update` or `refresh-toolchain-latest`. Copier excludes this rule.
+Do not edit `home/*-pkg.nix` (removed) or invent per-tool refreshers.

@@ -32,16 +32,16 @@ EOF
 }
 
 @test "consumer mode runs devenv update, leaves pins, prints copier hint" {
-  mkdir -p "$FIXTURE/home"
-  printf '  braveSearchMcpVersion = "0.0.0";\n' >"$FIXTURE/home/llm-context.nix"
+  mkdir -p "$FIXTURE/modules/non-nix"
+  printf '[{"name":"brave-search-mcp","pin":"0.0.0"}]\n' >"$FIXTURE/modules/non-nix/catalog.json"
   write_devenv_stub 0
 
   PATH="$BIN:$PATH" run bash "$UPDATE_SH"
   [ "$status" -eq 0 ]
   grep -qx 'devenv-stub:update' "$STUB_LOG"
   [[ $output == *"copier update"* ]]
-  [[ $output == *"home/llm-context.nix"* ]]
-  grep -q 'braveSearchMcpVersion = "0.0.0"' "$FIXTURE/home/llm-context.nix"
+  [[ $output == *"modules/non-nix/catalog.json"* ]]
+  grep -q '0.0.0' "$FIXTURE/modules/non-nix/catalog.json"
 }
 
 @test "consumer mode runs executable update.local.sh" {
@@ -113,11 +113,33 @@ EOF
   grep -q '%2f' "$STUB_LOG"
 }
 
-@test "npm-mcp refresher rewrites pins without hitting the live registry" {
+@test "non-nix refresher rewrites catalog pins without hitting the live registry" {
   command -v jq >/dev/null || skip "jq not installed"
   command -v python3 >/dev/null || skip "python3 not installed"
-  mkdir -p "$FIXTURE/home"
-  cp "$REPO_DIR/home/llm-context.nix" "$FIXTURE/home/llm-context.nix"
+  mkdir -p "$FIXTURE/modules/non-nix" "$FIXTURE/home"
+  cat >"$FIXTURE/modules/non-nix/catalog.json" <<'EOF'
+[
+  {
+    "name": "brave-search-mcp",
+    "kind": "cli",
+    "scope": "user",
+    "pin": "0.0.0",
+    "mise": "npm:@brave/brave-search-mcp-server",
+    "nixAttr": null,
+    "homepageContains": null
+  },
+  {
+    "name": "firecrawl-mcp",
+    "kind": "cli",
+    "scope": "user",
+    "pin": "0.0.0",
+    "mise": "npm:firecrawl-mcp",
+    "nixAttr": null,
+    "homepageContains": null
+  }
+]
+EOF
+  printf 'sha256 = "old";\n' >"$FIXTURE/home/vscode-ext-lib.nix"
 
   cat >"$BIN/curl" <<'EOF'
 #!/usr/bin/env bash
@@ -134,35 +156,39 @@ done
 exit 1
 EOF
   chmod +x "$BIN/curl"
+  cat >"$BIN/nix" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$BIN/nix"
 
-  UPDATE_ROOT=$FIXTURE PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/npm-mcp.sh"
+  UPDATE_ROOT=$FIXTURE PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/non-nix.sh"
   [ "$status" -eq 0 ]
-  grep -q 'braveSearchMcpVersion = "8.8.8"' "$FIXTURE/home/llm-context.nix"
-  grep -q 'firecrawlMcpVersion = "9.9.9"' "$FIXTURE/home/llm-context.nix"
-  grep -q '@brave/brave-search-mcp-server' "$FIXTURE/home/llm-context.nix"
+  grep -q '"pin": "8.8.8"' "$FIXTURE/modules/non-nix/catalog.json"
+  grep -q '"pin": "9.9.9"' "$FIXTURE/modules/non-nix/catalog.json"
 }
 
-@test "skills refresher runs the CLI update in the repo root through npx" {
+@test "skills refresher runs the CLI update in the repo root" {
   printf '{"version":1,"skills":{}}\n' >"$FIXTURE/skills-lock.json"
-  cat >"$BIN/npx" <<'EOF'
+  cat >"$BIN/skills" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n%s\n' "$PWD" "$*" >"$STUB_LOG"
 EOF
-  chmod +x "$BIN/npx"
+  chmod +x "$BIN/skills"
 
   UPDATE_ROOT=$FIXTURE PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/skills.sh"
   [ "$status" -eq 0 ]
   run cat "$STUB_LOG"
   [ "${lines[0]}" = "$FIXTURE" ]
-  [ "${lines[1]}" = "-y skills@latest update -y -p" ]
+  [ "${lines[1]}" = "update -y -p" ]
 }
 
 @test "skills refresher needs skills-lock.json and honors UPDATE_DRY_RUN" {
-  cat >"$BIN/npx" <<'EOF'
+  cat >"$BIN/skills" <<'EOF'
 #!/usr/bin/env bash
 printf 'ran\n' >"$STUB_LOG"
 EOF
-  chmod +x "$BIN/npx"
+  chmod +x "$BIN/skills"
 
   UPDATE_ROOT=$FIXTURE PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/skills.sh"
   [ "$status" -eq 1 ]
@@ -175,22 +201,38 @@ EOF
   [ ! -e "$STUB_LOG" ]
 }
 
-@test "npm-mcp refresher honors UPDATE_DRY_RUN" {
+@test "non-nix refresher honors UPDATE_DRY_RUN" {
   command -v jq >/dev/null || skip "jq not installed"
-  command -v python3 >/dev/null || skip "python3 not installed"
-  mkdir -p "$FIXTURE/home"
-  cp "$REPO_DIR/home/llm-context.nix" "$FIXTURE/home/llm-context.nix"
-  before=$(sha256sum "$FIXTURE/home/llm-context.nix" | awk '{print $1}')
+  mkdir -p "$FIXTURE/modules/non-nix"
+  cat >"$FIXTURE/modules/non-nix/catalog.json" <<'EOF'
+[
+  {
+    "name": "brave-search-mcp",
+    "kind": "cli",
+    "scope": "user",
+    "pin": "0.0.0",
+    "mise": "npm:@brave/brave-search-mcp-server",
+    "nixAttr": null,
+    "homepageContains": null
+  }
+]
+EOF
+  before=$(sha256sum "$FIXTURE/modules/non-nix/catalog.json" | awk '{print $1}')
 
   cat >"$BIN/curl" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' '{"version":"8.8.8"}'
 EOF
   chmod +x "$BIN/curl"
+  cat >"$BIN/nix" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$BIN/nix"
 
-  UPDATE_ROOT=$FIXTURE UPDATE_DRY_RUN=1 PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/npm-mcp.sh"
+  UPDATE_ROOT=$FIXTURE UPDATE_DRY_RUN=1 PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/non-nix.sh"
   [ "$status" -eq 0 ]
   [[ $output == *dry-run* ]]
-  after=$(sha256sum "$FIXTURE/home/llm-context.nix" | awk '{print $1}')
+  after=$(sha256sum "$FIXTURE/modules/non-nix/catalog.json" | awk '{print $1}')
   [ "$before" = "$after" ]
 }

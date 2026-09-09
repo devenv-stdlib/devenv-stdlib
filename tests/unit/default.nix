@@ -12,3 +12,4 @@ in
 // (import ./cursor.nix harness)
 // (import ./serena.nix harness)
 // (import ./terminal.nix harness)
+// (import ./non-nix.nix harness)

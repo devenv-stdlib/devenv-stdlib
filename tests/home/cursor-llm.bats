@@ -2,8 +2,8 @@
 # shellcheck disable=SC2030,SC2031
 # ^ SC2030/SC2031: each @test looks like a subshell, so API key exports are
 # reported as leaking or getting lost; they are deliberately per-test.
-# Exercises home/merge-cursor-llm.sh. Does not run home-manager switch,
-# the Headroom proxy, or `uv tool install`.
+# Exercises home/merge-cursor-llm.sh. Does not run home-manager switch
+# or `mise install`.
 
 setup() {
   REPO_DIR="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"

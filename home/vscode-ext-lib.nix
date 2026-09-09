@@ -1,12 +1,16 @@
 { pkgs }:
 let
+  inherit (pkgs) lib;
+  nonNix = import ../modules/non-nix/lib.nix { inherit lib; };
+  vsix = nonNix.entryByName "devenv-vscode";
   vs = pkgs.vscode-extensions;
 in
 rec {
+  # version from modules/non-nix/catalog.json; sha256 refreshed with the pin.
   devenvExtension = pkgs.vscode-utils.extensionFromVscodeMarketplace {
-    name = "devenv";
-    publisher = "datakurre";
-    version = "0.7.0";
+    inherit (vsix) publisher;
+    name = vsix.extension;
+    version = vsix.pin;
     sha256 = "1bjmjrg13zynala76vz5vpm4ann1dic6awiv03w2l9rkby4agba7";
   };
 

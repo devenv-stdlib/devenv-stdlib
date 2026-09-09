@@ -219,3 +219,27 @@ if count != 1:
 path.write_text(new)
 PY
 }
+
+catalog_path() {
+  printf '%s\n' "$(update_repo_root)/modules/non-nix/catalog.json"
+}
+
+catalog_read_pin() {
+  local name=$1
+  jq -er --arg n "$name" '.[] | select(.name == $n) | .pin' "$(catalog_path)"
+}
+
+catalog_set_pin() {
+  local name=$1 pin=$2 path
+  path=$(catalog_path)
+  if update_dry_run; then
+    echo "dry-run: $path: $name.pin = \"$pin\""
+    return 0
+  fi
+  local tmp
+  tmp=$(mktemp)
+  jq --arg n "$name" --arg p "$pin" \
+    'map(if .name == $n then .pin = $p else . end)' \
+    "$path" >"$tmp"
+  mv "$tmp" "$path"
+}
