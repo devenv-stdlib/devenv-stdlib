@@ -31,6 +31,26 @@ EOF
   grep -q 'line="' "$out"
 }
 
+@test "nix-unit junit tees live runner output to STDOUT" {
+  fake="$BATS_TEST_TMPDIR/fake-nix-unit"
+  out="$BATS_TEST_TMPDIR/nix-unit.xml"
+  cat >"$fake" <<'EOF'
+#!/usr/bin/env bash
+echo '✅ teeLiveStdout'
+echo '🎉 1/1 successful'
+EOF
+  chmod +x "$fake"
+  run python3 "$REPORT" nix-unit \
+    --nix-unit "$fake" \
+    --suite "$REPO_DIR/tests/unit/default.nix" \
+    --unit-dir "$REPO_DIR/tests/unit" \
+    --root "$REPO_DIR" \
+    --output "$out"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *teeLiveStdout* ]]
+  grep -q 'name="teeLiveStdout"' "$out"
+}
+
 @test "nixos-test junit can record a skipped run" {
   out="$BATS_TEST_TMPDIR/nixos-skip.xml"
   run python3 "$REPORT" nixos-test --skipped --status 0 --output "$out" --root "$REPO_DIR"
