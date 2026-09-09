@@ -1,0 +1,70 @@
+% devenv, bootstrap
+
+# Install or update Nix, devenv, Cachix, and Home Manager
+./setup.sh
+
+# Enter the project toolchain (git, gh, copier, nixfmt, bats, …)
+devenv shell
+
+# Re-apply Home Manager after editing home.nix or home.local.nix
+home-switch
+
+# Build the env, verify toolchain binaries, and run BATS
+devenv test
+
+# Trust this repo for devenv auto-activation (setup.sh runs this too)
+devenv allow
+
+# Auto-enter the shell via direnv (Home Manager hooks bash)
+direnv allow
+
+# Pick up a flake lock change without leaving the directory
+direnv reload
+
+# Install rootless Docker when the user socket is missing
+dockerd-rootless-setuptool.sh install
+systemctl --user enable --now docker
+loginctl enable-linger "$USER"
+
+# Apply this template to a monorepo (latest tagged release)
+copier copy <template-git-url> <dest>
+
+# Apply this checkout, including work not tagged yet
+copier copy --vcs-ref HEAD <template-path> <dest>
+
+% devenv, update
+
+# Umbrella update: flake inputs, catalog.local.toml, update.local.sh (consumer repos)
+update
+
+# Same script via devenv run (outside an interactive shell)
+devenv run update
+
+# devenv CLI only: refresh flake inputs in devenv.lock (nixpkgs, git-hooks, …)
+devenv update
+
+# Refresh only the git-hooks lock input (CI runs this weekly)
+devenv update git-hooks
+
+# Report whether a newer template Git tag exists
+copier check-update
+
+# Pull the latest tagged template into an existing monorepo copy
+copier update
+
+# Pull template changes from a branch or HEAD (keep working tree clean)
+copier update --vcs-ref HEAD
+
+# After copier update: re-apply Home Manager when home/ changed
+home-switch
+
+# After copier update or lock change: enter shell to pick up modules/
+devenv shell
+
+# Add a team tool to modules/non-nix/catalog.local.toml
+devenv tasks run non-nix:add-local -- --name <name> --kind cli --scope project --pin <version> --mise ubi:<owner>/<repo> --docs '<one-line docs + URL>'
+
+# Remove a team tool from catalog.local.toml
+devenv tasks run non-nix:remove-local -- --name <name>
+
+$ name: ls modules/non-nix/catalog.local.toml 2>/dev/null && rg '^\[\[tool\]\]' -A1 modules/non-nix/catalog.local.toml | rg 'name = ' | sed 's/.*name = "\([^"]*\)".*/\1/'

@@ -8,6 +8,11 @@ _: {
   enterShell = ''
     echo "devenv4monorepo ready: ''${USER:-unknown}@$(uname -n)"
 
+    # Repo-local navi cheats first; home-switch sets denisidoro/cheats globally.
+    if [ -d "$DEVENV_ROOT/cheats" ]; then
+      export NAVI_PATH="$DEVENV_ROOT/cheats''${NAVI_PATH:+:$NAVI_PATH}"
+    fi
+
     # Rootless Docker is the default for act and 9Router. CI keeps the runner daemon.
     # shellcheck disable=SC1091
     . "$DEVENV_ROOT/home/docker-rootless.sh"

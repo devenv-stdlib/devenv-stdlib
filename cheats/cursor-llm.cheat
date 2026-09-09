@@ -1,0 +1,61 @@
+% cursor, rtk
+
+# Re-apply Cursor Pro LLM stack (RTK + Serena + Headroom MCP)
+home-switch
+
+# Preview RTK compaction for a shell command
+rtk rewrite "git status"
+
+# Full output still under RTK (allowlist-friendly)
+rtk run -c 'git diff'
+# or:
+rtk git diff --no-compact
+
+# Inspect RTK Shell preToolUse hook merged into hooks.json
+jq '.hooks.preToolUse[] | select(.matcher=="Shell")' ~/.cursor/hooks.json
+
+# Confirm rtk is on terminalAllowlist
+jq '.terminalAllowlist' ~/.cursor/permissions.json
+
+# List MCP servers on Cursor Pro path (headroom included)
+jq -r '.mcpServers | keys[]' ~/.cursor/mcp.json
+
+# Authenticate GitHub MCP (uses gh auth token)
+gh auth login
+
+# Serena MCP help (symbol graph; upserted in ~/.cursor/mcp.json)
+serena start-mcp-server --help
+
+# Headroom MCP help (on-demand compress/retrieve; Pro path only)
+headroom --help
+
+# Skip entire LLM stack (RTK, Serena, MCP, 9Router wiring)
+# home.local.nix: cursor.llmContext.enable = false;
+
+% cursor, ninerouter
+
+# Enable 9Router gateway (removes host RTK, Ponytail, Headroom)
+# home.local.nix: cursor.ninerouter.enable = true;
+home-switch
+
+# Health-check local gateway on loopback
+curl -fsS http://127.0.0.1:20128/livez || curl -fsS http://127.0.0.1:20128/
+
+# Read Cursor Override OpenAI Base URL setup hints
+cat ~/.config/9router/cursor-openai.hint
+
+# Show gateway API key minted once as devenv (paste into Cursor Models)
+cat ~/.config/9router/cursor-api-key
+
+# Dashboard login password copied from gitignored .env
+cat ~/.config/9router/initial-password
+
+# Open 9Router dashboard (login with initial-password above)
+xdg-open http://127.0.0.1:20128
+
+# List MCP servers in gateway mode (no headroom; built-in RTK in 9Router)
+jq -r '.mcpServers | keys[]' ~/.cursor/mcp.json
+
+# Restore Cursor Pro path (host RTK + Headroom; stops ninerouter unit)
+# home.local.nix: cursor.ninerouter.enable = false;
+home-switch

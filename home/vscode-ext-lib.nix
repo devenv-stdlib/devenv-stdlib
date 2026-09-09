@@ -14,8 +14,16 @@ rec {
     sha256 = "1bjmjrg13zynala76vz5vpm4ann1dic6awiv03w2l9rkby4agba7";
   };
 
+  naviCheatsheetLanguage = pkgs.vscode-utils.extensionFromVscodeMarketplace {
+    publisher = "yanivmo";
+    name = "navi-cheatsheet-language";
+    version = "1.0.1";
+    sha256 = "18bl6kkdbykxfvriiiws68f59dlj8aga0279qgjldrhsgdgnfwf6";
+  };
+
   common = [
     devenvExtension
+    naviCheatsheetLanguage
     vs.jnoortheen.nix-ide
     vs.editorconfig.editorconfig
     vs.usernamehw.errorlens

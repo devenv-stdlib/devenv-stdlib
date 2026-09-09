@@ -17,6 +17,7 @@
     ./home/copier.nix
     ./home/httpie.nix
     ./home/explainshell.nix
+    ./home/navi.nix
     ./home/taplo.nix
     ./home/semantic-release.nix
     ./home/pay-respects.nix

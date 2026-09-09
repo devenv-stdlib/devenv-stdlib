@@ -56,15 +56,15 @@ pin = "3.24.0"
 mise = "npm:firecrawl-mcp"
 bin = "firecrawl-mcp"
 
-# Instant coding answers from Stack Overflow. Docs: https://github.com/gleitz/howdoi
+# Interactive cheatsheet browser. Docs: https://github.com/denisidoro/navi
 [[tool]]
-name = "howdoi"
+name = "navi"
 kind = "cli"
 scope = "user"
-pin = "2.0.20"
-mise = "pipx:howdoi"
-nixAttr = ["python313Packages", "howdoi"]
-homepageContains = "gleitz/howdoi"
+pin = "2.24.0"
+mise = "ubi:denisidoro/navi"
+nixAttr = ["navi"]
+homepageContains = "denisidoro/navi"
 
 # Technical-debt analyzer for enabled languages. Docs: https://github.com/iepathos/debtmap
 [[tool]]
