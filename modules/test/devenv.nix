@@ -155,5 +155,9 @@
     '';
   };
 
-  tasks."devenv:test-devenv".exec = "test-devenv";
+  tasks."devenv:test-devenv" = {
+    exec = "test-devenv";
+    # devenv tasks capture stdout by default; stream it live in CI / non-TTY.
+    showOutput = true;
+  };
 }
