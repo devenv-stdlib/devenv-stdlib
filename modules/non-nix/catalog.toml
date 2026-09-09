@@ -1,0 +1,110 @@
+# Non-Nix tool pins. Do not hand-edit pins to "upgrade" — run `update`
+# (includes/update/non-nix.sh) or wait for copier update.
+# Each [[tool]] needs a one-line comment: what it does + where to read more.
+
+# Compact Cursor Agent shell output. Docs: https://github.com/rtk-ai/rtk
+[[tool]]
+name = "rtk"
+kind = "cli"
+scope = "user"
+pin = "0.48.0"
+mise = "ubi:rtk-ai/rtk"
+nixAttr = ["rtk"]
+homepageContains = "rtk-ai/rtk"
+
+# Official GitHub MCP over stdio (token from gh auth). Docs: https://github.com/github/github-mcp-server
+[[tool]]
+name = "github-mcp-server"
+kind = "cli"
+scope = "user"
+pin = "1.11.0"
+mise = "ubi:github/github-mcp-server"
+nixAttr = ["github-mcp-server"]
+homepageContains = "github/github-mcp-server"
+
+# Code-memory MCP (symbol graph) for Cursor. Docs: https://oraios.github.io/serena/
+[[tool]]
+name = "serena"
+kind = "cli"
+scope = "user"
+pin = "1.7.0"
+mise = "pipx:serena-agent"
+
+# Context-compression MCP (compress/retrieve/stats). Docs: https://docs.headroomlabs.ai/docs
+[[tool]]
+name = "headroom"
+kind = "cli"
+scope = "user"
+pin = "0.37.0"
+mise = "pipx:headroom-ai[mcp]"
+
+# Brave Search MCP (needs BRAVE_API_KEY). Docs: https://github.com/brave/brave-search-mcp-server
+[[tool]]
+name = "brave-search-mcp"
+kind = "cli"
+scope = "user"
+pin = "2.1.3"
+mise = "npm:@brave/brave-search-mcp-server"
+bin = "brave-search-mcp-server"
+
+# Firecrawl crawl MCP (needs FIRECRAWL_API_KEY). Docs: https://docs.firecrawl.dev/mcp-server
+[[tool]]
+name = "firecrawl-mcp"
+kind = "cli"
+scope = "user"
+pin = "3.24.0"
+mise = "npm:firecrawl-mcp"
+bin = "firecrawl-mcp"
+
+# Instant coding answers from Stack Overflow. Docs: https://github.com/gleitz/howdoi
+[[tool]]
+name = "howdoi"
+kind = "cli"
+scope = "user"
+pin = "2.0.20"
+mise = "pipx:howdoi"
+nixAttr = ["python313Packages", "howdoi"]
+homepageContains = "gleitz/howdoi"
+
+# Technical-debt analyzer for enabled languages. Docs: https://github.com/iepathos/debtmap
+[[tool]]
+name = "debtmap"
+kind = "cli"
+scope = "project"
+pin = "0.23.0"
+mise = "ubi:iepathos/debtmap"
+nixAttr = ["debtmap"]
+homepageContains = "iepathos/debtmap"
+
+# Vercel skills CLI for vendored .agents/skills. Docs: https://skills.sh/
+[[tool]]
+name = "skills"
+kind = "cli"
+scope = "project"
+pin = "1.5.25"
+mise = "npm:skills"
+
+# Optional 9Router API gateway image. Docs: https://github.com/decolua/9router
+[[tool]]
+name = "ninerouter"
+kind = "docker-image"
+scope = "user"
+pin = "0.5.69"
+image = "decolua/9router"
+
+# Docker Engine MCP image (stdio via docker run). Docs: https://hub.docker.com/r/mcp/docker
+[[tool]]
+name = "docker-mcp"
+kind = "docker-image"
+scope = "user"
+pin = "0.0.19"
+image = "mcp/docker"
+
+# devenv VS Code/Cursor extension (Marketplace). Docs: https://marketplace.visualstudio.com/items?itemName=datakurre.devenv
+[[tool]]
+name = "devenv-vscode"
+kind = "vscode-extension"
+scope = "user"
+pin = "0.7.0"
+publisher = "datakurre"
+extension = "devenv"

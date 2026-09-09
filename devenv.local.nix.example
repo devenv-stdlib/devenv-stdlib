@@ -4,10 +4,12 @@
   # and enabled languages from the questionnaire; add max/unsupported,
   # debtmap, or packages below that block. Do not edit .copier-answers.yml.
   #
-  # After devenv shell, `update` runs devenv update then update.local.sh
-  # if that file is executable (gitignored). Put your uv/npx bumps there.
-  # Do not edit home/llm-context.nix version strings; those pins move
-  # with copier update.
+  # After devenv shell, `update` runs devenv update, refreshes
+  # modules/non-nix/catalog.local.toml (Nix if promotable, else mise),
+  # then update.local.sh if executable (gitignored). Put host-only
+  # extras in update.local.sh. Team tools belong in catalog.local.toml.
+  # Do not edit modules/non-nix/catalog.toml; those pins move with
+  # copier update.
 
   # packages = [ pkgs.hello ];
 

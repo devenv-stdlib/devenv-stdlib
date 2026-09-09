@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Refresh vendored agent skills (.agents/skills, skills-lock.json) with the
-# Vercel skills CLI (project-scope mise tool from modules/non-nix/catalog.json).
+# Vercel skills CLI (project-scope mise tool from modules/non-nix/catalog.toml).
 # Add or remove skills from the repo root with `skills add …` / `skills remove`;
 # this only pulls newer upstream copies. Review the diff before committing.
 set -euo pipefail
