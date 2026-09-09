@@ -9,7 +9,6 @@
     ./home/terminal.nix
     ./home/ides
     ./home/mise.nix
-    ./home/llm-context.nix
     ./home/bat.nix
     ./home/eza.nix
     ./home/copier.nix
