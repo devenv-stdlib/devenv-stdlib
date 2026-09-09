@@ -41,10 +41,9 @@
     test-devenv.exec = ''
       set -euo pipefail
       cd "$DEVENV_ROOT"
-      case ":''${NIX_PATH:-}:" in
-        *:nixpkgs=*) ;;
-        *) export NIX_PATH="nixpkgs=flake:nixpkgs''${NIX_PATH:+:$NIX_PATH}" ;;
-      esac
+      # shellcheck disable=SC1091
+      . "$DEVENV_ROOT/home/nix-path.sh"
+      ensure_nixpkgs_on_nix_path
 
       # devenv tasks and act have no TTY; tput/pretty-bats SIGPIPE without TERM.
       export TERM="''${TERM:-dumb}"

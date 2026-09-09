@@ -2,8 +2,8 @@
 let
   pkgs = import <nixpkgs> { };
   inherit (pkgs) lib;
-  versions = import ../../modules/language-versions-lib.nix { inherit lib; };
-  project = import ../../modules/project-lib.nix { inherit lib; };
+  versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
+  project = import ../../modules/lib/project.nix { inherit lib; };
   evalOk = import ./eval.nix { inherit lib versions project; };
 
   emptyYaml = pkgs.writeText "test-empty.yml" (versions.workflowText { });
@@ -19,10 +19,10 @@ let
   evalNix = pkgs.writeText "eval.nix" ''
     import ${./eval.nix} {
       lib = (import <nixpkgs> { }).lib;
-      versions = import ${../../modules/language-versions-lib.nix} {
+      versions = import ${../../modules/languages/versions-lib.nix} {
         lib = (import <nixpkgs> { }).lib;
       };
-      project = import ${../../modules/project-lib.nix} {
+      project = import ${../../modules/lib/project.nix} {
         lib = (import <nixpkgs> { }).lib;
       };
     }

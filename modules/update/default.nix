@@ -3,6 +3,6 @@
 _: {
   scripts.update.exec = ''
     set -euo pipefail
-    exec bash "$DEVENV_ROOT/modules/update.sh" "$@"
+    exec bash "$DEVENV_ROOT/modules/update/update.sh" "$@"
   '';
 }

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  project = import ./project-lib.nix { inherit lib; };
+  project = import ../lib/project.nix { inherit lib; };
   typescriptOn = (config.languages.typescript or { }).enable or false;
   bundlers = project.typescriptBundlers;
 in

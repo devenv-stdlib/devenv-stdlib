@@ -1,13 +1,18 @@
 _: {
   imports = [
-    ./packages.nix
-    ./git-hooks.nix
-    ./languages.nix
-    ./language-versions.nix
-    ./cursor-languages.nix
-    ./serena-languages.nix
-    ./debtmap.nix
-    ./update.nix
-    ./test-devenv.nix
+    ./packages
+    ./hooks/common.nix
+    ./hooks/rust.nix
+    ./hooks/go.nix
+    ./hooks/python.nix
+    ./hooks/javascript.nix
+    ./debtmap/hooks.nix
+    ./languages
+    ./languages/versions.nix
+    ./languages/cursor.nix
+    ./languages/serena.nix
+    ./debtmap
+    ./update
+    ./test/devenv.nix
   ];
 }

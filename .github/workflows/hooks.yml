@@ -36,7 +36,7 @@ jobs:
         if: ${{ !env.ACT }}
         uses: nix-community/cache-nix-action@v7
         with:
-          primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix', 'modules/git-hooks.nix') }}
+          primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix', 'modules/hooks/**', 'modules/debtmap/hooks.nix') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-${{ github.job }}-
           gc-max-store-size-linux: 5G
 

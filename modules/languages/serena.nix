@@ -4,7 +4,7 @@
   ...
 }:
 let
-  project = import ./project-lib.nix { inherit lib; };
+  project = import ../lib/project.nix { inherit lib; };
 in
 {
   # Regenerated on devenv:files from languages.*. Do not edit by hand.

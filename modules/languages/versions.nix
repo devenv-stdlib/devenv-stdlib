@@ -5,8 +5,8 @@
   ...
 }:
 let
-  catalogFile = ./toolchain-catalog.json;
-  versions = import ./language-versions-lib.nix {
+  catalogFile = ./catalog.json;
+  versions = import ./versions-lib.nix {
     inherit lib;
     catalog =
       if builtins.pathExists catalogFile then builtins.fromJSON (builtins.readFile catalogFile) else { };

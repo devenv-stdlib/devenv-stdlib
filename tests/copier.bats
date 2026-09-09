@@ -52,9 +52,12 @@ init_dest_git() {
   [ -f "$DEST/setup.sh" ]
   [ -f "$DEST/home.nix" ]
   [ -f "$DEST/modules/devenv.nix" ]
-  [ -f "$DEST/modules/toolchain-catalog.json" ]
+  [ -f "$DEST/modules/languages/catalog.json" ]
   [ -f "$DEST/README.md" ]
   [ -f "$DEST/.copier-answers.yml" ]
+  [ -f "$DEST/skills-lock.json" ]
+  [ -f "$DEST/.agents/skills/README.md" ]
+  [ -f "$DEST/.agents/skills/brainstorming/SKILL.md" ]
   grep -q '_src_path:' "$DEST/.copier-answers.yml"
   grep -q '_commit:' "$DEST/.copier-answers.yml"
   grep -q 'project_name:' "$DEST/.copier-answers.yml"
@@ -206,8 +209,8 @@ init_dest_git() {
 
   [ -f "$DEST/.cursor/rules/update.mdc" ]
   [ -f "$DEST/.cursor/rules/rtk-passthrough.mdc" ]
-  [ -f "$DEST/modules/update.nix" ]
-  [ -f "$DEST/modules/update.sh" ]
+  [ -f "$DEST/modules/update/default.nix" ]
+  [ -f "$DEST/modules/update/update.sh" ]
   [ ! -e "$DEST/.cursor/rules/non-nix-update.mdc" ]
   [ ! -e "$DEST/includes" ]
 }

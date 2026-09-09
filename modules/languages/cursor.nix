@@ -5,8 +5,8 @@
   ...
 }:
 let
-  ext = import ../home/vscode-ext-lib.nix { inherit pkgs; };
-  project = import ./project-lib.nix { inherit lib; };
+  ext = import ../../home/vscode-ext-lib.nix { inherit pkgs; };
+  project = import ../lib/project.nix { inherit lib; };
 
   langOn = name: (config.languages.${name} or { }).enable or false;
 

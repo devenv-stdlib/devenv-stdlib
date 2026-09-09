@@ -4,8 +4,8 @@
   ...
 }:
 let
-  project = import ./project-lib.nix { inherit lib; };
-  dlib = import ./debtmap-lib.nix { inherit lib; };
+  project = import ../lib/project.nix { inherit lib; };
+  dlib = import ./lib.nix { inherit lib; };
   enabled = project.debtmapLanguages (config.languages or { });
 
   godLimits =
