@@ -1,0 +1,70 @@
+---
+description: Isolate each feature in a worktree+branch; stack related PRs infra-first
+alwaysApply: true
+---
+
+# Parallel worktrees and stacked PRs
+
+One **project / issue / feature** → one **git worktree** + one **GitHub branch**.
+That keeps the main checkout clean so subagents can implement unrelated work in
+parallel without fighting the same index.
+
+**Integration branch (until first release):** `initial-development`.
+Create worktrees and open PRs against that branch, not `master`/`main`.
+
+## Starting work
+
+Before editing for a new topic:
+
+1. Create a worktree under `.worktrees/<short-slug>/` (already gitignored) from
+   latest `origin/initial-development`.
+2. Create a focused branch (`feat/…`, `fix/…`, `chore/…`) in that worktree.
+3. Do all implementation, commits, and verification **in that worktree**.
+4. Launch parallel subagents on **different** worktrees/branches when tasks are
+   independent. Do not share one dirty tree across concurrent agents.
+
+```
+# ❌ BAD — two agents editing the integration branch at once
+# ✅ GOOD
+git fetch origin
+git worktree add .worktrees/mise-catalog -b feat/mise-catalog origin/initial-development
+# agent A works there; agent B gets another worktree/branch
+```
+
+Prefer the repo’s `using-git-worktrees` skill / native worktree helpers when
+available. Skip creating a second worktree if you are **already** on an
+isolated worktree for that same topic.
+
+Trivial one-line doc/typo fixes on an existing PR branch do not need a new
+worktree. Anything that could collide with parallel work does.
+
+## Pushing and PRs
+
+When the user asks to push / open PRs:
+
+1. Push each feature branch with `-u`.
+2. Open one PR per branch into **`initial-development`** (or the previous
+   stack branch). Do not target `master`/`main` until a release cut says so.
+3. If several PRs share one topic, **stack** them: each PR’s base is the
+   previous branch in the stack (bottom of stack bases on `initial-development`).
+4. Say in each PR body which PR it stacks on and which depend on it.
+
+### Stack order (bottom → top)
+
+Put **infrastructure first**, **concrete product detail last**:
+
+1. Tooling / repo layout / shared libs / CI / rules / catalog schema
+2. Wiring (modules, tasks, Home Manager, generated config)
+3. Call-site behavior, UX, docs that describe the finished feature
+
+```
+# ❌ BAD — feature PR first, shared catalog helper stacked on top
+# ✅ GOOD — stack base → tip
+#   initial-development
+#   ← chore/non-nix-catalog-schema
+#     ← feat/mise-wiring
+#       ← feat/llm-context-shims
+```
+
+Retarget or recreate the stack if review reorders dependencies. Do not squash
+unrelated topics into one PR to avoid stacking.
