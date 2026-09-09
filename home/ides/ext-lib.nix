@@ -1,7 +1,7 @@
 { pkgs }:
 let
   inherit (pkgs) lib;
-  nonNix = import ../modules/non-nix/lib.nix { inherit lib; };
+  nonNix = import ../../modules/non-nix/lib.nix { inherit lib; };
   vsix = nonNix.entryByName "devenv-vscode";
   vs = pkgs.vscode-extensions;
 in
