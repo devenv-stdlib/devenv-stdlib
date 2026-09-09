@@ -1,6 +1,7 @@
 -P ubuntu-24.04=devenv-act:24.04
 -P ubuntu-26.04=devenv-act:24.04
 --pull=false
-# Shared devenv-act-nix volume: parallel matrix jobs race install-nix into /nix.
+# Shared devenv-act-nix volume: keep default concurrency low; test-devenv also
+# runs each matrix job with act -j so cells do not fill /nix in parallel.
 --concurrent-jobs 1
 --container-options --user runner --env HOME=/home/runner --env TMPDIR=/tmp --env RUNNER_TEMP=/tmp --env RUNNER_TOOL_CACHE=/tmp/toolcache -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix

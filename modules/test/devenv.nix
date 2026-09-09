@@ -88,7 +88,13 @@
       rm -f "$junit_dir/report.xml"
 
       echo "==> nixosTest"
-      nix_jobs="$(nproc 2>/dev/null || echo auto)"
+      # CI runners (+ nested act) share limited disk; keep integration builds serial.
+      # Locally, parallelize dependency builds with nproc.
+      if [ -n "''${GITHUB_ACTIONS:-}" ] || [ -n "''${CI:-}" ]; then
+        nix_jobs=1
+      else
+        nix_jobs="$(nproc 2>/dev/null || echo auto)"
+      fi
       if [ -n "''${ACT:-}" ]; then
         echo "skip nixosTest inside act (no /dev/kvm in the act container)"
         python3 "$report" nixos-test \
@@ -145,26 +151,36 @@
           chown -R "$(id -u):$(id -g)" /nix /home/runner/.cache/nix
         # TMPDIR/RUNNER_TEMP: install-nix-action uses set -u and expands RUNNER_TEMP
         # when TMPDIR is unset (cachix/install-nix-action#197).
-        act_opts="--user runner --env HOME=/home/runner --env TMPDIR=/tmp --env RUNNER_TEMP=/tmp --env RUNNER_TOOL_CACHE=/tmp/toolcache -v devenv-act-nix:/nix -v devenv-act-nix-cache=/home/runner/.cache/nix"
-        # One job at a time: matrix jobs share devenv-act-nix and race install-nix otherwise.
+        act_opts="--user runner --env HOME=/home/runner --env TMPDIR=/tmp --env RUNNER_TEMP=/tmp --env RUNNER_TOOL_CACHE=/tmp/toolcache -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix"
+        # act --concurrent-jobs 1 still overlapped matrix cells on the shared /nix
+        # volume (ENOSPC). Run each listed job id with -j so only one cell fills it.
+        run_act_serial() {
+          local workflow=$1
+          local job
+          while read -r job; do
+            [ -n "$job" ] || continue
+            echo "==> act -j $job ($workflow)"
+            act workflow_call \
+              --pull=false \
+              --concurrent-jobs 1 \
+              --container-options "$act_opts" \
+              -j "$job" \
+              -W "$workflow" \
+              -P ubuntu-24.04=devenv-act:24.04 \
+              -P ubuntu-26.04=devenv-act:24.04 || return 1
+          done < <(
+            act -W "$workflow" -l --pull=false \
+              -P ubuntu-24.04=devenv-act:24.04 \
+              -P ubuntu-26.04=devenv-act:24.04 2>/dev/null \
+              | awk 'NR > 1 && $2 != "" && $2 != "ID" { print $2 }' | sort -u
+          )
+        }
         if [ -z "''${GITHUB_ACTIONS:-}" ] && [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
           echo "==> act .github/workflows/test.yml"
-          act workflow_call \
-            --pull=false \
-            --concurrent-jobs 1 \
-            --container-options "$act_opts" \
-            -W "$DEVENV_ROOT/.github/workflows/test.yml" \
-            -P ubuntu-24.04=devenv-act:24.04 \
-            -P ubuntu-26.04=devenv-act:24.04 || status=1
+          run_act_serial "$DEVENV_ROOT/.github/workflows/test.yml" || status=1
         fi
         echo "==> act generated python matrix"
-        act workflow_call \
-          --pull=false \
-          --concurrent-jobs 1 \
-          --container-options "$act_opts" \
-          -W "$junit_dir/workflows/python.yml" \
-          -P ubuntu-24.04=devenv-act:24.04 \
-          -P ubuntu-26.04=devenv-act:24.04 || status=1
+        run_act_serial "$junit_dir/workflows/python.yml" || status=1
       fi
 
       exit "$status"
