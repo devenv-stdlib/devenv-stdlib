@@ -143,7 +143,9 @@
           -v devenv-act-nix-cache:/home/runner/.cache/nix \
           devenv-act:24.04 \
           chown -R "$(id -u):$(id -g)" /nix /home/runner/.cache/nix
-        act_opts="--user runner --env HOME=/home/runner -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix"
+        # TMPDIR/RUNNER_TEMP: install-nix-action uses set -u and expands RUNNER_TEMP
+        # when TMPDIR is unset (cachix/install-nix-action#197).
+        act_opts="--user runner --env HOME=/home/runner --env TMPDIR=/tmp --env RUNNER_TEMP=/tmp --env RUNNER_TOOL_CACHE=/tmp/toolcache -v devenv-act-nix:/nix -v devenv-act-nix-cache=/home/runner/.cache/nix"
         # One job at a time: matrix jobs share devenv-act-nix and race install-nix otherwise.
         if [ -z "''${GITHUB_ACTIONS:-}" ] && [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
           echo "==> act .github/workflows/test.yml"
