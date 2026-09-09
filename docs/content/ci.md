@@ -3,18 +3,19 @@
 [BATS](https://bats-core.readthedocs.io/) tests live in `tests/`:
 
 ```bash
-bats -r tests           # full suite
-bats tests/setup        # setup.sh only
-bats tests/home         # terminal-lib, bashrc.d, Cursor LLM merge
+bats -r --jobs "$(nproc)" tests   # full suite (parallel; needs GNU parallel)
+bats tests/setup                  # setup.sh only
+bats tests/home                   # terminal-lib, bashrc.d, Cursor LLM merge
 ```
 
+`test-devenv` runs BATS with `--jobs "$(nproc)"` (GNU `parallel` is on the devenv PATH).
 `tests/copier.bats` copies this template into a throwaway directory and checks `copier update`; it is excluded from generated monorepos.
 
 ## Workflows
 
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
-| `ci.yml` | Push and pull request to `main`/`master` | `test-devenv` on Ubuntu 24.04 and 26.04; then `test.yml` if it exists; `semantic-release` on push to `master`/`main` |
+| `ci.yml` | Push and pull request to `main`/`master` | `test-devenv` on Ubuntu 24.04 and 26.04; then `test.yml` if it exists; `semantic-release` on push to `master`/`main`. Concurrent runs for the same PR/ref cancel in progress. |
 | `test.yml` | Called from `ci.yml` | Per-language `devenv test` for each supported version, on Ubuntu 24.04 and 26.04 |
 | `setup-tests.yml` | Changes to setup/tag hooks, and every tag push | `bats tests/setup tests/tag-hook.bats` on Ubuntu 24.04 and 26.04 |
 | `pages.yml` | Push to `master`/`main`, pull request, or manual | Build the docs site; deploy to [devenv4monorepo.github.io](https://devenv4monorepo.github.io/) on `master`/`main` |
