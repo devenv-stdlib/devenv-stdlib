@@ -24,5 +24,7 @@ Rust always includes `stable` and may add `beta` / `nightly`.
 
 - JavaScript or TypeScript must pick at least one of `nodejs`, `bun`, or `deno`.
 - Python is 3+ only, with `cpython` and/or `pypy`.
+- Pinning `languages.python.version` (including the generated per-version `test.yml` matrix) needs the `nixpkgs-python` input in `devenv.yaml` (this template already includes it).
 - `python.extensionToolchain` puts `cc`, `c++`, `make`, `pkg-config`, `rustc`, and `cargo` on PATH for pip/uv source builds. It does not enable `languages.c` or `languages.rust`.
+- Rust channels other than `nixpkgs` (stable/beta/nightly in the matrix) need a `rust-overlay` input; add it when you enable Rust version matrices.
 - `languages.typescript.enable` requires `typescript.bundler`: `vite`, `turbopack`, `rspack`, `tsup`, or `tsdown`. The bundler stays a `package.json` dependency.
