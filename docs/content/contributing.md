@@ -151,7 +151,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `modules/non-nix/` | Shipped `catalog.toml`, `edit-catalog.sh`, optional `catalog.local.toml` (monorepo), resolve/TOML helpers |
 | `modules/mise/` | Project `mise.toml` + `mise:install` |
 | `home/mise.nix` | User mise conf.d + activation install/pull |
-| `.cursor/rules/worktrees-and-stacked-prs.mdc` | One worktree+branch per feature; stack related PRs infra-first (copied) |
+| `.cursor/rules/worktrees-and-stacked-prs.mdc` | One worktree+branch per feature; stack related PRs with `gh stack` (copied) |
 | `.cursor/rules/update.mdc` | Consumer rule: `update` vs `copier update` (copied) |
 | `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules; topical `modules/` layout (copied) |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large blobs (copied; `~/.cursor/rules/` after `home-switch` when 9Router is off) |
