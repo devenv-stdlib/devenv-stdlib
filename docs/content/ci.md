@@ -9,6 +9,8 @@ bats tests/home                   # terminal-lib, bashrc.d, Cursor LLM merge
 ```
 
 `test-devenv` runs BATS with `--jobs "$(nproc)"` (GNU `parallel` is on the devenv PATH).
+nix-unit stays single-process (no `--jobs`; forking per topic file is slower than one suite).
+Integration `nix-build` uses `-j "$(nproc)"` so dependency builds can run in parallel.
 `tests/copier.bats` copies this template into a throwaway directory and checks `copier update`; it is excluded from generated monorepos.
 
 ## Workflows
