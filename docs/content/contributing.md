@@ -10,7 +10,7 @@ Clone this repository only to develop the template. Generated monorepos get a co
 - `curl` and a user that can create `/nix`
 - Host [prek](https://prek.j178.dev/), nixfmt, statix, and deadnix (Homebrew on the host). Commit on the host, not inside Docker — VMware user namespaces make `bwrap` flaky.
 
-Languages stay **off** in this repo. Do not enable `languages.javascript` or `languages.typescript` to work on `docs/`; Node comes from `pkgs.nodejs` in `modules/packages.nix`. `devenv.local.nix` is gitignored here so a local experiment cannot leak into the template.
+Languages stay **off** in this repo. Do not enable `languages.javascript` or `languages.typescript` to work on `docs/`; Node comes from `pkgs.nodejs` in `modules/packages/`. `devenv.local.nix` is gitignored here so a local experiment cannot leak into the template.
 
 ## First-time setup
 
@@ -37,6 +37,8 @@ devenv update git-hooks      # refresh only the git-hooks lock input
 
 Do not edit `.devenv/` or other generated files. User-facing Nix is `devenv.nix`, `devenv.yaml`, `home.nix`, `modules/`, and `home/`.
 
+`modules/` is topical (`hooks/`, `languages/`, `debtmap/`, `packages/`, `update/`, `test/`, `lib/`). `modules/devenv.nix` is the barrel. Prefer small focused files over growing grab-bags; the Cursor rule `.cursor/rules/nix-module-split.mdc` (copied) requires a split when a module mixes concerns, grows past ~100 lines, or duplicates patterns in the same directory. Obvious cuts land in the same change; large ambiguous moves need a proposed tree first.
+
 ## Maintainer workflow
 
 Clone this repo only to change the template. Bumping a shipped pin here is how the **next tag** (semantic-release) gives users a newer tool via `copier update`.
@@ -52,17 +54,17 @@ refresh-toolchain-latest  # endoflife catalog; separate from update
 
 `update` in this checkout does **not** run a full `devenv update`. Lock policy stays: `git-hooks` weekly; nixpkgs only when intended.
 
-When adding a tool Nix does not package: pin in one place, add `includes/update/<name>.sh`, document it. The author Cursor rule enforces that. Consumers still get the new pin only after a release + `copier update`.
+When adding a tool Nix does not package: pin in one place, add `includes/update/<name>.sh`, document it. The author Cursor rule enforces that. Consumers still get the new pin only after a release + `copier update`. Vendored agent skills follow the same path: `npx skills add … -a cursor -y` from the repo root, then list the source in `.agents/skills/README.md`; `update` refreshes them via `includes/update/skills.sh`.
 
 ## Generated files
 
 | File | Writer | Git |
 | --- | --- | --- |
-| `.github/workflows/test.yml` | `modules/language-versions.nix` | committed |
-| `.vscode/extensions.json` | `modules/cursor-languages.nix` | gitignored |
-| `.serena/project.yml` | `modules/serena-languages.nix` | gitignored |
+| `.github/workflows/test.yml` | `modules/languages/versions.nix` | committed |
+| `.vscode/extensions.json` | `modules/languages/cursor.nix` | gitignored |
+| `.serena/project.yml` | `modules/languages/serena.nix` | gitignored |
 | `.vscode/settings.json` | `cursor-sync-extensions` | committed when it changes |
-| `.debtmap.toml` | `modules/debtmap.nix` | gitignored |
+| `.debtmap.toml` | `modules/debtmap/` | gitignored |
 | `.pre-commit-config.yaml` | git-hooks.nix / prek | gitignored |
 | `.env` | Copier from `.env.jinja` when keys were pasted | gitignored |
 
@@ -85,7 +87,7 @@ The README is marketing. Do not mirror these pages into `README.md`.
 refresh-toolchain-latest
 ```
 
-Fetches [endoflife.date](https://endoflife.date) into `modules/toolchain-catalog.json` and Copier max defaults (`includes/toolchain-latest.yml`). `includes/` is template-only (`_exclude`). The catalog JSON **does** ship with generated monorepos.
+Fetches [endoflife.date](https://endoflife.date) into `modules/languages/catalog.json` and Copier max defaults (`includes/toolchain-latest.yml`). `includes/` is template-only (`_exclude`). The catalog JSON **does** ship with generated monorepos.
 
 ## Tests
 
@@ -103,7 +105,8 @@ build-act-image              # devenv-act:24.04 for local act
 | `tests/unit/` | nix-unit (versions, hooks, debtmap, Cursor, Serena, terminal, …) |
 | `tests/setup/setup.bats` | `setup.sh` (sources the script; `main` guard) |
 | `tests/copier.bats` | `copier copy` / `update`; `ninerouter` default false; answers omit secret keys; not copied into monorepos |
-| `tests/update.bats` | `update` template vs consumer; pin helpers; no live registry |
+| `tests/update.bats` | `update` template vs consumer; pin helpers; skills refresher (stubbed `npx`); no live registry |
+| `tests/skills.bats` | `.agents/skills/` ↔ `skills-lock.json` consistency; every source attributed in `.agents/skills/README.md` |
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
 | `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
@@ -144,12 +147,14 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `copier.yml` | Questions and `_exclude` (not copied) |
 | `devenv.local.nix.jinja` | Renders consumer `devenv.local.nix` |
 | `includes/` | Catalog refresh, Copier max YAML, and pin refreshers (`includes/update/`; not copied) |
-| `modules/update.nix` | `update` script (template pins vs consumer lock; copied) |
 | `.cursor/rules/update.mdc` | Consumer rule: `update` vs `copier update` (copied) |
+| `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules; topical `modules/` layout (copied) |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large blobs (copied; `~/.cursor/rules/` after `home-switch` when 9Router is off) |
 | `.cursor/rules/rtk-passthrough.mdc` | Retry once without RTK compaction when a detail is missing (copied; `~/.cursor/rules/` when 9Router is off) |
 | `.cursor/rules/non-nix-update.mdc` | Author pin/refresher rule (not copied) |
-| `modules/toolchain-catalog.json` | Cycle → latest patch and EOL (copied) |
+| `.agents/skills/` / `skills-lock.json` | Vendored Cursor skills (Vercel skills CLI; `includes/update/skills.sh` refreshes; copied) |
+| `modules/languages/catalog.json` | Cycle → latest patch and EOL (copied) |
+| `modules/update/` | `update` script (template pins vs consumer lock; copied) |
 | `docs/` | Pages site (not copied) |
 | `devenv.nix` / `devenv.yaml` / `devenv.lock` | Shell, inputs, lock |
 | `home.nix` / `home/` | Home Manager |
@@ -157,9 +162,10 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `home/copier-llm.nix.jinja` | Renders `home/copier-llm.nix` (`cursor.ninerouter.enable`) |
 | `secretspec.toml` | Optional `INITIAL_PASSWORD` / `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` (copied) |
 | `home/load-secrets.sh` | `secretspec export` then `.env`; used by `home-switch` |
+| `home/nix-path.sh` | `nixpkgs=flake:nixpkgs` fallback, drops missing `NIX_PATH` dirs; used by `setup.sh`, `home-switch`, `test-devenv` |
 | `home/docker-rootless.sh` | Default `DOCKER_HOST` to `$XDG_RUNTIME_DIR/docker.sock` |
 | `.env.jinja` | Renders gitignored `.env` when Copier was given those keys |
-| `modules/` | Packages, languages, versions, hooks, debtmap, tests |
+| `modules/` | Barrel `devenv.nix` plus topical packages, languages, hooks, debtmap, update, test, lib |
 | `hooks/reference-transaction` | Tag guard |
 | `commitlint.config.mjs` / `.releaserc.json` | Commits and releases |
 | `tests/` | nix-unit, BATS, nixosTest, act image |

@@ -30,7 +30,7 @@ The shell banner uses the Copier `name` (this template prints `devenv4monorepo r
 home-switch
 ```
 
-That is `home-manager switch -b backup -f home.nix`. `home-switch` loads secrets with `secretspec export` (whatever provider is configured: dotenv, keyring, env, …) and falls back to sourcing gitignored `.env` if export is unavailable. Activation then sees `INITIAL_PASSWORD` / `BRAVE_API_KEY` / `FIRECRAWL_API_KEY`. Existing files Home Manager needs to replace are moved aside with a `.backup` suffix. On flakes-only hosts, `home-switch` and `setup.sh` set `NIX_PATH=nixpkgs=flake:nixpkgs` when `NIX_PATH` has no `nixpkgs=` entry.
+That is `home-manager switch -b backup -f home.nix`. `home-switch` loads secrets with `secretspec export` (whatever provider is configured: dotenv, keyring, env, …) and falls back to sourcing gitignored `.env` if export is unavailable. Activation then sees `INITIAL_PASSWORD` / `BRAVE_API_KEY` / `FIRECRAWL_API_KEY`. Existing files Home Manager needs to replace are moved aside with a `.backup` suffix. On flakes-only hosts, `home-switch` and `setup.sh` set `NIX_PATH=nixpkgs=flake:nixpkgs` when `NIX_PATH` has no `nixpkgs=` entry, and drop search-path directories that do not exist (such as `~/.nix-defexpr/channels` without channels), which Nix would otherwise warn about on every evaluation.
 
 ## Everyday commands
 
@@ -38,7 +38,7 @@ That is `home-manager switch -b backup -f home.nix`. `home-switch` loads secrets
 | --- | --- |
 | `./setup.sh` | Install or update Nix, devenv, Cachix, and Home Manager |
 | `copier copy <src> <dest>` | Apply this template to a monorepo |
-| `copier update` | Pull a newer tagged template into an existing copy (RTK, Serena, Headroom, 9Router, MCP pins, debtmap, …) |
+| `copier update` | Pull a newer tagged template into an existing copy (RTK, Serena, Headroom, 9Router, MCP pins, debtmap, agent skills, …) |
 | `copier check-update` | Report whether a newer template tag exists |
 | `update` | Our devenv script (`devenv run update`): in a generated repo, `devenv update` plus `update.local.sh`; in this template, refresh shipped non-Nix pins. Not the devenv CLI. |
 | `devenv update` | devenv CLI: flake inputs in `devenv.lock` only (`nixpkgs`, `git-hooks`, …) |
