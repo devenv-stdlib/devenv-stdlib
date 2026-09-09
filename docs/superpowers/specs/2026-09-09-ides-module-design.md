@@ -100,6 +100,7 @@ Rules:
 2. **Each harness** only chooses: config path (e.g. `~/.cursor/mcp.json`), when to enable (`cursor.llmContext.enable`), and harness-specific removals (e.g. drop `headroom` when 9Router is on).
 3. **Later harnesses** (Claude Code, Codex, Cortex, …) add a thin merge module that points the same catalog at that product’s MCP config. No re-listing of server commands.
 4. Cursor-only concerns stay in `cursor-llm.nix`: RTK rewrite hook, `permissions.json` allowlist, Ponytail/Headroom/RTK rules, 9Router unit and dashboard key flow. Those are not part of the shared MCP catalog.
+5. **User-owned entries are preserved.** Users may add their own MCP servers (and keep ones we do not ship). Merge only **upserts** catalog keys and **removes** keys we explicitly retire (e.g. `headroom` when 9Router is on). Never replace the whole `mcpServers` object or delete unknown keys. Same policy as today’s `merge-cursor-llm.sh`.
 
 Merge scripts: extract a harness-agnostic `mcp.json` upsert/remove core from `merge-cursor-llm.sh`; Cursor keeps a thin wrapper for hooks/permissions and for calling merge with `$HOME/.cursor/mcp.json`.
 
@@ -135,6 +136,7 @@ Enabling a language installs the matching marketplace extensions for every IDE w
 - **Common** extensions: user-global via Home Manager.
 - **Language** packs: project-local via devenv sync, not user-global.
 - **MCP servers**: user-global via Home Manager harness merge (not devenv), same as today.
+- **User additions win coexistence:** users may install their own marketplace extensions (under `~/.cursor/extensions`, `~/.vscode/extensions`, or via the IDE UI) and add their own MCP servers. Our sync **only adds missing catalog/language links**; it must not remove unknown extension directories or wipe user MCP entries. Project `.vscode/extensions.json` remains recommendations (plus our unwanted list for disabled packs), not an exclusive lock on the user’s editor.
 
 ## Library / naming
 
@@ -178,5 +180,5 @@ Update in the same session as the code (separate `docs:` commit when committing)
 3. Cursor module does not re-list language packs or settings; it specializes the vscode base.
 4. `vscode.enable` default false → no VS Code app on PATH / in `home.packages`.
 5. Enabling a language still installs that language’s extensions under `~/.cursor/extensions` on `devenv shell`.
-6. MCP server commands/URLs live in `home/ides/mcp/`; Cursor only merges into `~/.cursor/mcp.json` (existing servers and secret-gated Brave/Firecrawl still work).
+6. MCP server commands/URLs live in `home/ides/mcp/`; Cursor only merges into `~/.cursor/mcp.json` (existing servers and secret-gated Brave/Firecrawl still work). User-added MCP keys and extension dirs survive merge/sync.
 7. Docs and unit tests match the new paths and names.
