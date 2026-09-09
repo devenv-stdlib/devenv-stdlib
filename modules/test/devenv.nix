@@ -137,6 +137,12 @@
         build-act-image
         docker volume create devenv-act-nix >/dev/null
         docker volume create devenv-act-nix-cache >/dev/null
+        # Fresh volumes are root-owned; install-nix single-user needs the act UID.
+        docker run --rm --user 0 \
+          -v devenv-act-nix:/nix \
+          -v devenv-act-nix-cache:/home/runner/.cache/nix \
+          devenv-act:24.04 \
+          chown -R "$(id -u):$(id -g)" /nix /home/runner/.cache/nix
         act_opts="--user runner --env HOME=/home/runner -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix"
         if [ -z "''${GITHUB_ACTIONS:-}" ] && [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
           echo "==> act .github/workflows/test.yml"
