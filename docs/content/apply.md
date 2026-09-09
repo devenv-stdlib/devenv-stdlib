@@ -39,7 +39,7 @@ A generated monorepo is a **copy** of the template, plus your `devenv.local.nix`
    ```
 
    After a lock change, re-enter the shell (or `direnv reload`). If Home Manager files changed, `home-switch`.
-   `update.local.sh` (gitignored) is the only place for *your* uv/npx tools. Do not edit `home/llm-context.nix` version strings to “upgrade” RTK/Serena/Brave.
+   `update.local.sh` (gitignored) is the only place for *your* extra tools. Do not edit `modules/non-nix/catalog.json` pins to “upgrade” RTK/Serena/Brave.
 
 2. **Template-shipped tools** (RTK, Serena, Headroom, 9Router image, GitHub/Docker/Brave/Firecrawl MCP pins, debtmap, vendored agent skills, …):
 

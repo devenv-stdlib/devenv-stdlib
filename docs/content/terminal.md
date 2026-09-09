@@ -54,7 +54,7 @@ Then `home-switch` and open a new terminal. An unmanaged `~/.bashrc.d/20-local.s
 
 Set `cursor.enable = false;` in `home.local.nix` to skip the editor install.
 
-When `cursor.llmContext.enable` is on (default: `cursor.enable`), `home-switch` loads SecretSpec (any provider; `.env` fallback), merges `~/.cursor/hooks.json` and `~/.cursor/mcp.json` without replacing other entries, and starts `ninerouter-secrets-watch` (Cursor Brave/Firecrawl only unless 9Router is on). `uv tool install` needs network the first time.
+When `cursor.llmContext.enable` is on (default: `cursor.enable`), `home-switch` loads SecretSpec (any provider; `.env` fallback), merges `~/.cursor/hooks.json` and `~/.cursor/mcp.json` without replacing other entries, runs `mise install` for user-scope catalog CLIs, and starts `ninerouter-secrets-watch` (Cursor Brave/Firecrawl only unless 9Router is on). First install needs network.
 
 `cursor.ninerouter.enable` (default **false**; Copier `ninerouter`) is the Pro vs gateway switch:
 
@@ -63,4 +63,4 @@ When `cursor.llmContext.enable` is on (default: `cursor.enable`), `home-switch` 
 
 `ninerouter-secrets-watch` re-runs Cursor `brave-search` / `firecrawl` entries in `~/.cursor/mcp.json` when `.env` is saved (inotify) or every 30s via `secretspec export`. When 9Router is on it also re-runs `configure_9router`. Wrapper store paths come from the last `home-switch` (`~/.config/9router/mcp-wrappers.env`). Restart Cursor to load the new MCP servers.
 
-MCP entries use Nix-store wrappers so Cursor can load `libstdc++` for the uv tools. Always upserted: Serena, Context7 (`https://mcp.context7.com/mcp`), GitHub (`gh auth token`), Docker Engine (`mcp/docker:0.0.19` on the rootless socket). Headroom (`mcp serve`) is upserted only on the Pro path. Brave Search (`@brave/brave-search-mcp-server@2.1.3`) and Firecrawl (`firecrawl-mcp@3.24.0`) are added only when `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` are set, and removed when those keys are empty. `~/.cursor/rules/web-crawl-fallback.mdc` tells the agent to use Cursor’s browser on MCP quota/429 — guidance only. Set `cursor.llmContext.enable = false;` to skip this stack.
+MCP entries use mise shims (or Nix when the catalog promotes a tool). Always upserted: Serena, Context7 (`https://mcp.context7.com/mcp`), GitHub (`gh auth token`), Docker Engine (`mcp/docker` pin from the catalog on the rootless socket). Headroom (`mcp serve`) is upserted only on the Pro path. Brave Search and Firecrawl are added only when `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` are set, and removed when those keys are empty. `~/.cursor/rules/web-crawl-fallback.mdc` tells the agent to use Cursor’s browser on MCP quota/429 — guidance only. Set `cursor.llmContext.enable = false;` to skip this stack.

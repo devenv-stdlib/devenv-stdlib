@@ -30,7 +30,7 @@ Hooks do not use `pre-commit` `rev:` pins. `.pre-commit-config.yaml` is generate
 
 Refresh the hook framework locally with `devenv update git-hooks`. `update-lock.yml` runs that weekly (and on `workflow_dispatch`) and opens `chore: refresh the git-hooks lock`. It does **not** run a full `devenv update`, so the `nixpkgs` and `devenv` pins stay put.
 
-Hook binaries that come from this project's nixpkgs (`nixfmt`, `lychee`, `ruff`, …) move only when you intentionally `devenv update nixpkgs`. `modules/debtmap/pkg.nix` is a separate binary pin.
+Hook binaries that come from this project's nixpkgs (`nixfmt`, `lychee`, `ruff`, …) move only when you intentionally `devenv update nixpkgs`. `debtmap` is a separate non-Nix catalog pin (mise or Nix promotion).
 
 ## Tag guard
 

@@ -54,7 +54,7 @@ refresh-toolchain-latest  # endoflife catalog; separate from update
 
 `update` in this checkout does **not** run a full `devenv update`. Lock policy stays: `git-hooks` weekly; nixpkgs only when intended.
 
-When adding a tool Nix does not package: pin in one place, add `includes/update/<name>.sh`, document it. The author Cursor rule enforces that. Consumers still get the new pin only after a release + `copier update`. Vendored agent skills follow the same path: `npx skills add … -a cursor -y` from the repo root, then list the source in `.agents/skills/README.md`; `update` refreshes them via `includes/update/skills.sh`.
+When adding a non-Nix tool: add a row to `modules/non-nix/catalog.json` (CLI / docker-image / vscode-extension), keep install via mise or the existing Docker/Marketplace path, and let `includes/update/non-nix.sh` bump the pin. Document it. The author Cursor rule enforces that. Consumers still get the new pin only after a release + `copier update`. Vendored agent skills: `skills add … -a cursor -y` from the repo root (project mise PATH), then list the source in `.agents/skills/README.md`; `update` refreshes them via `includes/update/skills.sh`.
 
 ## Generated files
 
@@ -65,6 +65,7 @@ When adding a tool Nix does not package: pin in one place, add `includes/update/
 | `.serena/project.yml` | `modules/languages/serena.nix` | gitignored |
 | `.vscode/settings.json` | `cursor-sync-extensions` | committed when it changes |
 | `.debtmap.toml` | `modules/debtmap/` | gitignored |
+| `mise.toml` | `modules/mise/` from `modules/non-nix/catalog.json` | gitignored |
 | `.pre-commit-config.yaml` | git-hooks.nix / prek | gitignored |
 | `.env` | Copier from `.env.jinja` when keys were pasted | gitignored |
 
@@ -146,7 +147,10 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `setup.sh` | Host bootstrap (Nix, devenv, Cachix, Home Manager) |
 | `copier.yml` | Questions and `_exclude` (not copied) |
 | `devenv.local.nix.jinja` | Renders consumer `devenv.local.nix` |
-| `includes/` | Catalog refresh, Copier max YAML, and pin refreshers (`includes/update/`; not copied) |
+| `includes/` | Catalog refresh, Copier max YAML, and pin refreshers (`includes/update/non-nix.sh`, `skills.sh`; not copied) |
+| `modules/non-nix/` | Non-Nix catalog + resolve/TOML helpers (mise / Docker / VSIX) |
+| `modules/mise/` | Project `mise.toml` + `mise:install` |
+| `home/mise.nix` | User mise conf.d + activation install/pull |
 | `.cursor/rules/update.mdc` | Consumer rule: `update` vs `copier update` (copied) |
 | `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules; topical `modules/` layout (copied) |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large blobs (copied; `~/.cursor/rules/` after `home-switch` when 9Router is off) |
@@ -165,7 +169,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `home/nix-path.sh` | `nixpkgs=flake:nixpkgs` fallback, drops missing `NIX_PATH` dirs; used by `setup.sh`, `home-switch`, `test-devenv` |
 | `home/docker-rootless.sh` | Default `DOCKER_HOST` to `$XDG_RUNTIME_DIR/docker.sock` |
 | `.env.jinja` | Renders gitignored `.env` when Copier was given those keys |
-| `modules/` | Barrel `devenv.nix` plus topical packages, languages, hooks, debtmap, update, test, lib |
+| `modules/` | Barrel `devenv.nix` plus topical packages, languages, hooks, debtmap, mise, non-nix, update, test, lib |
 | `hooks/reference-transaction` | Tag guard |
 | `commitlint.config.mjs` / `.releaserc.json` | Commits and releases |
 | `tests/` | nix-unit, BATS, nixosTest, act image |
