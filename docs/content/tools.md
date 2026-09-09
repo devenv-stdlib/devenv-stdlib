@@ -26,7 +26,7 @@ nix --version
 ```bash
 devenv shell
 devenv test          # enterTest: required binaries + BATS
-devenv tasks run devenv:test-devenv
+devenv tasks run --show-output devenv:test-devenv
 ```
 
 - Docs: [devenv.sh](https://devenv.sh/) · [Getting started](https://devenv.sh/getting-started/)
