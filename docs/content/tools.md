@@ -149,21 +149,21 @@ git diff             # delta
 - zoxide: [ajeetdsouza/zoxide](https://github.com/ajeetdsouza/zoxide)
 - delta: [dandavison.github.io/delta](https://dandavison.github.io/delta/)
 
-### httpie, tldr, howdoi, fuck, usql
+### httpie, tldr, navi, fuck, usql
 
-[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. `howdoi` answers “how do I…” from Stack Overflow ([gleitz/howdoi](https://github.com/gleitz/howdoi); pin in `modules/non-nix/catalog.toml`, Nix when promotable else mise). [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
+[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. [navi](https://github.com/denisidoro/navi) browses interactive cheatsheets: repo-local sheets in `cheats/` (prepended to `NAVI_PATH` in `devenv shell`) plus [denisidoro/cheats](https://github.com/denisidoro/cheats) from Home Manager. [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
 
 ```bash
 http https://endoflife.date/api/rust.json
 tldr tar
-howdoi reverse a list in python
+navi
 # mistype a command, then:
 fuck
 ```
 
 - HTTPie: [httpie.io/docs/cli](https://httpie.io/docs/cli)
 - tldr pages: [tldr.sh](https://tldr.sh/) · tealdeer: [tealdeer-rs/tealdeer](https://github.com/tealdeer-rs/tealdeer)
-- howdoi: [gleitz/howdoi](https://github.com/gleitz/howdoi)
+- navi: [denisidoro/navi](https://github.com/denisidoro/navi) · cheats: [denisidoro/cheats](https://github.com/denisidoro/cheats) · syntax: [cheatsheet syntax](https://github.com/denisidoro/navi/blob/master/docs/cheatsheet/syntax/README.md)
 - pay-respects: [codeberg.org/iff/pay-respects](https://codeberg.org/iff/pay-respects)
 - usql: [xo/usql](https://github.com/xo/usql)
 
@@ -206,7 +206,7 @@ GNOME extension that drops the terminal from the top of the screen.
 
 ### Cursor
 
-[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager — no website AppImage. The launcher always passes `--no-sandbox`. Common extensions (devenv, Nix IDE, EditorConfig, …) are user-global. Language packs follow `languages.*` and are installed when you `devenv shell`.
+[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager — no website AppImage. The launcher always passes `--no-sandbox`. Common extensions (devenv, navi cheatsheet language, Nix IDE, EditorConfig, …) are user-global. Language packs follow `languages.*` and are installed when you `devenv shell`.
 
 ```bash
 # skip the editor
@@ -247,7 +247,7 @@ Pass `--dry-run` to preview. Each command’s `--help` includes copy-pasteable E
 | Scope | Config | Install |
 | --- | --- | --- |
 | Project (`debtmap`, `skills`, plus `catalog.local.toml` project-scope) | generated `mise.toml` (gitignored) | `mise:install` after `devenv:files` |
-| User (RTK, Serena, Headroom, MCP CLIs, howdoi, …) | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation |
+| User (RTK, Serena, Headroom, MCP CLIs, navi, …) | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation |
 
 Docker images (`decolua/9router`, `mcp/docker`) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools. Template authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a monorepo, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get shipped pin moves via `copier update`.
 
