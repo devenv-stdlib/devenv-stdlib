@@ -32,13 +32,16 @@ _: {
     command -v direnv
     command -v nixfmt
     command -v bats
+    command -v parallel
     command -v shellcheck
     command -v home-manager
     command -v copier
     command -v debtmap
     git --version
     jq --version
-    bats --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
+    mkdir -p "''${HOME}/.parallel"
+    touch "''${HOME}/.parallel/will-cite"
+    bats --jobs "$(nproc 2>/dev/null || echo 2)" --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
   '';
 
   scripts.home-switch.exec = ''
