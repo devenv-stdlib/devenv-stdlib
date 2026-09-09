@@ -113,13 +113,19 @@ merge_cursor_jsonc_strip() {
   sed -E '/^[[:space:]]*\/\//d; s/[[:space:]]+\/\/.*$//'
 }
 
-# Set terminalAllowlist to ["rtk"] only. Other keys (e.g. mcpAllowlist) stay.
-# The Shell hook rewrites or wraps every command through rtk so this is enough.
-# Usage: merge_cursor_permissions <permissions.json>
+# Set terminalAllowlist to [absolute-rtk-path, "rtk"]. Other keys stay.
+# Cursor auto-runs Shell when the first token matches allowlist; hook allow is ignored.
+# Usage: merge_cursor_permissions <permissions.json> <absolute-rtk-path>
 merge_cursor_permissions() {
   local perm_json=$1
+  local rtk_path=${2:-}
   local jq=${JQ:-jq}
   local dir tmp stripped
+
+  if [[ -z $rtk_path ]]; then
+    echo "merge_cursor_permissions: absolute rtk path required" >&2
+    return 1
+  fi
 
   dir=$(dirname "$perm_json")
   mkdir -p "$dir"
@@ -131,17 +137,48 @@ merge_cursor_permissions() {
       rm -f "$tmp" "$stripped"
       return 1
     fi
-    if ! "$jq" '.terminalAllowlist = ["rtk"]' "$stripped" >"$tmp"; then
+    if ! "$jq" --arg rtk "$rtk_path" '.terminalAllowlist = [$rtk, "rtk"]' "$stripped" >"$tmp"; then
       rm -f "$tmp" "$stripped"
       return 1
     fi
     rm -f "$stripped"
   else
-    if ! "$jq" -n '{terminalAllowlist: ["rtk"]}' >"$tmp"; then
+    if ! "$jq" -n --arg rtk "$rtk_path" '{terminalAllowlist: [$rtk, "rtk"]}' >"$tmp"; then
       rm -f "$tmp"
       return 1
     fi
   fi
+  mv -f "$tmp" "$perm_json"
+}
+
+# Drop managed RTK allowlist entries. If the list is empty, delete the key so
+# Cursor can fall back to the IDE-managed allowlist (9Router / gateway path).
+# Usage: merge_cursor_permissions_clear_rtk <permissions.json> [absolute-rtk-path]
+merge_cursor_permissions_clear_rtk() {
+  local perm_json=$1
+  local rtk_path=${2:-}
+  local jq=${JQ:-jq}
+  local tmp stripped
+
+  [[ -s $perm_json ]] || return 0
+
+  stripped=$(mktemp)
+  tmp=$(mktemp "$perm_json.XXXXXX")
+  if ! merge_cursor_jsonc_strip <"$perm_json" >"$stripped"; then
+    rm -f "$tmp" "$stripped"
+    return 1
+  fi
+  if ! "$jq" --arg rtk "$rtk_path" '
+    .terminalAllowlist = [
+      ((.terminalAllowlist // [])[])
+      | select(. != "rtk" and (. != $rtk or $rtk == ""))
+    ]
+    | if (.terminalAllowlist | length) == 0 then del(.terminalAllowlist) else . end
+  ' "$stripped" >"$tmp"; then
+    rm -f "$tmp" "$stripped"
+    return 1
+  fi
+  rm -f "$stripped"
   mv -f "$tmp" "$perm_json"
 }
 
@@ -199,8 +236,9 @@ if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
     mcp) merge_cursor_mcp "$@" ;;
     mcp-secrets) merge_cursor_mcp_secrets "$@" ;;
     permissions) merge_cursor_permissions "$@" ;;
+    permissions-clear-rtk) merge_cursor_permissions_clear_rtk "$@" ;;
     *)
-      echo "usage: $0 hooks <hooks.json> <rtk-rewrite> | hooks-remove <hooks.json> | mcp <mcp.json> <upsert.json> [remove.json] | mcp-secrets <mcp.json> <brave-cmd> <firecrawl-cmd> | permissions <permissions.json>" >&2
+      echo "usage: $0 hooks <hooks.json> <rtk-rewrite> | hooks-remove <hooks.json> | mcp <mcp.json> <upsert.json> [remove.json] | mcp-secrets <mcp.json> <brave-cmd> <firecrawl-cmd> | permissions <permissions.json> <absolute-rtk> | permissions-clear-rtk <permissions.json> [absolute-rtk]" >&2
       exit 2
       ;;
   esac

@@ -5,10 +5,12 @@
 # Sourced by tests when RTK/JQ are set; exec'd from the Home Manager wrapper.
 # Do not run `rtk init` — it can install the buggy native `rtk hook cursor` path.
 #
-# terminalAllowlist is ["rtk"] only. Always emit permission allow for rewritten
-# or rtk-wrapped commands so Cursor does not prompt on mundane Shell use.
+# Cursor ignores hook permission:allow for Shell auto-run; terminalAllowlist must
+# match the first token of updated_input.command. Activation installs a stable
+# $HOME/.cursor/bin/rtk and lists that path (plus bare "rtk") in permissions.json.
+# Always emit permission allow + absolute $RTK for rewritten or wrapped commands.
 # rtk rewrite exit 0 or 3 = apply rewrite (0.48+ often uses 3); 1 = no filter;
-# 2 = deny. Unfiltered commands become `rtk run -c …` (raw via RTK).
+# 2 = deny. Unfiltered commands become `$RTK run -c …` (raw via RTK).
 
 emit_allow() {
   "$JQ" -n --arg cmd "$1" '{
@@ -16,6 +18,22 @@ emit_allow() {
     "permission": "allow",
     "updated_input": { "command": $cmd }
   }'
+}
+
+# Prefer absolute $RTK so thin Agent PATH and allowlist stay aligned.
+abs_rtk_cmd() {
+  local cmd=$1
+  case $cmd in
+  rtk)
+    printf '%s\n' "$RTK"
+    ;;
+  rtk\ *)
+    printf '%s %s\n' "$RTK" "${cmd#rtk }"
+    ;;
+  *)
+    printf '%s\n' "$cmd"
+    ;;
+  esac
 }
 
 if [[ -z ${RTK:-} || ! -x ${RTK} ]]; then
@@ -43,21 +61,29 @@ RC=$?
 
 if [[ ($RC -eq 0 || $RC -eq 3) && -n ${REWRITTEN} ]]; then
   if [[ ${CMD} != "${REWRITTEN}" ]]; then
-    emit_allow "$REWRITTEN"
+    emit_allow "$(abs_rtk_cmd "$REWRITTEN")"
     exit 0
   fi
-  # Already an RTK command (or no-op rewrite): leave input; allowlist matches.
-  echo '{}'
+  # Already an RTK command (or no-op rewrite): force absolute + allow.
+  emit_allow "$(abs_rtk_cmd "$CMD")"
   exit 0
 fi
 
 # No specialized filter (or empty rewrite): keep the allowlist green via rtk run.
 case $CMD in
 rtk | rtk\ *)
-  echo '{}'
+  emit_allow "$(abs_rtk_cmd "$CMD")"
   exit 0
   ;;
 esac
 
-WRAPPED=$("$JQ" -nr --arg cmd "$CMD" '"rtk run -c " + ($cmd | @sh)')
+# Also rewrite absolute stable-bin prefixes to keep first token stable.
+case $CMD in
+"$RTK" | "$RTK"\ *)
+  emit_allow "$CMD"
+  exit 0
+  ;;
+esac
+
+WRAPPED=$("$JQ" -nr --arg rtk "$RTK" --arg cmd "$CMD" '"\($rtk) run -c " + ($cmd | @sh)')
 emit_allow "$WRAPPED"
