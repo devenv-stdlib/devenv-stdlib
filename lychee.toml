@@ -1,2 +1,6 @@
 # The Pages site 404s until the first successful deploy of pages.yml.
 exclude = ['^https://devenv4monorepo\.github\.io']
+# CI runners occasionally reset/timeout on nixos.org / brave.com; retry before failing.
+max_retries = 3
+retry_wait_time = "2s"
+timeout = "30s"
