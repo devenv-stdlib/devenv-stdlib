@@ -1,3 +1,6 @@
+# Local git worktrees (agent / developer isolation)
+.worktrees/
+
 # Devenv
 .devenv
 .devenv*
