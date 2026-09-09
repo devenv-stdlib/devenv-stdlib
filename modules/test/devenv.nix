@@ -88,6 +88,7 @@
       rm -f "$junit_dir/report.xml"
 
       echo "==> nixosTest"
+      nix_jobs="$(nproc 2>/dev/null || echo auto)"
       if [ -n "''${ACT:-}" ]; then
         echo "skip nixosTest inside act (no /dev/kvm in the act container)"
         python3 "$report" nixos-test \
@@ -95,7 +96,7 @@
           --status 0 \
           --root "$DEVENV_ROOT" \
           --output "$junit_dir/nixos-test.xml" || true
-      elif nix-build --no-out-link "$DEVENV_ROOT/tests/integration/default.nix" 2>&1 | tee "$junit_dir/nixos-test.log"; then
+      elif nix-build -j "$nix_jobs" --no-out-link "$DEVENV_ROOT/tests/integration/default.nix" 2>&1 | tee "$junit_dir/nixos-test.log"; then
         python3 "$report" nixos-test \
           --status 0 \
           --log "$junit_dir/nixos-test.log" \
@@ -116,7 +117,7 @@
       sync-language-versions-workflow
 
       echo "==> actionlint generated workflows"
-      fixtures="$(nix-build --no-out-link "$DEVENV_ROOT/tests/integration/workflows.nix")"
+      fixtures="$(nix-build -j "$nix_jobs" --no-out-link "$DEVENV_ROOT/tests/integration/workflows.nix")"
       mkdir -p "$junit_dir/workflows"
       cp -L "$fixtures"/*.yml "$junit_dir/workflows/"
       if [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
