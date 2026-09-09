@@ -13,8 +13,9 @@ setup() {
   command -v sha256sum >/dev/null || skip "sha256sum not installed"
   TMP=$(mktemp -d)
   export HOME="$TMP/home"
+  export XDG_CONFIG_HOME="$HOME/.config"
   export NINEROUTER_SECRETS_FINGERPRINT="$TMP/fp"
-  mkdir -p "$HOME" "$TMP/proj"
+  mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$TMP/proj"
   unset BRAVE_API_KEY FIRECRAWL_API_KEY INITIAL_PASSWORD
 }
 
