@@ -45,6 +45,7 @@ That is `home-manager switch -b backup -f home.nix`. `home-switch` loads secrets
 | `devenv update` | devenv CLI: flake inputs in `devenv.lock` only (`nixpkgs`, `git-hooks`, …) |
 | `devenv shell` | Enter the project toolchain |
 | `home-switch` | Re-apply Home Manager after editing `home.nix` |
+| `navi` | Browse repo `cheats/` plus community [denisidoro/cheats](https://github.com/denisidoro/cheats) |
 | `devenv test` | Build the env, check the toolchain, and run BATS |
 
 Optional auto-activation:
