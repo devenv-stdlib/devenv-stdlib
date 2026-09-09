@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
   pull-requests: write
 
 jobs:
@@ -21,12 +22,12 @@ jobs:
 
       - uses: cachix/install-nix-action@v31
 
-      - name: Cache Nix store
-        uses: nix-community/cache-nix-action@v7
+      - name: Restore Nix store
+        id: nix-cache
+        uses: nix-community/cache-nix-action/restore@v7
         with:
           primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-${{ github.job }}-
-          gc-max-store-size-linux: 5G
 
       - uses: cachix/cachix-action@v16
         with:
@@ -62,3 +63,10 @@ jobs:
           EOF
           )"
           fi
+
+      - name: Save Nix store
+        if: ${{ always() && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
+          gc-max-store-size-linux: 5G
