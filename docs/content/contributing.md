@@ -37,7 +37,7 @@ devenv update git-hooks      # refresh only the git-hooks lock input
 
 Do not edit `.devenv/` or other generated files. User-facing Nix is `devenv.nix`, `devenv.yaml`, `home.nix`, `modules/`, and `home/`.
 
-`modules/` is topical (`hooks/`, `languages/`, `debtmap/`, `packages/`, `update/`, `test/`, `lib/`). `modules/devenv.nix` is the barrel. Prefer small focused files over growing grab-bags; the Cursor rule `.cursor/rules/nix-module-split.mdc` (copied) requires a split when a module mixes concerns, grows past ~100 lines, or duplicates patterns in the same directory. Obvious cuts land in the same change; large ambiguous moves need a proposed tree first.
+`modules/` is topical (`hooks/`, `languages/`, `ides/`, `debtmap/`, `packages/`, `update/`, `test/`, `lib/`). `home/ides/` holds editors and the MCP catalog. `modules/devenv.nix` is the barrel. Prefer small focused files over growing grab-bags; the Cursor rule `.cursor/rules/nix-module-split.mdc` (copied) requires a split when a module mixes concerns, grows past ~100 lines, or duplicates patterns in the same directory. Obvious cuts land in the same change; large ambiguous moves need a proposed tree first.
 
 ## Maintainer workflow
 
@@ -61,9 +61,9 @@ When adding a non-Nix tool to the **template**: run `devenv tasks run non-nix:ad
 | File | Writer | Git |
 | --- | --- | --- |
 | `.github/workflows/test.yml` | `modules/languages/versions.nix` | committed |
-| `.vscode/extensions.json` | `modules/languages/cursor.nix` | gitignored |
+| `.vscode/extensions.json` | `modules/ides` | gitignored |
 | `.serena/project.yml` | `modules/languages/serena.nix` | gitignored |
-| `.vscode/settings.json` | `cursor-sync-extensions` | committed when it changes |
+| `.vscode/settings.json` | `cursor-sync-extensions` / `vscode-sync-extensions` | committed when it changes |
 | `.debtmap.toml` | `modules/debtmap/` | gitignored |
 | `mise.toml` | `modules/mise/` from `modules/non-nix/catalog.toml` (+ `catalog.local.toml`) | gitignored |
 | `.pre-commit-config.yaml` | git-hooks.nix / prek | gitignored |
@@ -103,7 +103,7 @@ build-act-image              # devenv-act:24.04 for local act
 
 | Suite | Role |
 | --- | --- |
-| `tests/unit/` | nix-unit (versions, hooks, debtmap, Cursor, Serena, terminal, …) |
+| `tests/unit/` | nix-unit (versions, hooks, debtmap, vscode helpers, Serena, terminal, …) |
 | `tests/setup/setup.bats` | `setup.sh` (sources the script; `main` guard) |
 | `tests/copier.bats` | `copier copy` / `update`; `ninerouter` default false; answers omit secret keys; not copied into monorepos |
 | `tests/update.bats` | `update` template vs consumer; pin helpers; skills refresher (stubbed `npx`); no live registry |
@@ -111,7 +111,7 @@ build-act-image              # devenv-act:24.04 for local act
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
 | `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
-| `tests/home/cursor-llm.bats` | Cursor `hooks.json` / `mcp.json` / `permissions.json` merge (RTK add/remove, RTK allowlist (preserves extras), hook rewrite/allow/`rtk run` wrap, Serena, Headroom MCP without proxy URL, Context7, GitHub, Docker, optional Brave/Firecrawl) |
+| `tests/home/cursor-llm.bats` | `home/ides/merge-cursor-llm.sh` + MCP catalog merge (RTK add/remove, RTK allowlist preserves extras, hook rewrite/allow/`rtk run` wrap, Serena, Headroom MCP without proxy URL, Context7, GitHub, Docker, optional Brave/Firecrawl; preserves user MCP keys) |
 | `tests/home/configure-9router.bats` | 9Router settings (`headroomEnabled` false) + Brave/Firecrawl upsert + devenv gateway key (fake curl) |
 | `tests/home/ninerouter-start.bats` | persist INITIAL_PASSWORD as a 9Router bcrypt hash (tunnel gate); in-container loopback proxy for local-only dashboard routes |
 | `tests/home/load-secrets.bats` | `home-switch` SecretSpec export vs `.env` fallback |
@@ -166,14 +166,14 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `devenv.nix` / `devenv.yaml` / `devenv.lock` | Shell, inputs, lock |
 | `home.nix` / `home/` | Home Manager |
 | `home/navi.nix` | `NAVI_PATH` → pinned denisidoro/cheats |
-| `home/llm-context.nix` | Cursor LLM context (Pro: RTK + Ponytail + Headroom MCP; optional 9Router) |
+| `home/ides/` | Editors (Cursor, opt-in VS Code, neovim, nano), MCP catalog, Cursor LLM/RTK/9Router |
 | `home/copier-llm.nix.jinja` | Renders `home/copier-llm.nix` (`cursor.ninerouter.enable`) |
 | `secretspec.toml` | Optional `INITIAL_PASSWORD` / `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` (copied) |
 | `home/load-secrets.sh` | `secretspec export` then `.env`; used by `home-switch` |
 | `home/nix-path.sh` | `nixpkgs=flake:nixpkgs` fallback, drops missing `NIX_PATH` dirs; used by `setup.sh`, `home-switch`, `test-devenv` |
 | `home/docker-rootless.sh` | Default `DOCKER_HOST` to `$XDG_RUNTIME_DIR/docker.sock` |
 | `.env.jinja` | Renders gitignored `.env` when Copier was given those keys |
-| `modules/` | Barrel `devenv.nix` plus topical packages, languages, hooks, debtmap, mise, non-nix, update, test, lib |
+| `modules/` | Barrel `devenv.nix` plus topical packages, languages, ides, hooks, debtmap, mise, non-nix, update, test, lib |
 | `hooks/reference-transaction` | Tag guard |
 | `commitlint.config.mjs` / `.releaserc.json` | Commits and releases |
 | `tests/` | nix-unit, BATS, nixosTest, act image |
