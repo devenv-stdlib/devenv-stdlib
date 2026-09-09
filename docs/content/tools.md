@@ -215,16 +215,16 @@ GNOME extension that drops the terminal from the top of the screen.
 
 `cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Context7, GitHub, Docker, and optional Brave/Firecrawl MCP from the shared `home/ides/mcp` catalog and merges them into `~/.cursor/mcp.json` (upsert only; user-added MCP servers are preserved).
 
-### VS Code
-
-Opt-in only (`vscode.enable = true` in `home.local.nix`; default **false**). Installs `pkgs.vscode` and common extensions under `~/.vscode/extensions`. Does not turn on with Cursor. Language packs use `vscode-sync-extensions` when you want them under `~/.vscode/extensions`.
-
 `cursor.ninerouter.enable` (default **false**; Copier `ninerouter`) chooses the compaction path:
 
 - **Off (Cursor Pro):** RTK Shell hook, user-global Ponytail rule, official Headroom MCP (`headroom mcp serve`, no `--proxy-url`, no `headroom-proxy`). Do not set Override OpenAI Base URL.
 - **On (gateway):** 9Router only. Built-in RTK / Ponytail via PATCH; `headroomEnabled` is false. No host RTK, Ponytail rule, or Headroom. Cursor Pro hosted models fail while Override OpenAI Base URL is on. After `home-switch`, paste `~/.config/9router/cursor-api-key`, set the base URL to `http://127.0.0.1:20128/v1`, and pick a 9Router model. See `~/.config/9router/cursor-openai.hint`. Home Manager cannot write those GUI fields (`Ctrl+Shift+0` toggles the key).
 
 - Docs: [cursor.com/docs](https://cursor.com/docs)
+
+### VS Code
+
+Opt-in only (`vscode.enable = true` in `home.local.nix`; default **false**). Installs `pkgs.vscode` and common extensions under `~/.vscode/extensions`. Does not turn on with Cursor. Language packs use `vscode-sync-extensions` when you want them under `~/.vscode/extensions`.
 
 ### Non-Nix catalog and mise
 
