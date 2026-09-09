@@ -84,14 +84,14 @@ rec {
 
   typescriptBundlerMissing = typescriptEnable: bundler: typescriptEnable && bundler == null;
 
-  cursorAlwaysRecommend = [
+  vscodeAlwaysRecommend = [
     "datakurre.devenv"
     "jnoortheen.nix-ide"
   ];
 
   # Ids used as unwantedRecommendations when a pack is off. Keep in sync with
-  # cursor-languages.nix (golang.Go matches the existing Cursor id).
-  cursorLanguageIds = {
+  # modules/ides (golang.Go matches the existing Cursor/VS Code id).
+  vscodeLanguageIds = {
     rust = [
       "rust-lang.rust-analyzer"
       "vadimcn.vscode-lldb"
@@ -112,20 +112,20 @@ rec {
     ];
   };
 
-  cursorUnwanted =
+  vscodeUnwanted =
     languages:
-    lib.optionals (!langOn languages "rust") cursorLanguageIds.rust
-    ++ lib.optionals (!langOn languages "go") cursorLanguageIds.go
-    ++ lib.optionals (!langOn languages "python") cursorLanguageIds.python
-    ++ lib.optionals (!javascriptOn languages) cursorLanguageIds.typescript;
+    lib.optionals (!langOn languages "rust") vscodeLanguageIds.rust
+    ++ lib.optionals (!langOn languages "go") vscodeLanguageIds.go
+    ++ lib.optionals (!langOn languages "python") vscodeLanguageIds.python
+    ++ lib.optionals (!javascriptOn languages) vscodeLanguageIds.typescript;
 
-  cursorRecommendations =
+  vscodeRecommendations =
     languages:
-    cursorAlwaysRecommend
-    ++ lib.optionals (langOn languages "rust") cursorLanguageIds.rust
-    ++ lib.optionals (langOn languages "go") cursorLanguageIds.go
-    ++ lib.optionals (langOn languages "python") cursorLanguageIds.python
-    ++ lib.optionals (javascriptOn languages) cursorLanguageIds.typescript;
+    vscodeAlwaysRecommend
+    ++ lib.optionals (langOn languages "rust") vscodeLanguageIds.rust
+    ++ lib.optionals (langOn languages "go") vscodeLanguageIds.go
+    ++ lib.optionals (langOn languages "python") vscodeLanguageIds.python
+    ++ lib.optionals (javascriptOn languages) vscodeLanguageIds.typescript;
 
   # Always-on Serena language_servers id for this template (Nix).
   serenaAlwaysLanguageServers = [ "nix" ];
