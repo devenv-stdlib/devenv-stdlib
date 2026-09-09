@@ -15,17 +15,33 @@ let
   dockerMcpImage = nonNix.imageRef "docker-mcp";
   ninerouterImage = nonNix.imageRef "ninerouter";
 
-  # Nix package when promoted; otherwise a thin mise shim (conf.d pins).
+  # Nix package when promoted; otherwise prefer a mise install dir binary
+  # (mise exec loads full conf.d and fails if unrelated tools lack pipx/npm).
   cliExe =
     name:
     let
       e = entry name;
       bin = if e == null then name else nonNix.binName e;
+      miseKey = if e == null then null else e.mise;
+      installName = if miseKey == null then null else lib.replaceStrings [ ":" "/" ] [ "-" "-" ] miseKey;
     in
     if e != null && e.via == "nix" then
       lib.getExe e.package
     else
       pkgs.writeShellScript bin ''
+        set -euo pipefail
+        installs="''${XDG_DATA_HOME:-$HOME/.local/share}/mise/installs"
+        ${lib.optionalString (installName != null) ''
+          for cand in \
+            "$installs"/${lib.escapeShellArg installName}/latest/${lib.escapeShellArg bin} \
+            "$installs"/${lib.escapeShellArg installName}/latest/bin/${lib.escapeShellArg bin} \
+            "$installs"/${lib.escapeShellArg installName}/*/${lib.escapeShellArg bin} \
+            "$installs"/${lib.escapeShellArg installName}/*/bin/${lib.escapeShellArg bin}; do
+            if [ -x "$cand" ]; then
+              exec "$cand" "$@"
+            fi
+          done
+        ''}
         exec ${mise} exec -- ${bin} "$@"
       '';
 
