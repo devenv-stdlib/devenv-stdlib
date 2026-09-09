@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cataloged = import ../../modules/language-versions-lib.nix {
+  cataloged = import ../../modules/languages/versions-lib.nix {
     inherit lib;
     catalog = {
       python = {

@@ -20,7 +20,7 @@ setup() {
 }
 
 @test "toolchain catalog json lists releases with latest and eol" {
-  [ -f "$REPO_DIR/modules/toolchain-catalog.json" ]
+  [ -f "$REPO_DIR/modules/languages/catalog.json" ]
   python3 -c '
 import json, sys
 p = json.load(open(sys.argv[1]))
@@ -29,5 +29,5 @@ for name in ("rust", "go", "python", "nodejs", "bun", "deno"):
     assert p[name]["releases"], name
     row = p[name]["releases"][0]
     assert "cycle" in row and "latest" in row and "eol" in row, name
-' "$REPO_DIR/modules/toolchain-catalog.json"
+' "$REPO_DIR/modules/languages/catalog.json"
 }

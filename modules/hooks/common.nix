@@ -1,20 +1,11 @@
 {
   pkgs,
-  lib,
-  config,
   ...
 }:
-let
-  project = import ./project-lib.nix { inherit lib; };
-  versions = import ./language-versions-lib.nix { inherit lib; };
-  languages = config.languages or { };
-  hooks = project.languageHooks {
-    inherit languages;
-    inherit (config) pythonTypeChecker;
-  };
-  debtmapPkg = import ./debtmap-pkg.nix { inherit pkgs lib; };
-in
 {
+  # Vendored upstream skills (Vercel skills CLI); not ours to lint or reflow.
+  git-hooks.excludes = [ "^\\.agents/skills/" ];
+
   git-hooks.hooks = {
     nixfmt.enable = true;
     statix.enable = true;
@@ -65,45 +56,6 @@ in
       description = "Detect hardcoded secrets";
       package = pkgs.gitleaks;
       entry = "${pkgs.gitleaks}/bin/gitleaks protect --staged --redact";
-      pass_filenames = false;
-    };
-
-    rustfmt = {
-      enable = hooks.rustfmt;
-      args = versions.rustfmtEditionArgs (config.supported.rust.edition or null);
-    };
-    clippy.enable = hooks.clippy;
-
-    gofmt.enable = hooks.gofmt;
-    golangci-lint.enable = hooks.golangci-lint;
-
-    ruff.enable = hooks.ruff;
-    ruff-format.enable = hooks.ruff-format;
-    check-python.enable = hooks.check-python;
-    python-debug-statements.enable = hooks.python-debug-statements;
-    sort-requirements-txt.enable = hooks.sort-requirements-txt;
-    pyright.enable = hooks.pyright;
-    ty = {
-      enable = hooks.ty;
-      name = "ty";
-      description = "Astral ty type checker (beta)";
-      package = pkgs.ty;
-      entry = "${pkgs.ty}/bin/ty check";
-      files = "\\.py$";
-    };
-
-    prettier = {
-      enable = hooks.prettier;
-      files = "\\.(cjs|js|jsx|mjs|ts|tsx)$";
-    };
-
-    debtmap = {
-      enable = hooks.debtmap;
-      name = "debtmap";
-      description = "Analyze technical debt for enabled languages";
-      package = debtmapPkg;
-      entry = "${debtmapPkg}/bin/debtmap analyze . --no-tui --quiet";
-      files = project.debtmapFiles languages;
       pass_filenames = false;
     };
   };

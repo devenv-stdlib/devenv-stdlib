@@ -2,7 +2,7 @@
 """Toolchain catalog for Copier max defaults and devenv version policy.
 
 Fetches endoflife.date cycles, records latest patch and EOL, and writes:
-  modules/toolchain-catalog.json  (Nix: latest patch per non-EOL cycle)
+  modules/languages/catalog.json  (Nix: latest patch per non-EOL cycle)
   includes/toolchain-latest.yml   (Copier max defaults, aligned to min)
 
 Usage:
@@ -23,7 +23,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 DEFAULT_YAML = HERE / "toolchain-latest.yml"
-DEFAULT_JSON = ROOT / "modules" / "toolchain-catalog.json"
+DEFAULT_JSON = ROOT / "modules" / "languages" / "catalog.json"
 API = "https://endoflife.date/api/{product}.json"
 USER_AGENT = "devenv4monorepo/toolchain-latest"
 

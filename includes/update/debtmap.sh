@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Refresh modules/debtmap-pkg.nix from the latest GitHub release.
+# Refresh modules/debtmap/pkg.nix from the latest GitHub release.
 set -euo pipefail
 
 # shellcheck disable=SC1091
@@ -20,7 +20,7 @@ debtmap_asset() {
 refresh_debtmap() {
   local root file version current sys asset url hash
   root=$(update_repo_root)
-  file=$root/modules/debtmap-pkg.nix
+  file=$root/modules/debtmap/pkg.nix
   version=$(github_latest_version iepathos debtmap)
   current=$(read_nix_string_assign "$file" version)
   echo "debtmap: $version"

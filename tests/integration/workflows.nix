@@ -4,7 +4,7 @@
 }:
 let
   inherit (pkgs) lib;
-  versions = import ../../modules/language-versions-lib.nix { inherit lib; };
+  versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
   write = name: text: pkgs.writeText name text;
 in
 pkgs.linkFarm "workflow-fixtures" [
