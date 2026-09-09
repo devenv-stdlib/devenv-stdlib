@@ -113,7 +113,8 @@ merge_cursor_jsonc_strip() {
   sed -E '/^[[:space:]]*\/\//d; s/[[:space:]]+\/\/.*$//'
 }
 
-# Set terminalAllowlist to [absolute-rtk-path, "rtk"]. Other keys stay.
+# Ensure terminalAllowlist starts with [absolute-rtk-path, "rtk"]; keep other
+# prefixes (Always Allow / manual extras). Other keys stay.
 # Cursor auto-runs Shell when the first token matches allowlist; hook allow is ignored.
 # Usage: merge_cursor_permissions <permissions.json> <absolute-rtk-path>
 merge_cursor_permissions() {
@@ -137,7 +138,12 @@ merge_cursor_permissions() {
       rm -f "$tmp" "$stripped"
       return 1
     fi
-    if ! "$jq" --arg rtk "$rtk_path" '.terminalAllowlist = [$rtk, "rtk"]' "$stripped" >"$tmp"; then
+    if ! "$jq" --arg rtk "$rtk_path" '
+      .terminalAllowlist = (
+        [$rtk, "rtk"]
+        + [((.terminalAllowlist // [])[]) | select(. != $rtk and . != "rtk")]
+      )
+    ' "$stripped" >"$tmp"; then
       rm -f "$tmp" "$stripped"
       return 1
     fi
