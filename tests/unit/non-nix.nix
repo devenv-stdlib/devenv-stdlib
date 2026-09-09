@@ -81,4 +81,9 @@ in
     expr = nonNix.imageRef "ninerouter";
     expected = "decolua/9router:0.5.69";
   };
+
+  testNonNixShippedCatalogNonEmpty = {
+    expr = builtins.length nonNix.shipped > 0;
+    expected = true;
+  };
 }

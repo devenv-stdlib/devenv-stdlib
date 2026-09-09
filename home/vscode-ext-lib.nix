@@ -6,7 +6,7 @@ let
   vs = pkgs.vscode-extensions;
 in
 rec {
-  # version from modules/non-nix/catalog.json; sha256 refreshed with the pin.
+  # version from modules/non-nix/catalog.toml; sha256 refreshed with the pin.
   devenvExtension = pkgs.vscode-utils.extensionFromVscodeMarketplace {
     inherit (vsix) publisher;
     name = vsix.extension;

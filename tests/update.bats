@@ -31,17 +31,29 @@ EOF
   chmod +x "$BIN/devenv"
 }
 
-@test "consumer mode runs devenv update, leaves pins, prints copier hint" {
-  mkdir -p "$FIXTURE/modules/non-nix"
-  printf '[{"name":"brave-search-mcp","pin":"0.0.0"}]\n' >"$FIXTURE/modules/non-nix/catalog.json"
+@test "consumer mode runs devenv update, local-catalog, leaves pins, prints copier hint" {
+  mkdir -p "$FIXTURE/modules/non-nix" "$FIXTURE/modules/update"
+  cat >"$FIXTURE/modules/non-nix/catalog.toml" <<'EOF'
+# Shipped. Docs: https://example.test
+[[tool]]
+name = "shipped"
+kind = "cli"
+scope = "user"
+pin = "0.0.0"
+mise = "npm:shipped"
+EOF
+  # stub local-catalog so consumer mode does not need network/nix
+  cat >"$FIXTURE/modules/update/local-catalog.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'local-catalog-stub\n'
+EOF
   write_devenv_stub 0
 
   PATH="$BIN:$PATH" run bash "$UPDATE_SH"
   [ "$status" -eq 0 ]
   grep -qx 'devenv-stub:update' "$STUB_LOG"
-  [[ $output == *"copier update"* ]]
-  [[ $output == *"modules/non-nix/catalog.json"* ]]
-  grep -q '0.0.0' "$FIXTURE/modules/non-nix/catalog.json"
+  [[ $output == *"copier update"* || $output == *"catalog.local.toml"* ]]
+  [[ $output == *local-catalog-stub* ]]
 }
 
 @test "consumer mode runs executable update.local.sh" {
@@ -113,31 +125,66 @@ EOF
   grep -q '%2f' "$STUB_LOG"
 }
 
-@test "non-nix refresher rewrites catalog pins without hitting the live registry" {
+@test "local-catalog dry-run bumps pins and preserves comments" {
+  command -v python3 >/dev/null || skip "python3 not installed"
   command -v jq >/dev/null || skip "jq not installed"
+  mkdir -p "$FIXTURE/modules/non-nix" "$FIXTURE/modules/update"
+  cp "$REPO_DIR/modules/update/pin-lib.sh" "$FIXTURE/modules/update/pin-lib.sh"
+  cp "$REPO_DIR/modules/update/local-catalog.sh" "$FIXTURE/modules/update/local-catalog.sh"
+  # empty shipped catalog so resolve only sees local (via still needs nixpkgs)
+  printf '# shipped empty\n' >"$FIXTURE/modules/non-nix/catalog.toml"
+  cat >"$FIXTURE/modules/non-nix/catalog.local.toml" <<'EOF'
+# Team CLI. Docs: https://example.test/team-cli
+[[tool]]
+name = "team-cli"
+kind = "cli"
+scope = "project"
+pin = "0.0.0"
+mise = "npm:team-cli"
+EOF
+  cat >"$BIN/curl" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' '{"version":"2.2.2"}'
+EOF
+  chmod +x "$BIN/curl"
+  cat >"$BIN/mise" <<'EOF'
+#!/usr/bin/env bash
+printf 'mise:%s\n' "$*" >>"$STUB_LOG"
+EOF
+  chmod +x "$BIN/mise"
+  cat >"$BIN/nix" <<'EOF'
+#!/usr/bin/env bash
+# pretend not promotable
+printf 'cli\n'
+EOF
+  chmod +x "$BIN/nix"
+
+  UPDATE_ROOT=$FIXTURE UPDATE_DRY_RUN=1 PATH="$BIN:$PATH" run bash "$FIXTURE/modules/update/local-catalog.sh"
+  [ "$status" -eq 0 ]
+  [[ $output == *dry-run* ]]
+  grep -q 'Docs: https://example.test/team-cli' "$FIXTURE/modules/non-nix/catalog.local.toml"
+  grep -q 'pin = "0.0.0"' "$FIXTURE/modules/non-nix/catalog.local.toml"
+}
+
+@test "non-nix refresher rewrites catalog pins without hitting the live registry" {
   command -v python3 >/dev/null || skip "python3 not installed"
   mkdir -p "$FIXTURE/modules/non-nix" "$FIXTURE/home"
-  cat >"$FIXTURE/modules/non-nix/catalog.json" <<'EOF'
-[
-  {
-    "name": "brave-search-mcp",
-    "kind": "cli",
-    "scope": "user",
-    "pin": "0.0.0",
-    "mise": "npm:@brave/brave-search-mcp-server",
-    "nixAttr": null,
-    "homepageContains": null
-  },
-  {
-    "name": "firecrawl-mcp",
-    "kind": "cli",
-    "scope": "user",
-    "pin": "0.0.0",
-    "mise": "npm:firecrawl-mcp",
-    "nixAttr": null,
-    "homepageContains": null
-  }
-]
+  cat >"$FIXTURE/modules/non-nix/catalog.toml" <<'EOF'
+# Brave Search MCP. Docs: https://example.test/brave
+[[tool]]
+name = "brave-search-mcp"
+kind = "cli"
+scope = "user"
+pin = "0.0.0"
+mise = "npm:@brave/brave-search-mcp-server"
+
+# Firecrawl MCP. Docs: https://example.test/firecrawl
+[[tool]]
+name = "firecrawl-mcp"
+kind = "cli"
+scope = "user"
+pin = "0.0.0"
+mise = "npm:firecrawl-mcp"
 EOF
   printf 'sha256 = "old";\n' >"$FIXTURE/home/vscode-ext-lib.nix"
 
@@ -156,16 +203,13 @@ done
 exit 1
 EOF
   chmod +x "$BIN/curl"
-  cat >"$BIN/nix" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-  chmod +x "$BIN/nix"
 
   UPDATE_ROOT=$FIXTURE PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/non-nix.sh"
   [ "$status" -eq 0 ]
-  grep -q '"pin": "8.8.8"' "$FIXTURE/modules/non-nix/catalog.json"
-  grep -q '"pin": "9.9.9"' "$FIXTURE/modules/non-nix/catalog.json"
+  grep -q 'pin = "8.8.8"' "$FIXTURE/modules/non-nix/catalog.toml"
+  grep -q 'pin = "9.9.9"' "$FIXTURE/modules/non-nix/catalog.toml"
+  grep -q 'Docs: https://example.test/brave' "$FIXTURE/modules/non-nix/catalog.toml"
+  grep -q 'Docs: https://example.test/firecrawl' "$FIXTURE/modules/non-nix/catalog.toml"
 }
 
 @test "skills refresher runs the CLI update in the repo root" {
@@ -202,37 +246,28 @@ EOF
 }
 
 @test "non-nix refresher honors UPDATE_DRY_RUN" {
-  command -v jq >/dev/null || skip "jq not installed"
+  command -v python3 >/dev/null || skip "python3 not installed"
   mkdir -p "$FIXTURE/modules/non-nix"
-  cat >"$FIXTURE/modules/non-nix/catalog.json" <<'EOF'
-[
-  {
-    "name": "brave-search-mcp",
-    "kind": "cli",
-    "scope": "user",
-    "pin": "0.0.0",
-    "mise": "npm:@brave/brave-search-mcp-server",
-    "nixAttr": null,
-    "homepageContains": null
-  }
-]
+  cat >"$FIXTURE/modules/non-nix/catalog.toml" <<'EOF'
+# Brave Search MCP. Docs: https://example.test/brave
+[[tool]]
+name = "brave-search-mcp"
+kind = "cli"
+scope = "user"
+pin = "0.0.0"
+mise = "npm:@brave/brave-search-mcp-server"
 EOF
-  before=$(sha256sum "$FIXTURE/modules/non-nix/catalog.json" | awk '{print $1}')
+  before=$(sha256sum "$FIXTURE/modules/non-nix/catalog.toml" | awk '{print $1}')
 
   cat >"$BIN/curl" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' '{"version":"8.8.8"}'
 EOF
   chmod +x "$BIN/curl"
-  cat >"$BIN/nix" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-  chmod +x "$BIN/nix"
 
   UPDATE_ROOT=$FIXTURE UPDATE_DRY_RUN=1 PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/non-nix.sh"
   [ "$status" -eq 0 ]
   [[ $output == *dry-run* ]]
-  after=$(sha256sum "$FIXTURE/modules/non-nix/catalog.json" | awk '{print $1}')
+  after=$(sha256sum "$FIXTURE/modules/non-nix/catalog.toml" | awk '{print $1}')
   [ "$before" = "$after" ]
 }

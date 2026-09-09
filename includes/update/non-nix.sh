@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Refresh modules/non-nix/catalog.json pins (and a few install-side hashes).
+# Refresh modules/non-nix/catalog.toml pins (and a few install-side hashes).
 # CLI tools install via mise (or Nix when promoted); images via docker pull;
 # devenv VS Code extension still uses vscode-ext-lib.nix for the VSIX hash.
+# Pin edits are line-local so per-tool comments stay intact.
 set -euo pipefail
 
 # shellcheck disable=SC1091
@@ -90,16 +91,25 @@ bump_vscode() {
 }
 
 print_promotable() {
-  local catalog
-  catalog=$(catalog_path)
   echo "non-nix: CLI entries with nixAttr (promote when nixpkgs is new enough + homepage matches):"
-  jq -r '.[] | select(.kind == "cli" and .nixAttr != null) | "  CANDIDATE \(.name) pin=\(.pin)"' "$catalog"
+  python3 - "$(catalog_path)" <<'PY'
+import sys
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib  # type: ignore
+
+with open(sys.argv[1], "rb") as f:
+    data = tomllib.load(f)
+for tool in data.get("tool", []):
+    if tool.get("kind") == "cli" and tool.get("nixAttr") is not None:
+        print(f"  CANDIDATE {tool['name']} pin={tool['pin']}")
+PY
 }
 
 refresh_non_nix() {
-  local root catalog
-  root=$(update_repo_root)
-  catalog=$root/modules/non-nix/catalog.json
+  local catalog
+  catalog=$(catalog_path)
   if [[ ! -f $catalog ]]; then
     echo "non-nix: missing $catalog" >&2
     return 1
@@ -121,10 +131,7 @@ refresh_non_nix() {
         return 1
         ;;
     esac
-  done < <(
-    jq -r '.[] | [.name, .kind, (.mise // ""), (.image // ""), (.publisher // ""), (.extension // "")] | @tsv' \
-      "$catalog"
-  )
+  done < <(catalog_list_tools)
 
   print_promotable
 }

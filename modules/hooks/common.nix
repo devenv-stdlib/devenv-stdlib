@@ -42,6 +42,16 @@
       };
     };
     check-json.enable = true;
+    check-toml.enable = true;
+    taplo.enable = true;
+    taplo-lint = {
+      enable = true;
+      name = "taplo-lint";
+      description = "Lint TOML files with taplo";
+      package = pkgs.taplo;
+      entry = "${pkgs.taplo}/bin/taplo lint";
+      types = [ "toml" ];
+    };
     trim-trailing-whitespace.enable = true;
     end-of-file-fixer.enable = true;
     check-added-large-files.enable = true;

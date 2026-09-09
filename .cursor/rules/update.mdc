@@ -5,20 +5,25 @@ alwaysApply: true
 
 # update vs copier update
 
-`update` / `devenv update` refresh **your** `devenv.lock` and optional
-`update.local.sh`. Template tools (RTK, Serena, Headroom, 9Router, MCP
-pins, debtmap, vendored `.agents/skills/`) move only with `copier update`.
+`update` / `devenv update` refresh **your** `devenv.lock`, then
+`modules/non-nix/catalog.local.toml` (team tools: Nix if promotable, else
+mise), then optional `update.local.sh`. Template-shipped tools (RTK, Serena,
+Headroom, 9Router, MCP pins, debtmap, vendored `.agents/skills/`) move only
+with `copier update`.
 
 ```
 # ❌ BAD — fighting the next copier update
-# modules/non-nix/catalog.json
-"pin": "9.9.9"
+# modules/non-nix/catalog.toml
+pin = "9.9.9"
 
-# ✅ GOOD
+# ✅ GOOD — team tools
+# modules/non-nix/catalog.local.toml  (committed in the monorepo)
+# then: update
+
+# ✅ GOOD — template pins
 copier update
-# or bump *your* extras in gitignored update.local.sh
 ```
 
-Do not edit `modules/non-nix/catalog.json` pins (or generated `mise.toml`)
-to "upgrade" the stack. `devenv update` is the devenv CLI (flake inputs).
-`update` is our script; it does not wrap that CLI.
+Do not edit shipped `modules/non-nix/catalog.toml` pins (or generated
+`mise.toml`) to "upgrade" the stack. `devenv update` is the devenv CLI
+(flake inputs). `update` is our script; it wraps that CLI in consumer mode.

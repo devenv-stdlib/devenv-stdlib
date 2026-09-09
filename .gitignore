@@ -9,6 +9,8 @@
 devenv.local.nix
 devenv.local.yaml
 home.local.nix
+# Consumer extras live in catalog.local.toml (committed in monorepos).
+modules/non-nix/catalog.local.toml
 
 # SecretSpec dotenv (9Router password, Brave / Firecrawl). Copier may write this.
 .env
@@ -37,7 +39,7 @@ result-*
 # Generated from languages.* and debtmap.* by modules/debtmap/
 .debtmap.toml
 
-# Generated from modules/non-nix/catalog.json by modules/mise/
+# Generated from modules/non-nix/catalog.toml by modules/mise/
 mise.toml
 
 # lychee link-check cache (git-hooks)

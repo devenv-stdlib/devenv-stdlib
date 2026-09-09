@@ -2,8 +2,50 @@
 # the attr exists, version is new enough, and homepage matches identity.
 { lib }:
 let
-  catalogFile = ./catalog.json;
-  catalog = builtins.fromJSON (builtins.readFile catalogFile);
+  catalogFile = ./catalog.toml;
+  localCatalogFile = ./catalog.local.toml;
+
+  # TOML omits nulls; normalize optional fields for resolve/mise helpers.
+  normalize =
+    entry:
+    entry
+    // {
+      nixAttr = entry.nixAttr or null;
+      homepageContains = entry.homepageContains or null;
+      mise = entry.mise or null;
+      bin = entry.bin or null;
+      image = entry.image or null;
+      publisher = entry.publisher or null;
+      extension = entry.extension or null;
+    };
+
+  readTools =
+    path:
+    if builtins.pathExists path then
+      map normalize ((builtins.fromTOML (builtins.readFile path)).tool or [ ])
+    else
+      [ ];
+
+  shipped = readTools catalogFile;
+  local = readTools localCatalogFile;
+
+  # Local may add tools only; colliding names fight the shipped catalog / copier.
+  assertNamesUnique =
+    entries:
+    let
+      names = map (e: e.name) entries;
+      dupes = lib.unique (lib.filter (n: lib.count (x: x == n) names > 1) names);
+    in
+    if dupes == [ ] then
+      entries
+    else
+      throw ''
+        non-nix catalog: duplicate tool name(s): ${lib.concatStringsSep ", " dupes}.
+        Rename or remove them from modules/non-nix/catalog.local.toml
+        (do not override shipped modules/non-nix/catalog.toml entries).
+      '';
+
+  catalog = assertNamesUnique (shipped ++ local);
 
   attrPath =
     entry:
@@ -98,7 +140,7 @@ let
       body = if tools == [ ] then "" else lib.concatStringsSep "\n" (map tomlToolLine tools);
     in
     ''
-      # Generated from modules/non-nix/catalog.json. Do not edit.
+      # Generated from modules/non-nix/catalog.toml (+ catalog.local.toml). Do not edit.
       # Languages stay on devenv; mise only installs catalog CLI fallbacks.
 
       [settings]
@@ -113,6 +155,9 @@ in
   inherit
     catalog
     catalogFile
+    localCatalogFile
+    shipped
+    local
     resolve
     filterScope
     nixPackages
