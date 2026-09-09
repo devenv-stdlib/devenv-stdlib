@@ -80,6 +80,11 @@ gh stack view      # show local/remote stack
 After landing or changing the bottom PR, run `gh stack sync` (or rebase) so
 dependents pick up the new base—do not leave upper PRs on a stale merge-base.
 
+With **parallel worktrees**, prefer `gh stack link` to register the stack on
+GitHub (auto base chaining). `gh stack sync` / `rebase` need each stack branch
+free of another worktree checkout; sync from a throwaway worktree or after
+removing conflicting worktrees if git refuses the checkout.
+
 ### Stack order (bottom → top)
 
 Put **infrastructure first**, **concrete product detail last**:
