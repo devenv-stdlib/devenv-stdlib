@@ -113,7 +113,8 @@ merge_cursor_jsonc_strip() {
   sed -E '/^[[:space:]]*\/\//d; s/[[:space:]]+\/\/.*$//'
 }
 
-# Upsert "rtk" into terminalAllowlist. Does not replace other prefixes or keys.
+# Set terminalAllowlist to ["rtk"] only. Other keys (e.g. mcpAllowlist) stay.
+# The Shell hook rewrites or wraps every command through rtk so this is enough.
 # Usage: merge_cursor_permissions <permissions.json>
 merge_cursor_permissions() {
   local perm_json=$1
@@ -130,12 +131,7 @@ merge_cursor_permissions() {
       rm -f "$tmp" "$stripped"
       return 1
     fi
-    if ! "$jq" '
-      .terminalAllowlist = (
-        (.terminalAllowlist // []) as $a
-        | $a + if ($a | index("rtk")) then [] else ["rtk"] end
-      )
-    ' "$stripped" >"$tmp"; then
+    if ! "$jq" '.terminalAllowlist = ["rtk"]' "$stripped" >"$tmp"; then
       rm -f "$tmp" "$stripped"
       return 1
     fi

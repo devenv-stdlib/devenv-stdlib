@@ -261,7 +261,7 @@ EOF
   [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "rtk" ]
 }
 
-@test "permissions merge upserts rtk without dropping other prefixes or keys" {
+@test "permissions merge replaces other prefixes; keeps other keys" {
   PERM="$TMP/.cursor/permissions.json"
   mkdir -p "$(dirname "$PERM")"
   cat >"$PERM" <<'EOF'
@@ -272,7 +272,7 @@ EOF
 EOF
   merge_cursor_permissions "$PERM"
   merge_cursor_permissions "$PERM"
-  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "git npm rtk" ]
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "rtk" ]
   [ "$(jq -r '.mcpAllowlist[0]' "$PERM")" = "github:*" ]
 }
 
@@ -288,11 +288,43 @@ EOF
 }
 EOF
   merge_cursor_permissions "$PERM"
-  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "git rtk" ]
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "rtk" ]
 }
 
-@test "permissions CLI upserts rtk" {
+@test "permissions CLI sets rtk-only allowlist" {
   PERM="$TMP/.cursor/permissions.json"
   "$REPO_DIR/home/merge-cursor-llm.sh" permissions "$PERM"
-  [ "$(jq -r '.terminalAllowlist[0]' "$PERM")" = "rtk" ]
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "rtk" ]
+}
+
+run_rtk_hook() {
+  local cmd=$1
+  export RTK JQ
+  jq -n --arg c "$cmd" '{tool_input:{command:$c}}' | bash "$REPO_DIR/home/rtk-rewrite.sh"
+}
+
+@test "rtk hook allows rewritten git and does not ask" {
+  command -v rtk >/dev/null || skip "rtk not installed"
+  RTK=$(command -v rtk)
+  JQ=$(command -v jq)
+  out=$(run_rtk_hook "git status")
+  [ "$(jq -r '.permission' <<<"$out")" = "allow" ]
+  [ "$(jq -r '.updated_input.command' <<<"$out")" = "rtk git status" ]
+}
+
+@test "rtk hook wraps unfiltered commands with rtk run" {
+  command -v rtk >/dev/null || skip "rtk not installed"
+  RTK=$(command -v rtk)
+  JQ=$(command -v jq)
+  out=$(run_rtk_hook "echo hello")
+  [ "$(jq -r '.permission' <<<"$out")" = "allow" ]
+  [[ "$(jq -r '.updated_input.command' <<<"$out")" == rtk\ run\ -c\ * ]]
+}
+
+@test "rtk hook leaves existing rtk commands unchanged" {
+  command -v rtk >/dev/null || skip "rtk not installed"
+  RTK=$(command -v rtk)
+  JQ=$(command -v jq)
+  out=$(run_rtk_hook "rtk git status")
+  [ "$(jq -r '.' <<<"$out")" = "{}" ]
 }
