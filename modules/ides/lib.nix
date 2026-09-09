@@ -2,15 +2,14 @@
   pkgs,
   lib,
   config,
-  ...
 }:
 let
   ext = import ../../home/vscode-ext-lib.nix { inherit pkgs; };
   project = import ../lib/project.nix { inherit lib; };
 
-  langOn = name: (config.languages.${name} or { }).enable or false;
-
-  typescriptOn = project.javascriptOn (config.languages or { });
+  languages = config.languages or { };
+  langOn = name: project.langOn languages name;
+  typescriptOn = project.javascriptOn languages;
 
   selected =
     lib.optionals (langOn "rust") ext.rust
@@ -18,16 +17,9 @@ let
     ++ lib.optionals (langOn "python") ext.python
     ++ lib.optionals typescriptOn ext.typescript;
 
-  # Hardcoded ids so disabled packs are not evaluated (Pylance is unfree).
-  unwantedRecommendations = project.cursorUnwanted (config.languages or { });
+  unwantedRecommendations = project.vscodeUnwanted languages;
 
-  # devenv + nix-ide are always relevant in this repo; language ids follow
-  # languages.*.enable so Cursor only recommends what this project uses.
-  recommendations = [
-    "datakurre.devenv"
-    "jnoortheen.nix-ide"
-  ]
-  ++ map ext.id selected;
+  recommendations = project.vscodeAlwaysRecommend ++ map ext.id selected;
 
   nixSettings = {
     "nix.enableLanguageServer" = true;
@@ -111,52 +103,59 @@ let
 
   settingsJson = pkgs.writeText "settings.json" (builtins.toJSON settings);
 
-  manifest = pkgs.writeText "cursor-ext-manifest" (
+  manifest = pkgs.writeText "ide-ext-manifest" (
     lib.concatMapStringsSep "\n" (e: "${ext.id e}|${ext.root e}") selected
   );
 in
 {
-  # Regenerated on devenv:files from languages.*. Do not edit by hand.
-  files.".vscode/extensions.json".json = {
-    inherit recommendations;
-    inherit unwantedRecommendations;
-  };
+  inherit
+    ext
+    selected
+    recommendations
+    unwantedRecommendations
+    settings
+    settingsJson
+    manifest
+    ;
 
-  scripts.cursor-sync-extensions.exec = ''
-    set -euo pipefail
-    dest_root="''${HOME:?}/.cursor/extensions"
-    mkdir -p "$dest_root" "$DEVENV_ROOT/.vscode"
+  # extensionsDir is expanded by the shell ($HOME/...). Only adds missing
+  # symlinks; never deletes user-installed extensions.
+  mkSyncScript =
+    {
+      extensionsDir,
+      logPrefix ? "ides",
+    }:
+    ''
+      set -euo pipefail
+      dest_root="${extensionsDir}"
+      mkdir -p "$dest_root" "$DEVENV_ROOT/.vscode"
 
-    if [ -s ${lib.escapeShellArg manifest} ]; then
-      while IFS='|' read -r id src; do
-        [ -n "$id" ] || continue
-        dest="$dest_root/$id"
-        if [ ! -e "$dest" ]; then
-          ln -s "$src" "$dest"
-          echo "cursor: installed $id"
-        fi
-      done < ${lib.escapeShellArg manifest}
-    fi
-
-    write_json() {
-      src="$1"
-      dest="$2"
-      tmp="$(mktemp)"
-      jq . "$src" >"$tmp"
-      if ! cmp -s "$tmp" "$dest" 2>/dev/null; then
-        mv "$tmp" "$dest"
-        return 0
+      if [ -s ${lib.escapeShellArg manifest} ]; then
+        while IFS='|' read -r id src; do
+          [ -n "$id" ] || continue
+          dest="$dest_root/$id"
+          if [ ! -e "$dest" ]; then
+            ln -s "$src" "$dest"
+            echo "${logPrefix}: installed $id"
+          fi
+        done < ${lib.escapeShellArg manifest}
       fi
-      rm -f "$tmp"
-      return 1
-    }
 
-    if write_json ${lib.escapeShellArg settingsJson} "$DEVENV_ROOT/.vscode/settings.json"; then
-      echo "cursor: wrote .vscode/settings.json for this project's languages"
-    fi
-  '';
+      write_json() {
+        src="$1"
+        dest="$2"
+        tmp="$(mktemp)"
+        jq . "$src" >"$tmp"
+        if ! cmp -s "$tmp" "$dest" 2>/dev/null; then
+          mv "$tmp" "$dest"
+          return 0
+        fi
+        rm -f "$tmp"
+        return 1
+      }
 
-  enterShell = ''
-    cursor-sync-extensions
-  '';
+      if write_json ${lib.escapeShellArg settingsJson} "$DEVENV_ROOT/.vscode/settings.json"; then
+        echo "${logPrefix}: wrote .vscode/settings.json for this project's languages"
+      fi
+    '';
 }

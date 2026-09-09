@@ -9,7 +9,7 @@ _: {
     ./debtmap/hooks.nix
     ./languages
     ./languages/versions.nix
-    ./languages/cursor.nix
+    ./ides
     ./languages/serena.nix
     ./debtmap
     ./mise
