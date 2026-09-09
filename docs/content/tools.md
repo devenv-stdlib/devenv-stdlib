@@ -151,7 +151,7 @@ git diff             # delta
 
 ### httpie, tldr, howdoi, fuck, usql
 
-[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. `howdoi` answers “how do I…” from Stack Overflow ([gleitz/howdoi](https://github.com/gleitz/howdoi); packaged here because nixpkgs dropped it). [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
+[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. `howdoi` answers “how do I…” from Stack Overflow ([gleitz/howdoi](https://github.com/gleitz/howdoi); pin in `modules/non-nix/catalog.json`, Nix when promotable else mise). [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
 
 ```bash
 http https://endoflife.date/api/rust.json
@@ -222,23 +222,34 @@ GNOME extension that drops the terminal from the top of the screen.
 
 - Docs: [cursor.com/docs](https://cursor.com/docs)
 
+### Non-Nix catalog and mise
+
+Pins for tools that are not (yet) taken from nixpkgs live in `modules/non-nix/catalog.json`. At eval time, CLI entries promote to a Nix package when the attr exists, `lib.versionAtLeast` meets the pin, and `homepage`/`pname` matches `homepageContains`. Otherwise [mise](https://mise.jdx.dev/) installs them.
+
+| Scope | Config | Install |
+| --- | --- | --- |
+| Project (`debtmap`, `skills`) | generated `mise.toml` (gitignored) | `mise:install` after `devenv:files` |
+| User (RTK, Serena, Headroom, MCP CLIs, howdoi, …) | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation |
+
+Docker images (`decolua/9router`, `mcp/docker`) and the devenv VS Code extension share the same catalog but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools. Template authors bump pins with `update` → `includes/update/non-nix.sh` (consumers get them via `copier update`).
+
 ### Agent skills
 
 `.agents/skills/` ships 54 upstream Cursor skills (project scope; Cursor reads that directory natively), vendored with the [Vercel skills CLI](https://github.com/vercel-labs/skills). `skills-lock.json` records each skill's source and content hash. Only a skill's name and description sit in context until the agent decides it is relevant; bodies load on demand. Sources: [obra/superpowers](https://github.com/obra/superpowers) (brainstorming, plans, TDD, debugging, code review, worktrees), [mattpocock/skills](https://github.com/mattpocock/skills) (spec/tickets/triage, codebase design, grill-me, handoff), [cursor/plugins](https://github.com/cursor/plugins) (`cursor-team-kit` PR/CI flows, `pstack` unslop/no-comments/principles, `cli-for-agents`), [trailofbits/skills](https://github.com/trailofbits/skills) (Python/Rust review, property-based and mutation testing, differential review, supply-chain and Actions auditors, second opinion), and Anthropic's `mcp-builder`. The per-skill table with licenses (MIT, CC-BY-SA-4.0, Apache-2.0) is `.agents/skills/README.md`.
 
 ```bash
-npx skills add owner/repo --skill <name> -a cursor -y   # add one (repo root)
-npx skills remove <name>
-npx skills list
+skills add owner/repo --skill <name> -a cursor -y   # add one (repo root; mise PATH)
+skills remove <name>
+skills list
 ```
 
-In this template, `update` runs `includes/update/skills.sh` (`npx skills update -y -p`); review the diff before committing, since skills run with the agent's permissions. Generated monorepos receive skill changes through `copier update`. Git hooks skip `.agents/skills/` (vendored text). Excluded on purpose: duplicate TDD/debugging skills, Claude-Code-only bootstrap and subagent skills, hook-driven plugins (`ralph-loop`, `advisor`, `continual-learning`), Anthropic document/Claude-API skills, vendor-product skills, smart-contract and fuzzing suites, and rule bundles such as awesome-cursorrules (always-apply, stale).
+In this template, `update` runs `includes/update/skills.sh` (`skills update -y -p` after project `mise install`); review the diff before committing, since skills run with the agent's permissions. Generated monorepos receive skill changes through `copier update`. Git hooks skip `.agents/skills/` (vendored text). Excluded on purpose: duplicate TDD/debugging skills, Claude-Code-only bootstrap and subagent skills, hook-driven plugins (`ralph-loop`, `advisor`, `continual-learning`), Anthropic document/Claude-API skills, vendor-product skills, smart-contract and fuzzing suites, and rule bundles such as awesome-cursorrules (always-apply, stale).
 
 - Docs: [Cursor skills](https://cursor.com/docs/skills), [agentskills.io](https://agentskills.io), [skills.sh](https://skills.sh/)
 
 ### RTK
 
-[RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. When `cursor.ninerouter.enable` is off, Home Manager pins the official release binary, merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`, and upserts `rtk` into `~/.cursor/permissions.json` `terminalAllowlist` (other prefixes stay; this key replaces the in-app terminal allowlist). It does not run `rtk init`. `.cursor/rules/rtk-passthrough.mdc` (also `~/.cursor/rules/` after `home-switch`) tells the agent to retry once with `RTK_DISABLED=1` or `--no-compact` only when a needed detail is missing. When 9Router is on, the gateway’s built-in RTK is used and that host hook and rule are removed.
+[RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. When `cursor.ninerouter.enable` is off, Home Manager installs the catalog pin via mise (or Nix when promotable), merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`, and upserts `rtk` into `~/.cursor/permissions.json` `terminalAllowlist` (other prefixes stay; this key replaces the in-app terminal allowlist). It does not run `rtk init`. `.cursor/rules/rtk-passthrough.mdc` (also `~/.cursor/rules/` after `home-switch`) tells the agent to retry once with `RTK_DISABLED=1` or `--no-compact` only when a needed detail is missing. When 9Router is on, the gateway’s built-in RTK is used and that host hook and rule are removed.
 
 ```bash
 rtk rewrite "git status"
@@ -249,7 +260,7 @@ rtk rewrite "git status"
 
 ### Headroom
 
-[Headroom](https://github.com/headroomlabs-ai/headroom) is official MCP (`headroom_compress` / `retrieve` / `stats`) on the Cursor Pro path. Home Manager installs `headroom-ai[mcp]` with `uv tool install` and upserts `headroom mcp serve` (no `--proxy-url`, no `headroom-proxy` unit). The agent must call those tools; nothing runs after every prompt. `.cursor/rules/headroom-compress.mdc` (also `~/.cursor/rules/headroom-compress.mdc` after `home-switch` when 9Router is off) tells the agent to compress only large tool output or pastes. Automatic transcript compaction would need Headroom’s proxy plus Override OpenAI Base URL, which Cursor Pro models refuse. When `cursor.ninerouter.enable` is on, host Headroom is not installed and leftover `mcpServers.headroom` is removed.
+[Headroom](https://github.com/headroomlabs-ai/headroom) is official MCP (`headroom_compress` / `retrieve` / `stats`) on the Cursor Pro path. Home Manager installs `headroom-ai` via mise (`pipx`) from the non-Nix catalog and upserts `headroom mcp serve` (no `--proxy-url`, no `headroom-proxy` unit). The agent must call those tools; nothing runs after every prompt. `.cursor/rules/headroom-compress.mdc` (also `~/.cursor/rules/headroom-compress.mdc` after `home-switch` when 9Router is off) tells the agent to compress only large tool output or pastes. Automatic transcript compaction would need Headroom’s proxy plus Override OpenAI Base URL, which Cursor Pro models refuse. When `cursor.ninerouter.enable` is on, host Headroom is not installed and leftover `mcpServers.headroom` is removed.
 
 ```bash
 headroom --help
@@ -259,7 +270,7 @@ headroom --help
 
 ### Serena
 
-[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` with `uv tool install` and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide`). devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override in `.serena/project.local.yml`.
+[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` via mise (`pipx`) from the non-Nix catalog and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide`). devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override in `.serena/project.local.yml`.
 
 ```bash
 serena start-mcp-server --help
@@ -306,13 +317,13 @@ Host Docker Engine tools via `docker run -i --rm -v $XDG_RUNTIME_DIR/docker.sock
 
 ### Brave Search
 
-Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key in both modes. Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server@2.1.3` (`npx -y`, STDIO) when `BRAVE_API_KEY` is set. When `cursor.ninerouter.enable` is on, the same key is POSTed to 9Router as a `brave-search` connection named `devenv` after dashboard login (`configure-9router.sh`).
+Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key in both modes. Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server` pin from the non-Nix catalog (mise `npm`, STDIO) when `BRAVE_API_KEY` is set. When `cursor.ninerouter.enable` is on, the same key is POSTed to 9Router as a `brave-search` connection named `devenv` after dashboard login (`configure-9router.sh`).
 
 - Docs: [Brave Search API](https://brave.com/search/api/) · [brave-search-mcp-server](https://github.com/brave/brave-search-mcp-server)
 
 ### Firecrawl
 
-Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (free tier) in both modes. Empty skips the MCP. Same SecretSpec / `.env` path as Brave. Home Manager upserts `firecrawl-mcp@3.24.0` (`npx -y`) when `FIRECRAWL_API_KEY` is set. When `cursor.ninerouter.enable` is on, the same key is upserted into 9Router as a `firecrawl` connection named `devenv`.
+Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (free tier) in both modes. Empty skips the MCP. Same SecretSpec / `.env` path as Brave. Home Manager upserts `firecrawl-mcp` from the non-Nix catalog (mise `npm`) when `FIRECRAWL_API_KEY` is set. When `cursor.ninerouter.enable` is on, the same key is upserted into 9Router as a `firecrawl` connection named `devenv`.
 
 - Docs: [Firecrawl](https://www.firecrawl.dev/) · [MCP](https://docs.firecrawl.dev/mcp-server)
 
@@ -354,7 +365,7 @@ Always-on in the devenv hook set: [nixfmt](https://github.com/NixOS/nixfmt), [st
 
 ### debtmap
 
-[debtmap](https://github.com/iepathos/debtmap) 0.23.0 (official release binaries in `modules/debtmap/pkg.nix`) runs when any of rust/python/javascript/typescript/go is on. `devenv shell` writes `.debtmap.toml` (gitignored). Override thresholds in `devenv.local.nix`.
+[debtmap](https://github.com/iepathos/debtmap) (pin in `modules/non-nix/catalog.json`; Nix when promotable else project mise) runs when any of rust/python/javascript/typescript/go is on. `devenv shell` writes `.debtmap.toml` (gitignored). Override thresholds in `devenv.local.nix`.
 
 ```bash
 debtmap --help
