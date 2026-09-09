@@ -36,13 +36,15 @@ def classname_for(file_path: str | None, fallback: str) -> str:
     return file_path.replace("/", ".").removesuffix(".nix").removesuffix(".bats")
 
 
-def locate_nix_unit(name: str, unit_dir: Path, root: Path) -> tuple[str | None, int | None]:
+def locate_nix_unit(
+    name: str, unit_dir: Path, root: Path
+) -> tuple[str | None, int | None]:
     for path in sorted(unit_dir.glob("*.nix")):
         if path.name in SKIP_UNIT:
             continue
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             stripped = line.lstrip()
-            if stripped.startswith(f"{name} =") or stripped.startswith(f"{name}="):
+            if stripped.startswith((f"{name} =", f"{name}=")):
                 return repo_relative(path, root), lineno
     return None, None
 
@@ -125,12 +127,17 @@ def parse_nix_unit(text: str, unit_dir: Path, root: Path) -> list[dict]:
     return cases
 
 
-def write_junit(path: Path, suite_name: str, cases: list[dict], time_s: float | None = None) -> None:
+def write_junit(
+    path: Path, suite_name: str, cases: list[dict], time_s: float | None = None
+) -> None:
     tests = len(cases)
     failures = sum(1 for case in cases if case["status"] == "failed")
     errors = sum(1 for case in cases if case["status"] == "error")
     skipped = sum(1 for case in cases if case["status"] == "skipped")
-    suites = ET.Element("testsuites", {"tests": str(tests), "failures": str(failures), "errors": str(errors)})
+    suites = ET.Element(
+        "testsuites",
+        {"tests": str(tests), "failures": str(failures), "errors": str(errors)},
+    )
     suite = ET.SubElement(
         suites,
         "testsuite",
@@ -159,7 +166,9 @@ def write_junit(path: Path, suite_name: str, cases: list[dict], time_s: float | 
         status = case["status"]
         if status in {"failed", "error"}:
             tag = "failure" if status == "failed" else "error"
-            node = ET.SubElement(testcase, tag, {"message": (case.get("message") or status)[:1000]})
+            node = ET.SubElement(
+                testcase, tag, {"message": (case.get("message") or status)[:1000]}
+            )
             node.text = case.get("details") or case.get("message") or ""
         elif status == "skipped":
             ET.SubElement(testcase, "skipped")
@@ -230,7 +239,9 @@ def cmd_nix_unit(args: argparse.Namespace) -> int:
             {
                 "name": "nix-unit",
                 "classname": "tests.unit",
-                "file": repo_relative(Path(args.suite), root) if not args.from_text else "tests/unit/default.nix",
+                "file": repo_relative(Path(args.suite), root)
+                if not args.from_text
+                else "tests/unit/default.nix",
                 "line": 1,
                 "status": "error" if rc else "passed",
                 "message": "nix-unit produced no test results",
@@ -251,7 +262,9 @@ def tail_text(path: Path | None, lines: int = 200) -> str:
     return "\n".join(content[-lines:])
 
 
-def stamp_native_junit(native: Path, dest: Path, file_path: str, line: int | None) -> bool:
+def stamp_native_junit(
+    native: Path, dest: Path, file_path: str, line: int | None
+) -> bool:
     try:
         tree = ET.parse(native)
     except ET.ParseError:
@@ -310,7 +323,11 @@ def cmd_nixos_test(args: argparse.Namespace) -> int:
     rel = args.file
     line = locate_run_nixos_test(root, rel)
     dest = Path(args.output)
-    if args.native and Path(args.native).is_file() and stamp_native_junit(Path(args.native), dest, rel, line):
+    if (
+        args.native
+        and Path(args.native).is_file()
+        and stamp_native_junit(Path(args.native), dest, rel, line)
+    ):
         emit_github_annotations(cases_from_junit(dest))
         return 0 if args.status == 0 else 1
     if args.skipped:
@@ -398,12 +415,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    nix_unit = sub.add_parser("nix-unit", help="Run or parse nix-unit and write JUnit XML")
+    nix_unit = sub.add_parser(
+        "nix-unit", help="Run or parse nix-unit and write JUnit XML"
+    )
     nix_unit.add_argument("--suite", default="tests/unit/default.nix")
     nix_unit.add_argument("--unit-dir", default="tests/unit")
     nix_unit.add_argument("--output", required=True)
     nix_unit.add_argument("--root", default=".")
-    nix_unit.add_argument("--from-text", help="Parse this nix-unit transcript instead of running nix-unit")
+    nix_unit.add_argument(
+        "--from-text", help="Parse this nix-unit transcript instead of running nix-unit"
+    )
     nix_unit.add_argument("--nix-unit", default="nix-unit")
     nix_unit.set_defaults(func=cmd_nix_unit)
 
@@ -411,13 +432,19 @@ def build_parser() -> argparse.ArgumentParser:
     nixos.add_argument("--output", required=True)
     nixos.add_argument("--status", type=int, required=True)
     nixos.add_argument("--log")
-    nixos.add_argument("--skipped", action="store_true", help="Record a skipped nixosTest case")
-    nixos.add_argument("--native", help="Optional driver-produced junit.xml to stamp with file/line")
+    nixos.add_argument(
+        "--skipped", action="store_true", help="Record a skipped nixosTest case"
+    )
+    nixos.add_argument(
+        "--native", help="Optional driver-produced junit.xml to stamp with file/line"
+    )
     nixos.add_argument("--root", default=".")
     nixos.add_argument("--file", default="tests/integration/default.nix")
     nixos.set_defaults(func=cmd_nixos_test)
 
-    bats = sub.add_parser("enrich-bats", help="Add file/line attributes to a BATS JUnit report")
+    bats = sub.add_parser(
+        "enrich-bats", help="Add file/line attributes to a BATS JUnit report"
+    )
     bats.add_argument("--input", required=True)
     bats.add_argument("--output", required=True)
     bats.add_argument("--root", default=".")

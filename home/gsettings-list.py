@@ -18,8 +18,7 @@ import sys
 def read(schema, key):
     raw = subprocess.check_output(["gsettings", "get", schema, key], text=True).strip()
     # gsettings prints an empty array as the typed variant "@as []".
-    if raw.startswith("@as "):
-        raw = raw[len("@as ") :]
+    raw = raw.removeprefix("@as ")
     value = ast.literal_eval(raw)
     if not isinstance(value, (list, tuple)):
         raise SystemExit(f"{schema} {key} is not an array: {raw}")
