@@ -263,7 +263,7 @@ EOF
   [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "$RTK_BIN rtk" ]
 }
 
-@test "permissions merge replaces other prefixes; keeps other keys" {
+@test "permissions merge preserves other prefixes; keeps other keys" {
   PERM="$TMP/.cursor/permissions.json"
   RTK_BIN="$TMP/.cursor/bin/rtk"
   mkdir -p "$(dirname "$PERM")"
@@ -275,7 +275,7 @@ EOF
 EOF
   merge_cursor_permissions "$PERM" "$RTK_BIN"
   merge_cursor_permissions "$PERM" "$RTK_BIN"
-  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "$RTK_BIN rtk" ]
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "$RTK_BIN rtk git npm" ]
   [ "$(jq -r '.mcpAllowlist[0]' "$PERM")" = "github:*" ]
 }
 
@@ -292,7 +292,7 @@ EOF
 }
 EOF
   merge_cursor_permissions "$PERM" "$RTK_BIN"
-  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "$RTK_BIN rtk" ]
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "$RTK_BIN rtk git" ]
 }
 
 @test "permissions CLI sets absolute rtk allowlist" {
