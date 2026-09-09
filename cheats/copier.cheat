@@ -1,0 +1,70 @@
+% copier, apply
+
+# Copy monorepo from latest tagged template release
+copier copy <template_url> <dest>
+
+$ template_url: echo 'https://github.com/devenv4monorepo/devenv4monorepo.git'
+$ dest: echo 'path/to/monorepo'
+
+# Copy from local devenv4monorepo checkout (unreleased template work)
+copier copy --vcs-ref HEAD <template_dir> <dest>
+
+$ template_dir: echo '/path/to/devenv4monorepo'
+$ dest: echo 'path/to/monorepo'
+
+# Bootstrap after first copy (commit answers first; see % copier, answers)
+./setup.sh
+
+# Enter devenv after bootstrap
+devenv shell
+
+% copier, update
+
+# Check whether a newer template Git tag exists
+copier check-update
+
+# Update monorepo from latest template Git tag (keep working tree clean)
+copier update
+
+# Update from template branch (unreleased template work)
+copier update --vcs-ref HEAD
+
+# Pick up home/ and modules/ after template merge
+home-switch
+
+# Re-enter shell after copier update
+devenv shell
+
+% copier, answers
+
+; Commit .copier-answers.yml, devenv.local.nix, home/copier-llm.nix — never .env
+; Do not edit .copier-answers.yml by hand; copier update needs it
+; Questionnaire writes devenv.local.nix; copier update re-asks (defaults = last answers)
+; File stores ninerouter plus ninerouter_password, brave_search, firecrawl booleans — not secret keys
+
+# Stage Copier-generated files for commit (not .env)
+git add .copier-answers.yml devenv.local.nix home/copier-llm.nix
+
+% copier, ninerouter
+
+; Copier question ninerouter — default false (Cursor Pro; no Models override)
+; false: RTK Shell hook, Ponytail rule, Headroom MCP — do not set Override OpenAI Base URL
+; true: writes home/copier-llm.nix with cursor.ninerouter.enable = true
+; true: asks INITIAL_PASSWORD (empty keeps image default 123456 until set in .env)
+; Override flag in home.local.nix with mkForce if needed
+
+# Show 9Router gateway API key for Cursor Models override
+cat ~/.config/9router/cursor-api-key
+
+; When ninerouter is on: Cursor Settings → Models → Advanced → Override OpenAI Base URL
+; Set to http://127.0.0.1:20128/v1 and paste the key above; Ctrl+Shift+0 toggles override off
+
+% copier, secrets
+
+; Brave/Firecrawl API keys and INITIAL_PASSWORD go to SecretSpec — default dotenv (.env)
+; Keys are not stored in .copier-answers.yml; leave empty to skip that MCP
+; Override provider with SECRETSPEC_PROVIDER or devenv.local.yaml (keyring, env, onepassword, …)
+; Existing destination .env is never overwritten (_skip_if_exists) — do not commit .env
+
+# Edit gitignored secrets file (dotenv provider)
+${EDITOR:-nano} .env

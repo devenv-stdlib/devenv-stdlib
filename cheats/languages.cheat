@@ -1,0 +1,45 @@
+% languages
+
+# Languages stay off in this template; enable them in a monorepo via Copier → devenv.local.nix
+rg -n 'languages\.|supported\.' devenv.local.nix devenv.local.nix.example
+
+# After changing languages.* / supported.*, re-enter the shell (writes .vscode / .serena)
+devenv shell
+
+# Show Serena language_servers generated from languages.* (gitignored)
+cat .serena/project.yml
+
+# Optional local Serena overrides (gitignored)
+$EDITOR .serena/project.local.yml
+
+# Extra options below the Copier block (debtmap, packages, supported.*.max)
+$EDITOR devenv.local.nix
+
+# Refresh modules/languages/catalog.json cycle → latest patch / EOL (template authors)
+refresh-toolchain-latest
+
+% mise, catalog
+
+# Team tools live in catalog.local.toml (create from example if missing)
+cp -n catalog.local.toml.example modules/non-nix/catalog.local.toml
+
+# Add a team/project tool to catalog.local.toml (flag-first; see --help)
+devenv tasks run non-nix:add-local -- --help
+
+# Remove a team tool from catalog.local.toml
+devenv tasks run non-nix:remove-local -- --name <tool>
+
+# Install project-scope mise tools from generated mise.toml
+devenv tasks run mise:install
+
+# Consumer update: devenv.lock, then catalog.local.toml (Nix or mise), then update.local.sh
+update
+
+# Template-shipped pins (navi, RTK, Serena, …) move only with copier update — not update
+copier check-update
+
+# Show generated project mise.toml (gitignored)
+cat mise.toml
+
+# User-scope mise conf written by home-switch
+cat ~/.config/mise/conf.d/devenv4monorepo.toml
