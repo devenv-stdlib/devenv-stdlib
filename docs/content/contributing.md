@@ -155,14 +155,17 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `.cursor/rules/update.mdc` | Consumer rule: `update` vs `copier update` (copied) |
 | `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules; topical `modules/` layout (copied) |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large blobs (copied; `~/.cursor/rules/` after `home-switch` when 9Router is off) |
-| `.cursor/rules/rtk-passthrough.mdc` | Retry once without RTK compaction when a detail is missing (copied; `~/.cursor/rules/` when 9Router is off) |
+| `.cursor/rules/rtk-passthrough.mdc` | Prefer RTK Shell path; full output via `rtk run`/`proxy`; ask if huge (copied; `~/.cursor/rules/` when 9Router is off) |
+| `.cursor/rules/navi-cheatsheets.mdc` | Prefer extending `cheats/*.cheat`; navi syntax (copied) |
 | `.cursor/rules/non-nix-update.mdc` | Author pin/refresher rule (not copied) |
 | `.agents/skills/` / `skills-lock.json` | Vendored Cursor skills (Vercel skills CLI; `includes/update/skills.sh` refreshes; copied) |
+| `cheats/` | Repo-local navi sheets (`NAVI_PATH` via `devenv shell`; copied) |
 | `modules/languages/catalog.json` | Cycle → latest patch and EOL (copied) |
 | `modules/update/` | `update` script (template pins vs consumer lock; copied) |
 | `docs/` | Pages site (not copied) |
 | `devenv.nix` / `devenv.yaml` / `devenv.lock` | Shell, inputs, lock |
 | `home.nix` / `home/` | Home Manager |
+| `home/navi.nix` | `NAVI_PATH` → pinned denisidoro/cheats |
 | `home/llm-context.nix` | Cursor LLM context (Pro: RTK + Ponytail + Headroom MCP; optional 9Router) |
 | `home/copier-llm.nix.jinja` | Renders `home/copier-llm.nix` (`cursor.ninerouter.enable`) |
 | `secretspec.toml` | Optional `INITIAL_PASSWORD` / `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` (copied) |
