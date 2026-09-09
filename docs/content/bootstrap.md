@@ -22,7 +22,7 @@ Then enter the project toolchain:
 devenv shell
 ```
 
-The shell banner uses the Copier `name` (this template prints `devenv4monorepo ready: <user>@<hostname>`). After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, `home-manager`, `copier`, and `debtmap` are on `PATH`.
+The shell banner uses the Copier `name` (this template prints `devenv4monorepo ready: <user>@<hostname>`). After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, `home-manager`, `copier`, and `debtmap` are on `PATH`. `setup.sh` and every `devenv shell` entry set this repository's local git config `rerere.enabled` and `rerere.autoupdate` to `true` (remember and auto-stage recorded conflict resolutions).
 
 ## Re-apply Home Manager
 

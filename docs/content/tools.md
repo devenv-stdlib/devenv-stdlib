@@ -213,7 +213,7 @@ GNOME extension that drops the terminal from the top of the screen.
 # home.local.nix: cursor.enable = false;
 ```
 
-`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Context7, GitHub, Docker, and optional Brave/Firecrawl MCP from the shared `home/ides/mcp` catalog and merges them into `~/.cursor/mcp.json` (upsert only; user-added MCP servers are preserved).
+`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Context7, GitHub, Docker, git-conflict-mcp, git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared `home/ides/mcp` catalog and merges them into `~/.cursor/mcp.json` (upsert only; user-added MCP servers are preserved).
 
 `cursor.ninerouter.enable` (default **false**; Copier `ninerouter`) chooses the compaction path:
 
@@ -336,6 +336,18 @@ gh auth login
 Host Docker Engine tools via `docker run -i --rm -v $XDG_RUNTIME_DIR/docker.sock:/var/run/docker.sock mcp/docker:0.0.19` — not the Docker MCP Gateway. The wrapper uses the rootless socket (`DOCKER_HOST` if you set it). It warns if `docker` or that socket is missing.
 
 - Docs: [hub.docker.com/r/mcp/docker](https://hub.docker.com/r/mcp/docker)
+
+### git-conflict-mcp
+
+[git-conflict-mcp](https://github.com/mattyatea/git-conflict-mcp) helps agents and humans resolve merge conflicts (optional WebUI). Home Manager installs the npm pin from the non-Nix catalog (mise) and upserts it into `~/.cursor/mcp.json` when `cursor.llmContext.enable` is on. You can still run `npx -y git-conflict-mcp` ad hoc; the catalog pin is what `home-switch` / mise install.
+
+- Docs: [mattyatea/git-conflict-mcp](https://github.com/mattyatea/git-conflict-mcp)
+
+### git-rebase-mcp
+
+[git-rebase-mcp](https://github.com/aaron-riact/git-rebase-mcp) lets an agent drive rebases (and cherry-pick/merge/revert conflicts) with safety checks (refuse bad amends, preflight, proceed/abort). Installed from GitHub via mise `pipx:` (uv tool install under the hood); pin is the default-branch commit SHA. Upserted into `~/.cursor/mcp.json` with the other catalog MCPs.
+
+- Docs: [aaron-riact/git-rebase-mcp](https://github.com/aaron-riact/git-rebase-mcp)
 
 ### Brave Search
 
