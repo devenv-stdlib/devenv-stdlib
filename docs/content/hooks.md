@@ -1,6 +1,6 @@
 # Hooks and commits
 
-Always-on hooks: Nix format/lint (`nixfmt`, `statix`, `deadnix`), `shellcheck`, `typos`, `proselint`, `lychee`, `actionlint`, `yamlfmt`, `check-json`, `trim-trailing-whitespace`, `end-of-file-fixer`, `check-added-large-files`, `check-case-conflicts`, `check-merge-conflicts` (Copier/git conflict markers), `gitleaks`, and `commitlint` on `commit-msg`.
+Always-on hooks: Nix format/lint (`nixfmt`, `statix`, `deadnix`), `shellcheck`, `typos`, `proselint`, `lychee`, `actionlint`, `yamlfmt`, `check-json`, `check-toml`, `taplo` / `taplo-lint`, `trim-trailing-whitespace`, `end-of-file-fixer`, `check-added-large-files`, `check-case-conflicts`, `check-merge-conflicts` (Copier/git conflict markers), `gitleaks`, and `commitlint` on `commit-msg`.
 
 ## Language hooks
 

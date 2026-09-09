@@ -54,7 +54,7 @@ refresh-toolchain-latest  # endoflife catalog; separate from update
 
 `update` in this checkout does **not** run a full `devenv update`. Lock policy stays: `git-hooks` weekly; nixpkgs only when intended.
 
-When adding a non-Nix tool: add a row to `modules/non-nix/catalog.json` (CLI / docker-image / vscode-extension), keep install via mise or the existing Docker/Marketplace path, and let `includes/update/non-nix.sh` bump the pin. Document it. The author Cursor rule enforces that. Consumers still get the new pin only after a release + `copier update`. Vendored agent skills: `skills add … -a cursor -y` from the repo root (project mise PATH), then list the source in `.agents/skills/README.md`; `update` refreshes them via `includes/update/skills.sh`.
+When adding a non-Nix tool to the **template**: run `devenv tasks run non-nix:add -- …` (or edit `modules/non-nix/catalog.toml` by hand) so each `[[tool]]` has a one-line `#` comment (what it does + docs URL), keep install via mise or the existing Docker/Marketplace path, and let `includes/update/non-nix.sh` bump the pin. Document it. Remove with `non-nix:remove`. Monorepo teams use `non-nix:add-local` / `non-nix:remove-local` against `modules/non-nix/catalog.local.toml` instead (committed; `update` refreshes them). The author Cursor rule enforces the comment shape. Consumers still get shipped pin moves only after a release + `copier update`. Vendored agent skills: `skills add … -a cursor -y` from the repo root (project mise PATH), then list the source in `.agents/skills/README.md`; `update` refreshes them via `includes/update/skills.sh`.
 
 ## Generated files
 
@@ -65,7 +65,7 @@ When adding a non-Nix tool: add a row to `modules/non-nix/catalog.json` (CLI / d
 | `.serena/project.yml` | `modules/languages/serena.nix` | gitignored |
 | `.vscode/settings.json` | `cursor-sync-extensions` | committed when it changes |
 | `.debtmap.toml` | `modules/debtmap/` | gitignored |
-| `mise.toml` | `modules/mise/` from `modules/non-nix/catalog.json` | gitignored |
+| `mise.toml` | `modules/mise/` from `modules/non-nix/catalog.toml` (+ `catalog.local.toml`) | gitignored |
 | `.pre-commit-config.yaml` | git-hooks.nix / prek | gitignored |
 | `.env` | Copier from `.env.jinja` when keys were pasted | gitignored |
 
@@ -148,9 +148,10 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `copier.yml` | Questions and `_exclude` (not copied) |
 | `devenv.local.nix.jinja` | Renders consumer `devenv.local.nix` |
 | `includes/` | Catalog refresh, Copier max YAML, and pin refreshers (`includes/update/non-nix.sh`, `skills.sh`; not copied) |
-| `modules/non-nix/` | Non-Nix catalog + resolve/TOML helpers (mise / Docker / VSIX) |
+| `modules/non-nix/` | Shipped `catalog.toml`, `edit-catalog.sh`, optional `catalog.local.toml` (monorepo), resolve/TOML helpers |
 | `modules/mise/` | Project `mise.toml` + `mise:install` |
 | `home/mise.nix` | User mise conf.d + activation install/pull |
+| `.cursor/rules/worktrees-and-stacked-prs.mdc` | One worktree+branch per feature; stack related PRs infra-first (copied) |
 | `.cursor/rules/update.mdc` | Consumer rule: `update` vs `copier update` (copied) |
 | `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules; topical `modules/` layout (copied) |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large blobs (copied; `~/.cursor/rules/` after `home-switch` when 9Router is off) |
@@ -173,7 +174,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `hooks/reference-transaction` | Tag guard |
 | `commitlint.config.mjs` / `.releaserc.json` | Commits and releases |
 | `tests/` | nix-unit, BATS, nixosTest, act image |
-| `devenv.local.nix.example` / `home.local.nix.example` | Extra options |
+| `devenv.local.nix.example` / `home.local.nix.example` / `catalog.local.toml.example` | Extra options / team tools template |
 
 ## Local overrides
 
