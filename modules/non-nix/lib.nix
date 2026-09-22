@@ -147,6 +147,8 @@ let
       [settings]
       # Keep core language backends off; devenv owns those toolchains.
       disable_tools = ["python", "node", "rust", "go"]
+      # pipx: catalog entries install via `uv tool install` when uv is on PATH.
+      pipx.uvx = true
 
       [tools]
       ${body}
