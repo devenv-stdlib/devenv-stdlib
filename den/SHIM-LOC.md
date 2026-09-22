@@ -8,10 +8,10 @@
 #   wc -l modules/lib/den-language-shim.nix modules/lib/den-project-bridge.nix
 #
 # Snapshot (Phase 3):
-#   den/**/*.nix .................... ~480 LOC (cascades + aspects + homes + class)
+#   den/**/*.nix .................... 424 LOC (cascades + aspects + homes + class)
 #   modules/lib/den-language-shim.nix .. 62 LOC
-#   modules/lib/den-project-bridge.nix . ~70 LOC
-#   Total dual-write Den shim ........ ~612 LOC  (≈600 alert — cutover plan = Phase 4)
+#   modules/lib/den-project-bridge.nix . 69 LOC
+#   Total dual-write Den shim ........ 555 LOC  (< 600 alert)
 #
 # Phase 2 snapshot was 419 LOC. Phase 3 adds home-cli + project class + bridge.
 # Abort criterion 2 (Phase 4): shim stays >~600 AND reviewers still grep project.nix.
