@@ -12,16 +12,6 @@ mise = "ubi:astral-sh/uv"
 nixAttr = ["uv"]
 homepageContains = "astral-sh/uv"
 
-# Official GitHub MCP over stdio (token from gh auth). Docs: https://github.com/github/github-mcp-server
-[[tool]]
-name = "github-mcp-server"
-kind = "cli"
-scope = "user"
-pin = "1.11.0"
-mise = "ubi:github/github-mcp-server"
-nixAttr = ["github-mcp-server"]
-homepageContains = "github/github-mcp-server"
-
 # Code-memory MCP (symbol graph) for Cursor. Docs: https://oraios.github.io/serena/
 [[tool]]
 name = "serena"

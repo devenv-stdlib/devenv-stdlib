@@ -6,7 +6,6 @@
   # Resolved CLI paths (store or mise shims).
   serena,
   headroom,
-  githubMcpBin,
   braveMcpBin,
   firecrawlMcpBin,
   gitConflictMcp,
@@ -14,17 +13,6 @@
   dockerMcpImage,
 }:
 let
-  githubMcp = pkgs.writeShellScript "github-mcp" ''
-    set -euo pipefail
-    token="$(${lib.getExe pkgs.gh} auth token 2>/dev/null || true)"
-    if [ -z "$token" ]; then
-      echo "github-mcp: run gh auth login first" >&2
-      exit 1
-    fi
-    export GITHUB_PERSONAL_ACCESS_TOKEN="$token"
-    exec ${githubMcpBin} stdio
-  '';
-
   dockerMcp = pkgs.writeShellScript "docker-mcp" ''
     set -euo pipefail
     # shellcheck disable=SC1091
@@ -80,9 +68,6 @@ let
     context7 = {
       url = "https://mcp.context7.com/mcp";
     };
-    github = {
-      command = toString githubMcp;
-    };
     docker = {
       command = toString dockerMcp;
     };
@@ -103,12 +88,12 @@ let
 
   mkUpsertJson = pkgs.writeText "mcp-upsert.json" (builtins.toJSON mkCoreServers);
 
-  # Empty remove list; kept so activation always passes a path to merge.
-  mkRemoveJson = pkgs.writeText "mcp-remove.json" (builtins.toJSON [ ]);
+  # Retire previously shipped catalog keys on activation (merge never deletes
+  # unknown user keys — only this explicit list).
+  mkRemoveJson = pkgs.writeText "mcp-remove.json" (builtins.toJSON [ "github" ]);
 in
 {
   inherit
-    githubMcp
     dockerMcp
     braveMcp
     firecrawlMcp
