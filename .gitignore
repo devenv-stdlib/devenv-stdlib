@@ -54,3 +54,6 @@ mise.toml
 # Documentation site
 /docs/node_modules/
 /docs/dist/
+
+# Nix fetcher cache (local)
+nix/fetcher-cache*.sqlite*
