@@ -17,6 +17,7 @@ let
       image = entry.image or null;
       publisher = entry.publisher or null;
       extension = entry.extension or null;
+      trustPolicyExcludes = entry.trustPolicyExcludes or null;
     };
 
   readTools =
@@ -126,13 +127,23 @@ let
   binName = e: if e.bin != null then e.bin else e.name;
 
   # Quoted tool key when it contains ':' (ubi:/npm:/pipx: backends).
+  # Optional trustPolicyExcludes → object form for aube no-downgrade exceptions.
   tomlToolLine =
     e:
     let
       key = e.mise;
       quoted = if lib.hasInfix ":" key then ''"${key}"'' else key;
+      excludes = e.trustPolicyExcludes or null;
+      excludeLit =
+        if excludes == null || excludes == [ ] then
+          null
+        else
+          "[ ${lib.concatMapStringsSep ", " (x: ''"${x}"'') excludes} ]";
     in
-    "${quoted} = \"${e.pin}\"";
+    if excludeLit == null then
+      "${quoted} = \"${e.pin}\""
+    else
+      ''${quoted} = { version = "${e.pin}", trust_policy_excludes = ${excludeLit} }'';
 
   toMiseToml =
     entries:

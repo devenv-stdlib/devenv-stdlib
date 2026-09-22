@@ -10,9 +10,20 @@ let
   projectNix = nonNix.nixPackages project;
   miseToml = nonNix.toMiseToml project;
   projectImages = nonNix.dockerImages project;
+  # uv must be on PATH before mise install: conf.d pipx: tools use uv tool install.
+  miseInstallPath = lib.makeBinPath [
+    pkgs.mise
+    pkgs.uv
+    pkgs.curl
+    pkgs.coreutils
+  ];
 in
 {
-  packages = [ pkgs.mise ] ++ projectNix;
+  packages = [
+    pkgs.mise
+    pkgs.uv
+  ]
+  ++ projectNix;
 
   # Regenerated on devenv:files. Do not edit; update modules/non-nix/catalog.toml.
   files."mise.toml".text = miseToml;
@@ -21,6 +32,8 @@ in
     "mise:install" = {
       exec = ''
         set -euo pipefail
+        export PATH=${lib.escapeShellArg miseInstallPath}:$PATH
+        export MISE_PIPX_UVX=1
         mise trust --yes mise.toml 2>/dev/null || mise trust mise.toml 2>/dev/null || true
         mise install
         ${lib.concatMapStrings (img: ''
