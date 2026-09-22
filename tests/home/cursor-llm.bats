@@ -15,7 +15,6 @@ setup() {
   MCP="$TMP/.cursor/mcp.json"
   SERENA_CMD="$TMP/.local/bin/serena"
   HEADROOM_CMD="$TMP/.local/bin/headroom"
-  GITHUB_CMD="$TMP/.local/bin/github-mcp"
   DOCKER_CMD="$TMP/.local/bin/docker-mcp"
   BRAVE_CMD="$TMP/.local/bin/brave-search-mcp"
   FIRECRAWL_CMD="$TMP/.local/bin/firecrawl-mcp"
@@ -27,13 +26,11 @@ write_core_upsert() {
   jq -n \
     --arg serena "$SERENA_CMD" \
     --arg headroom "$HEADROOM_CMD" \
-    --arg github "$GITHUB_CMD" \
     --arg docker "$DOCKER_CMD" \
     '{
       serena: { command: $serena, args: ["start-mcp-server", "--context", "ide", "--open-web-dashboard", "false"] },
       headroom: { command: $headroom, args: ["mcp", "serve"] },
       context7: { url: "https://mcp.context7.com/mcp" },
-      github: { command: $github },
       docker: { command: $docker }
     }' >"$UPSERT"
 }
@@ -51,11 +48,11 @@ teardown() {
   [ "$(jq -r '.mcpServers.headroom.command' "$MCP")" = "$HEADROOM_CMD" ]
   [ "$(jq -r '.mcpServers.headroom.args | join(" ")' "$MCP")" = "mcp serve" ]
   [ "$(jq -r '.mcpServers.context7.url' "$MCP")" = "https://mcp.context7.com/mcp" ]
-  [ "$(jq -r '.mcpServers.github.command' "$MCP")" = "$GITHUB_CMD" ]
+  [ "$(jq -r '.mcpServers.github // empty' "$MCP")" = "" ]
   [ "$(jq -r '.mcpServers.docker.command' "$MCP")" = "$DOCKER_CMD" ]
   [ "$(jq -r '.mcpServers["brave-search"] // empty' "$MCP")" = "" ]
   [ "$(jq -r '.mcpServers.firecrawl // empty' "$MCP")" = "" ]
-  [ "$(jq -r '.mcpServers | keys | length' "$MCP")" -eq 5 ]
+  [ "$(jq -r '.mcpServers | keys | length' "$MCP")" -eq 4 ]
 }
 
 @test "preserves foreign MCP servers and upserts managed ones" {
@@ -83,7 +80,18 @@ EOF
   [ "$(jq -r '.mcpServers.serena.args[2]' "$MCP")" = "ide" ]
   [ "$(jq -r '.mcpServers.headroom.command' "$MCP")" = "$HEADROOM_CMD" ]
   [ "$(jq -r '.mcpServers.context7.url' "$MCP")" = "https://mcp.context7.com/mcp" ]
-  [ "$(jq -r '.mcpServers.github.command' "$MCP")" = "$GITHUB_CMD" ]
+  [ "$(jq -r '.mcpServers.docker.command' "$MCP")" = "$DOCKER_CMD" ]
+}
+
+@test "removes retired github MCP when listed in remove.json" {
+  mkdir -p "$(dirname "$MCP")"
+  jq -n '{mcpServers: {github: {command: "/old/github-mcp"}, serena: {command: "/old/serena"}}}' >"$MCP"
+  write_core_upsert
+  printf '%s\n' '["github"]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  [ "$(jq -r '.mcpServers.github // empty' "$MCP")" = "" ]
+  [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
+  [ "$(jq -r '.mcpServers.docker.command' "$MCP")" = "$DOCKER_CMD" ]
 }
 
 @test "MCP merge is idempotent" {
@@ -135,7 +143,7 @@ EOF
   write_core_upsert
   echo '[]' >"$REMOVE"
   "$REPO_DIR/home/ides/merge-cursor-llm.sh" mcp "$MCP" "$UPSERT" "$REMOVE"
-  [ "$(jq -r '.mcpServers.github.command' "$MCP")" = "$GITHUB_CMD" ]
+  [ "$(jq -r '.mcpServers.github // empty' "$MCP")" = "" ]
   [ "$(jq -r '.mcpServers.docker.command' "$MCP")" = "$DOCKER_CMD" ]
 }
 

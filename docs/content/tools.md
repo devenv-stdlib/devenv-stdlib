@@ -215,7 +215,7 @@ GNOME extension that drops the terminal from the top of the screen.
 # home.local.nix: cursor.enable = false;
 ```
 
-`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Headroom, Context7, GitHub, Docker, git-conflict-mcp, git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared `home/ides/mcp` catalog and merges them into `~/.cursor/mcp.json` (upsert only; user-added MCP servers are preserved). It also writes the user-global Ponytail and Headroom Cursor rules. `mcp-secrets-watch` re-upserts Brave/Firecrawl when SecretSpec / `.env` keys change (wrappers under `~/.config/devenv4monorepo/`).
+`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Headroom, Context7, Docker, git-conflict-mcp, git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared `home/ides/mcp` catalog and merges them into `~/.cursor/mcp.json` (upsert only; user-added MCP servers are preserved; the retired `github` catalog key is removed). It also writes the user-global Ponytail and Headroom Cursor rules. `mcp-secrets-watch` re-upserts Brave/Firecrawl when SecretSpec / `.env` keys change (wrappers under `~/.config/devenv4monorepo/`).
 
 - Docs: [cursor.com/docs](https://cursor.com/docs)
 
@@ -293,16 +293,6 @@ serena start-mcp-server --help
 
 - Docs: [github.com/upstash/context7](https://github.com/upstash/context7)
 - Donate: [github.com/sponsors/upstash](https://github.com/sponsors/upstash)
-
-### GitHub MCP
-
-The official [github-mcp-server](https://github.com/github/github-mcp-server) (1.11.0) runs over stdio. A wrapper sets `GITHUB_PERSONAL_ACCESS_TOKEN` from `gh auth token` and warns if you have not logged in.
-
-```bash
-gh auth login
-```
-
-- Docs: [github/github-mcp-server](https://github.com/github/github-mcp-server)
 
 ### Docker Engine MCP
 
