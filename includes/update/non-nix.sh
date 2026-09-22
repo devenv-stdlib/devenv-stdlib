@@ -85,9 +85,6 @@ bump_docker() {
     return 0
   fi
   catalog_set_pin "$name" "$tag"
-  if [[ $name == ninerouter ]]; then
-    replace_ninerouter_image "$(update_repo_root)/home/ninerouter-start.sh" "${image}:${tag}"
-  fi
 }
 
 bump_vscode() {

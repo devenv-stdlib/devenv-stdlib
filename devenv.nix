@@ -13,7 +13,7 @@ _: {
       export NAVI_PATH="$DEVENV_ROOT/cheats''${NAVI_PATH:+:$NAVI_PATH}"
     fi
 
-    # Rootless Docker is the default for act and 9Router. CI keeps the runner daemon.
+    # Rootless Docker is the default for act and Docker MCP. CI keeps the runner daemon.
     # shellcheck disable=SC1091
     . "$DEVENV_ROOT/home/docker-rootless.sh"
     docker_rootless_env
