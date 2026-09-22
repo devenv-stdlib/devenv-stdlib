@@ -1,18 +1,25 @@
-# Dual-write shim LOC tracker (Phase 2–3 / abort criterion 2 precursor).
-# Alert if Den dual-write shim tax exceeds ~600 LOC without cutover plan.
-#
-# Counted as Den composition + thin adapters (not legacy HM/devenv bodies,
-# not tests, not CASCADES/CONTRIBUTING prose). Re-run after edits:
-#
+# Dual-write shim LOC tracker — Phase 4 cutover (cleared)
+
+Abort criterion 2: shim/`imports` dual-write stays >~600 LOC *and* reviewers
+still grep `project.nix` instead of `includes` DAGs.
+
+## Post-cutover snapshot
+
+```
+# Counted as Den composition only (adapters deleted):
 #   find den -name '*.nix' | xargs wc -l
-#   wc -l modules/lib/den-language-shim.nix modules/lib/den-project-bridge.nix
 #
-# Snapshot (Phase 3):
-#   den/**/*.nix .................... 424 LOC (cascades + aspects + homes + class)
-#   modules/lib/den-language-shim.nix .. 62 LOC
-#   modules/lib/den-project-bridge.nix . 69 LOC
-#   Total dual-write Den shim ........ 555 LOC  (< 600 alert)
+# Dual-write adapters REMOVED:
+#   modules/lib/den-language-shim.nix  (deleted)
+#   modules/lib/den-project-bridge.nix (deleted)
+#   legacy home-switch -f home.nix     (deleted; stub only)
 #
-# Phase 2 snapshot was 419 LOC. Phase 3 adds home-cli + project class + bridge.
-# Abort criterion 2 (Phase 4): shim stays >~600 AND reviewers still grep project.nix.
-# Legacy modules remain full implementations (intentional dual-write until Phase 4).
+# den/**/*.nix .................... 440 LOC (composition, not dual-write)
+# Dual-write shim tax ............. 0 LOC  (cleared)
+```
+
+Cascade readability: `den/*-cascade.nix` + `den/aspects/*` `includes`.
+`modules/lib/project.nix` keeps **pure** enable→list helpers for debtmap /
+serena / vscode / hooks — not a fan-out god-table.
+
+**Verdict:** Criterion 2 does **not** fire after cutover (shim tax cleared).

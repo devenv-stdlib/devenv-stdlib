@@ -1,16 +1,16 @@
-# Phase 2 W2.2: Den python aspect includes DAG + shim parity with project helpers.
+# Phase 2 W2.2: Den python aspect includes DAG + enable→helper goldens.
 {
   lib,
   project,
-  denLanguage,
   languageCascade,
+  expectedLanguageChildren,
   ...
 }:
 let
   cascade = languageCascade;
   includesOf = name: cascade.${name}.includes or [ ];
   hasInclude = aspect: child: builtins.elem child (includesOf aspect);
-  expected = denLanguage.expectedChildren.python;
+  expected = expectedLanguageChildren.python;
 in
 {
   testDenPythonIncludesHooks = {
@@ -51,12 +51,6 @@ in
       [ ]
       [ ]
     ];
-  };
-
-  # Shim surfaces the same DAG project.denLanguage reads.
-  testDenPythonShimMatchesCascade = {
-    expr = denLanguage.includesOf "python";
-    expected = includesOf "python";
   };
 
   # Enable path still drives helpers (Copier flags); cascade documents fan-out.
