@@ -101,6 +101,7 @@ _: {
     . "$DEVENV_ROOT/home/load-secrets.sh"
     home_load_secrets "$DEVENV_ROOT"
     # Legacy path kept through Phase 3 parity; Den path is home-switch-den.
+    # Phase 3: nix eval .#denHmParity asserts Den ≡ legacy fingerprints.
     home-manager switch -b backup -f "$DEVENV_ROOT/home.nix" "$@"
   '';
 

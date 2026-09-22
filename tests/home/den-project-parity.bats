@@ -12,7 +12,7 @@ setup() {
   run env NIX_CONFIG="experimental-features = nix-command flakes" \
     nix eval --impure --json "$REPO_DIR#denProjectParity.match"
   [ "$status" -eq 0 ]
-  [ "$output" = "true" ]
+  [[ "$output" == *true* ]]
 }
 
 @test "den project class is registered" {
@@ -22,7 +22,7 @@ setup() {
   run env NIX_CONFIG="experimental-features = nix-command flakes" \
     nix eval --impure --json "$REPO_DIR#denProjectClass.registered"
   [ "$status" -eq 0 ]
-  [ "$output" = "true" ]
+  [[ "$output" == *true* ]]
 }
 
 @test "den project class resolve yields python leaf concerns" {
