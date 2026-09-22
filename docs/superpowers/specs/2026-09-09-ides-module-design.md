@@ -86,7 +86,7 @@ Shared definitions for MCP servers the template ships:
 
 | Server | Notes |
 | --- | --- |
-| serena | CLI; `--context ide` (or harness-specific context later) |
+| serena | CLI; `--context ide` (or harness-specific context later). Global `~/.serena/serena_config.yml` excludes `search_for_pattern` via home-switch merge (`ensure-serena-config.py`); other Serena tools stay. |
 | headroom | Official MCP; omitted when 9Router / gateway path says so |
 | context7 | Remote URL |
 | brave-search | Optional; SecretSpec / `.env` |
