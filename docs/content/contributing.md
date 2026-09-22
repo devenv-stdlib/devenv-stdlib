@@ -112,6 +112,7 @@ build-act-image              # devenv-act:24.04 for local act
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
 | `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
 | `tests/home/cursor-llm.bats` | `home/ides/merge-cursor-llm.sh` + MCP catalog merge (Serena, Headroom MCP, Context7, optional Brave/Firecrawl; preserves user MCP keys; retires github/docker; legacy RTK hook/allowlist cleanup) |
+| `tests/home/ensure-serena-config.bats` | `home/ides/ensure-serena-config.py` merges global `excluded_tools: [search_for_pattern]` without wiping Serena-managed keys |
 | `tests/home/load-secrets.bats` | `home-switch` SecretSpec export vs `.env` fallback |
 | `tests/home/watch-mcp-secrets.bats` | secret fingerprint skip / upsert (Cursor `mcp.json`) |
 | `tests/home/docker-rootless.bats` | `DOCKER_HOST` defaults to the rootless socket; CI is a no-op |

@@ -276,10 +276,12 @@ headroom --help
 
 ### Serena
 
-[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` via mise (`pipx:` backend → `uv tool install`) from the non-Nix catalog and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide --open-web-dashboard false` so the dashboard stays available but does not open a browser tab on every MCP start). devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override in `.serena/project.local.yml`.
+[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` via mise (`pipx:` backend → `uv tool install`) from the non-Nix catalog and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide --open-web-dashboard false` so the dashboard stays available but does not open a browser tab on every MCP start). On the same activation, it merges `excluded_tools: [search_for_pattern]` into `~/.serena/serena_config.yml` (creates the file if missing; preserves Serena-managed keys such as `projects` / `auth_secret`). Cursor Instant Grep / Grep stays the lexical content-search path; Serena keeps symbol tools. devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override project settings in `.serena/project.local.yml` (exclusions still extend from the global config).
 
 ```bash
 serena start-mcp-server --help
+# After home-switch:
+grep -A2 excluded_tools ~/.serena/serena_config.yml
 ```
 
 - Docs: [oraios.github.io/serena](https://oraios.github.io/serena/)

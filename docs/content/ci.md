@@ -5,7 +5,7 @@
 ```bash
 bats -r --jobs "$(nproc)" tests   # full suite (parallel; needs GNU parallel)
 bats tests/setup                  # setup.sh only
-bats tests/home                   # terminal-lib, bashrc.d, Cursor LLM merge
+bats tests/home                   # terminal-lib, bashrc.d, Cursor LLM merge, Serena config
 ```
 
 `test-devenv` runs BATS with `--jobs "$(nproc)"` (GNU `parallel` is on the devenv PATH).
