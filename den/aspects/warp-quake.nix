@@ -1,5 +1,6 @@
 # Provider leaf: Warp dedicated hotkey window + GNOME custom keybinding.
 # Mutual exclusion with alacritty-quake is enforced by terminal hub includes (XOR).
+# Phase 5: unsupported on darwin/nixos — HM-only (no OS class keys).
 { den, ... }:
 let
   cascade = import ../terminal-cascade.nix;

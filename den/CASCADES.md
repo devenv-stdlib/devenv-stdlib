@@ -52,3 +52,15 @@ developer ──includes──► cursor
 `home-switch` → flake `#developer` only. Language hubs use the custom
 **`project`** class (not HM). See `den/PROJECT-CLASS-SPIKE.md` and
 `den/CONTRIBUTING-ASPECTS.md`.
+
+## Multi-OS (Phase 5)
+
+```
+fixture-nixos ──includes──► shell-tools   # nixos + darwin share one payload
+fixture-darwin ──includes──► shell-tools
+```
+
+`shell-tools` is the first portable aspect with non-empty `nixos` **and**
+`darwin` from one let-bound attrset. Host stubs: `den/hosts.nix`
+(`intoAttr = []`). Quake / GNOME terminal leaves stay HM-only — see
+`den/MULTI-OS.md`.

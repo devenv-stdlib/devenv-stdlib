@@ -1,8 +1,8 @@
 # Den HM + cascade flake — den.homes → homeConfigurations.developer
 # Sister libs (import-tree, flake-parts, den-diagram, zen, flake-aspects) intentionally omitted.
-# Phase 4: cutover — Den-only home-switch; dual shims deleted; Den-only goldens.
+# Phase 5: multi-OS class stubs (den.hosts + portable shell-tools); Ubuntu HM unchanged.
 {
-  description = "devenv4monorepo Den Phase 4 cutover (Den-only HM + project goldens)";
+  description = "devenv4monorepo Den Phase 5 multi-OS (hosts stubs + portable aspects)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -21,6 +21,7 @@
 
       denModules = [
         ./den/homes.nix
+        ./den/hosts.nix
         ./den/classes/project.nix
         ./den/aspects/cursor.nix
         ./den/aspects/cursor-extensions.nix
@@ -29,6 +30,7 @@
         ./den/aspects/alacritty-quake.nix
         ./den/aspects/warp-quake.nix
         ./den/aspects/home-cli.nix
+        ./den/aspects/shell-tools.nix
         ./den/aspects/languages.nix
         ./den/aspects/project-ides.nix
       ];
@@ -192,6 +194,85 @@
         "serena"
         "debtmap"
       ];
+
+      # --- Phase 5: OS class resolve (portable shell-tools × nixos + darwin) ---
+      expectedPortableTools = [
+        "ripgrep"
+        "fd"
+        "bat"
+        "fzf"
+        "direnv"
+        "zoxide"
+      ];
+      osMarkerOpts = {
+        options.denOsPortable = lib.mkOption {
+          type = lib.types.attrsOf lib.types.anything;
+          default = { };
+        };
+        options.denOsHost = lib.mkOption {
+          type = lib.types.attrsOf lib.types.anything;
+          default = { };
+        };
+      };
+      resolveOsMarkers =
+        class: aspect:
+        (lib.evalModules {
+          modules = [
+            (den.lib.aspects.resolve class aspect)
+            osMarkerOpts
+          ];
+        }).config;
+      shellToolsNixos = resolveOsMarkers "nixos" den.aspects.shell-tools;
+      shellToolsDarwin = resolveOsMarkers "darwin" den.aspects.shell-tools;
+      fixtureNixosMarkers = resolveOsMarkers "nixos" den.aspects.fixture-nixos;
+      fixtureDarwinMarkers = resolveOsMarkers "darwin" den.aspects.fixture-darwin;
+
+      quakeAspectKeys =
+        name:
+        let
+          a = den.aspects.${name};
+        in
+        {
+          hasNixos = a ? nixos;
+          hasDarwin = a ? darwin;
+          hasOs = a ? os;
+          hasHomeManager = a ? homeManager;
+        };
+
+      hostsMatrix = {
+        nixos = {
+          name = "fixture-nixos";
+          system = den.hosts.x86_64-linux.fixture-nixos.system;
+          class = den.hosts.x86_64-linux.fixture-nixos.class;
+          intoAttr = den.hosts.x86_64-linux.fixture-nixos.intoAttr;
+        };
+        darwin = {
+          name = "fixture-darwin";
+          system = den.hosts.aarch64-darwin.fixture-darwin.system;
+          class = den.hosts.aarch64-darwin.fixture-darwin.class;
+          intoAttr = den.hosts.aarch64-darwin.fixture-darwin.intoAttr;
+        };
+      };
+
+      osClassesOk =
+        shellToolsNixos.denOsPortable.aspect or null == "shell-tools"
+        && shellToolsDarwin.denOsPortable.aspect or null == "shell-tools"
+        && shellToolsNixos.denOsPortable.tools == expectedPortableTools
+        && shellToolsDarwin.denOsPortable.tools == expectedPortableTools
+        # Same payload both classes (no copy-paste): identical tool lists.
+        && shellToolsNixos.denOsPortable.tools == shellToolsDarwin.denOsPortable.tools
+        && hostsMatrix.nixos.class == "nixos"
+        && hostsMatrix.darwin.class == "darwin"
+        && hostsMatrix.nixos.intoAttr == [ ]
+        && hostsMatrix.darwin.intoAttr == [ ]
+        && !(quakeAspectKeys "alacritty-quake").hasNixos
+        && !(quakeAspectKeys "alacritty-quake").hasDarwin
+        && !(quakeAspectKeys "warp-quake").hasNixos
+        && !(quakeAspectKeys "warp-quake").hasDarwin
+        && !(quakeAspectKeys "terminal").hasNixos
+        && !(quakeAspectKeys "terminal").hasDarwin
+        && (quakeAspectKeys "alacritty-quake").hasHomeManager
+        && (quakeAspectKeys "warp-quake").hasHomeManager;
     in
     denConfig.config.flake
     // {
@@ -208,12 +289,15 @@
         alacritty-quake = aspectIncludeNames "alacritty-quake";
         warp-quake = aspectIncludeNames "warp-quake";
         home-cli = aspectIncludeNames "home-cli";
+        shell-tools = aspectIncludeNames "shell-tools";
         python = aspectIncludeNames "python";
         rust = aspectIncludeNames "rust";
         go = aspectIncludeNames "go";
         javascript = aspectIncludeNames "javascript";
         typescript = aspectIncludeNames "typescript";
         project-ides = aspectIncludeNames "project-ides";
+        fixture-nixos = aspectIncludeNames "fixture-nixos";
+        fixture-darwin = aspectIncludeNames "fixture-darwin";
       };
       # Cursor-off fixture (still has terminal + home-cli) for cascade bats.
       homeConfigurationsNoCursor = denConfigNoCursor.config.flake.homeConfigurations or { };
@@ -240,6 +324,28 @@
           )
         );
         expectedConcerns = expectedProjectConcerns;
+      };
+
+      # Phase 5 multi-OS (tests).
+      denOsClasses = {
+        match = osClassesOk;
+        hosts = hostsMatrix;
+        shellTools = {
+          nixos = shellToolsNixos.denOsPortable;
+          darwin = shellToolsDarwin.denOsPortable;
+          expectedTools = expectedPortableTools;
+        };
+        hostAspects = {
+          nixosIncludesShellTools = builtins.elem "shell-tools" (aspectIncludeNames "fixture-nixos");
+          darwinIncludesShellTools = builtins.elem "shell-tools" (aspectIncludeNames "fixture-darwin");
+          nixosHost = fixtureNixosMarkers.denOsHost or { };
+          darwinHost = fixtureDarwinMarkers.denOsHost or { };
+        };
+        ubuntuOnlyGuards = {
+          alacritty-quake = quakeAspectKeys "alacritty-quake";
+          warp-quake = quakeAspectKeys "warp-quake";
+          terminal = quakeAspectKeys "terminal";
+        };
       };
     };
 }

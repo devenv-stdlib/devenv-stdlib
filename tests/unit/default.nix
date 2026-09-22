@@ -22,3 +22,4 @@ in
 // (import ./den-project-golden.nix harness)
 // (import ./den-project-class.nix harness)
 // (import ./den-cutover-guards.nix harness)
+// (import ./den-os-classes.nix harness)
