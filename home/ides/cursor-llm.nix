@@ -51,7 +51,6 @@ let
       ;
     serena = cliExe "serena";
     headroom = cliExe "headroom";
-    githubMcpBin = cliExe "github-mcp-server";
     braveMcpBin = cliExe "brave-search-mcp";
     firecrawlMcpBin = cliExe "firecrawl-mcp";
     gitConflictMcp = cliExe "git-conflict-mcp";
@@ -76,11 +75,11 @@ in
     type = lib.types.bool;
     default = config.cursor.enable;
     description = ''
-      Install Serena, Headroom, Context7, GitHub, Docker, git-conflict-mcp,
+      Install Serena, Headroom, Context7, Docker, git-conflict-mcp,
       git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared
       home/ides/mcp catalog into ~/.cursor/mcp.json (upsert only; user-added
-      servers are preserved). Also writes Ponytail and Headroom Cursor rules.
-      Defaults to cursor.enable.
+      servers are preserved; retired catalog keys such as github are removed).
+      Also writes Ponytail and Headroom Cursor rules. Defaults to cursor.enable.
     '';
   };
 
