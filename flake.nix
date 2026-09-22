@@ -123,6 +123,7 @@
       denFp = hmFingerprint denHomeCfg;
 
       # Expected fixture goldens (developer + cursor + alacritty + home-cli).
+      # fd / ripgrep ship as home.packages (not programs.*.enable).
       expectedPrograms = {
         bash = true;
         bat = true;
@@ -132,8 +133,8 @@
         direnv = true;
         zoxide = true;
         gh = true;
-        ripgrep = true;
-        fd = true;
+        ripgrep = false;
+        fd = false;
       };
 
       hmGoldenOk =
@@ -141,7 +142,9 @@
         && denFp.llmEnable
         && denFp.terminalProvider == "alacritty"
         && denFp.programs == expectedPrograms
-        && builtins.elem "mcp-secrets-watch" denFp.systemdUserServices;
+        && builtins.elem "mcp-secrets-watch" denFp.systemdUserServices
+        && builtins.any (n: lib.hasPrefix "fd" n || n == "fd") denFp.packages
+        && builtins.any (n: lib.hasPrefix "ripgrep" n || n == "ripgrep") denFp.packages;
 
       # --- Phase 4: Den/project goldens (aspect includes + pure helpers) ---
       cascade = import ./den/language-cascade.nix;
