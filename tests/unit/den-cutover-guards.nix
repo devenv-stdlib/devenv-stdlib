@@ -20,4 +20,10 @@ in
     expr = builtins.pathExists (root + "/home.nix");
     expected = true;
   };
+
+  # Phase 5 must not revive dual-run shim adapters.
+  testPhase5DidNotReviveLanguageShim = {
+    expr = shimGone "modules/lib/den-language-shim.nix";
+    expected = true;
+  };
 }
