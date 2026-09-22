@@ -8,8 +8,9 @@
 #   wc -l modules/lib/den-language-shim.nix
 #
 # Snapshot (this PR):
-#   den/**/*.nix ............... ~350 LOC (cascades + aspects + homes)
-#   modules/lib/den-language-shim.nix ~55 LOC
-#   Total dual-write Den shim ... ~405 LOC  (< 600 alert)
+#   den/**/*.nix .................... 357 LOC (cascades + aspects + homes)
+#   modules/lib/den-language-shim.nix .. 62 LOC
+#   Total dual-write Den shim ........ 419 LOC  (< 600 alert)
 #
 # Legacy modules remain full implementations (intentional dual-write until Phase 4).
+# Abort criterion 2 (Phase 4): shim stays >~600 AND reviewers still grep project.nix.
