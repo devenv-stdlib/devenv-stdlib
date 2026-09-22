@@ -5,7 +5,7 @@
 ```bash
 bats -r --jobs 1 tests   # full suite (serial; git 2.55 + Nix fetcher races)
 bats tests/setup                  # setup.sh only
-bats tests/home                   # terminal-lib, bashrc.d, Cursor LLM merge
+bats tests/home                   # terminal-lib, bashrc.d, Cursor LLM merge, Serena config
 ```
 
 `test-devenv-unit` runs nix-unit (with `--quiet`: hide ✅ lines, keep failures + summary) and BATS with `--jobs "$(nproc)"` (GNU `parallel` is on the devenv PATH). BATS TAP goes to `junit/bats.log`; the CI log gets a pass count, or the full log on failure.

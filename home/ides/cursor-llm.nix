@@ -61,6 +61,12 @@ let
     chmod +x $out/merge-cursor-llm.sh
   '';
   mergeCursor = "${mergeCursorPkg}/merge-cursor-llm.sh";
+  # Merge excluded_tools into ~/.serena/serena_config.yml without wiping
+  # Serena-managed keys (projects, auth_secret).
+  ensureSerenaPy = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
+  ensureSerenaConfig = pkgs.writeShellScript "ensure-serena-config" ''
+    exec ${lib.getExe ensureSerenaPy} ${./ensure-serena-config.py} "$@"
+  '';
   loadSecrets = ../load-secrets.sh;
   watchMcpSecrets = ../watch-mcp-secrets.sh;
   hostConfigDir = "$HOME/.config/devenv4monorepo";
@@ -74,8 +80,9 @@ in
       git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared
       home/ides/mcp catalog into ~/.cursor/mcp.json (upsert only; user-added
       servers are preserved; retired catalog keys such as github and docker
-      are removed). Also writes Ponytail and Headroom Cursor rules. Defaults
-      to cursor.enable.
+      are removed). Ensures ~/.serena/serena_config.yml excludes
+      search_for_pattern (Cursor Grep stays the content-search path). Also
+      writes Ponytail and Headroom Cursor rules. Defaults to cursor.enable.
     '';
   };
 
@@ -139,6 +146,9 @@ in
           ${pkgs.runtimeShell} ${mergeCursor} mcp-secrets "$HOME/.cursor/mcp.json" \
             ${lib.escapeShellArg (toString mcp.braveMcp)} \
             ${lib.escapeShellArg (toString mcp.firecrawlMcp)}
+
+          # Global Serena: exclude search_for_pattern (keep symbol tools).
+          ${ensureSerenaConfig} "$HOME/.serena/serena_config.yml"
         '';
 
         writeDevenvRoot = lib.hm.dag.entryBefore [ "reloadSystemd" ] ''

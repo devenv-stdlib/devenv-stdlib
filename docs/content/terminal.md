@@ -54,7 +54,7 @@ Then `home-switch` and open a new terminal. An unmanaged `~/.bashrc.d/20-local.s
 
 Set `cursor.enable = false;` in `home.local.nix` to skip the editor install. Set `vscode.enable = true;` to opt into the VS Code app (off by default).
 
-When `cursor.llmContext.enable` is on (default: `cursor.enable`), `home-switch` loads SecretSpec (any provider; `.env` fallback), merges `~/.cursor/mcp.json` from the shared MCP catalog without replacing other entries, runs `mise install` for user-scope catalog CLIs, writes Ponytail and Headroom rules under `~/.cursor/rules/`, and starts `mcp-secrets-watch`. First install needs network.
+When `cursor.llmContext.enable` is on (default: `cursor.enable`), `home-switch` loads SecretSpec (any provider; `.env` fallback), merges `~/.cursor/mcp.json` from the shared MCP catalog without replacing other entries, runs `mise install` for user-scope catalog CLIs, ensures `~/.serena/serena_config.yml` excludes `search_for_pattern`, writes Ponytail and Headroom rules under `~/.cursor/rules/`, and starts `mcp-secrets-watch`. First install needs network.
 
 Activation also cleans retired RTK / 9Router leftovers (disable old units, strip managed Shell hooks and RTK allowlist entries, remove `$HOME/.cursor/bin/rtk` and `rtk-passthrough.mdc`). Wrapper store paths for Brave/Firecrawl live in `~/.config/devenv4monorepo/mcp-wrappers.env`.
 

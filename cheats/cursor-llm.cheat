@@ -12,6 +12,9 @@ gh auth login
 # Serena MCP help (symbol graph; upserted in ~/.cursor/mcp.json)
 serena start-mcp-server --help
 
+# Global Serena excludes search_for_pattern (home-switch merges this)
+grep -A5 '^excluded_tools:' ~/.serena/serena_config.yml
+
 # Headroom MCP help (on-demand compress/retrieve)
 headroom --help
 
