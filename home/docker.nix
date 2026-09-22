@@ -7,10 +7,10 @@ in
     type = lib.types.bool;
     default = true;
     description = ''
-      Point docker, act, and 9Router at the rootless Engine socket
+      Point docker and act at the rootless Engine socket
       ($XDG_RUNTIME_DIR/docker.sock). This stack assumes rootless Docker
-      (needed for local act). Set false or export DOCKER_HOST to use a
-      rootful daemon.
+      (needed for local act and the Docker MCP). Set false or export
+      DOCKER_HOST to use a rootful daemon.
     '';
   };
 

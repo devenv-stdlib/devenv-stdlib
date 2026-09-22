@@ -5,7 +5,7 @@ alwaysApply: true
 
 # When to call Headroom
 
-`headroom_compress` / `headroom_retrieve` / `headroom_stats` are on-demand. They do not run after every prompt. RTK already rewrites Shell tool output.
+`headroom_compress` / `headroom_retrieve` / `headroom_stats` are on-demand. They do not run after every prompt.
 
 Call `headroom_compress` only when a tool result or pasted blob is large enough to waste context (roughly thousands of tokens): long logs, fat search/crawl dumps, huge file reads, big JSON.
 

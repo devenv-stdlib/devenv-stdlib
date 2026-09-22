@@ -65,23 +65,3 @@ if count != 1:
 path.write_text(new)
 PY
 }
-
-replace_ninerouter_image() {
-  local file=$1 image=$2
-  if update_dry_run; then
-    echo "dry-run: $file: NINEROUTER_IMAGE default $image"
-    return 0
-  fi
-  python3 - "$file" "$image" <<'PY'
-import pathlib, re, sys
-
-path = pathlib.Path(sys.argv[1])
-image = sys.argv[2]
-text = path.read_text()
-pat = re.compile(r"(image=\$\{NINEROUTER_IMAGE:-)[^}]+(\})")
-new, count = pat.subn(rf"\g<1>{image}\2", text, count=1)
-if count != 1:
-    raise SystemExit(f"replace_ninerouter_image: expected 1 match in {path}, got {count}")
-path.write_text(new)
-PY
-}

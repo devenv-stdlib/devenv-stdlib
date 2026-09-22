@@ -46,9 +46,9 @@ EOF
 }
 
 @test "sources .env when secretspec is not on PATH" {
-  printf 'INITIAL_PASSWORD=from-env\n' >"$TMP/proj/.env"
+  printf 'BRAVE_API_KEY=from-env\n' >"$TMP/proj/.env"
   PATH="/usr/bin:/bin"
-  unset INITIAL_PASSWORD
+  unset BRAVE_API_KEY
   home_load_secrets "$TMP/proj"
-  [ "$INITIAL_PASSWORD" = "from-env" ]
+  [ "$BRAVE_API_KEY" = "from-env" ]
 }

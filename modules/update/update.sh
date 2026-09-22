@@ -50,7 +50,7 @@ elif [[ -e $local_hook ]]; then
 fi
 
 cat <<'EOF'
-Template-shipped tools (RTK, Serena, Headroom, 9Router, MCP pins, debtmap, …)
+Template-shipped tools (Serena, Headroom, MCP pins, debtmap, …)
 move only via copier update. Team tools live in modules/non-nix/catalog.local.toml
 and are refreshed by this `update` (Nix when promotable, else mise).
 EOF

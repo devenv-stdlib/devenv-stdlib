@@ -12,8 +12,6 @@
   gitConflictMcp,
   gitRebaseMcp,
   dockerMcpImage,
-  rtk,
-  jq,
 }:
 let
   githubMcp = pkgs.writeShellScript "github-mcp" ''
@@ -66,77 +64,47 @@ let
     exec ${firecrawlMcpBin}
   '';
 
-  rtkRewrite = pkgs.writeShellScript "rtk-rewrite.sh" ''
-    set -euo pipefail
-    stable="$HOME/.cursor/bin/rtk"
-    if [ -x "$stable" ]; then
-      export RTK="$stable"
-    else
-      export RTK=${lib.escapeShellArg rtk}
-    fi
-    export JQ=${lib.escapeShellArg jq}
-    exec ${pkgs.runtimeShell} ${../../rtk-rewrite.sh}
-  '';
-
-  # Core servers shared across harnesses. includeHeadroom=false drops headroom
-  # from the upsert (gateway path) so the harness can remove the key.
-  # User-added mcpServers keys are preserved by merge_mcp.
-  mkCoreServers =
-    {
-      includeHeadroom ? true,
-    }:
-    {
-      serena = {
-        command = toString serena;
-        args = [
-          "start-mcp-server"
-          "--context"
-          "ide"
-          "--open-web-dashboard"
-          "false"
-        ];
-      };
-      context7 = {
-        url = "https://mcp.context7.com/mcp";
-      };
-      github = {
-        command = toString githubMcp;
-      };
-      docker = {
-        command = toString dockerMcp;
-      };
-      "git-conflict-mcp" = {
-        command = toString gitConflictMcp;
-      };
-      "git-rebase-mcp" = {
-        command = toString gitRebaseMcp;
-      };
-    }
-    // lib.optionalAttrs includeHeadroom {
-      headroom = {
-        command = toString headroom;
-        args = [
-          "mcp"
-          "serve"
-        ];
-      };
+  # Core servers shared across harnesses. User-added mcpServers keys are
+  # preserved by merge_mcp.
+  mkCoreServers = {
+    serena = {
+      command = toString serena;
+      args = [
+        "start-mcp-server"
+        "--context"
+        "ide"
+        "--open-web-dashboard"
+        "false"
+      ];
     };
+    context7 = {
+      url = "https://mcp.context7.com/mcp";
+    };
+    github = {
+      command = toString githubMcp;
+    };
+    docker = {
+      command = toString dockerMcp;
+    };
+    "git-conflict-mcp" = {
+      command = toString gitConflictMcp;
+    };
+    "git-rebase-mcp" = {
+      command = toString gitRebaseMcp;
+    };
+    headroom = {
+      command = toString headroom;
+      args = [
+        "mcp"
+        "serve"
+      ];
+    };
+  };
 
-  mkUpsertJson =
-    {
-      includeHeadroom ? true,
-    }:
-    pkgs.writeText "mcp-upsert.json" (
-      builtins.toJSON (mkCoreServers {
-        inherit includeHeadroom;
-      })
-    );
+  mkUpsertJson = pkgs.writeText "mcp-upsert.json" (builtins.toJSON mkCoreServers);
 
-  mkRemoveJson =
-    {
-      removeHeadroom ? false,
-    }:
-    pkgs.writeText "mcp-remove.json" (builtins.toJSON (lib.optionals removeHeadroom [ "headroom" ]));
+  # Empty remove list; kept so activation always passes a path to merge.
+  mkRemoveJson = pkgs.writeText "mcp-remove.json" (builtins.toJSON [ ]);
 in
 {
   inherit
@@ -144,7 +112,6 @@ in
     dockerMcp
     braveMcp
     firecrawlMcp
-    rtkRewrite
     mkCoreServers
     mkUpsertJson
     mkRemoveJson

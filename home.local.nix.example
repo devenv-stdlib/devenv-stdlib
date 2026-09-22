@@ -12,20 +12,16 @@
   # Language packs follow devenv languages.* (see devenv.local.nix).
   # cursor.enable = false;
 
-  # RTK / Serena / Headroom for Cursor (default: cursor.enable).
+  # Serena / Headroom / MCP catalog for Cursor (default: cursor.enable).
   # cursor.llmContext.enable = false;
 
-  # 9Router gateway (default: false). Copier writes home/copier-llm.nix.
-  # Cursor Pro models fail while Override OpenAI Base URL is on.
-  # cursor.ninerouter.enable = true;
-
-  # Rootless Docker is the default (act, 9Router, Docker MCP).
+  # Rootless Docker is the default (act, Docker MCP).
   # export DOCKER_HOST=unix:///var/run/docker.sock to use a rootful daemon,
   # or turn the helper off:
   # docker.rootless.enable = false;
 
   # Bump your own uv/npx tools in gitignored update.local.sh (repo root).
-  # Template pins (RTK, Serena, Brave, …) move with copier update.
+  # Template pins (Serena, Headroom, Brave, …) move with copier update.
 
   # terminal.quakeKeybinding = "ctrl-`";
   # terminal.heightPercent = 40;
