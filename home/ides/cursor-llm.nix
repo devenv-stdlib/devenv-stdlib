@@ -11,7 +11,6 @@ let
   entry = name: lib.findFirst (e: e.name == name) null resolved;
   mise = lib.getExe pkgs.mise;
   jq = lib.getExe pkgs.jq;
-  dockerMcpImage = nonNix.imageRef "docker-mcp";
 
   # Nix package when promoted; otherwise prefer a mise install dir binary
   # (mise exec loads full conf.d and fails if unrelated tools lack pipx/npm).
@@ -44,11 +43,7 @@ let
       '';
 
   mcp = import ./mcp {
-    inherit
-      pkgs
-      lib
-      dockerMcpImage
-      ;
+    inherit pkgs;
     serena = cliExe "serena";
     headroom = cliExe "headroom";
     braveMcpBin = cliExe "brave-search-mcp";
@@ -75,11 +70,12 @@ in
     type = lib.types.bool;
     default = config.cursor.enable;
     description = ''
-      Install Serena, Headroom, Context7, Docker, git-conflict-mcp,
+      Install Serena, Headroom, Context7, git-conflict-mcp,
       git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared
       home/ides/mcp catalog into ~/.cursor/mcp.json (upsert only; user-added
-      servers are preserved; retired catalog keys such as github are removed).
-      Also writes Ponytail and Headroom Cursor rules. Defaults to cursor.enable.
+      servers are preserved; retired catalog keys such as github and docker
+      are removed). Also writes Ponytail and Headroom Cursor rules. Defaults
+      to cursor.enable.
     '';
   };
 

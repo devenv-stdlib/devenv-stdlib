@@ -2,7 +2,6 @@
 # Builds upsert payloads and CLI wrappers. Does not write any harness config.
 {
   pkgs,
-  lib,
   # Resolved CLI paths (store or mise shims).
   serena,
   headroom,
@@ -10,40 +9,8 @@
   firecrawlMcpBin,
   gitConflictMcp,
   gitRebaseMcp,
-  dockerMcpImage,
 }:
 let
-  dockerMcp = pkgs.writeShellScript "docker-mcp" ''
-    set -euo pipefail
-    # shellcheck disable=SC1091
-    . ${../../docker-rootless.sh}
-    docker_rootless_env
-    docker="$(command -v docker || true)"
-    if [ -z "$docker" ]; then
-      for cand in /usr/bin/docker /usr/local/bin/docker; do
-        if [ -x "$cand" ]; then
-          docker=$cand
-          break
-        fi
-      done
-    fi
-    if [ -z "$docker" ]; then
-      echo "docker-mcp: docker is not on PATH" >&2
-      exit 1
-    fi
-    sock=$(docker_engine_sock) || {
-      echo "docker-mcp: DOCKER_HOST must be a unix socket" >&2
-      exit 1
-    }
-    if [ ! -S "$sock" ]; then
-      echo "docker-mcp: no Engine socket at $sock (rootless Docker is the default)" >&2
-      exit 1
-    fi
-    exec "$docker" run -i --rm \
-      -v "$sock:/var/run/docker.sock" \
-      ${lib.escapeShellArg dockerMcpImage}
-  '';
-
   braveMcp = pkgs.writeShellScript "brave-search-mcp" ''
     exec ${braveMcpBin}
   '';
@@ -68,9 +35,6 @@ let
     context7 = {
       url = "https://mcp.context7.com/mcp";
     };
-    docker = {
-      command = toString dockerMcp;
-    };
     "git-conflict-mcp" = {
       command = toString gitConflictMcp;
     };
@@ -90,11 +54,15 @@ let
 
   # Retire previously shipped catalog keys on activation (merge never deletes
   # unknown user keys — only this explicit list).
-  mkRemoveJson = pkgs.writeText "mcp-remove.json" (builtins.toJSON [ "github" ]);
+  mkRemoveJson = pkgs.writeText "mcp-remove.json" (
+    builtins.toJSON [
+      "github"
+      "docker"
+    ]
+  );
 in
 {
   inherit
-    dockerMcp
     braveMcp
     firecrawlMcp
     mkCoreServers

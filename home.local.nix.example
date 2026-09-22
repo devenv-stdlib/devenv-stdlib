@@ -15,7 +15,7 @@
   # Serena / Headroom / MCP catalog for Cursor (default: cursor.enable).
   # cursor.llmContext.enable = false;
 
-  # Rootless Docker is the default (act, Docker MCP).
+  # Rootless Docker is the default (act).
   # export DOCKER_HOST=unix:///var/run/docker.sock to use a rootful daemon,
   # or turn the helper off:
   # docker.rootless.enable = false;
