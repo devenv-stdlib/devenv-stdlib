@@ -2,6 +2,16 @@
 # (includes/update/non-nix.sh) or wait for copier update.
 # Each [[tool]] needs a one-line comment: what it does + where to read more.
 
+# Fast Python package installer; mise pipx: tools use `uv tool install`. Docs: https://docs.astral.sh/uv/
+[[tool]]
+name = "uv"
+kind = "cli"
+scope = "user"
+pin = "0.12.17"
+mise = "ubi:astral-sh/uv"
+nixAttr = ["uv"]
+homepageContains = "astral-sh/uv"
+
 # Compact Cursor Agent shell output. Docs: https://github.com/rtk-ai/rtk
 [[tool]]
 name = "rtk"

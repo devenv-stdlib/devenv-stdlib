@@ -34,7 +34,7 @@ name = "serena"
 kind = "cli"
 scope = "user"
 pin = "1.7.0"
-mise = "pipx:serena-agent"
+mise = "pipx:serena-agent"  # installs via uv when uv is on PATH
 ```
 
 ## Add / remove entries
