@@ -90,7 +90,7 @@ Shared definitions for MCP servers the template ships:
 | headroom | Official MCP; omitted when 9Router / gateway path says so |
 | context7 | Remote URL |
 | brave-search | Optional; SecretSpec / `.env` |
-| firecrawl | Optional; SecretSpec / `.env` |
+| firecrawl | Optional; default **slim** hosted keyless URL; `FIRECRAWL_MCP_PROFILE=full` + API key for local full surface |
 
 Rules:
 

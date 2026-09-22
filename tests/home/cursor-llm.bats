@@ -19,6 +19,7 @@ setup() {
   FIRECRAWL_CMD="$TMP/.local/bin/firecrawl-mcp"
   UPSERT="$TMP/upsert.json"
   REMOVE="$TMP/remove.json"
+  unset BRAVE_API_KEY FIRECRAWL_API_KEY FIRECRAWL_MCP_PROFILE
 }
 
 write_core_upsert() {
@@ -153,7 +154,7 @@ EOF
   [ "$(jq -r '.mcpServers.docker // empty' "$MCP")" = "" ]
 }
 
-@test "mcp-secrets upserts Brave and Firecrawl from env keys" {
+@test "mcp-secrets upserts Brave and Firecrawl slim URL from env keys" {
   write_core_upsert
   echo '[]' >"$REMOVE"
   merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
@@ -161,8 +162,32 @@ EOF
   merge_cursor_mcp_secrets "$MCP" "$BRAVE_CMD" "$FIRECRAWL_CMD"
   [ "$(jq -r '.mcpServers["brave-search"].command' "$MCP")" = "$BRAVE_CMD" ]
   [ "$(jq -r '.mcpServers["brave-search"].env.BRAVE_API_KEY' "$MCP")" = "test-brave" ]
-  [ "$(jq -r '.mcpServers.firecrawl.env.FIRECRAWL_API_KEY' "$MCP")" = "test-fire" ]
+  [ "$(jq -r '.mcpServers.firecrawl.url' "$MCP")" = "https://mcp.firecrawl.dev/v2/mcp" ]
+  [ "$(jq -r '.mcpServers.firecrawl.command // empty' "$MCP")" = "" ]
+  [ "$(jq -r '.mcpServers.firecrawl.env // empty' "$MCP")" = "" ]
   [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
+}
+
+@test "mcp-secrets Firecrawl full profile uses local stdio and API key" {
+  write_core_upsert
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  export FIRECRAWL_API_KEY=test-fire FIRECRAWL_MCP_PROFILE=full
+  merge_cursor_mcp_secrets "$MCP" "$BRAVE_CMD" "$FIRECRAWL_CMD"
+  [ "$(jq -r '.mcpServers.firecrawl.command' "$MCP")" = "$FIRECRAWL_CMD" ]
+  [ "$(jq -r '.mcpServers.firecrawl.env.FIRECRAWL_API_KEY' "$MCP")" = "test-fire" ]
+  [ "$(jq -r '.mcpServers.firecrawl.url // empty' "$MCP")" = "" ]
+}
+
+@test "mcp-secrets Firecrawl slim profile enables without API key" {
+  write_core_upsert
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  unset FIRECRAWL_API_KEY
+  export FIRECRAWL_MCP_PROFILE=slim
+  merge_cursor_mcp_secrets "$MCP" "$BRAVE_CMD" "$FIRECRAWL_CMD"
+  [ "$(jq -r '.mcpServers.firecrawl.url' "$MCP")" = "https://mcp.firecrawl.dev/v2/mcp" ]
+  [ "$(jq -r '.mcpServers.firecrawl.env // empty' "$MCP")" = "" ]
 }
 
 @test "hooks-remove drops legacy RTK entries and keeps other preToolUse hooks" {
@@ -195,11 +220,25 @@ EOF
   merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
   export BRAVE_API_KEY=keep FIRECRAWL_API_KEY=keep
   merge_cursor_mcp_secrets "$MCP" "$BRAVE_CMD" "$FIRECRAWL_CMD"
-  unset BRAVE_API_KEY FIRECRAWL_API_KEY
+  unset BRAVE_API_KEY FIRECRAWL_API_KEY FIRECRAWL_MCP_PROFILE
   merge_cursor_mcp_secrets "$MCP" "$BRAVE_CMD" "$FIRECRAWL_CMD"
   [ "$(jq -r '.mcpServers["brave-search"] // empty' "$MCP")" = "" ]
   [ "$(jq -r '.mcpServers.firecrawl // empty' "$MCP")" = "" ]
   [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
+}
+
+@test "mcp-secrets switches Firecrawl from slim URL to full stdio" {
+  write_core_upsert
+  echo '[]' >"$REMOVE"
+  merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
+  export FIRECRAWL_API_KEY=test-fire
+  unset FIRECRAWL_MCP_PROFILE
+  merge_cursor_mcp_secrets "$MCP" "$BRAVE_CMD" "$FIRECRAWL_CMD"
+  [ "$(jq -r '.mcpServers.firecrawl.url' "$MCP")" = "https://mcp.firecrawl.dev/v2/mcp" ]
+  export FIRECRAWL_MCP_PROFILE=full
+  merge_cursor_mcp_secrets "$MCP" "$BRAVE_CMD" "$FIRECRAWL_CMD"
+  [ "$(jq -r '.mcpServers.firecrawl.command' "$MCP")" = "$FIRECRAWL_CMD" ]
+  [ "$(jq -r '.mcpServers.firecrawl.url // empty' "$MCP")" = "" ]
 }
 
 @test "permissions-clear-rtk drops managed entries and deletes empty key" {

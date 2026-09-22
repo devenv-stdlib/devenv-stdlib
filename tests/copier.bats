@@ -155,6 +155,7 @@ init_dest_git() {
   run ! grep -q 'INITIAL_PASSWORD' "$DEST/secretspec.toml"
   grep -q 'BRAVE_API_KEY' "$DEST/secretspec.toml"
   grep -q 'FIRECRAWL_API_KEY' "$DEST/secretspec.toml"
+  grep -q 'FIRECRAWL_MCP_PROFILE' "$DEST/secretspec.toml"
   grep -qxF '.env' "$DEST/.gitignore"
   if [ -f "$DEST/.env" ]; then
     run ! grep -q '^BRAVE_API_KEY=' "$DEST/.env"

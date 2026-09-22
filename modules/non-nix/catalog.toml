@@ -37,7 +37,9 @@ pin = "2.1.3"
 mise = "npm:@brave/brave-search-mcp-server"
 bin = "brave-search-mcp-server"
 
-# Firecrawl crawl MCP (needs FIRECRAWL_API_KEY). Docs: https://docs.firecrawl.dev/mcp-server
+# Firecrawl MCP local binary — only for FIRECRAWL_MCP_PROFILE=full.
+# Default (slim) uses hosted keyless https://mcp.firecrawl.dev/v2/mcp (no pin).
+# Docs: https://docs.firecrawl.dev/mcp-server/keyless
 [[tool]]
 name = "firecrawl-mcp"
 kind = "cli"
