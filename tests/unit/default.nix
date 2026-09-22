@@ -14,3 +14,7 @@ in
 // (import ./terminal.nix harness)
 // (import ./non-nix.nix harness)
 // (import ./den-cursor.nix harness)
+// (import ./den-terminal.nix harness)
+// (import ./den-python.nix harness)
+// (import ./den-languages.nix harness)
+// (import ./den-ide.nix harness)
