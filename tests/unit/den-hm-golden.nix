@@ -45,4 +45,16 @@ in
     expr = golden.fingerprint.programs.bat;
     expected = true;
   };
+
+  testDenHmGoldenFdAsPackage = {
+    expr = builtins.any (n: lib.hasPrefix "fd" n || n == "fd") golden.fingerprint.packages;
+    expected = true;
+  };
+
+  testDenHmGoldenRipgrepAsPackage = {
+    expr = builtins.any (
+      n: lib.hasPrefix "ripgrep" n || n == "ripgrep"
+    ) golden.fingerprint.packages;
+    expected = true;
+  };
 }
