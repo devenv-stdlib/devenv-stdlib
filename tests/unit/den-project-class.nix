@@ -22,7 +22,12 @@ in
 
   testDenProjectClassLeafConcerns = {
     expr = klass.pythonLeafConcerns;
-    expected = klass.expectedConcerns;
+    expected = [
+      "debtmap"
+      "hooks"
+      "ide-recs"
+      "serena"
+    ];
   };
 
   testDenProjectClassConcernCount = {
