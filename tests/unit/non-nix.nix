@@ -33,7 +33,18 @@ let
   };
 
   naviEntry = lib.findFirst (e: e.name == "navi") null nonNix.catalog;
-  dockerMcp = lib.findFirst (e: e.name == "docker-mcp") null nonNix.catalog;
+  # Synthetic docker-image entry — catalog no longer ships docker-mcp.
+  sampleDockerImage = {
+    name = "sample-docker-image";
+    kind = "docker-image";
+    scope = "user";
+    pin = "1.0.0";
+    image = "example/sample";
+    mise = null;
+    bin = null;
+    nixAttr = [ ];
+    homepageContains = null;
+  };
 in
 {
   testNonNixMissingAttrStaysMise = {
@@ -54,9 +65,9 @@ in
   testNonNixDockerNeverInMiseToml = {
     expr =
       let
-        toml = nonNix.toMiseToml [ (dockerMcp // { via = "docker-image"; }) ];
+        toml = nonNix.toMiseToml [ (sampleDockerImage // { via = "docker-image"; }) ];
       in
-      lib.hasInfix "mcp/docker" toml || lib.hasInfix "docker-mcp" toml;
+      lib.hasInfix "example/sample" toml || lib.hasInfix "sample-docker-image" toml;
     expected = false;
   };
 
@@ -112,9 +123,14 @@ in
     expected = true;
   };
 
-  testNonNixImageRef = {
+  testNonNixImageRefMissingIsNull = {
     expr = nonNix.imageRef "docker-mcp";
-    expected = "mcp/docker:0.0.19";
+    expected = null;
+  };
+
+  testNonNixDockerImagesList = {
+    expr = nonNix.dockerImages [ sampleDockerImage ];
+    expected = [ "example/sample:1.0.0" ];
   };
 
   testNonNixShippedCatalogNonEmpty = {

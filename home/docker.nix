@@ -9,7 +9,7 @@ in
     description = ''
       Point docker and act at the rootless Engine socket
       ($XDG_RUNTIME_DIR/docker.sock). This stack assumes rootless Docker
-      (needed for local act and the Docker MCP). Set false or export
+      (needed for local act). Set false or export
       DOCKER_HOST to use a rootful daemon.
     '';
   };
