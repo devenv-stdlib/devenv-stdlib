@@ -66,6 +66,19 @@ _: {
     # shellcheck disable=SC1091
     . "$DEVENV_ROOT/home/load-secrets.sh"
     home_load_secrets "$DEVENV_ROOT"
+    # Legacy path kept through Phase 3 parity; Den path is home-switch-den.
     home-manager switch -b backup -f "$DEVENV_ROOT/home.nix" "$@"
+  '';
+
+  # Phase 1 spike: den.homes → homeConfigurations.developer (cursor cascade).
+  # Requires flakes + impure env for USER/HOME defaults (same as legacy home.nix).
+  scripts.home-switch-den.exec = ''
+    # shellcheck disable=SC1091
+    . "$DEVENV_ROOT/home/nix-path.sh"
+    ensure_nixpkgs_on_nix_path
+    # shellcheck disable=SC1091
+    . "$DEVENV_ROOT/home/load-secrets.sh"
+    home_load_secrets "$DEVENV_ROOT"
+    home-manager switch -b backup --flake "$DEVENV_ROOT#developer" --impure "$@"
   '';
 }

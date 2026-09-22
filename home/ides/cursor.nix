@@ -39,8 +39,8 @@ let
   };
 in
 {
-  imports = [ ./cursor-extensions.nix ];
-
+  # Extensions are composed via den.aspects.cursor.includes (Den path) or
+  # home/ides/default.nix imports (legacy home.nix path) — not nested here.
   options.cursor.enable = lib.mkOption {
     type = lib.types.bool;
     default = true;
