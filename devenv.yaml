@@ -4,9 +4,20 @@ inputs:
     url: github:cachix/devenv-nixpkgs/rolling
   git-hooks:
     url: github:cachix/git-hooks.nix
+  # Required by generated test.yml when languages.python.version is set (act + CI).
+  nixpkgs-python:
+    url: github:cachix/nixpkgs-python
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
 
 imports:
   - ./modules
+
+# Pylance (and other Cursor language packs) are unfree; enabling Python
+# evaluates those packs for .vscode / cursor-sync.
+nixpkgs:
+  allow_unfree: true
 
 # Keep the devenv CLI aligned with the module set it evaluates.
 require_version: true

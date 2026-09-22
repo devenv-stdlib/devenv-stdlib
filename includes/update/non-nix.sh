@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Refresh modules/non-nix/catalog.toml pins (and a few install-side hashes).
 # CLI tools install via mise (or Nix when promoted); images via docker pull;
-# devenv VS Code extension still uses vscode-ext-lib.nix for the VSIX hash.
+# devenv VS Code extension still uses home/ides/ext-lib.nix for the VSIX hash.
 # Pin edits are line-local so per-tool comments stay intact.
 set -euo pipefail
 
@@ -26,7 +26,7 @@ npm_pkg() {
 }
 
 bump_cli() {
-  local name=$1 mise=$2 current latest owner repo
+  local name=$1 mise=$2 current latest owner repo pkg
   current=$(catalog_read_pin "$name")
   case $mise in
     ubi:*)
@@ -34,7 +34,27 @@ bump_cli() {
       latest=$(github_latest_version "$owner" "$repo")
       ;;
     pipx:*)
-      latest=$(pypi_latest "$(pipx_pkg "$mise")")
+      pkg=$(pipx_pkg "$mise")
+      # GitHub shorthand (owner/repo) or git+ URL — not on PyPI.
+      if [[ $pkg == git+https://github.com/* ]]; then
+        rest=${pkg#git+https://github.com/}
+        rest=${rest%.git*}
+        rest=${rest%%@*}
+        owner=${rest%%/*}
+        repo=${rest#*/}
+        repo=${repo%%/*}
+        if ! latest=$(github_latest_version "$owner" "$repo" 2>/dev/null); then
+          latest=$(github_default_branch_sha "$owner" "$repo")
+        fi
+      elif [[ $pkg == */* ]]; then
+        owner=${pkg%%/*}
+        repo=${pkg#*/}
+        if ! latest=$(github_latest_version "$owner" "$repo" 2>/dev/null); then
+          latest=$(github_default_branch_sha "$owner" "$repo")
+        fi
+      else
+        latest=$(pypi_latest "$pkg")
+      fi
       ;;
     npm:*)
       latest=$(npm_latest "$(npm_pkg "$mise")")
@@ -81,13 +101,13 @@ bump_vscode() {
     return 0
   fi
   if update_dry_run; then
-    echo "dry-run: catalog + vscode-ext-lib: version = \"$version\""
+    echo "dry-run: catalog + home/ides/ext-lib: version = \"$version\""
     return 0
   fi
   url=$(vs_marketplace_vsix_url "$publisher" "$extension" "$version")
   hash=$(prefetch_url_hash "$url" nix32)
   catalog_set_pin "$name" "$version"
-  replace_nix_string_assign "$root/home/vscode-ext-lib.nix" sha256 "$hash"
+  replace_nix_string_assign "$root/home/ides/ext-lib.nix" sha256 "$hash"
 }
 
 print_promotable() {

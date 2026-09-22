@@ -1,5 +1,5 @@
 ---
-description: Isolate each feature in a worktree+branch; stack related PRs infra-first
+description: Isolate each feature in a worktree+branch; stack related PRs with gh stack
 alwaysApply: true
 ---
 
@@ -38,16 +38,52 @@ isolated worktree for that same topic.
 Trivial one-line doc/typo fixes on an existing PR branch do not need a new
 worktree. Anything that could collide with parallel work does.
 
-## Pushing and PRs
+## Pushing and stacked PRs — use `gh stack`
 
-When the user asks to push / open PRs:
+Install once: `gh extension install github/gh-stack` (docs: https://gh.io/stacks).
 
-1. Push each feature branch with `-u`.
-2. Open one PR per branch into **`initial-development`** (or the previous
-   stack branch). Do not target `main` until a release cut says so.
-3. If several PRs share one topic, **stack** them: each PR’s base is the
-   previous branch in the stack (bottom of stack bases on `initial-development`).
-4. Say in each PR body which PR it stacks on and which depend on it.
+When the user asks to push / open PRs for related work:
+
+1. Push branches with `gh stack push` (or `git push -u` then stack).
+2. **Do not** manually retarget PR bases or rely on a checklist of “stacks on
+   #N” alone. Use **`gh stack`** so GitHub tracks the stack and rebases upper
+   PRs when a lower layer changes.
+3. Trunk for stacks is **`initial-development`** until a release cut says
+   otherwise (`--base initial-development`). Do not target `main` yet.
+4. One PR per branch. Keep PR bodies accurate, but the stack of record is
+   what `gh stack` created on GitHub—not a prose checklist.
+
+### New stack (local tracking)
+
+```
+# bottom → top; trunk = initial-development
+gh stack init --base initial-development chore/schema feat/wiring feat/ux
+# …commits on each layer…
+gh stack submit --auto --open
+```
+
+### Existing open PRs (no local metadata yet)
+
+```
+# bottom → top by PR number or branch name
+gh stack link --base initial-development 5 3 2 6 7
+```
+
+### Keep the stack healthy
+
+```
+gh stack sync      # pull remote + rebase stack on trunk / lower layers
+gh stack rebase    # rebase layers after trunk or bottom moves
+gh stack view      # show local/remote stack
+```
+
+After landing or changing the bottom PR, run `gh stack sync` (or rebase) so
+dependents pick up the new base—do not leave upper PRs on a stale merge-base.
+
+With **parallel worktrees**, prefer `gh stack link` to register the stack on
+GitHub (auto base chaining). `gh stack sync` / `rebase` need each stack branch
+free of another worktree checkout; sync from a throwaway worktree or after
+removing conflicting worktrees if git refuses the checkout.
 
 ### Stack order (bottom → top)
 
@@ -59,12 +95,13 @@ Put **infrastructure first**, **concrete product detail last**:
 
 ```
 # ❌ BAD — feature PR first, shared catalog helper stacked on top
-# ✅ GOOD — stack base → tip
+# ❌ BAD — only a PR-body checklist (“stacks on #5”) without gh stack
+# ✅ GOOD — gh stack link/submit, base → tip
 #   initial-development
 #   ← chore/non-nix-catalog-schema
 #     ← feat/mise-wiring
 #       ← feat/llm-context-shims
 ```
 
-Retarget or recreate the stack if review reorders dependencies. Do not squash
+Use `gh stack modify` / re-`link` if review reorders dependencies. Do not squash
 unrelated topics into one PR to avoid stacking.

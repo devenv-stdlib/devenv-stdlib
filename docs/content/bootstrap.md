@@ -6,7 +6,7 @@ One command configures the devenv binary cache as root, applies `home.nix` (Alac
 ./setup.sh
 ```
 
-The script prints a notice that it needs `sudo` for the Nix daemon, flakes (if missing), and `cachix use devenv`. It does **not** add your user to Nix `trusted-users`. Home Manager is installed into the user Nix profile and does not need sudo. It does **not** install Docker. This stack defaults to **rootless Docker** (`DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock`) for local `act`, 9Router, and the Docker MCP. `devenv shell` and `~/.bashrc.d/20-docker-rootless.sh` set that unless `CI` / `GITHUB_ACTIONS` is set (GitHub-hosted runners stay on the rootful daemon). If the user socket is missing after setup:
+The script prints a notice that it needs `sudo` for the Nix daemon, flakes (if missing), `cachix use devenv`, and (on AppArmor hosts) Cursor Agent terminal sandbox profiles. It does **not** add your user to Nix `trusted-users`. Home Manager is installed into the user Nix profile and does not need sudo. It does **not** install Docker. This stack defaults to **rootless Docker** (`DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock`) for local `act`, 9Router, and the Docker MCP. `devenv shell` and `~/.bashrc.d/20-docker-rootless.sh` set that unless `CI` / `GITHUB_ACTIONS` is set (GitHub-hosted runners stay on the rootful daemon). If the user socket is missing after setup:
 
 ```bash
 dockerd-rootless-setuptool.sh install
@@ -22,7 +22,7 @@ Then enter the project toolchain:
 devenv shell
 ```
 
-The shell banner uses the Copier `name` (this template prints `devenv4monorepo ready: <user>@<hostname>`). After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, `home-manager`, `copier`, and `debtmap` are on `PATH`.
+The shell banner uses the Copier `name` (this template prints `devenv4monorepo ready: <user>@<hostname>`). After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, `home-manager`, `copier`, and `debtmap` are on `PATH`. `setup.sh` and every `devenv shell` entry set this repository's local git config `rerere.enabled` and `rerere.autoupdate` to `true` (remember and auto-stage recorded conflict resolutions).
 
 ## Re-apply Home Manager
 
@@ -45,6 +45,7 @@ That is `home-manager switch -b backup -f home.nix`. `home-switch` loads secrets
 | `devenv update` | devenv CLI: flake inputs in `devenv.lock` only (`nixpkgs`, `git-hooks`, …) |
 | `devenv shell` | Enter the project toolchain |
 | `home-switch` | Re-apply Home Manager after editing `home.nix` |
+| `navi` | Browse repo `cheats/` plus community [denisidoro/cheats](https://github.com/denisidoro/cheats) |
 | `devenv test` | Build the env, check the toolchain, and run BATS |
 
 Optional auto-activation:

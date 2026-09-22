@@ -1,0 +1,44 @@
+% terminal, quake
+
+# Default stack: Alacritty + Zellij on F12 Quake (terminal.quakeKeybinding; Warp: terminal.provider = "warp")
+gsettings get org.gnome.shell.extensions.quake-terminal terminal-shortcut
+
+# After first home-switch with Alacritty, log out and back in once so GNOME loads Quake
+echo "Log out of GNOME, then sign back in"
+
+# Re-apply terminal stack after editing home.local.nix (Alacritty, Zellij, Quake, or Warp)
+home-switch
+
+# Switch dropdown terminal to Warp (set terminal.provider = "warp" in home.local.nix first)
+home-switch
+
+# Change Quake shortcut — add terminal.quakeKeybinding = "<binding>" to home.local.nix, then home-switch
+home-switch
+
+# Change dropdown height — add terminal.heightPercent = <n> (1–100, default 30) to home.local.nix, then home-switch
+home-switch
+
+# Change Zellij theme — add alacritty.zellijTheme = "<theme>" to home.local.nix (default dracula), then home-switch
+home-switch
+
+$ theme: printf '%s\n' dracula nord tokyo-night
+
+# Attach to the F12 dropdown Zellij session from another terminal (default session quake; alacritty.zellijSession)
+zellij attach quake
+
+# Attach to the dash/app-grid Zellij session (default session main; alacritty.zellijGuiSession)
+zellij attach main
+
+% terminal, docker
+
+# Install and enable rootless Docker when the user socket is missing (setup.sh does not install Docker)
+dockerd-rootless-setuptool.sh install && systemctl --user enable --now docker && loginctl enable-linger "$USER"
+
+# Show DOCKER_HOST (defaults to rootless unix://$XDG_RUNTIME_DIR/docker.sock via ~/.bashrc.d/20-docker-rootless.sh)
+echo "${DOCKER_HOST:-<unset — rootless default in new shells>}"
+
+# Disable rootless Docker default — add docker.rootless.enable = false to home.local.nix, then home-switch
+home-switch
+
+# Point docker at a rootful daemon for this shell (override rootless default)
+export DOCKER_HOST=unix:///var/run/docker.sock

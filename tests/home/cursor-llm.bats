@@ -2,13 +2,13 @@
 # shellcheck disable=SC2030,SC2031
 # ^ SC2030/SC2031: each @test looks like a subshell, so API key exports are
 # reported as leaking or getting lost; they are deliberately per-test.
-# Exercises home/merge-cursor-llm.sh. Does not run home-manager switch
+# Exercises home/ides/merge-cursor-llm.sh. Does not run home-manager switch
 # or `mise install`.
 
 setup() {
   REPO_DIR="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   # shellcheck disable=SC1091
-  source "$REPO_DIR/home/merge-cursor-llm.sh"
+  source "$REPO_DIR/home/ides/merge-cursor-llm.sh"
   command -v jq >/dev/null || skip "jq not installed"
   TMP=$(mktemp -d)
   HOOKS="$TMP/.cursor/hooks.json"
@@ -186,7 +186,7 @@ EOF
 @test "mcp CLI upserts from JSON files" {
   write_core_upsert
   echo '[]' >"$REMOVE"
-  "$REPO_DIR/home/merge-cursor-llm.sh" mcp "$MCP" "$UPSERT" "$REMOVE"
+  "$REPO_DIR/home/ides/merge-cursor-llm.sh" mcp "$MCP" "$UPSERT" "$REMOVE"
   [ "$(jq -r '.mcpServers.github.command' "$MCP")" = "$GITHUB_CMD" ]
   [ "$(jq -r '.mcpServers.docker.command' "$MCP")" = "$DOCKER_CMD" ]
 }
@@ -223,7 +223,7 @@ EOF
 }
 
 @test "hooks-remove CLI is a no-op when hooks.json is missing" {
-  "$REPO_DIR/home/merge-cursor-llm.sh" hooks-remove "$HOOKS"
+  "$REPO_DIR/home/ides/merge-cursor-llm.sh" hooks-remove "$HOOKS"
   [ ! -e "$HOOKS" ]
 }
 
@@ -255,14 +255,17 @@ EOF
   [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
 }
 
-@test "permissions merge creates terminalAllowlist with rtk" {
+@test "permissions merge creates terminalAllowlist with absolute rtk and bare rtk" {
   PERM="$TMP/.cursor/permissions.json"
-  merge_cursor_permissions "$PERM"
-  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "rtk" ]
+  RTK_BIN="$TMP/.cursor/bin/rtk"
+  mkdir -p "$(dirname "$RTK_BIN")"
+  merge_cursor_permissions "$PERM" "$RTK_BIN"
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "$RTK_BIN rtk" ]
 }
 
-@test "permissions merge upserts rtk without dropping other prefixes or keys" {
+@test "permissions merge preserves other prefixes; keeps other keys" {
   PERM="$TMP/.cursor/permissions.json"
+  RTK_BIN="$TMP/.cursor/bin/rtk"
   mkdir -p "$(dirname "$PERM")"
   cat >"$PERM" <<'EOF'
 {
@@ -270,14 +273,15 @@ EOF
   "terminalAllowlist": ["git", "npm"]
 }
 EOF
-  merge_cursor_permissions "$PERM"
-  merge_cursor_permissions "$PERM"
-  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "git npm rtk" ]
+  merge_cursor_permissions "$PERM" "$RTK_BIN"
+  merge_cursor_permissions "$PERM" "$RTK_BIN"
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "$RTK_BIN rtk git npm" ]
   [ "$(jq -r '.mcpAllowlist[0]' "$PERM")" = "github:*" ]
 }
 
 @test "permissions merge accepts JSONC line comments" {
   PERM="$TMP/.cursor/permissions.json"
+  RTK_BIN="$TMP/.cursor/bin/rtk"
   mkdir -p "$(dirname "$PERM")"
   cat >"$PERM" <<'EOF'
 {
@@ -287,12 +291,79 @@ EOF
   ]
 }
 EOF
-  merge_cursor_permissions "$PERM"
-  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "git rtk" ]
+  merge_cursor_permissions "$PERM" "$RTK_BIN"
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "$RTK_BIN rtk git" ]
 }
 
-@test "permissions CLI upserts rtk" {
+@test "permissions CLI sets absolute rtk allowlist" {
   PERM="$TMP/.cursor/permissions.json"
-  "$REPO_DIR/home/merge-cursor-llm.sh" permissions "$PERM"
-  [ "$(jq -r '.terminalAllowlist[0]' "$PERM")" = "rtk" ]
+  RTK_BIN="$TMP/.cursor/bin/rtk"
+  "$REPO_DIR/home/ides/merge-cursor-llm.sh" permissions "$PERM" "$RTK_BIN"
+  [ "$(jq -r '.terminalAllowlist | join(" ")' "$PERM")" = "$RTK_BIN rtk" ]
+}
+
+@test "permissions-clear-rtk drops managed entries and deletes empty key" {
+  PERM="$TMP/.cursor/permissions.json"
+  RTK_BIN="$TMP/.cursor/bin/rtk"
+  mkdir -p "$(dirname "$PERM")"
+  jq -n --arg rtk "$RTK_BIN" '{terminalAllowlist: [$rtk, "rtk"], mcpAllowlist: ["github:*"]}' >"$PERM"
+  merge_cursor_permissions_clear_rtk "$PERM" "$RTK_BIN"
+  [ "$(jq -r 'has("terminalAllowlist")' "$PERM")" = "false" ]
+  [ "$(jq -r '.mcpAllowlist[0]' "$PERM")" = "github:*" ]
+}
+
+@test "permissions-clear-rtk CLI clears rtk allowlist" {
+  PERM="$TMP/.cursor/permissions.json"
+  RTK_BIN="$TMP/.cursor/bin/rtk"
+  mkdir -p "$(dirname "$PERM")"
+  jq -n --arg rtk "$RTK_BIN" '{terminalAllowlist: [$rtk, "rtk"]}' >"$PERM"
+  "$REPO_DIR/home/ides/merge-cursor-llm.sh" permissions-clear-rtk "$PERM" "$RTK_BIN"
+  [ "$(jq -r 'has("terminalAllowlist")' "$PERM")" = "false" ]
+}
+
+run_rtk_hook() {
+  local cmd=$1
+  export RTK JQ
+  jq -n --arg c "$cmd" '{tool_input:{command:$c}}' | bash "$REPO_DIR/home/rtk-rewrite.sh"
+}
+
+@test "rtk hook allows rewritten git with absolute RTK first token" {
+  command -v rtk >/dev/null || skip "rtk not installed"
+  RTK=$(command -v rtk)
+  JQ=$(command -v jq)
+  out=$(run_rtk_hook "git status")
+  [ "$(jq -r '.permission' <<<"$out")" = "allow" ]
+  [ "$(jq -r '.updated_input.command' <<<"$out")" = "$RTK git status" ]
+  [ "$(jq -r '.updated_input.command | split(" ")[0]' <<<"$out")" = "$RTK" ]
+}
+
+@test "rtk hook wraps unfiltered commands with absolute rtk run" {
+  command -v rtk >/dev/null || skip "rtk not installed"
+  RTK=$(command -v rtk)
+  JQ=$(command -v jq)
+  out=$(run_rtk_hook "echo hello")
+  [ "$(jq -r '.permission' <<<"$out")" = "allow" ]
+  [[ "$(jq -r '.updated_input.command' <<<"$out")" == "$RTK"\ run\ -c\ * ]]
+}
+
+@test "rtk hook rewrites relative rtk commands to absolute and allows" {
+  command -v rtk >/dev/null || skip "rtk not installed"
+  RTK=$(command -v rtk)
+  JQ=$(command -v jq)
+  out=$(run_rtk_hook "rtk git status")
+  [ "$(jq -r '.permission' <<<"$out")" = "allow" ]
+  [ "$(jq -r '.updated_input.command' <<<"$out")" = "$RTK git status" ]
+}
+
+@test "allowlist first entry matches hook-emitted first token" {
+  command -v rtk >/dev/null || skip "rtk not installed"
+  PERM="$TMP/.cursor/permissions.json"
+  RTK=$(command -v rtk)
+  JQ=$(command -v jq)
+  merge_cursor_permissions "$PERM" "$RTK"
+  out=$(run_rtk_hook "git status")
+  allow0=$(jq -r '.terminalAllowlist[0]' "$PERM")
+  first=$(jq -r '.updated_input.command | split(" ")[0]' <<<"$out")
+  [ "$allow0" = "$first" ]
+  [ "$first" = "$RTK" ]
 }

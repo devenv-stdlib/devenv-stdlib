@@ -7,7 +7,7 @@
 let
   cfg = config.cursor.llmContext;
   nine = config.cursor.ninerouter.enable;
-  nonNix = import ../modules/non-nix/lib.nix { inherit lib; };
+  nonNix = import ../../modules/non-nix/lib.nix { inherit lib; };
   resolved = nonNix.resolve pkgs;
   entry = name: lib.findFirst (e: e.name == name) null resolved;
   mise = lib.getExe pkgs.mise;
@@ -15,88 +15,83 @@ let
   dockerMcpImage = nonNix.imageRef "docker-mcp";
   ninerouterImage = nonNix.imageRef "ninerouter";
 
-  # Nix package when promoted; otherwise a thin mise shim (conf.d pins).
+  # Nix package when promoted; otherwise prefer a mise install dir binary
+  # (mise exec loads full conf.d and fails if unrelated tools lack pipx/npm).
   cliExe =
     name:
     let
       e = entry name;
       bin = if e == null then name else nonNix.binName e;
+      miseKey = if e == null then null else e.mise;
+      installName = if miseKey == null then null else lib.replaceStrings [ ":" "/" ] [ "-" "-" ] miseKey;
     in
     if e != null && e.via == "nix" then
       lib.getExe e.package
     else
       pkgs.writeShellScript bin ''
+        set -euo pipefail
+        installs="''${XDG_DATA_HOME:-$HOME/.local/share}/mise/installs"
+        ${lib.optionalString (installName != null) ''
+          for cand in \
+            "$installs"/${lib.escapeShellArg installName}/latest/${lib.escapeShellArg bin} \
+            "$installs"/${lib.escapeShellArg installName}/latest/bin/${lib.escapeShellArg bin} \
+            "$installs"/${lib.escapeShellArg installName}/*/${lib.escapeShellArg bin} \
+            "$installs"/${lib.escapeShellArg installName}/*/bin/${lib.escapeShellArg bin}; do
+            if [ -x "$cand" ]; then
+              exec "$cand" "$@"
+            fi
+          done
+        ''}
         exec ${mise} exec -- ${bin} "$@"
       '';
 
-  rtk = cliExe "rtk";
-  serena = cliExe "serena";
-  headroom = cliExe "headroom";
-  githubMcpBin = cliExe "github-mcp-server";
-  braveMcpBin = cliExe "brave-search-mcp";
-  firecrawlMcpBin = cliExe "firecrawl-mcp";
+  mcp = import ./mcp {
+    inherit
+      pkgs
+      lib
+      jq
+      dockerMcpImage
+      ;
+    rtk = cliExe "rtk";
+    serena = cliExe "serena";
+    headroom = cliExe "headroom";
+    githubMcpBin = cliExe "github-mcp-server";
+    braveMcpBin = cliExe "brave-search-mcp";
+    firecrawlMcpBin = cliExe "firecrawl-mcp";
+    gitConflictMcp = cliExe "git-conflict-mcp";
+    gitRebaseMcp = cliExe "git-rebase-mcp";
+  };
 
-  rtkRewrite = pkgs.writeShellScript "rtk-rewrite.sh" ''
-    export RTK=${lib.escapeShellArg rtk}
-    export JQ=${lib.escapeShellArg jq}
-    exec ${pkgs.runtimeShell} ${./rtk-rewrite.sh}
+  upsertJson = mcp.mkUpsertJson { includeHeadroom = !nine; };
+  removeJson = mcp.mkRemoveJson { removeHeadroom = nine; };
+
+  # Copy wrapper + merge-lib together. A lone `./merge-cursor-llm.sh` store
+  # path makes dirname=/nix/store and `source …/mcp/merge-lib.sh` miss.
+  mergeCursorPkg = pkgs.runCommand "merge-cursor-llm" { } ''
+    mkdir -p $out/mcp
+    cp ${./merge-cursor-llm.sh} $out/merge-cursor-llm.sh
+    cp ${./mcp/merge-lib.sh} $out/mcp/merge-lib.sh
+    chmod +x $out/merge-cursor-llm.sh
   '';
-  githubMcp = pkgs.writeShellScript "github-mcp" ''
-    set -euo pipefail
-    token="$(${lib.getExe pkgs.gh} auth token 2>/dev/null || true)"
-    if [ -z "$token" ]; then
-      echo "github-mcp: run gh auth login first" >&2
-      exit 1
-    fi
-    export GITHUB_PERSONAL_ACCESS_TOKEN="$token"
-    exec ${githubMcpBin} stdio
-  '';
-  dockerMcp = pkgs.writeShellScript "docker-mcp" ''
-    set -euo pipefail
-    # shellcheck disable=SC1091
-    . ${./docker-rootless.sh}
-    docker_rootless_env
-    docker="$(command -v docker || true)"
-    if [ -z "$docker" ]; then
-      for cand in /usr/bin/docker /usr/local/bin/docker; do
-        if [ -x "$cand" ]; then
-          docker=$cand
-          break
-        fi
-      done
-    fi
-    if [ -z "$docker" ]; then
-      echo "docker-mcp: docker is not on PATH" >&2
-      exit 1
-    fi
-    sock=$(docker_engine_sock) || {
-      echo "docker-mcp: DOCKER_HOST must be a unix socket" >&2
-      exit 1
-    }
-    if [ ! -S "$sock" ]; then
-      echo "docker-mcp: no Engine socket at $sock (rootless Docker is the default)" >&2
-      exit 1
-    fi
-    exec "$docker" run -i --rm \
-      -v "$sock:/var/run/docker.sock" \
-      ${lib.escapeShellArg dockerMcpImage}
-  '';
-  braveMcp = pkgs.writeShellScript "brave-search-mcp" ''
-    exec ${braveMcpBin}
-  '';
-  firecrawlMcp = pkgs.writeShellScript "firecrawl-mcp" ''
-    exec ${firecrawlMcpBin}
-  '';
+  mergeCursor = "${mergeCursorPkg}/merge-cursor-llm.sh";
+  loadSecrets = ../load-secrets.sh;
+  configureNine = ../configure-9router.sh;
+  watchNine = ../watch-9router-secrets.sh;
+  dockerRootless = ../docker-rootless.sh;
+  nineLoopback = ../ninerouter-loopback-proxy.js;
+  nineStart = ../ninerouter-start.sh;
+  rtkBin = cliExe "rtk";
 in
 {
   options.cursor.llmContext.enable = lib.mkOption {
     type = lib.types.bool;
     default = config.cursor.enable;
     description = ''
-      Install Serena, Context7, GitHub, Docker, and optional Brave/Firecrawl MCP.
-      Default path also installs RTK, a Ponytail rule, and Headroom MCP.
-      9Router is opt-in via cursor.ninerouter.enable.
-      Defaults to cursor.enable.
+      Install Serena, Context7, GitHub, Docker, and optional Brave/Firecrawl MCP
+      from the shared home/ides/mcp catalog into ~/.cursor/mcp.json (upsert only;
+      user-added servers are preserved). Default path also installs RTK, a
+      Ponytail rule, and Headroom MCP. 9Router is opt-in via
+      cursor.ninerouter.enable. Defaults to cursor.enable.
     '';
   };
 
@@ -125,15 +120,21 @@ in
               ${
                 if nine then
                   ''
-                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} hooks-remove "$HOME/.cursor/hooks.json"
+                    ${pkgs.runtimeShell} ${mergeCursor} hooks-remove "$HOME/.cursor/hooks.json"
+                    ${pkgs.runtimeShell} ${mergeCursor} permissions-clear-rtk \
+                      "$HOME/.cursor/permissions.json" "$HOME/.cursor/bin/rtk"
                     rm -f "$HOME/.cursor/rules/ponytail.mdc" \
                       "$HOME/.cursor/rules/headroom-compress.mdc" \
                       "$HOME/.cursor/rules/rtk-passthrough.mdc"
                   ''
                 else
                   ''
-                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} hooks "$HOME/.cursor/hooks.json" ${lib.escapeShellArg (toString rtkRewrite)}
-                    ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} permissions "$HOME/.cursor/permissions.json"
+                    mkdir -p "$HOME/.cursor/bin"
+                    ln -sfn ${lib.escapeShellArg (toString rtkBin)} "$HOME/.cursor/bin/rtk"
+                    ${pkgs.runtimeShell} ${mergeCursor} permissions \
+                      "$HOME/.cursor/permissions.json" "$HOME/.cursor/bin/rtk"
+                    ${pkgs.runtimeShell} ${mergeCursor} hooks \
+                      "$HOME/.cursor/hooks.json" ${lib.escapeShellArg (toString mcp.rtkRewrite)}
                   ''
               }
 
@@ -141,54 +142,17 @@ in
               mkdir -p "$HOME/.config/9router"
               umask 077
               printf 'BRAVE_MCP=%s\nFIRECRAWL_MCP=%s\n' \
-                ${lib.escapeShellArg (toString braveMcp)} \
-                ${lib.escapeShellArg (toString firecrawlMcp)} \
+                ${lib.escapeShellArg (toString mcp.braveMcp)} \
+                ${lib.escapeShellArg (toString mcp.firecrawlMcp)} \
                 >"$HOME/.config/9router/mcp-wrappers.env"
               chmod 600 "$HOME/.config/9router/mcp-wrappers.env"
 
-              upsert=$(mktemp)
-              remove=$(mktemp)
-              ${
-                if nine then
-                  ''
-                    ${jq} -n \
-                      --arg serena ${lib.escapeShellArg (toString serena)} \
-                      --arg github ${lib.escapeShellArg (toString githubMcp)} \
-                      --arg docker ${lib.escapeShellArg (toString dockerMcp)} \
-                      '
-                        {
-                          serena: { command: $serena, args: ["start-mcp-server", "--context", "ide"] },
-                          context7: { url: "https://mcp.context7.com/mcp" },
-                          github: { command: $github },
-                          docker: { command: $docker }
-                        }
-                      ' >"$upsert"
-                    printf '%s\n' '["headroom"]' >"$remove"
-                  ''
-                else
-                  ''
-                    ${jq} -n \
-                      --arg serena ${lib.escapeShellArg (toString serena)} \
-                      --arg headroom ${lib.escapeShellArg (toString headroom)} \
-                      --arg github ${lib.escapeShellArg (toString githubMcp)} \
-                      --arg docker ${lib.escapeShellArg (toString dockerMcp)} \
-                      '
-                        {
-                          serena: { command: $serena, args: ["start-mcp-server", "--context", "ide"] },
-                          headroom: { command: $headroom, args: ["mcp", "serve"] },
-                          context7: { url: "https://mcp.context7.com/mcp" },
-                          github: { command: $github },
-                          docker: { command: $docker }
-                        }
-                      ' >"$upsert"
-                    printf '%s\n' '[]' >"$remove"
-                  ''
-              }
-              ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} mcp "$HOME/.cursor/mcp.json" "$upsert" "$remove"
-              rm -f "$upsert" "$remove"
-              ${pkgs.runtimeShell} ${./merge-cursor-llm.sh} mcp-secrets "$HOME/.cursor/mcp.json" \
-                ${lib.escapeShellArg (toString braveMcp)} \
-                ${lib.escapeShellArg (toString firecrawlMcp)}
+              ${pkgs.runtimeShell} ${mergeCursor} mcp "$HOME/.cursor/mcp.json" \
+                ${lib.escapeShellArg (toString upsertJson)} \
+                ${lib.escapeShellArg (toString removeJson)}
+              ${pkgs.runtimeShell} ${mergeCursor} mcp-secrets "$HOME/.cursor/mcp.json" \
+                ${lib.escapeShellArg (toString mcp.braveMcp)} \
+                ${lib.escapeShellArg (toString mcp.firecrawlMcp)}
             '';
 
             writeDevenvRoot = lib.hm.dag.entryBefore [ "reloadSystemd" ] ''
@@ -213,12 +177,12 @@ in
             Service = {
               Environment = [
                 "PATH=${config.home.profileDirectory}/bin:/usr/local/bin:/usr/bin:/bin"
-                "NINEROUTER_LOAD_SECRETS_SH=${./load-secrets.sh}"
-                "NINEROUTER_CONFIGURE_SH=${./configure-9router.sh}"
-                "NINEROUTER_MERGE_CURSOR_SH=${./merge-cursor-llm.sh}"
+                "NINEROUTER_LOAD_SECRETS_SH=${loadSecrets}"
+                "NINEROUTER_CONFIGURE_SH=${configureNine}"
+                "NINEROUTER_MERGE_CURSOR_SH=${mergeCursor}"
                 "NINEROUTER_ENABLE=${if nine then "1" else "0"}"
               ];
-              ExecStart = "${pkgs.runtimeShell} ${./watch-9router-secrets.sh} watch";
+              ExecStart = "${pkgs.runtimeShell} ${watchNine} watch";
               Restart = "on-failure";
               RestartSec = "10s";
             };
@@ -246,9 +210,9 @@ in
             and error handling. Standard library over new dependencies.
           '';
 
-          ".cursor/rules/headroom-compress.mdc".source = ../.cursor/rules/headroom-compress.mdc;
+          ".cursor/rules/headroom-compress.mdc".source = ../../.cursor/rules/headroom-compress.mdc;
 
-          ".cursor/rules/rtk-passthrough.mdc".source = ../.cursor/rules/rtk-passthrough.mdc;
+          ".cursor/rules/rtk-passthrough.mdc".source = ../../.cursor/rules/rtk-passthrough.mdc;
 
           ".cursor/rules/web-crawl-fallback.mdc".text = ''
             ---
@@ -315,7 +279,7 @@ in
                   ]
                 )
               }:$PATH
-              ${pkgs.runtimeShell} ${./configure-9router.sh} http://127.0.0.1:20128 http://host.docker.internal:8787 || true
+              ${pkgs.runtimeShell} ${configureNine} http://127.0.0.1:20128 http://host.docker.internal:8787 || true
               echo "9Router: set Cursor Override OpenAI Base URL — see $HOME/.config/9router/cursor-openai.hint" >&2
             '';
           };
@@ -328,12 +292,12 @@ in
           Service = {
             Environment = [
               "PATH=${config.home.profileDirectory}/bin:/usr/local/bin:/usr/bin:/bin"
-              "DOCKER_ROOTLESS_SH=${./docker-rootless.sh}"
-              "NINEROUTER_LOOPBACK_PROXY=${./ninerouter-loopback-proxy.js}"
+              "DOCKER_ROOTLESS_SH=${dockerRootless}"
+              "NINEROUTER_LOOPBACK_PROXY=${nineLoopback}"
               "NINEROUTER_PYTHON=${lib.getExe (pkgs.python313.withPackages (p: [ p.bcrypt ]))}"
               "NINEROUTER_IMAGE=${ninerouterImage}"
             ];
-            ExecStart = "${pkgs.runtimeShell} ${./ninerouter-start.sh}";
+            ExecStart = "${pkgs.runtimeShell} ${nineStart}";
             Restart = "on-failure";
             RestartSec = "5s";
           };

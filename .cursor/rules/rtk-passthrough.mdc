@@ -1,20 +1,42 @@
 ---
-description: Retry once without RTK compaction when a needed detail is missing
+description: Prefer RTK Shell path; full output via rtk run/proxy; ask if huge
 alwaysApply: true
 ---
 
-# When to bypass RTK compaction
+# Shell goes through RTK
 
-The Shell hook rewrites `git diff` to `rtk git diff`. Keep that compact output.
+`terminalAllowlist` always includes the absolute **`$HOME/.cursor/bin/rtk`**
+(plus bare `rtk`); `home-switch` keeps any other prefixes already in
+`~/.cursor/permissions.json`. The `preToolUse` Shell hook rewrites known
+commands (`git status` → `$HOME/.cursor/bin/rtk git status`) or wraps the
+rest as `$HOME/.cursor/bin/rtk run -c '…'`. Prefer that path. Do not invent
+bare non-`rtk` shell commands to "skip" the hook. Do not run `rtk init` or
+install the marketplace RTK extension — `home-switch` owns hooks and
+permissions.
 
-If a specific line, path, or hunk is missing, retry **once**. Do not disable RTK for ordinary status or diff.
+## When you need full (uncompacted) output
+
+Retry **once** with raw output still under RTK:
 
 ```
-# ❌ BAD — RTK_DISABLED=1 on every git status
-# ✅ GOOD — compact first; if a hunk is missing:
+# ❌ BAD — leaves allowlist; prompts the user
 RTK_DISABLED=1 git diff
-# or: rtk git diff --no-compact
+git diff
+
+# ✅ GOOD — compact first; if a detail is missing:
+rtk git diff --no-compact
+# or:
+rtk run -c 'git diff'
 # or: Read / Grep a known file (those tools skip the Shell hook)
 ```
 
-`RTK_DISABLED=1 <cmd>` makes `rtk rewrite` pass through (our hook then runs the original). Failures may print a tee path under `~/.local/share/rtk/tee/` — read that before re-running. Do not loop.
+`rtk proxy …` is also fine (raw + usage tracking).
+
+## Ask first if output is likely huge
+
+If full output may be very long (large test logs, full `nix-build` / bats /
+nix-unit dumps, big trees), **ask the user before** `rtk run` / `rtk proxy`
+/ `--no-compact`. Prefer compact RTK (or Headroom after a long run) otherwise.
+
+Do not loop on bypass. Failures may print a tee under `~/.local/share/rtk/tee/`
+— read that before re-running.

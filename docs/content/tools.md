@@ -26,7 +26,7 @@ nix --version
 ```bash
 devenv shell
 devenv test          # enterTest: required binaries + BATS
-devenv tasks run devenv:test-devenv
+devenv tasks run --show-output devenv:test-devenv
 ```
 
 - Docs: [devenv.sh](https://devenv.sh/) · [Getting started](https://devenv.sh/getting-started/)
@@ -149,21 +149,21 @@ git diff             # delta
 - zoxide: [ajeetdsouza/zoxide](https://github.com/ajeetdsouza/zoxide)
 - delta: [dandavison.github.io/delta](https://dandavison.github.io/delta/)
 
-### httpie, tldr, howdoi, fuck, usql
+### httpie, tldr, navi, fuck, usql
 
-[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. `howdoi` answers “how do I…” from Stack Overflow ([gleitz/howdoi](https://github.com/gleitz/howdoi); pin in `modules/non-nix/catalog.toml`, Nix when promotable else mise). [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
+[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. [navi](https://github.com/denisidoro/navi) browses interactive cheatsheets: repo-local sheets in `cheats/` (prepended to `NAVI_PATH` in `devenv shell`) plus [denisidoro/cheats](https://github.com/denisidoro/cheats) from Home Manager. [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
 
 ```bash
 http https://endoflife.date/api/rust.json
 tldr tar
-howdoi reverse a list in python
+navi
 # mistype a command, then:
 fuck
 ```
 
 - HTTPie: [httpie.io/docs/cli](https://httpie.io/docs/cli)
 - tldr pages: [tldr.sh](https://tldr.sh/) · tealdeer: [tealdeer-rs/tealdeer](https://github.com/tealdeer-rs/tealdeer)
-- howdoi: [gleitz/howdoi](https://github.com/gleitz/howdoi)
+- navi: [denisidoro/navi](https://github.com/denisidoro/navi) · cheats: [denisidoro/cheats](https://github.com/denisidoro/cheats) · syntax: [cheatsheet syntax](https://github.com/denisidoro/navi/blob/master/docs/cheatsheet/syntax/README.md)
 - pay-respects: [codeberg.org/iff/pay-respects](https://codeberg.org/iff/pay-respects)
 - usql: [xo/usql](https://github.com/xo/usql)
 
@@ -206,14 +206,14 @@ GNOME extension that drops the terminal from the top of the screen.
 
 ### Cursor
 
-[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager — no website AppImage. The launcher always passes `--no-sandbox`. Common extensions (devenv, Nix IDE, EditorConfig, …) are user-global. Language packs follow `languages.*` and are installed when you `devenv shell`.
+[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager (`home/ides/cursor.nix`) — no website AppImage. The launcher always passes `--no-sandbox` (Chromium only; the store `chrome-sandbox` cannot be root-owned 4755). Agent terminal sandbox is separate: on Ubuntu, `./setup.sh` installs AppArmor profiles under `includes/cursor-agent-sandbox/`. Common extensions (devenv, navi cheatsheet language, Nix IDE, EditorConfig, …) are user-global under `~/.cursor/extensions`. Language packs follow `languages.*` and are installed when you `devenv shell` (`modules/ides`, `cursor-sync-extensions`). Users may add their own extensions; sync only adds missing links.
 
 ```bash
 # skip the editor
 # home.local.nix: cursor.enable = false;
 ```
 
-`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Context7, GitHub, Docker, and optional Brave/Firecrawl MCP and merges hooks/MCP.
+`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Context7, GitHub, Docker, git-conflict-mcp, git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared `home/ides/mcp` catalog and merges them into `~/.cursor/mcp.json` (upsert only; user-added MCP servers are preserved).
 
 `cursor.ninerouter.enable` (default **false**; Copier `ninerouter`) chooses the compaction path:
 
@@ -221,6 +221,10 @@ GNOME extension that drops the terminal from the top of the screen.
 - **On (gateway):** 9Router only. Built-in RTK / Ponytail via PATCH; `headroomEnabled` is false. No host RTK, Ponytail rule, or Headroom. Cursor Pro hosted models fail while Override OpenAI Base URL is on. After `home-switch`, paste `~/.config/9router/cursor-api-key`, set the base URL to `http://127.0.0.1:20128/v1`, and pick a 9Router model. See `~/.config/9router/cursor-openai.hint`. Home Manager cannot write those GUI fields (`Ctrl+Shift+0` toggles the key).
 
 - Docs: [cursor.com/docs](https://cursor.com/docs)
+
+### VS Code
+
+Opt-in only (`vscode.enable = true` in `home.local.nix`; default **false**). Installs `pkgs.vscode` and common extensions under `~/.vscode/extensions`. Does not turn on with Cursor. Language packs use `vscode-sync-extensions` when you want them under `~/.vscode/extensions`.
 
 ### Non-Nix catalog and mise
 
@@ -247,7 +251,7 @@ Pass `--dry-run` to preview. Each command’s `--help` includes copy-pasteable E
 | Scope | Config | Install |
 | --- | --- | --- |
 | Project (`debtmap`, `skills`, plus `catalog.local.toml` project-scope) | generated `mise.toml` (gitignored) | `mise:install` after `devenv:files` |
-| User (RTK, Serena, Headroom, MCP CLIs, howdoi, …) | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation |
+| User (RTK, Serena, Headroom, MCP CLIs, navi, …) | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation |
 
 Docker images (`decolua/9router`, `mcp/docker`) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools. Template authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a monorepo, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get shipped pin moves via `copier update`.
 
@@ -267,7 +271,7 @@ In this template, `update` runs `includes/update/skills.sh` (`skills update -y -
 
 ### RTK
 
-[RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. When `cursor.ninerouter.enable` is off, Home Manager installs the catalog pin via mise (or Nix when promotable), merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`, and upserts `rtk` into `~/.cursor/permissions.json` `terminalAllowlist` (other prefixes stay; this key replaces the in-app terminal allowlist). It does not run `rtk init`. `.cursor/rules/rtk-passthrough.mdc` (also `~/.cursor/rules/` after `home-switch`) tells the agent to retry once with `RTK_DISABLED=1` or `--no-compact` only when a needed detail is missing. When 9Router is on, the gateway’s built-in RTK is used and that host hook and rule are removed.
+[RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. When `cursor.ninerouter.enable` is off, Home Manager installs the catalog pin via mise (or Nix when promotable), installs a stable `$HOME/.cursor/bin/rtk` entrypoint, merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`, and ensures `~/.cursor/permissions.json` `terminalAllowlist` includes that absolute path plus bare `rtk` (preserves other prefixes; this key still owns the in-app terminal allowlist). Cursor auto-runs Shell from the allowlist (hook `permission: allow` alone is not enough). The hook rewrites or wraps every command so the first token is `$HOME/.cursor/bin/rtk` (thin Agent PATH cannot rely on bare `rtk`). It does not run `rtk init` and does not use the marketplace RTK extension — both fight `home-switch`. `.cursor/rules/rtk-passthrough.mdc` (also `~/.cursor/rules/` after `home-switch`) tells the agent to keep the RTK path, use `rtk run` / `rtk proxy` / `--no-compact` for full output, and ask first when that output is likely huge. Reload Cursor after `home-switch` so hooks reload. When 9Router is on, the gateway’s built-in RTK is used; the host hook, RTK rules, and managed RTK allowlist entries are removed.
 
 ```bash
 rtk rewrite "git status"
@@ -333,6 +337,18 @@ Host Docker Engine tools via `docker run -i --rm -v $XDG_RUNTIME_DIR/docker.sock
 
 - Docs: [hub.docker.com/r/mcp/docker](https://hub.docker.com/r/mcp/docker)
 
+### git-conflict-mcp
+
+[git-conflict-mcp](https://github.com/mattyatea/git-conflict-mcp) helps agents and humans resolve merge conflicts (optional WebUI). Home Manager installs the npm pin from the non-Nix catalog (mise) and upserts it into `~/.cursor/mcp.json` when `cursor.llmContext.enable` is on. You can still run `npx -y git-conflict-mcp` ad hoc; the catalog pin is what `home-switch` / mise install.
+
+- Docs: [mattyatea/git-conflict-mcp](https://github.com/mattyatea/git-conflict-mcp)
+
+### git-rebase-mcp
+
+[git-rebase-mcp](https://github.com/aaron-riact/git-rebase-mcp) lets an agent drive rebases (and cherry-pick/merge/revert conflicts) with safety checks (refuse bad amends, preflight, proceed/abort). Installed from GitHub via mise `pipx:` (uv tool install under the hood); pin is the default-branch commit SHA. Upserted into `~/.cursor/mcp.json` with the other catalog MCPs.
+
+- Docs: [aaron-riact/git-rebase-mcp](https://github.com/aaron-riact/git-rebase-mcp)
+
 ### Brave Search
 
 Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key in both modes. Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server` pin from the non-Nix catalog (mise `npm`, STDIO) when `BRAVE_API_KEY` is set. When `cursor.ninerouter.enable` is on, the same key is POSTed to 9Router as a `brave-search` connection named `devenv` after dashboard login (`configure-9router.sh`).
@@ -393,10 +409,10 @@ debtmap --help
 
 ### BATS and act
 
-[BATS](https://bats-core.readthedocs.io/) is the shell test runner (`bats -r tests`). [act](https://nektosact.com/) replays GitHub Actions locally; `test-devenv` builds `devenv-act:24.04` and runs `act workflow_call` on generated workflows. `.actrc` maps both `ubuntu-24.04` and `ubuntu-26.04` to that image. `act` is also user-global (`home/act.nix`). Local act uses the rootless Engine (`DOCKER_HOST`).
+[BATS](https://bats-core.readthedocs.io/) is the shell test runner (`bats -r --jobs "$(nproc)" tests`; GNU `parallel` required for `--jobs`). [act](https://nektosact.com/) replays GitHub Actions locally; `test-devenv` builds `devenv-act:24.04` and runs `act workflow_call` on generated workflows. `.actrc` maps both `ubuntu-24.04` and `ubuntu-26.04` to that image. `act` is also user-global (`home/act.nix`). Local act uses the rootless Engine (`DOCKER_HOST`).
 
 ```bash
-bats -r tests
+bats -r --jobs "$(nproc)" tests
 build-act-image
 ```
 

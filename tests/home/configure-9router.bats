@@ -14,6 +14,9 @@ setup() {
   TMP=$(mktemp -d)
   export PATH="$TMP/bin:$PATH"
   export HOME="$TMP/home"
+  # devenv/CI export XDG_CONFIG_HOME; pin it under the fake HOME so scripts
+  # and assertions agree on ~/.config/9router paths.
+  export XDG_CONFIG_HOME="$HOME/.config"
   mkdir -p "$HOME/.config/9router" "$TMP/bin" "$TMP/http"
   cat >"$TMP/bin/curl" <<'EOF'
 #!/usr/bin/env bash

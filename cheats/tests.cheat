@@ -1,0 +1,38 @@
+% tests, bats
+
+# devenv enterTest: toolchain checks plus full BATS
+devenv test
+
+# Full BATS suite
+bats -r tests
+
+# setup.sh only
+bats tests/setup
+
+# Home Manager tests (terminal-lib, bashrc.d, Cursor LLM)
+bats tests/home
+
+# Copier copy/update (template-only; excluded from monorepos)
+bats tests/copier.bats
+
+% tests, nix-unit
+
+# Maintainer suite: nix-unit, BATS, nixosTest, actionlint, act
+test-devenv
+
+# Same via devenv tasks
+devenv tasks run devenv:test-devenv
+
+% tests, ci
+
+# Full maintainer CI locally (writes junit/*.xml)
+test-devenv
+
+# Build act Docker image devenv-act:24.04
+build-act-image
+
+# Setup and tag-hook subset (setup-tests.yml)
+bats tests/setup tests/tag-hook.bats
+
+# JUnit reports from test-devenv (gitignored)
+ls junit/

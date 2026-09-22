@@ -86,4 +86,14 @@ in
     expr = builtins.length nonNix.shipped > 0;
     expected = true;
   };
+
+  testNonNixBinNameFallsBackWhenBinNull = {
+    expr = nonNix.binName (
+      rtkEntry
+      // {
+        bin = null;
+      }
+    );
+    expected = "rtk";
+  };
 }

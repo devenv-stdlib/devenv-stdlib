@@ -14,6 +14,7 @@
     pkgs.direnv
     pkgs.nixfmt
     pkgs.bats
+    pkgs.parallel # bats --jobs
     pkgs.shellcheck
     pkgs.home-manager
     pkgs.commitlint

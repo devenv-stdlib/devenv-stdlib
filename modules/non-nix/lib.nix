@@ -122,7 +122,8 @@ let
     in
     if e == null || e.kind != "docker-image" then null else "${e.image}:${e.pin}";
 
-  binName = e: e.bin or e.name;
+  # normalize sets missing bin to null; `e.bin or e.name` would stay null.
+  binName = e: if e.bin != null then e.bin else e.name;
 
   # Quoted tool key when it contains ':' (ubi:/npm:/pipx: backends).
   tomlToolLine =

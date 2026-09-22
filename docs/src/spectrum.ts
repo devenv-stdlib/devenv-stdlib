@@ -7,7 +7,11 @@ import { IconChevronUp } from "@spectrum-web-components/icons-workflow/src/eleme
 import "@spectrum-web-components/icons-workflow/icons/sp-icon-chevron-up.js";
 import { Link } from "@spectrum-web-components/link";
 import "@spectrum-web-components/link/sp-link.js";
-import { SideNav, SideNavHeading, SideNavItem } from "@spectrum-web-components/sidenav";
+import {
+  SideNav,
+  SideNavHeading,
+  SideNavItem,
+} from "@spectrum-web-components/sidenav";
 import "@spectrum-web-components/sidenav/sp-sidenav-heading.js";
 import "@spectrum-web-components/sidenav/sp-sidenav-item.js";
 import "@spectrum-web-components/sidenav/sp-sidenav.js";

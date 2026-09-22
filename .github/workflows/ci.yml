@@ -5,6 +5,10 @@ on:
     branches: [main, master]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-devenv:
     strategy:
@@ -24,18 +28,21 @@ jobs:
       - name: Own workspace under act
         if: ${{ env.ACT }}
         run: |
-          sudo mkdir -p /home/runner/.cache/nix
-          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}" /home/runner/.cache
+          sudo mkdir -p /home/runner/.cache/nix /nix
+          # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
+          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}" /home/runner/.cache /nix
 
       - uses: cachix/install-nix-action@v31
 
-      - name: Cache Nix store
+      # Combined cache-nix-action only saves on success(); failed jobs never
+      # populated test-devenv keys. Restore + always-save fills Actions cache.
+      - name: Restore Nix store
+        id: nix-cache
         if: ${{ !env.ACT }}
-        uses: nix-community/cache-nix-action@v7
+        uses: nix-community/cache-nix-action/restore@v7
         with:
           primary-key: nix-${{ matrix.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix') }}
           restore-prefixes-first-match: nix-${{ matrix.os }}-${{ github.job }}-
-          gc-max-store-size-linux: 5G
 
       - uses: cachix/cachix-action@v16
         with:
@@ -45,7 +52,8 @@ jobs:
         run: nix profile add nixpkgs#devenv
 
       - name: Test devenv
-        run: devenv tasks run devenv:test-devenv
+        # --show-output: devenv tasks hide captured stdout unless showOutput / this flag
+        run: devenv tasks run --show-output devenv:test-devenv
 
       - name: Upload JUnit reports
         if: ${{ always() && !env.ACT }}
@@ -64,6 +72,13 @@ jobs:
             junit/**/*.xml
           comment_mode: always
           check_run_annotations: none
+
+      - name: Save Nix store
+        if: ${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
+          gc-max-store-size-linux: 5G
 
   has-test-workflow:
     needs: test-devenv
@@ -91,6 +106,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      actions: write
       issues: write
       pull-requests: write
     steps:
@@ -100,15 +116,22 @@ jobs:
 
       - uses: cachix/install-nix-action@v31
 
-      - name: Cache Nix store
-        uses: nix-community/cache-nix-action@v7
+      - name: Restore Nix store
+        id: nix-cache
+        uses: nix-community/cache-nix-action/restore@v7
         with:
           primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-${{ github.job }}-
-          gc-max-store-size-linux: 5G
 
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEVENV_SKIP_TAG_TESTS: "1"
         run: nix shell nixpkgs#semantic-release --command semantic-release
+
+      - name: Save Nix store
+        if: ${{ always() && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
+          gc-max-store-size-linux: 5G

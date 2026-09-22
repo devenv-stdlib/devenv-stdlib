@@ -277,6 +277,8 @@ Elevated privileges (sudo) are required for:
   - installing or upgrading the Nix daemon
   - enabling the flakes experimental feature in /etc/nix (if missing)
   - configuring the devenv Cachix cache with `cachix use devenv`
+  - installing AppArmor profiles so Cursor Agent terminal sandbox works on
+    Ubuntu (kernel.apparmor_restrict_unprivileged_userns=1)
   - on systems without systemd: making /nix writable for your user after a
     single-user (--init none) install
 
@@ -390,7 +392,16 @@ main() {
   step "configure the devenv Cachix binary cache as root" \
     sudo_with_nix "$cachix_bin" use devenv
 
+  if [[ -x $REPO_ROOT/includes/cursor-agent-sandbox/install.sh ]]; then
+    step "install Cursor Agent terminal sandbox AppArmor profiles" \
+      "${SUDO[@]}" "$REPO_ROOT/includes/cursor-agent-sandbox/install.sh"
+  fi
+
   cd "$REPO_ROOT" || fail "cannot enter $REPO_ROOT"
+
+  # shellcheck disable=SC1091
+  . "$REPO_ROOT/home/ensure-git-rerere.sh"
+  ensure_git_rerere
 
   printf '→ trust this directory for devenv auto-activation\n'
   if devenv allow; then
