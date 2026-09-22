@@ -2,8 +2,8 @@
 {
   lib,
   project,
-  denLanguage,
   languageCascade,
+  expectedLanguageChildren,
   ...
 }:
 let
@@ -54,8 +54,8 @@ in
   };
 
   testDenExpectedChildrenParity = {
-    expr = builtins.mapAttrs (_: sort) denLanguage.expectedChildren;
-    expected = builtins.mapAttrs (hub: _: hubShape hub) denLanguage.expectedChildren;
+    expr = builtins.mapAttrs (_: sort) expectedLanguageChildren;
+    expected = builtins.mapAttrs (hub: _: hubShape hub) expectedLanguageChildren;
   };
 
   # JS+TS prettier / Serena typescript / IDE pack via javascriptOn.

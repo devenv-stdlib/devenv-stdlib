@@ -1,6 +1,6 @@
 # Bootstrap
 
-One command configures the devenv binary cache as root, applies `home.nix` (Alacritty + Zellij + Quake Terminal, Atuin + ble.sh, Cursor + devenv extension, Starship), and builds this environment:
+One command configures the devenv binary cache as root, applies the Den Home Manager profile (Alacritty + Zellij + Quake Terminal, Atuin + ble.sh, Cursor + devenv extension, Starship), and builds this environment:
 
 ```bash
 ./setup.sh
@@ -30,7 +30,7 @@ The shell banner uses the Copier `name` (this template prints `devenv4monorepo r
 home-switch
 ```
 
-That is `home-manager switch -b backup -f home.nix`. `home-switch` loads secrets with `secretspec export` (whatever provider is configured: dotenv, keyring, env, …) and falls back to sourcing gitignored `.env` if export is unavailable. Activation then sees `BRAVE_API_KEY` / `FIRECRAWL_API_KEY`. Existing files Home Manager needs to replace are moved aside with a `.backup` suffix. On flakes-only hosts, `home-switch` and `setup.sh` set `NIX_PATH=nixpkgs=flake:nixpkgs` when `NIX_PATH` has no `nixpkgs=` entry, and drop search-path directories that do not exist (such as `~/.nix-defexpr/channels` without channels), which Nix would otherwise warn about on every evaluation.
+That is `home-manager switch -b backup --flake .#developer --impure`. `home-switch` loads secrets with `secretspec export` (whatever provider is configured: dotenv, keyring, env, …) and falls back to sourcing gitignored `.env` if export is unavailable. Activation then sees `BRAVE_API_KEY` / `FIRECRAWL_API_KEY`. Existing files Home Manager needs to replace are moved aside with a `.backup` suffix. On flakes-only hosts, `home-switch` and `setup.sh` set `NIX_PATH=nixpkgs=flake:nixpkgs` when `NIX_PATH` has no `nixpkgs=` entry, and drop search-path directories that do not exist (such as `~/.nix-defexpr/channels` without channels), which Nix would otherwise warn about on every evaluation.
 
 ## Everyday commands
 
@@ -44,7 +44,7 @@ That is `home-manager switch -b backup -f home.nix`. `home-switch` loads secrets
 | `non-nix:add-local` / `non-nix:remove-local` | Add or remove a team tool in `modules/non-nix/catalog.local.toml` (creates the file from root `catalog.local.toml.example` if missing). Example: `devenv tasks run non-nix:add-local -- --name example-cli --kind cli --scope project --pin 1.0.0 --mise ubi:owner/example-cli --docs 'Example CLI. Docs: https://example.com'`. |
 | `devenv update` | devenv CLI: flake inputs in `devenv.lock` only (`nixpkgs`, `git-hooks`, …) |
 | `devenv shell` | Enter the project toolchain |
-| `home-switch` | Re-apply Home Manager after editing `home.nix` |
+| `home-switch` | Re-apply Den Home Manager after editing aspects / `home.local.nix` |
 | `navi` | Browse repo `cheats/` plus community [denisidoro/cheats](https://github.com/denisidoro/cheats) |
 | `devenv test` | Build the env, check the toolchain, and run BATS |
 

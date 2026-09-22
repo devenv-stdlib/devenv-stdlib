@@ -20,7 +20,7 @@ This template splits those problems:
 | --- | --- |
 | The same skeleton in every monorepo, updatable later | Copier (`copy` / `update`) |
 | Compilers, linters, and hooks for *this* tree | devenv (`devenv.nix` + generated `devenv.local.nix`) |
-| Terminal, prompt, and editor on every host | Home Manager (`home.nix`) |
+| Terminal, prompt, and editor on every host | Home Manager (Den `home-switch`) |
 | CI that matches the versions developers can use | `supported.<lang>.*` and a generated `test.yml` |
 
 Languages stay **off** in this template repo so work on the skeleton does not pull Rust, Go, Python, or Node. Generated monorepos turn them on through the Copier questionnaire.

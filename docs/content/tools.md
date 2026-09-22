@@ -33,10 +33,10 @@ devenv tasks run --show-output devenv:test-devenv
 
 ### Home Manager
 
-[Home Manager](https://nix-community.github.io/home-manager/) owns the user profile: terminal, Starship, Cursor, bash integrations, and the CLIs under `home/*.nix`. Re-apply after editing `home.nix` or `home.local.nix`:
+[Home Manager](https://nix-community.github.io/home-manager/) owns the user profile: terminal, Starship, Cursor, bash integrations, and the CLIs under `home/*.nix` (composed via Den aspects). Re-apply after editing Den aspects or `home.local.nix`:
 
 ```bash
-home-switch          # home-manager switch -b backup -f home.nix
+home-switch          # home-manager switch -b backup --flake .#developer --impure
 ```
 
 Replaced files get a `.backup` suffix. On flakes-only hosts, `home-switch` and `setup.sh` set `NIX_PATH=nixpkgs=flake:nixpkgs` when `NIX_PATH` has no `nixpkgs=` entry, and drop search-path directories that do not exist (such as `~/.nix-defexpr/channels` without channels), which Nix would otherwise warn about on every evaluation.

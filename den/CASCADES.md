@@ -41,13 +41,14 @@ project-ides ──includes──► vscode-recs
 
 enterShell writers remain in `modules/ides`; aspects document composition.
 
-## Developer home (Phase 3 dual-run)
+## Developer home (Phase 4 cutover)
 
 ```
 developer ──includes──► cursor
           ├───────────► terminal
-          └───────────► home-cli   # remaining legacy HM CLIs / IDEs for parity
+          └───────────► home-cli   # remaining HM CLIs / IDEs
 ```
 
-Language hubs use the custom **`project`** class (not HM). See
-`den/PROJECT-CLASS-SPIKE.md` and `den/CONTRIBUTING-ASPECTS.md`.
+`home-switch` → flake `#developer` only. Language hubs use the custom
+**`project`** class (not HM). See `den/PROJECT-CLASS-SPIKE.md` and
+`den/CONTRIBUTING-ASPECTS.md`.

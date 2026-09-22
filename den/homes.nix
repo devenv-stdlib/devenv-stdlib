@@ -1,4 +1,5 @@
 # Standalone Home Manager via den.homes (no NixOS/Darwin host required).
+# Phase 4: sole HM composition root for supported Ubuntu hosts (`home-switch`).
 { inputs, den, ... }:
 {
   imports = [ inputs.den.flakeModule ];
@@ -12,7 +13,7 @@
       nixpkgs.config.allowUnfree = true;
     };
 
-    # Template developer home — cursor + terminal + home-cli (Phase 3 dual-run parity).
+    # Template developer home — cursor + terminal + home-cli.
     # Language / project-ide aspects use the project class (see den/classes/project.nix).
     homes.x86_64-linux.developer = { };
 
@@ -24,9 +25,24 @@
       ];
       homeManager =
         { config, lib, ... }:
+        let
+          # Gitignored home.local.nix is invisible to pure flake eval. home-switch
+          # always passes --impure so PWD-relative lookup works from the repo root.
+          pwd = builtins.getEnv "PWD";
+          pwdLocal = if pwd != "" then "${pwd}/home.local.nix" else null;
+          localOverride =
+            if pwdLocal != null && builtins.pathExists pwdLocal then
+              pwdLocal
+            else if builtins.pathExists ../home.local.nix then
+              ../home.local.nix
+            else
+              null;
+        in
         {
+          imports = lib.optional (localOverride != null) localOverride;
+
           home = {
-            # Match legacy home.nix: prefer login-shell USER/HOME (needs --impure).
+            # Prefer login-shell USER/HOME (needs --impure). Fixture fallback for eval.
             username = lib.mkDefault (
               let
                 u = builtins.getEnv "USER";
@@ -45,8 +61,9 @@
             {
               assertion = config.home.username != "" && config.home.homeDirectory != "";
               message = ''
-                home.username / home.homeDirectory are empty. Run `home-switch-den` from a
-                login shell (USER and HOME set), or set them in den/homes.nix.
+                home.username / home.homeDirectory are empty. Run `home-switch` from a
+                login shell (USER and HOME set), or set them in den/homes.nix /
+                home.local.nix.
               '';
             }
           ];

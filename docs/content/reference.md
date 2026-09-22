@@ -5,7 +5,7 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | Path | Role |
 | --- | --- |
 | `setup.sh` | One-command host bootstrap |
-| `devenv.nix` | Shell banner, tests, `home-switch` |
+| `devenv.nix` | Shell banner, tests, `home-switch` (Den flake) |
 | `devenv.yaml` / `devenv.lock` | Inputs and pinned lock |
 | `devenv.local.nix` | Questionnaire output (`name`, `languages.*`, `supported.*`) |
 | `devenv.local.nix.example` | Extra options to append (debtmap, packages, `supported.*.max`) |
@@ -18,7 +18,9 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `.cursor/rules/navi-cheatsheets.mdc` | Prefer extending `cheats/*.cheat`; navi syntax; no community-sheet copies |
 | `.agents/skills/` / `skills-lock.json` | 54 vendored Cursor skills (Vercel skills CLI); `README.md` there lists sources and licenses |
 | `cheats/` | Repo-local [navi](https://github.com/denisidoro/navi) sheets (`NAVI_PATH` in `devenv shell`) |
-| `home.nix` / `home/` | Home Manager (terminal, Cursor, user-global CLIs, rootless Docker `DOCKER_HOST`) |
+| `den/` + `flake.nix` | Den aspects / `den.homes` → `homeConfigurations.developer` |
+| `home/` | Home Manager modules (imported by Den aspects) |
+| `home.nix` | Compat stub only — do not use `-f home.nix` |
 | `home/navi.nix` | `NAVI_PATH` → pinned [denisidoro/cheats](https://github.com/denisidoro/cheats) |
 | `home.local.nix` | Gitignored host overrides |
 | `secretspec.toml` | Optional Brave / Firecrawl secret names (values stay out of git) |

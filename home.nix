@@ -1,54 +1,20 @@
+# Compat stub (Phase 4 cutover). Home Manager no longer evaluates this file.
+#
+# Supported Ubuntu hosts use Den:
+#   home-switch  →  home-manager switch --flake .#developer --impure
+# Composition lives in den/homes.nix + den/aspects/* (cursor, terminal, home-cli).
+# Optional host overrides: home.local.nix (imported by den.homes).
+#
+# Kept as a path so Copier destinations still receive a recognizable filename;
+# do not pass `-f home.nix` — that path is unsupported after cutover.
 {
-  config,
-  lib,
-  ...
-}:
-{
-  imports = [
-    ./home/bash.nix
-    ./home/terminal.nix
-    ./home/ides
-    ./home/mise.nix
-    ./home/bat.nix
-    ./home/eza.nix
-    ./home/copier.nix
-    ./home/httpie.nix
-    ./home/explainshell.nix
-    ./home/navi.nix
-    ./home/taplo.nix
-    ./home/semantic-release.nix
-    ./home/pay-respects.nix
-    ./home/usql.nix
-    ./home/zoxide.nix
-    ./home/act.nix
-    ./home/docker.nix
-    ./home/fzf.nix
-    ./home/delta.nix
-    ./home/direnv.nix
-    ./home/ripgrep.nix
-    ./home/fd.nix
-    ./home/gh.nix
-  ]
-  ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
-
-  home = {
-    username = lib.mkDefault (builtins.getEnv "USER");
-    homeDirectory = lib.mkDefault (builtins.getEnv "HOME");
-    stateVersion = "25.05";
-  };
-
-  programs.home-manager.enable = true;
-
-  # Ubuntu / other non-NixOS: export session vars and XDG dirs to GNOME.
-  targets.genericLinux.enable = true;
-
   assertions = [
     {
-      assertion = config.home.username != "" && config.home.homeDirectory != "";
+      assertion = false;
       message = ''
-        home.username / home.homeDirectory are empty. Run `home-switch` from a
-        login shell (USER and HOME set), or copy home.local.nix.example to
-        home.local.nix and set them there.
+        Legacy home.nix root removed (Den Phase 4 cutover).
+        Use `home-switch` (flake #developer --impure) or:
+          home-manager switch -b backup --flake .#developer --impure
       '';
     }
   ];
