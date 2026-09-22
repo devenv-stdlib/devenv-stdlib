@@ -89,18 +89,17 @@ Shared definitions for MCP servers the template ships:
 | serena | CLI; `--context ide` (or harness-specific context later) |
 | headroom | Official MCP; omitted when 9Router / gateway path says so |
 | context7 | Remote URL |
-| github | Wrapper around `gh auth token` + github-mcp-server |
 | docker | Rootless Docker socket wrapper |
 | brave-search | Optional; SecretSpec / `.env` |
 | firecrawl | Optional; SecretSpec / `.env` |
 
 Rules:
 
-1. **One catalog** builds the upsert/remove payloads (commands, args, URLs). Wrappers (github/docker/brave/firecrawl scripts) live with the catalog.
+1. **One catalog** builds the upsert/remove payloads (commands, args, URLs). Wrappers (docker/brave/firecrawl scripts) live with the catalog.
 2. **Each harness** only chooses: config path (e.g. `~/.cursor/mcp.json`), when to enable (`cursor.llmContext.enable`), and harness-specific removals (e.g. drop `headroom` when 9Router is on).
 3. **Later harnesses** (Claude Code, Codex, Cortex, …) add a thin merge module that points the same catalog at that product’s MCP config. No re-listing of server commands.
 4. Cursor-only concerns stay in `cursor-llm.nix`: RTK rewrite hook, `permissions.json` allowlist, Ponytail/Headroom/RTK rules, 9Router unit and dashboard key flow. Those are not part of the shared MCP catalog.
-5. **User-owned entries are preserved.** Users may add their own MCP servers (and keep ones we do not ship). Merge only **upserts** catalog keys and **removes** keys we explicitly retire (e.g. `headroom` when 9Router is on). Never replace the whole `mcpServers` object or delete unknown keys. Same policy as today’s `merge-cursor-llm.sh`.
+5. **User-owned entries are preserved.** Users may add their own MCP servers (and keep ones we do not ship). Merge only **upserts** catalog keys and **removes** keys we explicitly retire (e.g. former `github` MCP, or `headroom` when 9Router is on). Never replace the whole `mcpServers` object or delete unknown keys. Same policy as today’s `merge-cursor-llm.sh`.
 
 Merge scripts: extract a harness-agnostic `mcp.json` upsert/remove core from `merge-cursor-llm.sh`; Cursor keeps a thin wrapper for hooks/permissions and for calling merge with `$HOME/.cursor/mcp.json`.
 
