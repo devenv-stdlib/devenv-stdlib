@@ -77,6 +77,20 @@ in
     expected = true;
   };
 
+  testNonNixMiseTomlEnablesPipxUvx = {
+    expr = lib.hasInfix "pipx.uvx = true" (nonNix.toMiseToml [ ]);
+    expected = true;
+  };
+
+  testNonNixUvCatalogEntry = {
+    expr =
+      let
+        uv = lib.findFirst (e: e.name == "uv") null nonNix.catalog;
+      in
+      uv != null && uv.mise == "ubi:astral-sh/uv";
+    expected = true;
+  };
+
   testNonNixImageRef = {
     expr = nonNix.imageRef "ninerouter";
     expected = "decolua/9router:0.5.69";
