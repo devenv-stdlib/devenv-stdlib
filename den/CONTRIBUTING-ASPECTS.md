@@ -22,12 +22,17 @@
 5. **Do not** add zen / flake-aspects / dendrix. Sister libs only if a phase
    gate already pulled them.
 
-### Home vs project class
+### Home vs project vs OS classes
 
 | Lifetime | Class key | Lands in |
 | --- | --- | --- |
 | User profile (terminal, Cursor, CLIs) | `homeManager` | `den.homes` → `home-switch` |
 | Project toolchain (hooks, serena, IDE recs) | `project` | resolve → devenv modules |
+| Host OS (NixOS / Darwin stubs) | `nixos` / `darwin` | `den.hosts` (Phase 5; stubs until real hosts) |
+
+Portable features: one shared payload on `nixos` + `darwin` (see
+`den/aspects/shell-tools.nix`). Ubuntu-only GNOME quake stays HM-only —
+do not add OS class keys (`den/MULTI-OS.md`).
 
 GUI terminal / Cursor stay **out of** devenv PATH — same architecture rule,
 now visible as two class keys on one aspect when needed.
@@ -56,4 +61,4 @@ get an aspect name + includes edge so the DAG stays readable.
 | --- | --- |
 | `home-switch` | flake `.#developer --impure` (Den) |
 
-Goldens: `nix eval .#denHmGolden` / `.#denProjectGolden`.
+Goldens: `nix eval .#denHmGolden` / `.#denProjectGolden` / `.#denOsClasses`.
