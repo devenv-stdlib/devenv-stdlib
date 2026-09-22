@@ -28,7 +28,7 @@ setup() {
 }
 
 @test "home-switch script is Den flake-only" {
-  grep -q 'home-manager switch -b backup --flake .*#developer --impure' "$REPO_DIR/devenv.nix"
+  grep -qE 'home-manager switch -b backup --flake .*#developer.*--impure' "$REPO_DIR/devenv.nix"
   ! grep -q 'home-switch-den' "$REPO_DIR/devenv.nix"
   ! grep -qE 'home-manager switch .* -f .*home\.nix' "$REPO_DIR/devenv.nix"
 }
