@@ -9,7 +9,7 @@ in
     includes = map (name: den.aspects.${name}) cascade.alacritty-quake.includes;
 
     homeManager = {
-      # Shared terminal.nix still imports alacritty.nix behind mkIf (shim).
+      # Shared terminal.nix still imports alacritty.nix behind mkIf.
       # Setting provider makes the include → install edge explicit for Den path.
       imports = [ ../../home/terminal.nix ];
       terminal.provider = "alacritty";
