@@ -339,7 +339,7 @@ Host Docker Engine tools via `docker run -i --rm -v $XDG_RUNTIME_DIR/docker.sock
 
 ### git-conflict-mcp
 
-[git-conflict-mcp](https://github.com/mattyatea/git-conflict-mcp) helps agents and humans resolve merge conflicts (optional WebUI). Home Manager installs the npm pin from the non-Nix catalog (mise) and upserts it into `~/.cursor/mcp.json` when `cursor.llmContext.enable` is on. You can still run `npx -y git-conflict-mcp` ad hoc; the catalog pin is what `home-switch` / mise install.
+[git-conflict-mcp](https://github.com/mattyatea/git-conflict-mcp) helps agents and humans resolve merge conflicts (optional WebUI). Home Manager installs the npm pin from the non-Nix catalog (mise) and upserts it into `~/.cursor/mcp.json` when `cursor.llmContext.enable` is on. You can still run `npx -y git-conflict-mcp` ad hoc; the catalog pin is what `home-switch` / mise install. Pin `1.12.5` has no npm provenance (unlike `1.11.10`); the catalog sets a narrow aube `trust_policy_excludes` for that version after review (same publisher, missing attestation).
 
 - Docs: [mattyatea/git-conflict-mcp](https://github.com/mattyatea/git-conflict-mcp)
 
