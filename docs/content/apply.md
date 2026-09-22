@@ -51,7 +51,7 @@ A generated monorepo is a **copy** of the template, plus your `devenv.local.nix`
    `update` bumps those pins and installs via Nix when promotable, otherwise mise.
    Do not edit `modules/non-nix/catalog.toml` pins to “upgrade” Serena/Brave.
 
-2. **Template-shipped tools** (Serena, Headroom, Docker/Brave/Firecrawl MCP pins, debtmap, vendored agent skills, …):
+2. **Template-shipped tools** (Serena, Headroom, Brave/Firecrawl MCP pins, debtmap, vendored agent skills, …):
 
    ```bash
    copier check-update

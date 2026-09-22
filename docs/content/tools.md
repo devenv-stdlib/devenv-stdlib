@@ -69,7 +69,7 @@ cachix use devenv    # already done by setup.sh
 
 ### Docker (rootless)
 
-This stack defaults to **rootless Docker**. `devenv shell` and `~/.bashrc.d/20-docker-rootless.sh` set `DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock` so `docker`, `act`, and the Docker MCP talk to the user daemon even if a rootful Engine is also installed. GitHub Actions leaves `DOCKER_HOST` unset (`CI` / `GITHUB_ACTIONS`). `setup.sh` does not install Docker.
+This stack defaults to **rootless Docker**. `devenv shell` and `~/.bashrc.d/20-docker-rootless.sh` set `DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock` so `docker` and `act` talk to the user daemon even if a rootful Engine is also installed. GitHub Actions leaves `DOCKER_HOST` unset (`CI` / `GITHUB_ACTIONS`). `setup.sh` does not install Docker.
 
 ```bash
 echo "$DOCKER_HOST"    # unix:///run/user/$(id -u)/docker.sock
@@ -213,7 +213,7 @@ GNOME extension that drops the terminal from the top of the screen.
 # home.local.nix: cursor.enable = false;
 ```
 
-`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Headroom, Context7, Docker, git-conflict-mcp, git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared `home/ides/mcp` catalog and merges them into `~/.cursor/mcp.json` (upsert only; user-added MCP servers are preserved; the retired `github` catalog key is removed). It also writes the user-global Ponytail and Headroom Cursor rules. `mcp-secrets-watch` re-upserts Brave/Firecrawl when SecretSpec / `.env` keys change (wrappers under `~/.config/devenv4monorepo/`).
+`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Headroom, Context7, git-conflict-mcp, git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared `home/ides/mcp` catalog and merges them into `~/.cursor/mcp.json` (upsert only; user-added MCP servers are preserved; the retired `github` and `docker` catalog keys are removed). It also writes the user-global Ponytail and Headroom Cursor rules. `mcp-secrets-watch` re-upserts Brave/Firecrawl when SecretSpec / `.env` keys change (wrappers under `~/.config/devenv4monorepo/`).
 
 - Docs: [cursor.com/docs](https://cursor.com/docs)
 
@@ -248,7 +248,7 @@ Pass `--dry-run` to preview. Each command’s `--help` includes copy-pasteable E
 | Project (`debtmap`, `skills`, plus `catalog.local.toml` project-scope) | generated `mise.toml` (gitignored) | `mise:install` after `devenv:files` |
 | User (Serena, Headroom, MCP CLIs, navi, …) | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation |
 
-Docker images (`mcp/docker`) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools and sets `pipx.uvx = true` so catalog `pipx:` CLIs use `uv tool install` (Home Manager and devenv `mise:install` put `uv` on PATH; no host `pipx` required). Template authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a monorepo, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get shipped pin moves via `copier update`.
+Docker images (when present in the catalogs) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools and sets `pipx.uvx = true` so catalog `pipx:` CLIs use `uv tool install` (Home Manager and devenv `mise:install` put `uv` on PATH; no host `pipx` required). Template authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a monorepo, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get shipped pin moves via `copier update`.
 
 ### Agent skills
 
@@ -291,12 +291,6 @@ serena start-mcp-server --help
 
 - Docs: [github.com/upstash/context7](https://github.com/upstash/context7)
 - Donate: [github.com/sponsors/upstash](https://github.com/sponsors/upstash)
-
-### Docker Engine MCP
-
-Host Docker Engine tools via `docker run -i --rm -v $XDG_RUNTIME_DIR/docker.sock:/var/run/docker.sock mcp/docker:0.0.19` — not the Docker MCP Gateway. The wrapper uses the rootless socket (`DOCKER_HOST` if you set it). It warns if `docker` or that socket is missing.
-
-- Docs: [hub.docker.com/r/mcp/docker](https://hub.docker.com/r/mcp/docker)
 
 ### git-conflict-mcp
 

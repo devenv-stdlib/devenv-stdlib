@@ -95,14 +95,6 @@ scope = "user"
 pin = "4d65fcbab0e528db4a2caf6d0d4230e4c717a647"
 mise = "pipx:aaron-riact/git-rebase-mcp"
 
-# Docker Engine MCP image (stdio via docker run). Docs: https://hub.docker.com/r/mcp/docker
-[[tool]]
-name = "docker-mcp"
-kind = "docker-image"
-scope = "user"
-pin = "0.0.19"
-image = "mcp/docker"
-
 # devenv VS Code/Cursor extension (Marketplace). Docs: https://marketplace.visualstudio.com/items?itemName=datakurre.devenv
 [[tool]]
 name = "devenv-vscode"
