@@ -12,14 +12,15 @@
       nixpkgs.config.allowUnfree = true;
     };
 
-    # Template developer home — cursor (Phase 1) + terminal (Phase 2).
-    # Language / project-ide aspects are project-scoped (no HM class yet).
+    # Template developer home — cursor + terminal + home-cli (Phase 3 dual-run parity).
+    # Language / project-ide aspects use the project class (see den/classes/project.nix).
     homes.x86_64-linux.developer = { };
 
     aspects.developer = {
       includes = [
         den.aspects.cursor
         den.aspects.terminal
+        den.aspects.home-cli
       ];
       homeManager =
         { config, lib, ... }:
