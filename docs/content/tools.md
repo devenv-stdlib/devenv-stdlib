@@ -253,7 +253,7 @@ Pass `--dry-run` to preview. Each command’s `--help` includes copy-pasteable E
 | Project (`debtmap`, `skills`, plus `catalog.local.toml` project-scope) | generated `mise.toml` (gitignored) | `mise:install` after `devenv:files` |
 | User (RTK, Serena, Headroom, MCP CLIs, navi, …) | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation |
 
-Docker images (`decolua/9router`, `mcp/docker`) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools. Template authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a monorepo, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get shipped pin moves via `copier update`.
+Docker images (`decolua/9router`, `mcp/docker`) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools and sets `pipx.uvx = true` so catalog `pipx:` CLIs use `uv tool install` (Home Manager puts `uv` on the `mise install` PATH; no host `pipx` required). Template authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a monorepo, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get shipped pin moves via `copier update`.
 
 ### Agent skills
 
@@ -282,7 +282,7 @@ rtk rewrite "git status"
 
 ### Headroom
 
-[Headroom](https://github.com/headroomlabs-ai/headroom) is official MCP (`headroom_compress` / `retrieve` / `stats`) on the Cursor Pro path. Home Manager installs `headroom-ai` via mise (`pipx`) from the non-Nix catalog and upserts `headroom mcp serve` (no `--proxy-url`, no `headroom-proxy` unit). The agent must call those tools; nothing runs after every prompt. `.cursor/rules/headroom-compress.mdc` (also `~/.cursor/rules/headroom-compress.mdc` after `home-switch` when 9Router is off) tells the agent to compress only large tool output or pastes. Automatic transcript compaction would need Headroom’s proxy plus Override OpenAI Base URL, which Cursor Pro models refuse. When `cursor.ninerouter.enable` is on, host Headroom is not installed and leftover `mcpServers.headroom` is removed.
+[Headroom](https://github.com/headroomlabs-ai/headroom) is official MCP (`headroom_compress` / `retrieve` / `stats`) on the Cursor Pro path. Home Manager installs `headroom-ai` via mise (`pipx:` backend → `uv tool install`; `uv` is on the activation PATH) from the non-Nix catalog and upserts `headroom mcp serve` (no `--proxy-url`, no `headroom-proxy` unit). The agent must call those tools; nothing runs after every prompt. `.cursor/rules/headroom-compress.mdc` (also `~/.cursor/rules/headroom-compress.mdc` after `home-switch` when 9Router is off) tells the agent to compress only large tool output or pastes. Automatic transcript compaction would need Headroom’s proxy plus Override OpenAI Base URL, which Cursor Pro models refuse. When `cursor.ninerouter.enable` is on, host Headroom is not installed and leftover `mcpServers.headroom` is removed.
 
 ```bash
 headroom --help
@@ -292,7 +292,7 @@ headroom --help
 
 ### Serena
 
-[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` via mise (`pipx`) from the non-Nix catalog and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide --open-web-dashboard false` so the dashboard stays available but does not open a browser tab on every MCP start). devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override in `.serena/project.local.yml`.
+[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` via mise (`pipx:` backend → `uv tool install`) from the non-Nix catalog and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide --open-web-dashboard false` so the dashboard stays available but does not open a browser tab on every MCP start). devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override in `.serena/project.local.yml`.
 
 ```bash
 serena start-mcp-server --help
