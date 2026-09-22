@@ -67,6 +67,14 @@ merge_cursor_permissions_clear_rtk() {
 }
 
 # Add or drop brave-search / firecrawl from env keys. Other servers stay.
+#
+# Firecrawl profiles (FIRECRAWL_MCP_PROFILE):
+#   slim (default when enabled) — hosted keyless URL, 3 tools (scrape/search/parse).
+#   full — local firecrawl-mcp stdio with FIRECRAWL_API_KEY (~full tool surface).
+# Enable slim with FIRECRAWL_API_KEY set and/or FIRECRAWL_MCP_PROFILE=slim.
+# Full requires FIRECRAWL_MCP_PROFILE=full and a non-empty FIRECRAWL_API_KEY.
+# Slim never writes the API key into mcp.json (Bearer auth unlocks the full surface).
+#
 # Usage: merge_cursor_mcp_secrets <mcp.json> <brave-cmd> <firecrawl-cmd>
 merge_cursor_mcp_secrets() {
   local mcp_json=$1
@@ -74,6 +82,9 @@ merge_cursor_mcp_secrets() {
   local firecrawl_cmd=$3
   local jq=${JQ:-jq}
   local upsert remove rc
+  local firecrawl_url=https://mcp.firecrawl.dev/v2/mcp
+  # bash 4+: lowercase profile for comparisons
+  local firecrawl_profile=${FIRECRAWL_MCP_PROFILE,,}
 
   upsert=$(mktemp)
   remove=$(mktemp)
@@ -82,13 +93,22 @@ merge_cursor_mcp_secrets() {
     --arg firecrawl "$firecrawl_cmd" \
     --arg brave_key "${BRAVE_API_KEY:-}" \
     --arg firecrawl_key "${FIRECRAWL_API_KEY:-}" \
+    --arg firecrawl_profile "$firecrawl_profile" \
+    --arg firecrawl_url "$firecrawl_url" \
     '
+      def want_full:
+        $firecrawl_profile == "full" and $firecrawl_key != "";
+      def want_slim:
+        $firecrawl_profile == "slim"
+        or ($firecrawl_key != "" and $firecrawl_profile != "full");
       {}
       | (if $brave_key != "" then
           . + { "brave-search": { command: $brave, env: { BRAVE_API_KEY: $brave_key } } }
         else . end)
-      | (if $firecrawl_key != "" then
+      | (if want_full then
           . + { firecrawl: { command: $firecrawl, env: { FIRECRAWL_API_KEY: $firecrawl_key } } }
+        elif want_slim then
+          . + { firecrawl: { url: $firecrawl_url } }
         else . end)
     ' >"$upsert"; then
     rm -f "$upsert" "$remove"
@@ -97,9 +117,15 @@ merge_cursor_mcp_secrets() {
   if ! "$jq" -n \
     --arg brave_key "${BRAVE_API_KEY:-}" \
     --arg firecrawl_key "${FIRECRAWL_API_KEY:-}" \
+    --arg firecrawl_profile "$firecrawl_profile" \
     '
+      def want_full:
+        $firecrawl_profile == "full" and $firecrawl_key != "";
+      def want_slim:
+        $firecrawl_profile == "slim"
+        or ($firecrawl_key != "" and $firecrawl_profile != "full");
       [ (if $brave_key == "" then "brave-search" else empty end),
-        (if $firecrawl_key == "" then "firecrawl" else empty end) ]
+        (if (want_full or want_slim) then empty else "firecrawl" end) ]
     ' >"$remove"; then
     rm -f "$upsert" "$remove"
     return 1

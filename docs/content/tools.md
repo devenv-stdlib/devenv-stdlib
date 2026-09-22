@@ -312,9 +312,13 @@ Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) ke
 
 ### Firecrawl
 
-Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (free tier). Empty skips the MCP. Same SecretSpec / `.env` path as Brave. Home Manager upserts `firecrawl-mcp` from the non-Nix catalog (mise `npm`) when `FIRECRAWL_API_KEY` is set. `mcp-secrets-watch` re-upserts when the key changes.
+Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (free tier). Empty skips the MCP unless you set `FIRECRAWL_MCP_PROFILE=slim` in `.env` / SecretSpec for keyless-only. Same SecretSpec / `.env` path as Brave.
 
-- Docs: [Firecrawl](https://www.firecrawl.dev/) · [MCP](https://docs.firecrawl.dev/mcp-server)
+**Default when enabled (slim):** Home Manager upserts the hosted keyless MCP URL `https://mcp.firecrawl.dev/v2/mcp` — three tools (`firecrawl_scrape`, `firecrawl_search`, `firecrawl_parse`), low schema tax. The API key is **not** written into `~/.cursor/mcp.json` (Bearer auth on that URL unlocks the full tool surface).
+
+**Full profile (opt-in):** set `FIRECRAWL_MCP_PROFILE=full` with `FIRECRAWL_API_KEY` to use the local `firecrawl-mcp` pin from the non-Nix catalog (mise `npm`) — the large ~25+ tool surface. `mcp-secrets-watch` re-upserts when the key or profile changes.
+
+- Docs: [Firecrawl](https://www.firecrawl.dev/) · [MCP](https://docs.firecrawl.dev/mcp-server) · [Keyless / slim](https://docs.firecrawl.dev/mcp-server/keyless)
 
 ### Neovim and nano
 
