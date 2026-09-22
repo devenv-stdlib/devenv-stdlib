@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Default docker(1), act, and 9Router to the rootless Engine socket.
+# Default docker(1), act, and the Docker MCP to the rootless Engine socket.
 # CI keeps the runner daemon (usually rootful). Override with DOCKER_HOST.
 # shellcheck disable=SC2034
 

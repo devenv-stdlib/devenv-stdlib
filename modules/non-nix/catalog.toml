@@ -12,16 +12,6 @@ mise = "ubi:astral-sh/uv"
 nixAttr = ["uv"]
 homepageContains = "astral-sh/uv"
 
-# Compact Cursor Agent shell output. Docs: https://github.com/rtk-ai/rtk
-[[tool]]
-name = "rtk"
-kind = "cli"
-scope = "user"
-pin = "0.48.0"
-mise = "ubi:rtk-ai/rtk"
-nixAttr = ["rtk"]
-homepageContains = "rtk-ai/rtk"
-
 # Official GitHub MCP over stdio (token from gh auth). Docs: https://github.com/github/github-mcp-server
 [[tool]]
 name = "github-mcp-server"
@@ -114,14 +104,6 @@ kind = "cli"
 scope = "user"
 pin = "4d65fcbab0e528db4a2caf6d0d4230e4c717a647"
 mise = "pipx:aaron-riact/git-rebase-mcp"
-
-# Optional 9Router API gateway image. Docs: https://github.com/decolua/9router
-[[tool]]
-name = "ninerouter"
-kind = "docker-image"
-scope = "user"
-pin = "0.5.69"
-image = "decolua/9router"
 
 # Docker Engine MCP image (stdio via docker run). Docs: https://hub.docker.com/r/mcp/docker
 [[tool]]

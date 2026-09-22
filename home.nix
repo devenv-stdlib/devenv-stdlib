@@ -29,7 +29,6 @@
     ./home/fd.nix
     ./home/gh.nix
   ]
-  ++ lib.optional (builtins.pathExists ./home/copier-llm.nix) ./home/copier-llm.nix
   ++ lib.optional (builtins.pathExists ./home.local.nix) ./home.local.nix;
 
   home = {

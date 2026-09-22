@@ -17,46 +17,46 @@ let
   pkgsMissing = { };
 
   pkgsOldWrong = {
-    rtk = fakePkg {
+    navi = fakePkg {
       version = "0.1.0";
-      homepage = "https://example.com/wrong-rtk";
-      pname = "rtk";
+      homepage = "https://example.com/wrong-navi";
+      pname = "navi";
     };
   };
 
   pkgsPromotable = {
-    rtk = fakePkg {
-      version = "0.99.0";
-      homepage = "https://github.com/rtk-ai/rtk";
-      pname = "rtk";
+    navi = fakePkg {
+      version = "9.99.0";
+      homepage = "https://github.com/denisidoro/navi";
+      pname = "navi";
     };
   };
 
-  rtkEntry = lib.findFirst (e: e.name == "rtk") null nonNix.catalog;
-  ninerouter = lib.findFirst (e: e.name == "ninerouter") null nonNix.catalog;
+  naviEntry = lib.findFirst (e: e.name == "navi") null nonNix.catalog;
+  dockerMcp = lib.findFirst (e: e.name == "docker-mcp") null nonNix.catalog;
 in
 {
   testNonNixMissingAttrStaysMise = {
-    expr = (nonNix.resolveOne pkgsMissing rtkEntry).via;
+    expr = (nonNix.resolveOne pkgsMissing naviEntry).via;
     expected = "cli";
   };
 
   testNonNixWrongHomepageStaysMise = {
-    expr = (nonNix.resolveOne pkgsOldWrong rtkEntry).via;
+    expr = (nonNix.resolveOne pkgsOldWrong naviEntry).via;
     expected = "cli";
   };
 
   testNonNixVersionAndHomepagePromote = {
-    expr = (nonNix.resolveOne pkgsPromotable rtkEntry).via;
+    expr = (nonNix.resolveOne pkgsPromotable naviEntry).via;
     expected = "nix";
   };
 
   testNonNixDockerNeverInMiseToml = {
     expr =
       let
-        toml = nonNix.toMiseToml [ (ninerouter // { via = "docker-image"; }) ];
+        toml = nonNix.toMiseToml [ (dockerMcp // { via = "docker-image"; }) ];
       in
-      lib.hasInfix "decolua" toml || lib.hasInfix "9router" toml;
+      lib.hasInfix "mcp/docker" toml || lib.hasInfix "docker-mcp" toml;
     expected = false;
   };
 
@@ -65,7 +65,7 @@ in
       let
         toml = nonNix.toMiseToml [
           (
-            rtkEntry
+            naviEntry
             // {
               via = "cli";
               package = null;
@@ -73,7 +73,7 @@ in
           )
         ];
       in
-      lib.hasInfix ''"ubi:rtk-ai/rtk" = "'' toml;
+      lib.hasInfix ''"ubi:denisidoro/navi" = "'' toml;
     expected = true;
   };
 
@@ -113,8 +113,8 @@ in
   };
 
   testNonNixImageRef = {
-    expr = nonNix.imageRef "ninerouter";
-    expected = "decolua/9router:0.5.69";
+    expr = nonNix.imageRef "docker-mcp";
+    expected = "mcp/docker:0.0.19";
   };
 
   testNonNixShippedCatalogNonEmpty = {
@@ -124,11 +124,11 @@ in
 
   testNonNixBinNameFallsBackWhenBinNull = {
     expr = nonNix.binName (
-      rtkEntry
+      naviEntry
       // {
         bin = null;
       }
     );
-    expected = "rtk";
+    expected = "navi";
   };
 }

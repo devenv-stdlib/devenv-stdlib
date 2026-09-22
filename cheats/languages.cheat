@@ -35,7 +35,7 @@ devenv tasks run mise:install
 # Consumer update: devenv.lock, then catalog.local.toml (Nix or mise), then update.local.sh
 update
 
-# Template-shipped pins (navi, RTK, Serena, …) move only with copier update — not update
+# Template-shipped pins (navi, Serena, Headroom, …) move only with copier update — not update
 copier check-update
 
 # Show generated project mise.toml (gitignored)

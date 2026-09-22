@@ -37,31 +37,17 @@ devenv shell
 
 % copier, answers
 
-; Commit .copier-answers.yml, devenv.local.nix, home/copier-llm.nix — never .env
+; Commit .copier-answers.yml and devenv.local.nix — never .env
 ; Do not edit .copier-answers.yml by hand; copier update needs it
 ; Questionnaire writes devenv.local.nix; copier update re-asks (defaults = last answers)
-; File stores ninerouter plus ninerouter_password, brave_search, firecrawl booleans — not secret keys
+; File stores brave_search and firecrawl booleans — not secret keys
 
 # Stage Copier-generated files for commit (not .env)
-git add .copier-answers.yml devenv.local.nix home/copier-llm.nix
-
-% copier, ninerouter
-
-; Copier question ninerouter — default false (Cursor Pro; no Models override)
-; false: RTK Shell hook, Ponytail rule, Headroom MCP — do not set Override OpenAI Base URL
-; true: writes home/copier-llm.nix with cursor.ninerouter.enable = true
-; true: asks INITIAL_PASSWORD (empty keeps image default 123456 until set in .env)
-; Override flag in home.local.nix with mkForce if needed
-
-# Show 9Router gateway API key for Cursor Models override
-cat ~/.config/9router/cursor-api-key
-
-; When ninerouter is on: Cursor Settings → Models → Advanced → Override OpenAI Base URL
-; Set to http://127.0.0.1:20128/v1 and paste the key above; Ctrl+Shift+0 toggles override off
+git add .copier-answers.yml devenv.local.nix
 
 % copier, secrets
 
-; Brave/Firecrawl API keys and INITIAL_PASSWORD go to SecretSpec — default dotenv (.env)
+; Brave/Firecrawl API keys go to SecretSpec — default dotenv (.env)
 ; Keys are not stored in .copier-answers.yml; leave empty to skip that MCP
 ; Override provider with SECRETSPEC_PROVIDER or devenv.local.yaml (keyring, env, onepassword, …)
 ; Existing destination .env is never overwritten (_skip_if_exists) — do not commit .env
