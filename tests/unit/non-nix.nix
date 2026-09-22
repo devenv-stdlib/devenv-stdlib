@@ -91,6 +91,24 @@ in
     expected = true;
   };
 
+  testNonNixTrustPolicyExcludesInToml = {
+    expr =
+      let
+        e = lib.findFirst (x: x.name == "git-conflict-mcp") null nonNix.catalog;
+        toml = nonNix.toMiseToml [
+          (
+            e
+            // {
+              via = "cli";
+              package = null;
+            }
+          )
+        ];
+      in
+      lib.hasInfix "trust_policy_excludes" toml && lib.hasInfix "git-conflict-mcp@1.12.5" toml;
+    expected = true;
+  };
+
   testNonNixImageRef = {
     expr = nonNix.imageRef "ninerouter";
     expected = "decolua/9router:0.5.69";

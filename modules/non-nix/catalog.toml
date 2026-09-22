@@ -95,12 +95,14 @@ pin = "1.5.25"
 mise = "npm:skills"
 
 # Merge-conflict MCP (WebUI + agent tools). Docs: https://github.com/mattyatea/git-conflict-mcp
+# 1.12.5 dropped npm provenance vs 1.11.10 (same publisher); reviewed 2026-09-22 — aube exclude.
 [[tool]]
 name = "git-conflict-mcp"
 kind = "cli"
 scope = "user"
 pin = "1.12.5"
 mise = "npm:git-conflict-mcp"
+trustPolicyExcludes = ["git-conflict-mcp@1.12.5"]
 
 # Agent-safe rebase / conflict driver (not on PyPI). Docs: https://github.com/aaron-riact/git-rebase-mcp
 [[tool]]
