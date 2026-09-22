@@ -18,6 +18,8 @@ let
       publisher = entry.publisher or null;
       extension = entry.extension or null;
       trustPolicyExcludes = entry.trustPolicyExcludes or null;
+      allowBuilds = entry.allowBuilds or null;
+      allowLowDownloads = entry.allowLowDownloads or null;
     };
 
   readTools =
@@ -127,7 +129,7 @@ let
   binName = e: if e.bin != null then e.bin else e.name;
 
   # Quoted tool key when it contains ':' (ubi:/npm:/pipx: backends).
-  # Optional trustPolicyExcludes → object form for aube no-downgrade exceptions.
+  # Optional aube options → object form (trust exclude / builds / low downloads).
   tomlToolLine =
     e:
     let
@@ -139,11 +141,17 @@ let
           null
         else
           "[ ${lib.concatMapStringsSep ", " (x: ''"${x}"'') excludes} ]";
+      allowBuilds = e.allowBuilds or null;
+      allowLowDownloads = e.allowLowDownloads or null;
+      opts =
+        lib.optional (excludeLit != null) "trust_policy_excludes = ${excludeLit}"
+        ++ lib.optional (allowBuilds == true) "allow_builds = true"
+        ++ lib.optional (allowLowDownloads == true) "allow_low_downloads = true";
     in
-    if excludeLit == null then
+    if opts == [ ] then
       "${quoted} = \"${e.pin}\""
     else
-      ''${quoted} = { version = "${e.pin}", trust_policy_excludes = ${excludeLit} }'';
+      ''${quoted} = { version = "${e.pin}", ${lib.concatStringsSep ", " opts} }'';
 
   toMiseToml =
     entries:
