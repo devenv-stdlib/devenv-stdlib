@@ -16,7 +16,7 @@ setup() {
   export XDG_CONFIG_HOME="$HOME/.config"
   export MCP_SECRETS_FINGERPRINT="$TMP/fp"
   mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$TMP/proj"
-  unset BRAVE_API_KEY FIRECRAWL_API_KEY
+  unset BRAVE_API_KEY FIRECRAWL_API_KEY FIRECRAWL_MCP_PROFILE
 }
 
 teardown() {
@@ -73,10 +73,25 @@ teardown() {
   printf 'BRAVE_MCP=/tmp/brave-mcp\nFIRECRAWL_MCP=/tmp/fire-mcp\n' >"$(mcp_secrets_wrappers_file)"
   printf '%s\n' '{"mcpServers":{"serena":{"command":"/old/serena"}}}' >"$HOME/.cursor/mcp.json"
   export BRAVE_API_KEY=secret-brave
-  unset FIRECRAWL_API_KEY
+  unset FIRECRAWL_API_KEY FIRECRAWL_MCP_PROFILE
   run mcp_secrets_sync "$TMP/proj"
   [ "$status" -eq 0 ]
   [ "$(jq -r '.mcpServers["brave-search"].env.BRAVE_API_KEY' "$HOME/.cursor/mcp.json")" = "secret-brave" ]
   [ "$(jq -r '.mcpServers.firecrawl // empty' "$HOME/.cursor/mcp.json")" = "" ]
+  [ "$(jq -r '.mcpServers.serena.command' "$HOME/.cursor/mcp.json")" = "/old/serena" ]
+}
+
+@test "sync upserts Firecrawl slim hosted URL when API key is set" {
+  command -v jq >/dev/null || skip "jq not installed"
+  mkdir -p "$HOME/.cursor" "$(mcp_secrets_host_dir)"
+  printf 'BRAVE_MCP=/tmp/brave-mcp\nFIRECRAWL_MCP=/tmp/fire-mcp\n' >"$(mcp_secrets_wrappers_file)"
+  printf '%s\n' '{"mcpServers":{"serena":{"command":"/old/serena"}}}' >"$HOME/.cursor/mcp.json"
+  unset BRAVE_API_KEY
+  export FIRECRAWL_API_KEY=secret-fire
+  unset FIRECRAWL_MCP_PROFILE
+  run mcp_secrets_sync "$TMP/proj"
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '.mcpServers.firecrawl.url' "$HOME/.cursor/mcp.json")" = "https://mcp.firecrawl.dev/v2/mcp" ]
+  [ "$(jq -r '.mcpServers.firecrawl.env // empty' "$HOME/.cursor/mcp.json")" = "" ]
   [ "$(jq -r '.mcpServers.serena.command' "$HOME/.cursor/mcp.json")" = "/old/serena" ]
 }
