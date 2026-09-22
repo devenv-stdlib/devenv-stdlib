@@ -53,7 +53,7 @@ copier update
 copier check-update
 ```
 
-`copier update` is how generated monorepos receive newer RTK/Serena/Headroom/9Router/MCP/debtmap pins. `update` / `devenv update` do not rewrite those files. See [Apply](#apply) and [Contribution guide](#contributing).
+`copier update` is how generated monorepos receive newer Serena/Headroom/MCP/debtmap pins. `update` / `devenv update` do not rewrite those files. See [Apply](#apply) and [Contribution guide](#contributing).
 
 - Docs: [Copier](https://copier.readthedocs.io/en/stable)
 
@@ -69,7 +69,7 @@ cachix use devenv    # already done by setup.sh
 
 ### Docker (rootless)
 
-This stack defaults to **rootless Docker**. `devenv shell` and `~/.bashrc.d/20-docker-rootless.sh` set `DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock` so `docker`, `act`, 9Router, and the Docker MCP talk to the user daemon even if a rootful Engine is also installed. GitHub Actions leaves `DOCKER_HOST` unset (`CI` / `GITHUB_ACTIONS`). `setup.sh` does not install Docker.
+This stack defaults to **rootless Docker**. `devenv shell` and `~/.bashrc.d/20-docker-rootless.sh` set `DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock` so `docker`, `act`, and the Docker MCP talk to the user daemon even if a rootful Engine is also installed. GitHub Actions leaves `DOCKER_HOST` unset (`CI` / `GITHUB_ACTIONS`). `setup.sh` does not install Docker.
 
 ```bash
 echo "$DOCKER_HOST"    # unix:///run/user/$(id -u)/docker.sock
@@ -213,12 +213,7 @@ GNOME extension that drops the terminal from the top of the screen.
 # home.local.nix: cursor.enable = false;
 ```
 
-`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Context7, GitHub, Docker, git-conflict-mcp, git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared `home/ides/mcp` catalog and merges them into `~/.cursor/mcp.json` (upsert only; user-added MCP servers are preserved).
-
-`cursor.ninerouter.enable` (default **false**; Copier `ninerouter`) chooses the compaction path:
-
-- **Off (Cursor Pro):** RTK Shell hook, user-global Ponytail rule, official Headroom MCP (`headroom mcp serve`, no `--proxy-url`, no `headroom-proxy`). Do not set Override OpenAI Base URL.
-- **On (gateway):** 9Router only. Built-in RTK / Ponytail via PATCH; `headroomEnabled` is false. No host RTK, Ponytail rule, or Headroom. Cursor Pro hosted models fail while Override OpenAI Base URL is on. After `home-switch`, paste `~/.config/9router/cursor-api-key`, set the base URL to `http://127.0.0.1:20128/v1`, and pick a 9Router model. See `~/.config/9router/cursor-openai.hint`. Home Manager cannot write those GUI fields (`Ctrl+Shift+0` toggles the key).
+`cursor.llmContext.enable` (default: `cursor.enable`) installs Serena, Headroom, Context7, GitHub, Docker, git-conflict-mcp, git-rebase-mcp, and optional Brave/Firecrawl MCP from the shared `home/ides/mcp` catalog and merges them into `~/.cursor/mcp.json` (upsert only; user-added MCP servers are preserved). It also writes the user-global Ponytail and Headroom Cursor rules. `mcp-secrets-watch` re-upserts Brave/Firecrawl when SecretSpec / `.env` keys change (wrappers under `~/.config/devenv4monorepo/`).
 
 - Docs: [cursor.com/docs](https://cursor.com/docs)
 
@@ -251,9 +246,9 @@ Pass `--dry-run` to preview. Each command’s `--help` includes copy-pasteable E
 | Scope | Config | Install |
 | --- | --- | --- |
 | Project (`debtmap`, `skills`, plus `catalog.local.toml` project-scope) | generated `mise.toml` (gitignored) | `mise:install` after `devenv:files` |
-| User (RTK, Serena, Headroom, MCP CLIs, navi, …) | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation |
+| User (Serena, Headroom, MCP CLIs, navi, …) | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation |
 
-Docker images (`decolua/9router`, `mcp/docker`) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools and sets `pipx.uvx = true` so catalog `pipx:` CLIs use `uv tool install` (Home Manager puts `uv` on the `mise install` PATH; no host `pipx` required). Template authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a monorepo, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get shipped pin moves via `copier update`.
+Docker images (`mcp/docker`) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools. Template authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a monorepo, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get shipped pin moves via `copier update`.
 
 ### Agent skills
 
@@ -269,20 +264,9 @@ In this template, `update` runs `includes/update/skills.sh` (`skills update -y -
 
 - Docs: [Cursor skills](https://cursor.com/docs/skills), [agentskills.io](https://agentskills.io), [skills.sh](https://skills.sh/)
 
-### RTK
-
-[RTK](https://github.com/rtk-ai/rtk) (`rtk-ai/rtk`, not crates.io) rewrites Cursor Agent shell commands so the model sees compact output. When `cursor.ninerouter.enable` is off, Home Manager installs the catalog pin via mise (or Nix when promotable), installs a stable `$HOME/.cursor/bin/rtk` entrypoint, merges a `preToolUse` Shell hook into `~/.cursor/hooks.json`, and ensures `~/.cursor/permissions.json` `terminalAllowlist` includes that absolute path plus bare `rtk` (preserves other prefixes; this key still owns the in-app terminal allowlist). Cursor auto-runs Shell from the allowlist (hook `permission: allow` alone is not enough). The hook rewrites or wraps every command so the first token is `$HOME/.cursor/bin/rtk` (thin Agent PATH cannot rely on bare `rtk`). It does not run `rtk init` and does not use the marketplace RTK extension — both fight `home-switch`. `.cursor/rules/rtk-passthrough.mdc` (also `~/.cursor/rules/` after `home-switch`) tells the agent to keep the RTK path, use `rtk run` / `rtk proxy` / `--no-compact` for full output, and ask first when that output is likely huge. Reload Cursor after `home-switch` so hooks reload. When 9Router is on, the gateway’s built-in RTK is used; the host hook, RTK rules, and managed RTK allowlist entries are removed.
-
-```bash
-rtk rewrite "git status"
-```
-
-- Docs: [rtk-ai/rtk](https://github.com/rtk-ai/rtk)
-- Donate: [github.com/sponsors/rtk-ai](https://github.com/sponsors/rtk-ai)
-
 ### Headroom
 
-[Headroom](https://github.com/headroomlabs-ai/headroom) is official MCP (`headroom_compress` / `retrieve` / `stats`) on the Cursor Pro path. Home Manager installs `headroom-ai` via mise (`pipx:` backend → `uv tool install`; `uv` is on the activation PATH) from the non-Nix catalog and upserts `headroom mcp serve` (no `--proxy-url`, no `headroom-proxy` unit). The agent must call those tools; nothing runs after every prompt. `.cursor/rules/headroom-compress.mdc` (also `~/.cursor/rules/headroom-compress.mdc` after `home-switch` when 9Router is off) tells the agent to compress only large tool output or pastes. Automatic transcript compaction would need Headroom’s proxy plus Override OpenAI Base URL, which Cursor Pro models refuse. When `cursor.ninerouter.enable` is on, host Headroom is not installed and leftover `mcpServers.headroom` is removed.
+[Headroom](https://github.com/headroomlabs-ai/headroom) is official MCP (`headroom_compress` / `retrieve` / `stats`). Home Manager installs `headroom-ai` via mise (`pipx`) from the non-Nix catalog and upserts `headroom mcp serve` (no `--proxy-url`, no `headroom-proxy` unit). The agent must call those tools; nothing runs after every prompt. `.cursor/rules/headroom-compress.mdc` (also `~/.cursor/rules/headroom-compress.mdc` after `home-switch`) tells the agent to compress only large tool output or pastes.
 
 ```bash
 headroom --help
@@ -292,7 +276,7 @@ headroom --help
 
 ### Serena
 
-[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` via mise (`pipx:` backend → `uv tool install`) from the non-Nix catalog and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide --open-web-dashboard false` so the dashboard stays available but does not open a browser tab on every MCP start). devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override in `.serena/project.local.yml`.
+[Serena](https://github.com/oraios/serena) is Headroom’s code-memory MCP (symbol graph). Home Manager installs `serena-agent` via mise (`pipx`) from the non-Nix catalog and upserts the `serena` server in `~/.cursor/mcp.json` (`--context ide --open-web-dashboard false` so the dashboard stays available but does not open a browser tab on every MCP start). devenv writes `.serena/project.yml` from `languages.*` (`language_servers` always includes `nix`). Serena starts its own language servers; they are not Cursor’s. Override in `.serena/project.local.yml`.
 
 ```bash
 serena start-mcp-server --help
@@ -300,19 +284,6 @@ serena start-mcp-server --help
 
 - Docs: [oraios.github.io/serena](https://oraios.github.io/serena/)
 - Donate: [github.com/sponsors/oraios](https://github.com/sponsors/oraios)
-
-### 9Router
-
-[9Router](https://github.com/decolua/9router) is an optional local API gateway (`decolua/9router:0.5.69`). Copier `ninerouter` / `cursor.ninerouter.enable` (default **false**) starts it. Cursor Pro hosted models fail while Override OpenAI Base URL is on; turn the key toggle off (`Ctrl+Shift+0`) to use Pro again.
-
-When enabled, Home Manager starts the `ninerouter` user service with `-p 127.0.0.1:20128:20128` (rootless Docker is the default; not `--network host`) and `--add-host=host.docker.internal:<host IPv4>`. A loopback TCP proxy inside the container forwards that published port to 9Router on `127.0.0.1` so dashboard local-only routes (tunnel enable) do not demand a CLI token. Docker `host-gateway` is the bridge in the rootlesskit netns and does not reach host loopback, so the start script uses the host default-route address (`NINEROUTER_HOST_IP` overrides). It then PATCHes settings (`rtkEnabled` and `ponytailEnabled` on, `headroomEnabled` false, Caveman off) and mints a gateway key named `devenv` once (`~/.config/9router/cursor-api-key`, mode `0600`). The host curl to 9Router stays `http://127.0.0.1:20128`. Open that URL to log in with `INITIAL_PASSWORD` from gitignored `.env` (copied to `~/.config/9router/initial-password` **before** the unit starts). The start script hashes `INITIAL_PASSWORD` into settings so the tunnel gate (`hasPassword`) is satisfied. Env-only login is still the default password until that hash exists. A custom hash from Dashboard → Settings is not overwritten. `~/.9router` is rootless-owned `DATA_DIR`. A locked `/api/settings` does not fail `home-switch`. Host RTK, the Ponytail rule, and Headroom are not installed in this mode.
-
-```bash
-# after home-switch, with Docker on PATH
-curl -fsS http://127.0.0.1:20128/livez || curl -fsS http://127.0.0.1:20128/
-```
-
-- Docs: [github.com/decolua/9router](https://github.com/decolua/9router) · [9router.com](https://9router.com)
 
 ### Context7
 
@@ -351,13 +322,13 @@ Host Docker Engine tools via `docker run -i --rm -v $XDG_RUNTIME_DIR/docker.sock
 
 ### Brave Search
 
-Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key in both modes. Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server` pin from the non-Nix catalog (mise `npm`, STDIO) when `BRAVE_API_KEY` is set. When `cursor.ninerouter.enable` is on, the same key is POSTed to 9Router as a `brave-search` connection named `devenv` after dashboard login (`configure-9router.sh`).
+Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key. Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server` pin from the non-Nix catalog (mise `npm`, STDIO) when `BRAVE_API_KEY` is set. `mcp-secrets-watch` re-upserts when the key changes.
 
 - Docs: [Brave Search API](https://brave.com/search/api/) · [brave-search-mcp-server](https://github.com/brave/brave-search-mcp-server)
 
 ### Firecrawl
 
-Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (free tier) in both modes. Empty skips the MCP. Same SecretSpec / `.env` path as Brave. Home Manager upserts `firecrawl-mcp` from the non-Nix catalog (mise `npm`) when `FIRECRAWL_API_KEY` is set. When `cursor.ninerouter.enable` is on, the same key is upserted into 9Router as a `firecrawl` connection named `devenv`.
+Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (free tier). Empty skips the MCP. Same SecretSpec / `.env` path as Brave. Home Manager upserts `firecrawl-mcp` from the non-Nix catalog (mise `npm`) when `FIRECRAWL_API_KEY` is set. `mcp-secrets-watch` re-upserts when the key changes.
 
 - Docs: [Firecrawl](https://www.firecrawl.dev/) · [MCP](https://docs.firecrawl.dev/mcp-server)
 

@@ -15,13 +15,11 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `.cursor/rules/update.mdc` | `update` is your lock + hook; template tools use `copier update` |
 | `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules under `modules/` / `home/` |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large tool output or pastes |
-| `.cursor/rules/rtk-passthrough.mdc` | Prefer RTK Shell path; full output via `rtk run`/`proxy`; ask if huge |
 | `.cursor/rules/navi-cheatsheets.mdc` | Prefer extending `cheats/*.cheat`; navi syntax; no community-sheet copies |
 | `.agents/skills/` / `skills-lock.json` | 54 vendored Cursor skills (Vercel skills CLI); `README.md` there lists sources and licenses |
 | `cheats/` | Repo-local [navi](https://github.com/denisidoro/navi) sheets (`NAVI_PATH` in `devenv shell`) |
 | `home.nix` / `home/` | Home Manager (terminal, Cursor, user-global CLIs, rootless Docker `DOCKER_HOST`) |
 | `home/navi.nix` | `NAVI_PATH` → pinned [denisidoro/cheats](https://github.com/denisidoro/cheats) |
-| `home/copier-llm.nix` | Copier `ninerouter` → `cursor.ninerouter.enable` (default false) |
 | `home.local.nix` | Gitignored host overrides |
 | `secretspec.toml` | Optional Brave / Firecrawl secret names (values stay out of git) |
 | `.env` | Gitignored dotenv; Copier writes keys when you pasted them |

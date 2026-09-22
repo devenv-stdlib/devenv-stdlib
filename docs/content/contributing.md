@@ -105,17 +105,15 @@ build-act-image              # devenv-act:24.04 for local act
 | --- | --- |
 | `tests/unit/` | nix-unit (versions, hooks, debtmap, vscode helpers, Serena, terminal, …) |
 | `tests/setup/setup.bats` | `setup.sh` (sources the script; `main` guard) |
-| `tests/copier.bats` | `copier copy` / `update`; `ninerouter` default false; answers omit secret keys; not copied into monorepos |
+| `tests/copier.bats` | `copier copy` / `update`; answers omit secret keys; not copied into monorepos |
 | `tests/update.bats` | `update` template vs consumer; pin helpers; skills refresher (stubbed `npx`); no live registry |
 | `tests/skills.bats` | `.agents/skills/` ↔ `skills-lock.json` consistency; every source attributed in `.agents/skills/README.md` |
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
 | `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
-| `tests/home/cursor-llm.bats` | `home/ides/merge-cursor-llm.sh` + MCP catalog merge (RTK add/remove, RTK allowlist preserves extras, hook rewrite/allow/`rtk run` wrap, Serena, Headroom MCP without proxy URL, Context7, GitHub, Docker, optional Brave/Firecrawl; preserves user MCP keys) |
-| `tests/home/configure-9router.bats` | 9Router settings (`headroomEnabled` false) + Brave/Firecrawl upsert + devenv gateway key (fake curl) |
-| `tests/home/ninerouter-start.bats` | persist INITIAL_PASSWORD as a 9Router bcrypt hash (tunnel gate); in-container loopback proxy for local-only dashboard routes |
+| `tests/home/cursor-llm.bats` | `home/ides/merge-cursor-llm.sh` + MCP catalog merge (Serena, Headroom MCP, Context7, GitHub, Docker, optional Brave/Firecrawl; preserves user MCP keys; legacy RTK hook/allowlist cleanup) |
 | `tests/home/load-secrets.bats` | `home-switch` SecretSpec export vs `.env` fallback |
-| `tests/home/watch-9router-secrets.bats` | secret fingerprint skip / upsert (Cursor `mcp.json`; skip `configure_9router` when 9Router is off) |
+| `tests/home/watch-mcp-secrets.bats` | secret fingerprint skip / upsert (Cursor `mcp.json`) |
 | `tests/home/docker-rootless.bats` | `DOCKER_HOST` defaults to the rootless socket; CI is a no-op |
 | `tests/tag-hook.bats` | failing suite blocks `git tag` |
 | `tests/integration/` | nixosTest (generated `test.yml` + eval asserts) |
@@ -154,8 +152,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `.cursor/rules/worktrees-and-stacked-prs.mdc` | One worktree+branch per feature; stack related PRs with `gh stack` (copied) |
 | `.cursor/rules/update.mdc` | Consumer rule: `update` vs `copier update` (copied) |
 | `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules; topical `modules/` layout (copied) |
-| `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large blobs (copied; `~/.cursor/rules/` after `home-switch` when 9Router is off) |
-| `.cursor/rules/rtk-passthrough.mdc` | Prefer RTK Shell path; full output via `rtk run`/`proxy`; ask if huge (copied; `~/.cursor/rules/` when 9Router is off) |
+| `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large blobs (copied; `~/.cursor/rules/` after `home-switch`) |
 | `.cursor/rules/navi-cheatsheets.mdc` | Prefer extending `cheats/*.cheat`; navi syntax (copied) |
 | `.cursor/rules/non-nix-update.mdc` | Author pin/refresher rule (not copied) |
 | `.agents/skills/` / `skills-lock.json` | Vendored Cursor skills (Vercel skills CLI; `includes/update/skills.sh` refreshes; copied) |
@@ -166,10 +163,10 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `devenv.nix` / `devenv.yaml` / `devenv.lock` | Shell, inputs, lock |
 | `home.nix` / `home/` | Home Manager |
 | `home/navi.nix` | `NAVI_PATH` → pinned denisidoro/cheats |
-| `home/ides/` | Editors (Cursor, opt-in VS Code, neovim, nano), MCP catalog, Cursor LLM/RTK/9Router |
-| `home/copier-llm.nix.jinja` | Renders `home/copier-llm.nix` (`cursor.ninerouter.enable`) |
-| `secretspec.toml` | Optional `INITIAL_PASSWORD` / `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` (copied) |
+| `home/ides/` | Editors (Cursor, opt-in VS Code, neovim, nano), MCP catalog, Cursor LLM context |
+| `secretspec.toml` | Optional `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` (copied) |
 | `home/load-secrets.sh` | `secretspec export` then `.env`; used by `home-switch` |
+| `home/watch-mcp-secrets.sh` | Re-upsert Brave/Firecrawl MCP when SecretSpec keys change |
 | `home/nix-path.sh` | `nixpkgs=flake:nixpkgs` fallback, drops missing `NIX_PATH` dirs; used by `setup.sh`, `home-switch`, `test-devenv` |
 | `home/docker-rootless.sh` | Default `DOCKER_HOST` to `$XDG_RUNTIME_DIR/docker.sock` |
 | `.env.jinja` | Renders gitignored `.env` when Copier was given those keys |
@@ -183,4 +180,4 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 
 In **this** repo, `devenv.local.nix` and `home.local.nix` stay gitignored. Put host-only Home Manager lines in `home.local.nix`. Do not commit language enables here.
 
-In a **generated** monorepo, commit `devenv.local.nix` and `home/copier-llm.nix`, and add extras below the Copier block (`devenv.local.nix.example`).
+In a **generated** monorepo, commit `devenv.local.nix`, and add extras below the Copier block (`devenv.local.nix.example`).
