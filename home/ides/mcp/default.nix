@@ -92,6 +92,8 @@ let
           "start-mcp-server"
           "--context"
           "ide"
+          "--open-web-dashboard"
+          "false"
         ];
       };
       context7 = {

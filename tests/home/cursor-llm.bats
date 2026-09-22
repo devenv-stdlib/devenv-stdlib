@@ -31,7 +31,7 @@ write_core_upsert() {
     --arg github "$GITHUB_CMD" \
     --arg docker "$DOCKER_CMD" \
     '{
-      serena: { command: $serena, args: ["start-mcp-server", "--context", "ide"] },
+      serena: { command: $serena, args: ["start-mcp-server", "--context", "ide", "--open-web-dashboard", "false"] },
       headroom: { command: $headroom, args: ["mcp", "serve"] },
       context7: { url: "https://mcp.context7.com/mcp" },
       github: { command: $github },
@@ -99,7 +99,7 @@ EOF
   echo '[]' >"$REMOVE"
   merge_cursor_mcp "$MCP" "$UPSERT" "$REMOVE"
   [ "$(jq -r '.mcpServers.serena.command' "$MCP")" = "$SERENA_CMD" ]
-  [ "$(jq -r '.mcpServers.serena.args | join(" ")' "$MCP")" = "start-mcp-server --context ide" ]
+  [ "$(jq -r '.mcpServers.serena.args | join(" ")' "$MCP")" = "start-mcp-server --context ide --open-web-dashboard false" ]
   [ "$(jq -r '.mcpServers.headroom.command' "$MCP")" = "$HEADROOM_CMD" ]
   [ "$(jq -r '.mcpServers.headroom.args | join(" ")' "$MCP")" = "mcp serve" ]
   [ "$(jq -r '.mcpServers.context7.url' "$MCP")" = "https://mcp.context7.com/mcp" ]
