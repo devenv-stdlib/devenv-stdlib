@@ -15,6 +15,8 @@ let
     exec ${braveMcpBin}
   '';
 
+  # Used only when FIRECRAWL_MCP_PROFILE=full. Default Firecrawl wiring is the
+  # hosted keyless slim URL (see merge_cursor_mcp_secrets), not this wrapper.
   firecrawlMcp = pkgs.writeShellScript "firecrawl-mcp" ''
     exec ${firecrawlMcpBin}
   '';

@@ -244,7 +244,7 @@ firecrawl_api_key:
   secret: true
   default: ""
   help: >-
-    Firecrawl API key (optional). Firecrawl has a free tier (https://www.firecrawl.dev/). Leave empty to skip the Firecrawl MCP. The key is stored with SecretSpec / gitignored .env, not in .copier-answers.yml.
+    Firecrawl API key (optional). Enables the slim hosted Firecrawl MCP (scrape/search/parse) by default; the key is not written into mcp.json. Leave empty to skip, or later set FIRECRAWL_MCP_PROFILE=slim in .env for keyless-only. For the full local MCP surface, set FIRECRAWL_MCP_PROFILE=full with this key. Free tier: https://www.firecrawl.dev/. Stored with SecretSpec / gitignored .env, not in .copier-answers.yml.
 
 # Copier matches exclusions against the destination path, so a template whose
 # output name is flake.nix would be dropped by `/flake.nix`. Render beside it

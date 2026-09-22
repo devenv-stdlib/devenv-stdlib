@@ -27,8 +27,9 @@ mcp_secrets_mcp_json() {
 
 mcp_secrets_fingerprint() {
   # Hash values only; never write secrets to the fingerprint file.
-  printf 'brave=%s\nfirecrawl=%s\n' \
-    "${BRAVE_API_KEY-}" "${FIRECRAWL_API_KEY-}" |
+  # Include Firecrawl profile so slim↔full switches re-upsert without a key change.
+  printf 'brave=%s\nfirecrawl=%s\nfirecrawl_profile=%s\n' \
+    "${BRAVE_API_KEY-}" "${FIRECRAWL_API_KEY-}" "${FIRECRAWL_MCP_PROFILE-}" |
     sha256sum | awk '{print $1}'
 }
 

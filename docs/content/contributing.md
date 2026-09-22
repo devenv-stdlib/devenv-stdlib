@@ -174,7 +174,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `home/` | Home Manager modules |
 | `home/navi.nix` | `NAVI_PATH` → pinned denisidoro/cheats |
 | `home/ides/` | Editors (Cursor, opt-in VS Code, neovim, nano), MCP catalog, Cursor LLM context |
-| `secretspec.toml` | Optional `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` (copied) |
+| `secretspec.toml` | Optional `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` / `FIRECRAWL_MCP_PROFILE` (copied) |
 | `home/load-secrets.sh` | `secretspec export` then `.env`; used by `home-switch` |
 | `home/watch-mcp-secrets.sh` | Re-upsert Brave/Firecrawl MCP when SecretSpec keys change |
 | `home/nix-path.sh` | `nixpkgs=flake:nixpkgs` fallback, drops missing `NIX_PATH` dirs; used by `setup.sh`, `home-switch`, `test-devenv` |
