@@ -1,8 +1,8 @@
 # Den HM + cascade flake — den.homes → homeConfigurations.developer
 # Sister libs (import-tree, flake-parts, den-diagram, zen, flake-aspects) intentionally omitted.
-# Phase 3: dual-run HM/project parity + custom project class spike (devenv CLI unchanged).
+# Phase 4: cutover — Den-only home-switch; dual shims deleted; Den-only goldens.
 {
-  description = "devenv4monorepo Den Phase 3 dual-run (HM/project parity + project class)";
+  description = "devenv4monorepo Den Phase 4 cutover (Den-only HM + project goldens)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -18,8 +18,6 @@
     inputs:
     let
       lib = inputs.nixpkgs.lib;
-      system = "x86_64-linux";
-      pkgs = inputs.nixpkgs.legacyPackages.${system};
 
       denModules = [
         ./den/homes.nix
@@ -42,7 +40,7 @@
 
       den = denConfig.config.den;
 
-      # Fixture identity for dual HM parity (avoid impure USER/HOME drift).
+      # Fixture identity for Den-only goldens (avoid impure USER/HOME drift).
       fixtureHome = {
         home.username = lib.mkForce "developer";
         home.homeDirectory = lib.mkForce "/home/developer";
@@ -84,28 +82,12 @@
       aspectIncludeNames =
         aspect: map (a: a.name or "<aspect>") denConfig.config.den.aspects.${aspect}.includes;
 
-      # --- Phase 3: dual HM evaluation (Den vs legacy home.nix) ---
-      # Den path: extend the flake homeConfiguration with a fixed fixture identity.
+      # --- Phase 4: Den-only HM golden (no legacy home.nix compare) ---
       denHomeCfg =
         (denConfig.config.flake.homeConfigurations.developer.extendModules {
           modules = [ fixtureHome ];
         }).config;
 
-      # Legacy path: same nixpkgs + HM + fixture identity as Den.
-      legacyHomeCfg =
-        (inputs.home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [
-            ./home.nix
-            fixtureHome
-            {
-              # Match den.default.homeManager allowUnfree.
-              nixpkgs.config.allowUnfree = true;
-            }
-          ];
-        }).config;
-
-      # Normalized fingerprint for dual-run parity (packages / programs / dconf / units).
       hmFingerprint =
         cfg:
         let
@@ -133,38 +115,62 @@
             ripgrep = prog "ripgrep";
             fd = prog "fd";
           };
-          # Sorted package names — order must not affect parity.
           packages = lib.sort (a: b: a < b) pkgNames;
-          # dconf keys of interest (terminal GNOME bindings live here when set).
           dconfSettings = cfg.dconf.settings or { };
-          # User systemd units of interest (mcp-secrets-watch).
           systemdUserServices = builtins.attrNames (cfg.systemd.user.services or { });
         };
 
       denFp = hmFingerprint denHomeCfg;
-      legacyFp = hmFingerprint legacyHomeCfg;
 
-      hmParity = {
-        cursorEnable = denFp.cursorEnable == legacyFp.cursorEnable;
-        llmEnable = denFp.llmEnable == legacyFp.llmEnable;
-        terminalProvider = denFp.terminalProvider == legacyFp.terminalProvider;
-        programs = denFp.programs == legacyFp.programs;
-        packages = denFp.packages == legacyFp.packages;
-        # systemd unit names (sorted compare)
-        systemdUserServices =
-          (lib.sort (a: b: a < b) denFp.systemdUserServices)
-          == (lib.sort (a: b: a < b) legacyFp.systemdUserServices);
+      # Expected fixture goldens (developer + cursor + alacritty + home-cli).
+      expectedPrograms = {
+        bash = true;
+        bat = true;
+        starship = true;
+        eza = true;
+        fzf = true;
+        direnv = true;
+        zoxide = true;
+        gh = true;
+        ripgrep = true;
+        fd = true;
       };
 
-      hmParityOk = builtins.all (v: v) (builtins.attrValues hmParity);
+      hmGoldenOk =
+        denFp.cursorEnable
+        && denFp.llmEnable
+        && denFp.terminalProvider == "alacritty"
+        && denFp.programs == expectedPrograms
+        && builtins.elem "mcp-secrets-watch" denFp.systemdUserServices;
 
-      # --- Phase 3: project class resolve spike ---
-      projectBridge = import ./modules/lib/den-project-bridge.nix { inherit lib; };
+      # --- Phase 4: Den/project goldens (aspect includes + pure helpers) ---
+      cascade = import ./den/language-cascade.nix;
+      project = import ./modules/lib/project.nix { inherit lib; };
+      pythonOnFixture = {
+        languages.python.enable = true;
+      };
+      pythonGolden = {
+        includes = cascade.python.includes;
+        hooks = project.languageHooks pythonOnFixture;
+        serena = project.serenaLanguageServers pythonOnFixture.languages;
+        vscode = project.vscodeRecommendations pythonOnFixture.languages;
+        debtmap = project.debtmapLanguages pythonOnFixture.languages;
+      };
+      expectedPythonIncludes = [
+        "python-hooks"
+        "python-ide-recs"
+        "python-serena"
+        "python-debtmap"
+      ];
+      projectGoldenOk =
+        pythonGolden.includes == expectedPythonIncludes
+        && pythonGolden.hooks.ruff
+        && builtins.elem "python" pythonGolden.serena
+        && builtins.elem "ms-python.python" pythonGolden.vscode
+        && pythonGolden.debtmap == [ "python" ];
 
-      # Resolve python aspect's project class into a plain module (NVF-style).
+      # --- Project class resolve (kept from Phase 3 spike) ---
       pythonProjectModule = den.lib.aspects.resolve "project" den.aspects.python;
-
-      # Stub options so resolve output can be evaluated without full devenv.
       pythonProjectEval = lib.evalModules {
         modules = [
           pythonProjectModule
@@ -176,8 +182,13 @@
           }
         ];
       };
-
       pythonProjectMarkers = pythonProjectEval.config.denProject or { };
+      expectedProjectConcerns = [
+        "hooks"
+        "ide-recs"
+        "serena"
+        "debtmap"
+      ];
     in
     denConfig.config.flake
     // {
@@ -206,17 +217,16 @@
       # Warp provider fixture for terminal XOR bats.
       homeConfigurationsWarp = denConfigWarp.config.flake.homeConfigurations or { };
 
-      # Phase 3 dual-run exports (tests).
-      denHmParity = {
-        match = hmParityOk;
-        checks = hmParity;
-        den = denFp;
-        legacy = legacyFp;
+      # Phase 4 Den-only goldens (tests).
+      denHmGolden = {
+        match = hmGoldenOk;
+        fingerprint = denFp;
+        inherit expectedPrograms;
       };
-      denProjectParity = {
-        match = projectBridge.pythonParityMatch;
-        aspect = projectBridge.aspectPythonParity;
-        legacy = projectBridge.legacyPythonParity;
+      denProjectGolden = {
+        match = projectGoldenOk;
+        python = pythonGolden;
+        expectedIncludes = expectedPythonIncludes;
       };
       denProjectClass = {
         registered = den.classes ? project;
@@ -226,7 +236,7 @@
             builtins.attrNames (pythonProjectMarkers.markers or { })
           )
         );
-        expectedConcerns = projectBridge.expectedProjectMarkers.python.concerns;
+        expectedConcerns = expectedProjectConcerns;
       };
     };
 }

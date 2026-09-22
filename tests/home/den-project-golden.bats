@@ -1,16 +1,16 @@
 #!/usr/bin/env bats
-# Phase 3: dual project/devenv parity for python-on fixture + project class spike.
+# Phase 4: Den/project goldens for python-on fixture + project class resolve.
 
 setup() {
   REPO_DIR="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
 }
 
-@test "denProjectParity flake export reports match" {
+@test "denProjectGolden flake export reports match" {
   if ! command -v nix >/dev/null 2>&1; then
     skip "nix not installed"
   fi
   run env NIX_CONFIG="experimental-features = nix-command flakes" \
-    nix eval --impure --json "$REPO_DIR#denProjectParity.match"
+    nix eval --impure --json "$REPO_DIR#denProjectGolden.match"
   [ "$status" -eq 0 ]
   [[ "$output" == *true* ]]
 }

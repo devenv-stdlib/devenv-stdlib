@@ -92,25 +92,13 @@ _: {
     bats --jobs 1 --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
   '';
 
+  # Phase 4 cutover: Den-only HM entry (den.homes → homeConfigurations.developer).
+  # Requires flakes + impure env for USER/HOME defaults.
   scripts.home-switch.exec = ''
     # shellcheck disable=SC1091
     . "$DEVENV_ROOT/home/nix-path.sh"
     ensure_nixpkgs_on_nix_path
     # SecretSpec first (dotenv, keyring, …). .env only if export is unavailable.
-    # shellcheck disable=SC1091
-    . "$DEVENV_ROOT/home/load-secrets.sh"
-    home_load_secrets "$DEVENV_ROOT"
-    # Legacy path kept through Phase 3 parity; Den path is home-switch-den.
-    # Phase 3: nix eval .#denHmParity asserts Den ≡ legacy fingerprints.
-    home-manager switch -b backup -f "$DEVENV_ROOT/home.nix" "$@"
-  '';
-
-  # Phase 1 spike: den.homes → homeConfigurations.developer (cursor cascade).
-  # Requires flakes + impure env for USER/HOME defaults (same as legacy home.nix).
-  scripts.home-switch-den.exec = ''
-    # shellcheck disable=SC1091
-    . "$DEVENV_ROOT/home/nix-path.sh"
-    ensure_nixpkgs_on_nix_path
     # shellcheck disable=SC1091
     . "$DEVENV_ROOT/home/load-secrets.sh"
     home_load_secrets "$DEVENV_ROOT"
