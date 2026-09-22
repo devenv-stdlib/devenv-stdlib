@@ -1,5 +1,6 @@
 # Provider leaf: Alacritty + Zellij + Quake GNOME extension.
 # Mutual exclusion with warp-quake is enforced by terminal hub includes (XOR).
+# Phase 5: unsupported on darwin/nixos — HM-only (no OS class keys).
 { den, ... }:
 let
   cascade = import ../terminal-cascade.nix;
