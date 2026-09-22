@@ -105,7 +105,10 @@ in
           )
         ];
       in
-      lib.hasInfix "trust_policy_excludes" toml && lib.hasInfix "git-conflict-mcp@1.12.5" toml;
+      lib.hasInfix "trust_policy_excludes" toml
+      && lib.hasInfix "git-conflict-mcp@1.12.5" toml
+      && lib.hasInfix "allow_builds = true" toml
+      && lib.hasInfix "allow_low_downloads = true" toml;
     expected = true;
   };
 
