@@ -18,3 +18,6 @@ in
 // (import ./den-python.nix harness)
 // (import ./den-languages.nix harness)
 // (import ./den-ide.nix harness)
+// (import ./den-hm-parity.nix harness)
+// (import ./den-project-parity.nix harness)
+// (import ./den-project-class.nix harness)
