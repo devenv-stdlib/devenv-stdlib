@@ -1,0 +1,42 @@
+# Den cascade diagrams (Phase 2 W2.5 — hand-maintained; den-diagram deferred).
+# Source of truth for edges: den/*-cascade.nix. Read includes there first.
+
+## Cursor (Phase 1)
+
+```
+cursor ──includes──► cursor-extensions
+       └───────────► cursor-llm (mcp-stack)
+```
+
+## Terminal (Phase 2 W2.1)
+
+```
+terminal ──includes──► alacritty-quake  XOR  warp-quake
+```
+
+Default hub include is `alacritty-quake`. Switch provider by forcing the hub
+`includes` to `[ warp-quake ]` and `terminal.provider = "warp"`.
+
+## Languages (Phase 2 W2.2–W2.3)
+
+```
+python ──includes──► python-hooks
+       ├───────────► python-ide-recs
+       ├───────────► python-serena
+       └───────────► python-debtmap
+```
+
+Same four-child shape for rust / go / javascript / typescript.
+JS+TS share prettier, Serena `typescript` server, and the typescript IDE pack
+(`project.javascriptOn`) — see `language-cascade.nix` `shared`.
+
+Copier still only sets `languages.*.enable` in `devenv.local.nix`.
+
+## Project IDEs (Phase 2 W2.4)
+
+```
+project-ides ──includes──► vscode-recs
+             └───────────► cursor-sync-extensions
+```
+
+enterShell writers remain in `modules/ides`; aspects document composition.
