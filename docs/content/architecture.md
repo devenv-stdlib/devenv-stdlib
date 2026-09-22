@@ -48,6 +48,10 @@ The terminal is user-global because you already have a terminal open to run `dev
 
 Language packs are the exception: they are **not** user-global. devenv (`modules/ides`) generates `.vscode/extensions.json` and settings from `languages.*`. `cursor-sync-extensions` installs the matching packs under `~/.cursor/extensions` when you enter the shell (add-only; user extensions stay). `vscode.enable` (default **false**) is opt-in for the VS Code app and `~/.vscode/extensions` common links. Serena’s project `language_servers` still come from `modules/languages/serena.nix`.
 
+## Den composition (planned)
+
+Phase 0 inventory and ADR name today’s enable→cascade graph before Den lands: [cascade inventory](../den/cascade-inventory.md), [ADR 0001](../adr/0001-den-composition-model.md). Copier and the devenv CLI stay; Phase 1+ may adopt Den for aspects/`includes` only. `home-switch` still targets `home.nix`.
+
 ## Release loop
 
 Conventional Commits (`commitlint`) on every commit. Pull requests run `hooks.yml` (`prek`; [pre-commit.ci lite](https://pre-commit.ci/lite.html) pushes autofixes, including forks). Push to `master` or `main` runs `ci.yml`: `test-devenv`, then the generated `test.yml` matrix, then [semantic-release](https://semantic-release.gitbook.io/semantic-release/) which versions and tags. Those tags are what `copier copy` and `copier update` use by default.
