@@ -6,7 +6,7 @@
 # Enter the project toolchain (git, gh, copier, nixfmt, bats, …)
 devenv shell
 
-# Re-apply Home Manager after editing home.nix or home.local.nix
+# Re-apply Home Manager after editing Den aspects or home.local.nix
 home-switch
 
 # Build the env, verify toolchain binaries, and run BATS

@@ -1,8 +1,7 @@
-# Phase 2 W2.4: project IDE / sync aspect includes + vscode helper parity.
+# Phase 2 W2.4: project IDE / sync aspect includes + vscode helper goldens.
 {
   lib,
   project,
-  denLanguage,
   ideCascade,
   ...
 }:
@@ -28,9 +27,12 @@ in
     expected = 2;
   };
 
-  testDenProjectIdesShimMatchesCascade = {
-    expr = sort denLanguage.projectIdeIncludes;
-    expected = sort (includesOf "project-ides");
+  testDenProjectIdesIncludesMatchCascade = {
+    expr = sort (includesOf "project-ides");
+    expected = sort [
+      "vscode-recs"
+      "cursor-sync-extensions"
+    ];
   };
 
   testDenIdeLeavesHaveNoNestedIncludes = {

@@ -368,17 +368,18 @@ in_setup() {
   [[ $output == *"profile add github:cachix/devenv/${rev}"* ]]
 }
 
-@test "apply_home_manager switches with backup against home.nix" {
+@test "apply_home_manager switches with backup against Den flake" {
   stub home-manager 'printf "%s\n" "$*" >"$HM_ARGS"'
   HM_ARGS="$BATS_TEST_TMPDIR/hm-args"
-  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  FLAKE_DIR="$BATS_TEST_TMPDIR/flake-root"
+  mkdir -p "$FLAKE_DIR"
+  : >"$FLAKE_DIR/flake.nix"
   export HM_ARGS
-  : >"$HOME_NIX"
-  in_setup "SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  in_setup "SETUP_HOME_FLAKE='$FLAKE_DIR#developer'; apply_home_manager"
   [ "$status" -eq 0 ]
-  [[ $output == *"apply Home Manager configuration"* ]]
+  [[ $output == *"apply Home Manager configuration via Den flake"* ]]
   run cat "$HM_ARGS"
-  [ "$output" = "switch -b backup -f $HOME_NIX" ]
+  [ "$output" = "switch -b backup --flake $FLAKE_DIR#developer --impure" ]
 }
 
 @test "apply_home_manager fails when home-manager is missing" {
@@ -390,28 +391,32 @@ in_setup() {
 
 @test "apply_home_manager fails when switch fails" {
   stub home-manager "exit 1"
-  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
-  : >"$HOME_NIX"
-  in_setup "SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  FLAKE_DIR="$BATS_TEST_TMPDIR/flake-root"
+  mkdir -p "$FLAKE_DIR"
+  : >"$FLAKE_DIR/flake.nix"
+  in_setup "SETUP_HOME_FLAKE='$FLAKE_DIR#developer'; apply_home_manager"
   [ "$status" -eq 1 ]
-  [[ $output == *"apply Home Manager configuration"* ]]
+  [[ $output == *"apply Home Manager configuration via Den flake"* ]]
 }
 
-@test "apply_home_manager fails when home.nix is missing" {
+@test "apply_home_manager fails when flake.nix is missing" {
   stub home-manager "touch '$BATS_TEST_TMPDIR/hm-ran'; exit 0"
-  in_setup "SETUP_HOME_NIX='$BATS_TEST_TMPDIR/missing.nix'; apply_home_manager"
+  FLAKE_DIR="$BATS_TEST_TMPDIR/missing-flake"
+  mkdir -p "$FLAKE_DIR"
+  in_setup "SETUP_HOME_FLAKE='$FLAKE_DIR#developer'; apply_home_manager"
   [ "$status" -eq 1 ]
-  [[ $output == *"Home Manager config not found"* ]]
+  [[ $output == *"flake.nix not found"* ]]
   [ ! -e "$BATS_TEST_TMPDIR/hm-ran" ]
 }
 
 @test "apply_home_manager sets nixpkgs on NIX_PATH when it is empty" {
   stub home-manager 'printf "%s\n" "$NIX_PATH" >"$HM_NIX_PATH"'
   HM_NIX_PATH="$BATS_TEST_TMPDIR/hm-nix-path"
-  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  FLAKE_DIR="$BATS_TEST_TMPDIR/flake-root"
+  mkdir -p "$FLAKE_DIR"
+  : >"$FLAKE_DIR/flake.nix"
   export HM_NIX_PATH
-  : >"$HOME_NIX"
-  in_setup "unset NIX_PATH; SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  in_setup "unset NIX_PATH; SETUP_HOME_FLAKE='$FLAKE_DIR#developer'; apply_home_manager"
   [ "$status" -eq 0 ]
   run cat "$HM_NIX_PATH"
   [ "$output" = "nixpkgs=flake:nixpkgs" ]
@@ -420,10 +425,11 @@ in_setup() {
 @test "apply_home_manager prepends nixpkgs when NIX_PATH lacks it" {
   stub home-manager 'printf "%s\n" "$NIX_PATH" >"$HM_NIX_PATH"'
   HM_NIX_PATH="$BATS_TEST_TMPDIR/hm-nix-path"
-  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  FLAKE_DIR="$BATS_TEST_TMPDIR/flake-root"
+  mkdir -p "$FLAKE_DIR"
+  : >"$FLAKE_DIR/flake.nix"
   export HM_NIX_PATH
-  : >"$HOME_NIX"
-  in_setup "NIX_PATH='nixos-config=/etc/nixos'; SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  in_setup "NIX_PATH='nixos-config=/etc/nixos'; SETUP_HOME_FLAKE='$FLAKE_DIR#developer'; apply_home_manager"
   [ "$status" -eq 0 ]
   run cat "$HM_NIX_PATH"
   [ "$output" = "nixpkgs=flake:nixpkgs:nixos-config=/etc/nixos" ]
@@ -432,10 +438,11 @@ in_setup() {
 @test "apply_home_manager does not overwrite an existing nixpkgs NIX_PATH entry" {
   stub home-manager 'printf "%s\n" "$NIX_PATH" >"$HM_NIX_PATH"'
   HM_NIX_PATH="$BATS_TEST_TMPDIR/hm-nix-path"
-  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  FLAKE_DIR="$BATS_TEST_TMPDIR/flake-root"
+  mkdir -p "$FLAKE_DIR"
+  : >"$FLAKE_DIR/flake.nix"
   export HM_NIX_PATH
-  : >"$HOME_NIX"
-  in_setup "NIX_PATH='nixpkgs=/custom/nixpkgs:foo=bar'; SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  in_setup "NIX_PATH='nixpkgs=/custom/nixpkgs:foo=bar'; SETUP_HOME_FLAKE='$FLAKE_DIR#developer'; apply_home_manager"
   [ "$status" -eq 0 ]
   run cat "$HM_NIX_PATH"
   [ "$output" = "nixpkgs=/custom/nixpkgs:foo=bar" ]
@@ -444,11 +451,12 @@ in_setup() {
 @test "apply_home_manager drops NIX_PATH directories that do not exist" {
   stub home-manager 'printf "%s\n" "$NIX_PATH" >"$HM_NIX_PATH"'
   HM_NIX_PATH="$BATS_TEST_TMPDIR/hm-nix-path"
-  HOME_NIX="$BATS_TEST_TMPDIR/home.nix"
+  FLAKE_DIR="$BATS_TEST_TMPDIR/flake-root"
+  mkdir -p "$FLAKE_DIR"
+  : >"$FLAKE_DIR/flake.nix"
   export HM_NIX_PATH
-  : >"$HOME_NIX"
   mkdir -p "$BATS_TEST_TMPDIR/channels"
-  in_setup "NIX_PATH='$BATS_TEST_TMPDIR/missing:$BATS_TEST_TMPDIR/channels:foo=/missing'; SETUP_HOME_NIX='$HOME_NIX'; apply_home_manager"
+  in_setup "NIX_PATH='$BATS_TEST_TMPDIR/missing:$BATS_TEST_TMPDIR/channels:foo=/missing'; SETUP_HOME_FLAKE='$FLAKE_DIR#developer'; apply_home_manager"
   [ "$status" -eq 0 ]
   run cat "$HM_NIX_PATH"
   [ "$output" = "nixpkgs=flake:nixpkgs:$BATS_TEST_TMPDIR/channels:foo=/missing" ]

@@ -26,21 +26,19 @@ resolve + eval; full `modules/` import lands at cutover).
 Not chosen: flake-parts `devenv.shells` primary path (would reshape
 shell/CI/Copier and trip criterion 3).
 
-## What still dual-writes
+## What landed after cutover (Phase 4)
 
-- Copier → `languages.*.enable` remains the enable gate.
-- `modules/lib/project.nix` helpers still compute hooks/serena/vscode/debtmap.
-- `modules/lib/den-project-bridge.nix` + flake `denProjectParity` assert
-  aspect-backed fixture ≡ legacy helpers for python-on.
-- HM dual path: `home-switch` vs `home-switch-den` until Phase 4.
+- Copier → `languages.*.enable` remains the enable gate (W4.4).
+- `modules/lib/project.nix` keeps pure hooks/serena/vscode/debtmap helpers.
+- Dual adapters (`den-language-shim`, `den-project-bridge`) **deleted**.
+- HM path: `home-switch` → flake `#developer` only (no `home-switch-den`).
 
-## Risks accepted for Phase 4
+## Risks accepted for Phase 5 (multi-OS)
 
 - Bridge packaging across Den flake inputs vs devenv lock (shared `lib` OK;
   careful with `pkgs`).
-- Cutover must import resolved modules under `modules/` without fighting
-  Copier enable flags (`mkIf` / guards).
-
+- OS classes (`darwin` / `nixos`) grow on the same aspects without reviving
+  a legacy HM root.
 ## Abort not fired
 
 Criterion 3 does **not** fire: a viable non-fork route exists and is tested.

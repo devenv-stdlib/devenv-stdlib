@@ -18,7 +18,8 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 : "${SETUP_DOCKERENV:=/.dockerenv}"
 : "${SETUP_CONTAINERENV:=/run/.containerenv}"
 : "${SETUP_PROC_CGROUP:=/proc/1/cgroup}"
-: "${SETUP_HOME_NIX:=$REPO_ROOT/home.nix}"
+# Phase 4: Den flake entry (homeConfigurations.developer). Override for tests.
+: "${SETUP_HOME_FLAKE:=$REPO_ROOT#developer}"
 
 NIX_PROFILE_DIR="${SETUP_NIX_ROOT}/var/nix/profiles/default"
 NIX_DAEMON_PROFILE="${NIX_PROFILE_DIR}/etc/profile.d/nix-daemon.sh"
@@ -253,10 +254,13 @@ ensure_devenv() {
 
 apply_home_manager() {
   command -v home-manager >/dev/null 2>&1 || fail "home-manager is not on PATH"
-  [[ -f $SETUP_HOME_NIX ]] || fail "Home Manager config not found: $SETUP_HOME_NIX"
+  local flake_uri=$SETUP_HOME_FLAKE
+  local flake_dir=${flake_uri%%#*}
+  [[ -d $flake_dir ]] || fail "Home Manager flake directory not found: $flake_dir"
+  [[ -f $flake_dir/flake.nix ]] || fail "Home Manager flake.nix not found under: $flake_dir"
   ensure_nixpkgs_on_nix_path
-  step "apply Home Manager configuration (terminal, Cursor, Starship)" \
-    home-manager switch -b backup -f "$SETUP_HOME_NIX"
+  step "apply Home Manager configuration via Den flake (terminal, Cursor, Starship)" \
+    home-manager switch -b backup --flake "$flake_uri" --impure
 }
 
 ensure_sudo() {

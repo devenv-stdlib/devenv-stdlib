@@ -1,6 +1,5 @@
-# Phase 3 dual-run: remaining legacy home.nix modules not owned by cursor/terminal.
-# Keeps Den homeConfiguration on parity with -f home.nix for the developer fixture.
-# Cursor stack + terminal/provider stay in their aspects (avoid double-enable churn).
+# Remaining HM modules not owned by cursor/terminal aspects (developer home).
+# Cursor stack + terminal/provider stay in their aspects (avoid double-enable).
 _: {
   den.aspects.home-cli = {
     includes = [ ];
