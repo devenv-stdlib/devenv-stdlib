@@ -291,7 +291,7 @@ This script installs or updates Nix, devenv, Cachix, and Home Manager,
 configures the devenv binary cache, applies this repository's Home Manager
 configuration (terminal, Cursor, Starship), and builds the devenv shell.
 
-This stack expects rootless Docker on the host (local act, Docker MCP).
+This stack expects rootless Docker on the host (local act).
 It does not install Docker. See
 https://docs.docker.com/engine/security/rootless/
 
@@ -327,7 +327,7 @@ print_rootless_docker_hint() {
     return 0
   fi
   cat <<EOF
-This template defaults to rootless Docker (act, Docker MCP).
+This template defaults to rootless Docker (act).
 The user socket is missing ($sock). Install Engine extras, then:
 
   dockerd-rootless-setuptool.sh install

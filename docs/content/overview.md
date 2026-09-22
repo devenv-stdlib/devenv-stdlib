@@ -36,4 +36,4 @@ Languages stay **off** in this template repo so work on the skeleton does not pu
 
 ## Supported hosts
 
-The supported hosts are the **current Ubuntu LTS and the previous one** (today: 26.04 and 24.04; x86_64 or aarch64). You need `curl`, a user that can create `/nix` (the Nix installer typically needs `sudo` once), and **rootless Docker** for local `act` and the Docker MCP. `setup.sh` does not install Docker. See [Docker rootless mode](https://docs.docker.com/engine/security/rootless/). Set `DOCKER_HOST=unix:///var/run/docker.sock` only if you must use a rootful daemon.
+The supported hosts are the **current Ubuntu LTS and the previous one** (today: 26.04 and 24.04; x86_64 or aarch64). You need `curl`, a user that can create `/nix` (the Nix installer typically needs `sudo` once), and **rootless Docker** for local `act`. `setup.sh` does not install Docker. See [Docker rootless mode](https://docs.docker.com/engine/security/rootless/). Set `DOCKER_HOST=unix:///var/run/docker.sock` only if you must use a rootful daemon.

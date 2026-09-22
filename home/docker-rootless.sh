@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Default docker(1), act, and the Docker MCP to the rootless Engine socket.
+# Default docker(1) and act to the rootless Engine socket.
 # CI keeps the runner daemon (usually rootful). Override with DOCKER_HOST.
 # shellcheck disable=SC2034
 
@@ -22,7 +22,7 @@ docker_rootless_env() {
   DOCKER_HOST=$(docker_rootless_host)
 }
 
-# Unix socket to bind-mount into mcp/docker. Fails for tcp:// DOCKER_HOST.
+# Unix socket path for DOCKER_HOST (rootless default). Fails for tcp:// DOCKER_HOST.
 docker_engine_sock() {
   docker_rootless_env
   local host=${DOCKER_HOST:-}
