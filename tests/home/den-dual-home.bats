@@ -14,7 +14,8 @@ setup() {
   run env NIX_CONFIG="experimental-features = nix-command flakes" \
     nix eval --impure --json "$REPO_DIR#denHmParity.match"
   [ "$status" -eq 0 ]
-  [ "$output" = "true" ]
+  # nix may print dirty-tree warnings before the JSON value (no trailing newline).
+  [[ "$output" == *true* ]]
 }
 
 @test "den vs legacy HM fingerprint eval asserts" {
