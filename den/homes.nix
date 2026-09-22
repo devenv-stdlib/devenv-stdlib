@@ -12,11 +12,15 @@
       nixpkgs.config.allowUnfree = true;
     };
 
-    # Template developer home — Cursor cascade is the Phase 1 spike.
+    # Template developer home — cursor (Phase 1) + terminal (Phase 2).
+    # Language / project-ide aspects are project-scoped (no HM class yet).
     homes.x86_64-linux.developer = { };
 
     aspects.developer = {
-      includes = [ den.aspects.cursor ];
+      includes = [
+        den.aspects.cursor
+        den.aspects.terminal
+      ];
       homeManager =
         { config, lib, ... }:
         {

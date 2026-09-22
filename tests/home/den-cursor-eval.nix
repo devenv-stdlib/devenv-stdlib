@@ -23,6 +23,9 @@ assert must "cursor-off: no cursor option or disabled" (
 assert must "cursor-off: no llmContext or disabled" (
   !(offCfg ? cursor) || !(offCfg.cursor ? llmContext) || !offCfg.cursor.llmContext.enable
 );
+# Phase 2: cursor-off fixture still includes terminal (alacritty default).
+assert must "cursor-off still has terminal" (offCfg ? terminal);
+assert must "cursor-off terminal provider alacritty" (offCfg.terminal.provider == "alacritty");
 assert must "cascade metadata lists llm" (
   builtins.elem "cursor-llm" flake.denCursorCascade.cursor.includes
 );

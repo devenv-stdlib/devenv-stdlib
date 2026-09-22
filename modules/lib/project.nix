@@ -1,5 +1,11 @@
 { lib }:
+# Language enable helpers. Phase 2: includes DAG lives in den/language-cascade.nix
+# (via den-language-shim.nix) — "what does python enable?" → aspect includes, not
+# grepping this file. Enable flags still come from Copier / languages.*.enable.
 rec {
+  # Den cascade shim (dual-write until Phase 4 cutover).
+  denLanguage = import ./den-language-shim.nix { inherit lib; };
+
   langOn = languages: name: (languages.${name} or { }).enable or false;
 
   javascriptOn = languages: langOn languages "javascript" || langOn languages "typescript";
