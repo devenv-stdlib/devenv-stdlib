@@ -1,16 +1,18 @@
 # Composable CI preset: owns language/OS test.yml matrix generation.
-# Attrpath: ci.language-matrix — not a megapreset named "CI".
-# Behavior matches the former modules/languages/versions.nix module.
+# Attrpath: ci.github_actions.language-matrix — under ci/github_actions, not a
+# megapreset named "CI". Behavior matches the former modules/languages/versions.nix.
 _: {
   path = [
     "ci"
+    "github_actions"
     "language-matrix"
   ];
   description = ''
     Generate .github/workflows/test.yml from stdlib.lang.*.ciMatrix flags and
     supported.* version policies (Ubuntu LTS runners).
   '';
-  # Always available; presets.ci.language-matrix.enable can turn the writer off.
+  # Always available; presets.ci.github_actions.language-matrix.enable can turn
+  # the writer off.
   when = _: true;
   project =
     {
@@ -20,15 +22,15 @@ _: {
       ...
     }:
     let
-      catalogFile = ../../modules/languages/catalog.json;
-      versions = import ../../modules/languages/versions-lib.nix {
+      catalogFile = ../../../modules/languages/catalog.json;
+      versions = import ../../../modules/languages/versions-lib.nix {
         inherit lib;
         catalog =
           if builtins.pathExists catalogFile then builtins.fromJSON (builtins.readFile catalogFile) else { };
       };
       inherit
         (
-          (import ../../stdlib {
+          (import ../../../stdlib {
             inherit lib;
             nix-log = null;
           })
@@ -51,7 +53,7 @@ _: {
           langOn "javascript" || langOn "typescript";
 
       snapshot =
-        log.debug' "ci.language-matrix snapshot"
+        log.debug' "ci.github_actions.language-matrix snapshot"
           {
             inherit
               pythonOn

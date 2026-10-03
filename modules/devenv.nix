@@ -19,8 +19,9 @@ in
     # below via stdlib.devenv.load. No empty compat shims for the old
     # modules/hooks or modules/ides paths — pre-release, nothing public to
     # break. presets/examples/ is documentation only.
-    # CI language/OS matrix strategy is presets/ci/language-matrix.nix
-    # (attrpath ci.language-matrix).
+    # CI language/OS matrix strategy is
+    # presets/ci/github_actions/language-matrix.nix
+    # (attrpath ci.github_actions.language-matrix).
     ./debtmap/hooks.nix
     ./languages
     ./debtmap
