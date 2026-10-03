@@ -111,6 +111,7 @@ in
       vscode = (spec "vscode").category;
       neovim = (spec "neovim").category;
       nano = (spec "nano").category;
+      neovimInstall = (spec "neovim").install;
     };
     expected = {
       alacritty = "terminal";
@@ -126,6 +127,10 @@ in
       vscode = "ide";
       neovim = "ide";
       nano = "ide";
+      neovimInstall = {
+        kind = "hm-program";
+        program = "nixvim";
+      };
     };
   };
 

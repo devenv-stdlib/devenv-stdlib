@@ -9,6 +9,8 @@
     home-manager.follows = "devenv-stdlib/home-manager";
     den.follows = "devenv-stdlib/den";
     import-tree.follows = "devenv-stdlib/import-tree";
+    # Neovim tool (tools/ide/neovim.nix) imports inputs.nixvim.homeModules.nixvim.
+    nixvim.follows = "devenv-stdlib/nixvim";
   };
 
   outputs =

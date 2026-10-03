@@ -1,6 +1,6 @@
 # Remaining HM modules not owned by cursor/terminal aspects (developer home).
 # Cursor stack + terminal/provider stay in their aspects (avoid double-enable).
-{ lib, ... }:
+{ lib, inputs, ... }:
 {
   den.aspects.home-cli = {
     includes = [ ];
@@ -12,6 +12,8 @@
         ../../home/bash.nix
         # IDEs not on the cursor cascade (cursor*/mise stay in cursor aspects).
         ../../home/ides/vscode.nix
+        # nixvim HM module (flake input). tools/ide/neovim.nix enables programs.nixvim.
+        inputs.nixvim.homeModules.nixvim
         ../../home/ides/neovim.nix
         ../../home/ides/nano.nix
         # mise also imported by cursor-llm; same-path re-import is fine.
