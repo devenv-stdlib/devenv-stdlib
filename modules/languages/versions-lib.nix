@@ -389,7 +389,10 @@ rec {
           with:
             name: devenv
         - name: Install devenv
-          run: nix profile add nixpkgs#devenv
+          run: |
+            # Pin CLI to the locked modules rev (devenv.yaml require_version: true).
+            rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
+            nix profile add "github:cachix/devenv/''${rev}"
         - name: Test
           run: ${testRun}
         - name: Save Nix store
