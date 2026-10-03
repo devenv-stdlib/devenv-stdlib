@@ -97,9 +97,12 @@ let
   serenaServers = cfg: cfg.files.".serena/project.yml".yaml.language_servers;
 in
 {
-  testPresetStubIsMarkedForRebase = {
-    expr = ((import ../../stdlib/preset.nix { inherit lib; }).mkPreset { name = "example"; }).stub;
-    expected = "rebase-onto-cursor/presets-schema-a2d0";
+  # P2 owns stdlib/preset.nix. mkPreset is a Den module, not the old stub attrset.
+  testPresetSchemaComesFromP2 = {
+    expr = builtins.isFunction (
+      (import ../../stdlib/preset.nix { inherit lib; }).mkPreset { name = "example"; }
+    );
+    expected = true;
   };
 
   testLanguagesOffMatchHelpers = {
@@ -314,23 +317,18 @@ in
     };
   };
 
+  # P2 realize throws when strict requirements fail, instead of leaving a failed assertion.
   testTypescriptBundlerRequiresStrict = {
     expr =
-      let
-        cfg = eval {
-          languages.typescript.enable = true;
-        };
-      in
-      {
-        failed = map (a: a.assertion) (failedAssertions cfg);
-        prettier = hookOn cfg "prettier";
-        messages = map (a: lib.hasInfix "typescript.bundler" a.message) (failedAssertions cfg);
-      };
-    expected = {
-      failed = [ false ];
-      prettier = false;
-      messages = [ true ];
-    };
+      (builtins.tryEval (
+        let
+          cfg = eval {
+            languages.typescript.enable = true;
+          };
+        in
+        builtins.seq cfg.assertions cfg.warnings
+      )).success;
+    expected = false;
   };
 
   testTypescriptBundlerWarnsWhenNotStrict = {
