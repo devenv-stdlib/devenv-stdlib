@@ -1,4 +1,4 @@
-# ble.sh line editor. Sourced before Atuin and Starship (mkBefore).
+# ble.sh line editor. Bash-only: install/load only when the resolved shell is bash.
 args@{
   pkgs,
   lib,
@@ -12,6 +12,7 @@ if false then
 else
   let
     tool = import ../../../stdlib/tool.nix { inherit lib; };
+    shell = import ../../../stdlib/shell.nix { inherit lib; };
     spec = {
       name = "blesh";
       category = "shell";
@@ -36,7 +37,11 @@ else
             config,
             ...
           }:
-          lib.mkIf (config.terminal.provider == "alacritty") {
+          let
+            resolved = shell.resolve config config.shell.preferred;
+            install = shell.shouldInstallBlesh resolved;
+          in
+          lib.mkIf (config.terminal.provider == "alacritty" && install) {
             # ble.sh before Atuin/Starship (those land in initExtra at default order).
             programs.bash.initExtra = lib.mkBefore ''
               source -- "${pkgs.blesh}/share/blesh/ble.sh"
