@@ -164,12 +164,36 @@ let
       ) grouped
     );
 
+  # tools= takes tool attrpath refs (same nesting as categories / presets),
+  # never bare string literals like "pyright".
   normalizeTool =
     item:
-    if builtins.isString item then
+    if builtins.isAttrs item && item._type or null == "tool-ref" then
+      let
+        path = toolLib.normalizePath item.path;
+        name = lib.last path;
+      in
       {
-        name = item;
-        aspect = item;
+        inherit name path;
+        aspect = name;
+      }
+    else if builtins.isAttrs item && item ? path && !(item ? name && item ? category) then
+      let
+        path = toolLib.normalizePath item.path;
+        name = lib.last path;
+      in
+      {
+        inherit name path;
+        aspect = item.aspect or name;
+      }
+    else if builtins.isList item then
+      let
+        path = toolLib.normalizePath item;
+        name = lib.last path;
+      in
+      {
+        inherit name path;
+        aspect = name;
       }
     else if builtins.isAttrs item && item ? name then
       let
@@ -178,13 +202,23 @@ let
             toolLib.meta item
           else
             item;
+        path =
+          if built ? path then
+            toolLib.normalizePath built.path
+          else if built ? category then
+            toolLib.pathFromCategory built.category built.name
+          else
+            [ built.name ];
       in
       {
         inherit (built) name;
+        inherit path;
         aspect = item.aspect or built.name;
       }
+    else if builtins.isString item then
+      throw "mkPreset tools: use attrpath refs (e.g. with tools; [ python.lint.pyright ]), not string literals"
     else
-      throw "mkPreset tools: expected a tool name or mkTool attrset";
+      throw "mkPreset tools: expected a tool attrpath ref or mkTool attrset";
 
   normalizeTools =
     cfg: raw:
@@ -328,6 +362,8 @@ in
     refsFromPaths
     normalizeInclude
     normalizeIncludes
+    normalizeTool
+    normalizeTools
     getPresetAttr
     ;
 

@@ -2,7 +2,8 @@
 #
 # One API for every tool. Internally a tool is global (Home Manager / user
 # profile), local (project / devenv), or both — inferred from which payloads
-# are present. Callers still use mkTool + tools.<name>.enable.
+# are present. Enable options stay at tools.<leaf>.enable; inclusion uses
+# nested attrpath refs (tools.python.lint.pyright), same idea as presets.
 #
 # A tool file is a module. Call it with `__stdlibMeta = true` to read the
 # declaration without evaluating the module body.
@@ -58,6 +59,61 @@ let
     else
       [ "global" ];
 
+  # Attrpath segments for a tool. Accept a list, or a single undotted leaf.
+  normalizePath =
+    value:
+    if builtins.isList value then
+      assert lib.assertMsg (
+        value != [ ] && lib.all builtins.isString value
+      ) "mkTool path: expected a non-empty list of attrpath segments";
+      value
+    else if builtins.isString value then
+      assert lib.assertMsg (
+        value != "" && !(lib.hasInfix "." value)
+      ) "mkTool path: use a segment list (e.g. [ \"python\" \"lint\" \"pyright\" ]), not a dotted string";
+      [ value ]
+    else
+      throw "mkTool path: expected attrpath segments (list of strings) or one leaf name";
+
+  pathString = path: lib.concatStringsSep "." path;
+
+  # Public inclusion path from category + leaf name:
+  # lang.python.linters + pyright → python.lint.pyright
+  # shell + bash → shell.bash
+  # shell.history + atuin → shell.history.atuin
+  pathFromCategory =
+    category: name:
+    let
+      segs = lib.splitString "." category;
+      withoutLang = if segs != [ ] && builtins.head segs == "lang" then builtins.tail segs else segs;
+      mapped = map (s: if s == "linters" then "lint" else s) withoutLang;
+    in
+    mapped ++ [ name ];
+
+  mkRef = path: {
+    _type = "tool-ref";
+    path = normalizePath path;
+  };
+
+  # Nested attrset of refs so callers write `with tools; [ python.lint.pyright ]`.
+  refsFromPaths =
+    paths:
+    lib.foldl' (
+      tree: path: lib.recursiveUpdate tree (lib.setAttrByPath (normalizePath path) (mkRef path))
+    ) { } paths;
+
+  refsFromSpecs =
+    discovered:
+    let
+      paths = map (d: d.spec.path) discovered;
+      ids = map pathString paths;
+      dupes = lib.unique (lib.filter (id: lib.count (x: x == id) ids > 1) ids);
+    in
+    if dupes != [ ] then
+      throw "mkTool: duplicate tool attrpaths: ${builtins.toString dupes}"
+    else
+      refsFromPaths paths;
+
   meta =
     spec:
     let
@@ -69,6 +125,7 @@ let
       # categories.resolve throws on an unknown path.
       node = categories.resolve category;
       scopes = scopesOf spec;
+      path = if spec ? path then normalizePath spec.path else pathFromCategory category name;
     in
     assert require (builtins.elem kind installKinds)
       "mkTool ${name}: install.kind ${kind} is not one of ${builtins.toString installKinds}";
@@ -91,9 +148,17 @@ let
     assert require (
       kind != "project" || builtins.elem "local" scopes
     ) "mkTool ${name}: install.kind = project requires a project (local) payload";
+    assert require (
+      lib.last path == name
+    ) "mkTool ${name}: path ${pathString path} must end with the tool leaf name";
     spec
     // {
-      inherit name category scopes;
+      inherit
+        name
+        category
+        scopes
+        path
+        ;
       categoryNode = node;
       dependsOn = spec.dependsOn or [ ];
       isGlobal = builtins.elem "global" scopes;
@@ -266,5 +331,11 @@ in
     installKinds
     upgradeKinds
     policyArgOf
+    normalizePath
+    pathString
+    pathFromCategory
+    mkRef
+    refsFromPaths
+    refsFromSpecs
     ;
 }

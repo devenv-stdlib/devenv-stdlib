@@ -1,5 +1,5 @@
 # Shared JS/TS formatter. Uses javascript-or-typescript category policy.
-_: {
+{ tools, ... }: {
   path = [
     "javascript"
     "lint"
@@ -7,5 +7,5 @@ _: {
   ];
   description = "Prettier git-hook and JS/TS editor formatter settings.";
   categoryPolicy = "javascript-or-typescript";
-  tools = [ "prettier" ];
+  tools = [ tools.javascript.lint.prettier ];
 }
