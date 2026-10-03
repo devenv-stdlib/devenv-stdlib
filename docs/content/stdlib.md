@@ -38,7 +38,7 @@ The other pure helpers live under `stdlib/`. The old paths re-export them:
 | `stdlib/catalog.nix` | `modules/non-nix/lib.nix` |
 | `stdlib/debtmap.nix` | `modules/debtmap/lib.nix` |
 
-`mkTool` and `mkPreset` are not part of this export.
+`mkTool` is `stdlib/tool.nix`, exported as `stdlib.mkTool`. `mkPreset` is not part of this export.
 
 ## Categories
 
@@ -62,7 +62,7 @@ OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.
 
 `stdlib.discover` lists `.nix` files under the directories you pass. It skips names that start with `_`.
 
-`stdlib.den.load` and `stdlib.devenv.load` return module lists for the Den flake and the devenv evaluator. Both return an empty list until tool and preset lowering exists, so callers can already concatenate the result.
+`stdlib.den.load` lowers `tools/**/*.nix` into Den aspect modules. A missing directory still yields an empty list, so callers can concatenate the result. `stdlib.devenv.load` stays an empty list until preset project payloads exist.
 
 ## Compat shims
 

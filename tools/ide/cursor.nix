@@ -1,0 +1,107 @@
+# Cursor IDE launcher (nixpkgs code-cursor) plus desktop entry.
+# Extensions and LLM/MCP stay on their own aspects.
+args@{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
+# pkgs and config stay in the signature so Den does not call this without pkgs.
+# The false branch is never evaluated; it only marks those names as used.
+if false then
+  { inherit pkgs config; }
+else
+  let
+    tool = import ../../stdlib/tool.nix { inherit lib; };
+    spec = {
+      name = "cursor";
+      category = "ide";
+      install = {
+        kind = "nix";
+        attr = "code-cursor";
+      };
+      # Cursor updates itself; the nixpkgs pin is the bootstrap.
+      upgrade = "self";
+      defaultEnable = true;
+    };
+  in
+  if args.__stdlibMeta or false then
+    tool.meta spec
+  else
+    tool.apply args (
+      spec
+      // {
+        options.cursor.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Install Cursor from nixpkgs plus common editor extensions under
+            ~/.cursor/extensions. Specializes the shared VS Code extension packs
+            (home/ides/ext-lib.nix). Language packs are installed by devenv when
+            languages.* is enabled. Does not enable vscode.enable.
+            programs.cursor is not used: it replaces ~/.config/Cursor/User/settings.json.
+          '';
+        };
+
+        homeManager =
+          {
+            pkgs,
+            lib,
+            config,
+            ...
+          }:
+          let
+            cfg = config.cursor;
+            mesaDrivers = pkgs.mesa;
+            glLibs = lib.makeLibraryPath [
+              pkgs.libglvnd
+              mesaDrivers
+              pkgs.libdrm
+              pkgs.wayland
+              pkgs.libxkbcommon
+            ];
+
+            # chrome-sandbox cannot be root 4755 in the Nix store, so --no-sandbox is
+            # always required off NixOS. Mesa + X11 are only for VMware (SVGA / no
+            # /run/opengl-driver); systemd-detect-virt decides at launch.
+            cursorPkg = pkgs.writeShellApplication {
+              name = "cursor";
+              text = ''
+                extra=()
+                virt=""
+                if command -v systemd-detect-virt >/dev/null 2>&1; then
+                  virt="$(systemd-detect-virt 2>/dev/null || true)"
+                elif [ -x /usr/bin/systemd-detect-virt ]; then
+                  virt="$(/usr/bin/systemd-detect-virt 2>/dev/null || true)"
+                fi
+                if [ "$virt" = vmware ]; then
+                  export LD_LIBRARY_PATH="${glLibs}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+                  export LIBGL_DRIVERS_PATH="${mesaDrivers}/lib/dri''${LIBGL_DRIVERS_PATH:+:$LIBGL_DRIVERS_PATH}"
+                  export __EGL_VENDOR_LIBRARY_DIRS="${mesaDrivers}/share/glvnd/egl_vendor.d''${__EGL_VENDOR_LIBRARY_DIRS:+:$__EGL_VENDOR_LIBRARY_DIRS}"
+                  extra+=(--ozone-platform=x11)
+                fi
+                exec ${lib.getExe pkgs.code-cursor} --no-sandbox "''${extra[@]}" "$@"
+              '';
+            };
+          in
+          lib.mkIf cfg.enable {
+            nixpkgs.config.allowUnfree = true;
+
+            home.packages = [ cursorPkg ];
+
+            # gnome-shell often starts without ~/.nix-profile/share on XDG_DATA_DIRS.
+            xdg.dataFile."applications/cursor.desktop".text = ''
+              [Desktop Entry]
+              Type=Application
+              Name=Cursor
+              Comment=AI-powered code editor
+              Exec=${lib.getExe cursorPkg} %F
+              Icon=${pkgs.code-cursor}/share/pixmaps/cursor.png
+              Terminal=false
+              Categories=Development;IDE;
+              StartupWMClass=Cursor
+              MimeType=text/plain;inode/directory;
+            '';
+          };
+      }
+    )
