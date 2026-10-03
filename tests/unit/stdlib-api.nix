@@ -48,6 +48,110 @@ let
       builtins.head (builtins.match "[[:space:]]*${name} = \"([^\"]+)\";.*" (builtins.head matches));
 
   cardinalityOf = path: (stdlib.categories.resolve path).cardinality;
+
+  supported = stdlib.devenvSupported;
+
+  expectedLangPaths = lib.concatMap (lang: [
+    "lang.${lang}"
+    "lang.${lang}.linters"
+  ]) supported.languages;
+
+  expectedServicePaths = map (svc: "services.${svc}") supported.services;
+
+  # Non-lang/services category paths (stable scaffold outside devenv ids).
+  expectedOtherPaths = [
+    "ai-gateways"
+    "cache"
+    "containers"
+    "data"
+    "debuggers"
+    "docs"
+    "harness"
+    "http"
+    "ide"
+    "infra"
+    "infra.cloud"
+    "infra.iac"
+    "infra.kubernetes"
+    "infra.kubernetes.cluster"
+    "lang"
+    "linters"
+    "mcp"
+    "mcp.code"
+    "mcp.docs"
+    "mcp.git"
+    "mcp.web"
+    "monitor"
+    "profilers"
+    "profilers.cpu"
+    "profilers.memory"
+    "release"
+    "release.changelog"
+    "scanners"
+    "secrets"
+    "services"
+    "shell"
+    "shell.history"
+    "shell.nav"
+    "shell.prompt"
+    "tasks"
+    "terminal"
+    "terminal.mux"
+    "tui"
+    "vcs"
+  ];
+
+  expectedPaths = sort (expectedOtherPaths ++ expectedLangPaths ++ expectedServicePaths);
+
+  expectedCardinality =
+    builtins.listToAttrs (
+      map (path: {
+        name = path;
+        value = "bundle";
+      }) (expectedLangPaths ++ expectedServicePaths ++ [
+        "cache"
+        "containers"
+        "data"
+        "docs"
+        "http"
+        "infra"
+        "infra.cloud"
+        "infra.kubernetes"
+        "lang"
+        "linters"
+        "monitor"
+        "profilers"
+        "profilers.cpu"
+        "profilers.memory"
+        "release"
+        "scanners"
+        "secrets"
+        "services"
+        "shell"
+        "shell.nav"
+        "tasks"
+        "tui"
+        "vcs"
+      ])
+    )
+    // {
+      "ai-gateways" = "zero-or-one";
+      "debuggers" = "any-of";
+      "harness" = "exactly-one";
+      "ide" = "any-of";
+      "infra.iac" = "exactly-one";
+      "infra.kubernetes.cluster" = "zero-or-one";
+      "mcp" = "any-of";
+      "mcp.code" = "any-of";
+      "mcp.docs" = "any-of";
+      "mcp.git" = "any-of";
+      "mcp.web" = "any-of";
+      "release.changelog" = "zero-or-one";
+      "shell.history" = "zero-or-one";
+      "shell.prompt" = "zero-or-one";
+      "terminal" = "exactly-one";
+      "terminal.mux" = "zero-or-one";
+    };
 in
 {
   testStdlibVersion = {
@@ -86,6 +190,7 @@ in
       "categories.cardinalityViolation"
       "categories.paths"
       "categories.resolve"
+      "categories.supported"
       "categories.tree"
       "categoryPolicy"
       "categoryPolicy.bindPreset"
@@ -97,10 +202,13 @@ in
       "categoryPolicy.languageAvailable"
       "categoryPolicy.mkAnyLanguagePolicy"
       "categoryPolicy.mkLanguagePolicy"
+      "categoryPolicy.mkServicePolicy"
       "categoryPolicy.optionsModule"
       "categoryPolicy.policies"
       "categoryPolicy.policyIds"
       "categoryPolicy.requiresOf"
+      "categoryPolicy.serviceAvailable"
+      "categoryPolicy.supported"
       "categoryPolicy.toolAssertions"
       "debtmap"
       "debtmap.defaultGodObject"
@@ -116,6 +224,7 @@ in
       "den.load"
       "devenv"
       "devenv.load"
+      "devenvSupported"
       "discover"
       "harness"
       "harness.cardinality"
@@ -242,60 +351,28 @@ in
 
   testStdlibCategoryPaths = {
     expr = stdlib.categories.paths;
-    expected = [
-      "ai-gateways"
-      "cache"
-      "containers"
-      "data"
-      "debuggers"
-      "docs"
-      "harness"
-      "http"
-      "ide"
-      "infra"
-      "infra.cloud"
-      "infra.iac"
-      "infra.kubernetes"
-      "infra.kubernetes.cluster"
-      "lang"
-      "lang.go"
-      "lang.go.linters"
-      "lang.haskell"
-      "lang.haskell.linters"
-      "lang.javascript"
-      "lang.javascript.linters"
-      "lang.nix"
-      "lang.nix.linters"
-      "lang.python"
-      "lang.python.linters"
-      "lang.rust"
-      "lang.rust.linters"
-      "lang.typescript"
-      "lang.typescript.linters"
-      "linters"
-      "mcp"
-      "mcp.code"
-      "mcp.docs"
-      "mcp.git"
-      "mcp.web"
-      "monitor"
-      "profilers"
-      "profilers.cpu"
-      "profilers.memory"
-      "release"
-      "release.changelog"
-      "scanners"
-      "secrets"
-      "shell"
-      "shell.history"
-      "shell.nav"
-      "shell.prompt"
-      "tasks"
-      "terminal"
-      "terminal.mux"
-      "tui"
-      "vcs"
-    ];
+    expected = expectedPaths;
+  };
+
+  testStdlibDevenvSupportedScaffold = {
+    expr = {
+      nLangs = builtins.length supported.languages;
+      nServices = builtins.length supported.services;
+      python = (stdlib.categories.resolve "lang.python").categoryPolicy;
+      zig = (stdlib.categories.resolve "lang.zig").categoryPolicy;
+      postgres = (stdlib.categories.resolve "services.postgres").categoryPolicy;
+      hasPythonLinters = lib.elem "lang.python.linters" stdlib.categories.paths;
+      hasZigLinters = lib.elem "lang.zig.linters" stdlib.categories.paths;
+    };
+    expected = {
+      nLangs = 58;
+      nServices = 43;
+      python = "python";
+      zig = "zig";
+      postgres = "services.postgres";
+      hasPythonLinters = true;
+      hasZigLinters = true;
+    };
   };
 
   testStdlibCategoryCardinality = {
@@ -305,60 +382,7 @@ in
         value = cardinalityOf path;
       }) stdlib.categories.paths
     );
-    expected = {
-      "ai-gateways" = "zero-or-one";
-      "cache" = "bundle";
-      "containers" = "bundle";
-      "data" = "bundle";
-      "debuggers" = "any-of";
-      "docs" = "bundle";
-      "harness" = "exactly-one";
-      "http" = "bundle";
-      "ide" = "any-of";
-      "infra" = "bundle";
-      "infra.cloud" = "bundle";
-      "infra.iac" = "exactly-one";
-      "infra.kubernetes" = "bundle";
-      "infra.kubernetes.cluster" = "zero-or-one";
-      "lang" = "bundle";
-      "lang.go" = "bundle";
-      "lang.go.linters" = "bundle";
-      "lang.haskell" = "bundle";
-      "lang.haskell.linters" = "bundle";
-      "lang.javascript" = "bundle";
-      "lang.javascript.linters" = "bundle";
-      "lang.nix" = "bundle";
-      "lang.nix.linters" = "bundle";
-      "lang.python" = "bundle";
-      "lang.python.linters" = "bundle";
-      "lang.rust" = "bundle";
-      "lang.rust.linters" = "bundle";
-      "lang.typescript" = "bundle";
-      "lang.typescript.linters" = "bundle";
-      "linters" = "bundle";
-      "mcp" = "any-of";
-      "mcp.code" = "any-of";
-      "mcp.docs" = "any-of";
-      "mcp.git" = "any-of";
-      "mcp.web" = "any-of";
-      "monitor" = "bundle";
-      "profilers" = "bundle";
-      "profilers.cpu" = "bundle";
-      "profilers.memory" = "bundle";
-      "release" = "bundle";
-      "release.changelog" = "zero-or-one";
-      "scanners" = "bundle";
-      "secrets" = "bundle";
-      "shell" = "bundle";
-      "shell.history" = "zero-or-one";
-      "shell.nav" = "bundle";
-      "shell.prompt" = "zero-or-one";
-      "tasks" = "bundle";
-      "terminal" = "exactly-one";
-      "terminal.mux" = "zero-or-one";
-      "tui" = "bundle";
-      "vcs" = "bundle";
-    };
+    expected = expectedCardinality;
   };
 
   testStdlibProfilersAreSplit = {

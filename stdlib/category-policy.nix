@@ -1,22 +1,35 @@
-# Category-wide policies for namespaced language categories.
+# Category-wide policies for namespaced language and service categories.
 #
 # Declared once per category (not copied onto every leaf). When any preset
 # under `<lang>.*` or tool under `lang.<lang>.*` is used/enabled, the category
-# policy's prerequisites must hold.
+# policy's prerequisites must hold. Service categories use `services.<id>.*`
+# presets / `services.<id>` tools the same way against `services.<id>.enable`.
 #
 # Each language id (python, rust, …) must be available via
 # `languages.<id>.enable` or an explicit override
 # `stdlib.categoryPolicies.<id>.available = true`.
 #
-# Add an entry to `policies` and set `categoryPolicy` on the matching
-# `lang.<id>` node in categories.nix.
+# Service policy ids are `services.<id>` (matching the category annotation).
+#
+# Language/service ids come from stdlib/devenv-supported.nix. Set
+# `categoryPolicy` on the matching node in categories.nix (generated there).
 { lib }:
 let
+  supported = import ./devenv-supported.nix;
+
   # Flexible "toolchain available somehow" for a devenv language id.
   languageAvailable =
     lang: cfg:
     ((cfg.languages.${lang} or { }).enable or false)
     || ((cfg.stdlib.categoryPolicies.${lang} or { }).available or false);
+
+  serviceAvailable =
+    svc: cfg:
+    let
+      policyId = "services.${svc}";
+    in
+    ((cfg.services.${svc} or { }).enable or false)
+    || ((cfg.stdlib.categoryPolicies.${policyId} or { }).available or false);
 
   mkLanguagePolicy = lang: {
     id = lang;
@@ -27,6 +40,16 @@ let
     available = languageAvailable lang;
     message = ''
       category ${lang}: ${lang} must be available (set languages.${lang}.enable or stdlib.categoryPolicies.${lang}.available = true)
+    '';
+  };
+
+  mkServicePolicy = svc: {
+    id = "services.${svc}";
+    presetRoot = "services";
+    toolCategoryPrefix = "services.${svc}";
+    available = serviceAvailable svc;
+    message = ''
+      category services.${svc}: ${svc} must be available (set services.${svc}.enable or stdlib.categoryPolicies."services.${svc}".available = true)
     '';
   };
 
@@ -50,27 +73,39 @@ let
       '';
     };
 
-  # Language categories with presets (python, rust, …). Add an entry and set
-  # categoryPolicy on lang.<id> in categories.nix.
-  policies = {
-    go = mkLanguagePolicy "go";
-    haskell = mkLanguagePolicy "haskell";
-    javascript = mkLanguagePolicy "javascript";
+  languagePolicies = lib.listToAttrs (
+    map (lang: {
+      name = lang;
+      value = mkLanguagePolicy lang;
+    }) supported.languages
+  );
+
+  servicePolicies = lib.listToAttrs (
+    map (svc: {
+      name = "services.${svc}";
+      value = mkServicePolicy svc;
+    }) supported.services
+  );
+
+  policies = languagePolicies // servicePolicies // {
     javascript-or-typescript = mkAnyLanguagePolicy [
       "javascript"
       "typescript"
     ];
-    nix = mkLanguagePolicy "nix";
-    python = mkLanguagePolicy "python";
-    rust = mkLanguagePolicy "rust";
-    typescript = mkLanguagePolicy "typescript";
   };
 
   policyIds = lib.sort (a: b: a < b) (builtins.attrNames policies);
 
   forId = id: policies.${id} or null;
 
-  forPresetPath = path: if path == [ ] then null else forId (builtins.head path);
+  forPresetPath =
+    path:
+    if path == [ ] then
+      null
+    else if builtins.head path == "services" && builtins.length path >= 2 then
+      forId "services.${builtins.elemAt path 1}"
+    else
+      forId (builtins.head path);
 
   forToolCategory =
     dotted:
@@ -79,6 +114,8 @@ let
     in
     if builtins.length parts >= 2 && builtins.head parts == "lang" then
       forId (builtins.elemAt parts 1)
+    else if builtins.length parts >= 2 && builtins.head parts == "services" then
+      forId "services.${builtins.elemAt parts 1}"
     else
       null;
 
@@ -167,8 +204,9 @@ let
               default = false;
               description = ''
                 Treat this category's toolchain as available without
-                languages.<id>.enable. Use when Python (etc.) is provided
-                outside devenv languages.*.
+                languages.<id>.enable (or services.<id>.enable for
+                services.* policy ids). Use when the toolchain is provided
+                outside devenv languages.* / services.*.
               '';
             };
           }
@@ -176,8 +214,9 @@ let
         default = { };
         description = ''
           Per-category policy overrides. Enabling any preset under <id>.* or
-          tool under lang.<id>.* requires the category to be available
-          (languages.<id>.enable or categoryPolicies.<id>.available).
+          tool under lang.<id>.* (or services.<id>.*) requires the category
+          to be available (languages.<id>.enable / services.<id>.enable or
+          categoryPolicies.<id>.available).
         '';
       };
     };
@@ -187,7 +226,9 @@ in
     policies
     policyIds
     languageAvailable
+    serviceAvailable
     mkLanguagePolicy
+    mkServicePolicy
     mkAnyLanguagePolicy
     forId
     forPresetPath
@@ -198,5 +239,6 @@ in
     bindPreset
     toolAssertions
     optionsModule
+    supported
     ;
 }
