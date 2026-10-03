@@ -1,6 +1,10 @@
 _: {
   name = "devenv4monorepo";
 
+  # cachix/devenv v2.4.0 tagged modules still ship latest-version=2.3.1; align
+  # with the release CLI so require_version: true (and the enterShell notice) match.
+  devenv.latestVersion = "2.4.0";
+
   # devenv.cachix.org is already in nix.conf (setup.sh: cachix use devenv;
   # CI: cachix-action). devenv's own pull would add it again and Nix warns.
   cachix.enable = false;
