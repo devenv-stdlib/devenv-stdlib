@@ -21,7 +21,8 @@
 #   }
 #
 # With the devenv loader, the same building blocks are separate presets
-# gated by `when = languages.python.enable`. Disable one with
+# gated by the python category policy (languages.python.enable or
+# stdlib.categoryPolicies.python.available). Disable one with
 # `presets.python.lint.ruff.enable = false` without dropping the rest.
 { lib, ... }:
 let

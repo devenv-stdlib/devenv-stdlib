@@ -7,6 +7,7 @@
   lib,
   categories ? import ./categories.nix { inherit lib; },
   toolLib ? import ./tool.nix { inherit lib; },
+  categoryPolicy ? import ./category-policy.nix { inherit lib; },
 }:
 let
   # P1 stdlib/categories.nix is `{ tree, resolve, ... }`. A raw node tree
@@ -336,7 +337,8 @@ in
       path ? null,
       name ? null,
       description ? "",
-      when ? (_: true),
+      # null = inherit category-policy when (or always-true when no policy).
+      when ? null,
       requires ? [ ],
       tools ? [ ],
       configure ? { },
@@ -357,6 +359,10 @@ in
           throw "mkPreset: path (attrpath segments) is required";
       presetId = pathString presetPath;
       includeIds = normalizeIncludes includes;
+      bound = categoryPolicy.bindPreset {
+        path = presetPath;
+        inherit when requires;
+      };
     in
     {
       den,
@@ -372,9 +378,9 @@ in
       strict' = if strict == null then true else strict;
       result = realize {
         name = presetId;
+        when = bound.when;
+        requires = bound.requires;
         inherit
-          when
-          requires
           tools
           exclude
           aspectAlias

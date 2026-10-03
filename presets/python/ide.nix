@@ -9,7 +9,6 @@ in
     "ide"
   ];
   description = "Python VS Code / Cursor extension pack and Pylance setting.";
-  when = cfg: (cfg.languages.python or { }).enable or false;
   project.stdlib.lang.python = {
     vscodeIds = project.vscodeLanguageIds.python;
     extensionSet = "python";

@@ -11,6 +11,7 @@
 { lib }:
 let
   categories = import ./categories.nix { inherit lib; };
+  categoryPolicy = import ./category-policy.nix { inherit lib; };
 
   installKinds = [
     "nix"
@@ -114,6 +115,7 @@ let
       cfgEnable = moduleArgs.config.tools.${checked.name}.enable;
       rendered = (spec.homeManager or (_: { })) moduleArgs;
       deps = checked.dependsOn;
+      policyAssertions = categoryPolicy.toolAssertions moduleArgs.config checked.category;
     in
     assert require checked.isGlobal
       "mkTool ${checked.name}: apply is for global (homeManager) tools; use applyLocal for project payloads";
@@ -162,11 +164,15 @@ let
             tools = lib.genAttrs deps (_: {
               enable = true;
             });
-            assertions = map (dep: {
-              assertion = moduleArgs.config.tools.${dep}.enable;
-              message = "tools.${checked.name}.enable requires tools.${dep}.enable";
-            }) deps;
           })
+          {
+            assertions =
+              (map (dep: {
+                assertion = moduleArgs.config.tools.${dep}.enable;
+                message = "tools.${checked.name}.enable requires tools.${dep}.enable";
+              }) deps)
+              ++ policyAssertions;
+          }
           rendered
         ]
       );

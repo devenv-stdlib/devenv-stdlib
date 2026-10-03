@@ -24,6 +24,7 @@ let
     ++ names "debtmap" stdlib.debtmap
     ++ names "catalog" stdlib.catalog
     ++ names "categories" stdlib.categories
+    ++ names "categoryPolicy" stdlib.categoryPolicy
     ++ names "harness" stdlib.harness
     ++ names "shell" stdlib.shell
     ++ names "log" stdlib.log
@@ -86,6 +87,20 @@ in
       "categories.paths"
       "categories.resolve"
       "categories.tree"
+      "categoryPolicy"
+      "categoryPolicy.bindPreset"
+      "categoryPolicy.forCategoryNode"
+      "categoryPolicy.forId"
+      "categoryPolicy.forPresetPath"
+      "categoryPolicy.forToolCategory"
+      "categoryPolicy.inheritedWhen"
+      "categoryPolicy.languageAvailable"
+      "categoryPolicy.mkLanguagePolicy"
+      "categoryPolicy.optionsModule"
+      "categoryPolicy.policies"
+      "categoryPolicy.policyIds"
+      "categoryPolicy.requiresOf"
+      "categoryPolicy.toolAssertions"
       "debtmap"
       "debtmap.defaultGodObject"
       "debtmap.godLimitsToml"
