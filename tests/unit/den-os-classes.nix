@@ -1,6 +1,6 @@
 # Phase 5: portable aspect × two OS classes + Ubuntu-only quake guards.
 # Consumes flake export denOsClasses (see flake.nix).
-{ lib, ... }:
+_:
 let
   flake = builtins.getFlake (toString ../..);
   os = flake.denOsClasses;
