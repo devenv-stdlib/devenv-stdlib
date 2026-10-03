@@ -5,8 +5,13 @@
 }:
 let
   project = import ../lib/project.nix { inherit lib; };
+  stdlibDevenv = import ../../stdlib/devenv.nix { inherit lib; };
   dlib = import ./lib.nix { inherit lib; };
-  enabled = project.debtmapLanguages (config.languages or { });
+  enabled =
+    if config ? stdlib.lang then
+      stdlibDevenv.debtmapLanguages config.stdlib.lang
+    else
+      project.debtmapLanguages (config.languages or { });
 
   godLimits =
     defaults:
