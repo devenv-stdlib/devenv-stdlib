@@ -18,19 +18,17 @@ let
     ((cfg.languages.${lang} or { }).enable or false)
     || ((cfg.stdlib.categoryPolicies.${lang} or { }).available or false);
 
-  mkLanguagePolicy =
-    lang:
-    {
-      id = lang;
-      # Preset attrpath root: python.lint.ruff → python
-      presetRoot = lang;
-      # Tool category prefix: lang.python / lang.python.linters
-      toolCategoryPrefix = "lang.${lang}";
-      available = languageAvailable lang;
-      message = ''
-        category ${lang}: ${lang} must be available (set languages.${lang}.enable or stdlib.categoryPolicies.${lang}.available = true)
-      '';
-    };
+  mkLanguagePolicy = lang: {
+    id = lang;
+    # Preset attrpath root: python.lint.ruff → python
+    presetRoot = lang;
+    # Tool category prefix: lang.python / lang.python.linters
+    toolCategoryPrefix = "lang.${lang}";
+    available = languageAvailable lang;
+    message = ''
+      category ${lang}: ${lang} must be available (set languages.${lang}.enable or stdlib.categoryPolicies.${lang}.available = true)
+    '';
+  };
 
   # Only python is fully wired. Keys here are the extension point for rust/go/….
   policies = {
@@ -41,12 +39,7 @@ let
 
   forId = id: policies.${id} or null;
 
-  forPresetPath =
-    path:
-    if path == [ ] then
-      null
-    else
-      forId (builtins.head path);
+  forPresetPath = path: if path == [ ] then null else forId (builtins.head path);
 
   forToolCategory =
     dotted:
@@ -78,7 +71,7 @@ let
       [
         {
           assertion = policy.available;
-          message = policy.message;
+          inherit (policy) message;
         }
       ];
 
@@ -103,12 +96,10 @@ let
   # Module assertions for an enabled tool under a category policy.
   toolAssertions =
     config: category:
-    map (
-      req: {
-        assertion = if builtins.isFunction req.assertion then req.assertion config else req.assertion;
-        inherit (req) message;
-      }
-    ) (requiresOf (forToolCategory category));
+    map (req: {
+      assertion = if builtins.isFunction req.assertion then req.assertion config else req.assertion;
+      inherit (req) message;
+    }) (requiresOf (forToolCategory category));
 
   # devenv / HM option: explicit availability override per category id.
   optionsModule =

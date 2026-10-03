@@ -4,7 +4,7 @@
 { lib, ... }:
 let
   stdlib = import ../../stdlib { inherit lib; };
-  categoryPolicy = stdlib.categoryPolicy;
+  inherit (stdlib) categoryPolicy;
   presetLib = import ../../stdlib/preset.nix { inherit lib; };
   toolLib = import ../../stdlib/tool.nix { inherit lib; };
 
@@ -24,8 +24,8 @@ let
     in
     presetLib.realize {
       name = presetLib.pathString path;
-      when = bound.when;
-      requires = bound.requires;
+      inherit (bound) when;
+      inherit (bound) requires;
       tools = [ "ruff" ];
       inherit enable strict cfg;
       globalStrict = cfg.presets.strict or true;
@@ -88,11 +88,12 @@ in
   testCategoryPolicyPythonRegistered = {
     expr = {
       ids = categoryPolicy.policyIds;
-      preset = (categoryPolicy.forPresetPath [
-        "python"
-        "lint"
-        "ruff"
-      ]).id;
+      preset =
+        (categoryPolicy.forPresetPath [
+          "python"
+          "lint"
+          "ruff"
+        ]).id;
       tool = (categoryPolicy.forToolCategory "lang.python.linters").id;
       annotated = (stdlib.categories.resolve "lang.python").categoryPolicy;
     };
@@ -197,8 +198,8 @@ in
     expr =
       let
         # Force when=true without python → triggered, then requires fail (strict throw).
-        threw = !(builtins.tryEval (
-          realizePreset {
+        threw =
+          !(builtins.tryEval (realizePreset {
             path = [
               "python"
               "lint"
@@ -206,8 +207,7 @@ in
             ];
             when = _: true;
             cfg = { };
-          }
-        )).success;
+          })).success;
         warned = realizePreset {
           path = [
             "python"
@@ -221,7 +221,7 @@ in
       in
       {
         inherit threw;
-        inert = warned.inert;
+        inherit (warned) inert;
         hasWarning = lib.any (w: lib.hasInfix "category python" w) warned.warnings;
       };
     expected = {
@@ -281,7 +281,7 @@ in
         inheritWhen = bound.when { } == false;
         inheritWhenOn = bound.when { languages.python.enable = true; };
         nRequires = builtins.length checked;
-        message = (builtins.head checked).message;
+        inherit ((builtins.head checked)) message;
       };
     expected = {
       inheritWhen = true;
