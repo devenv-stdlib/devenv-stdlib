@@ -17,6 +17,7 @@
         runner24 = contains "ubuntu-24.04" yaml;
         runner26 = contains "ubuntu-26.04" yaml;
         skip = contains "no-language-matrix:" yaml;
+        skipQuoted = contains ''run: echo "No languages enabled; skipping per-version devenv test."'' yaml;
         latest = contains "ubuntu-latest" yaml;
         jammy = contains "ubuntu-22.04" yaml;
       };
@@ -27,6 +28,7 @@
       runner24 = true;
       runner26 = true;
       skip = true;
+      skipQuoted = true;
       latest = false;
       jammy = false;
     };
