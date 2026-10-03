@@ -1,42 +1,68 @@
-# ble.sh before Atuin/Starship, and Atuin's daemon search settings.
+# Atuin (+ ble.sh on bash). Shell option is mandatory unless exactly one shell tool is on.
 { lib, ... }:
 let
   inherit (import ../stdlib/preset.nix { inherit lib; }) mkPreset;
+  shell = import ../stdlib/shell.nix { inherit lib; };
+
+  resolvedOf = cfg: shell.resolve cfg cfg.presets.alacritty-atuin.shell;
+
+  toolsFor =
+    cfg:
+    let
+      resolved = resolvedOf cfg;
+      shells = shell.policyShells cfg resolved;
+    in
+    shells ++ [ "atuin" ] ++ lib.optional (shell.shouldInstallBlesh resolved) "blesh";
 in
 {
   imports = [
     (mkPreset {
       name = "alacritty-atuin";
-      description = "ble.sh before Atuin and Starship, with Atuin's daemon fuzzy search.";
+      description = "Atuin history with daemon fuzzy search; ble.sh before Atuin/Starship when the resolved shell is bash.";
 
-      extraOptions.tools = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        default = [
-          "atuin"
-          "blesh"
-        ];
-        description = "Tools that must be enabled for this preset. Both atuin and blesh are required.";
+      extraOptions.shell = shell.mkShellOption {
+        description = "Interactive shell this preset configures. Required unless exactly one of tools.{bash,zsh,elvish} is enabled.";
       };
 
-      tools = cfg: cfg.presets.alacritty-atuin.tools;
+      tools = toolsFor;
 
       requires = [
         {
-          assertion = cfg: builtins.elem "atuin" cfg.presets.alacritty-atuin.tools;
-          message = "alacritty-atuin requires the atuin tool to be enabled";
+          assertion = cfg: resolvedOf cfg != null;
+          message = "presets.alacritty-atuin.shell is required unless exactly one of tools.{bash,zsh,elvish} is enabled";
         }
         {
-          assertion = cfg: builtins.elem "blesh" cfg.presets.alacritty-atuin.tools;
-          message = "alacritty-atuin requires the blesh tool to be enabled";
+          assertion = cfg: builtins.elem "atuin" (toolsFor cfg);
+          message = "alacritty-atuin requires the atuin tool";
+        }
+        {
+          assertion =
+            cfg: !(shell.shouldInstallBlesh (resolvedOf cfg)) || builtins.elem "blesh" (toolsFor cfg);
+          message = "alacritty-atuin requires blesh when the resolved shell is bash";
         }
       ];
 
+      configure = cfg: {
+        shell.preferred = resolvedOf cfg;
+      };
+
       homeManager =
-        { pkgs, lib, ... }:
+        {
+          pkgs,
+          lib,
+          config,
+          ...
+        }:
+        let
+          resolved = resolvedOf config;
+          shells = shell.policyShells config resolved;
+          integrations = shell.enableIntegrations shells;
+          installBlesh = shell.shouldInstallBlesh resolved;
+        in
         {
           programs.atuin = {
             enable = true;
-            enableBashIntegration = true;
+            inherit (integrations) enableBashIntegration enableZshIntegration;
             # User systemd + socket activation (generic Linux). Do not set
             # settings.daemon.autostart: it is incompatible with systemd_socket.
             daemon.enable = true;
@@ -44,16 +70,27 @@ in
             settings.search_mode = "daemon-fuzzy";
           };
 
-          # ble.sh before Atuin/Starship (those land in initExtra at default order).
-          programs.bash.initExtra = lib.mkBefore ''
-            source -- "${pkgs.blesh}/share/blesh/ble.sh"
-          '';
+          # ble.sh before Atuin/Starship — bash only.
+          programs.bash.initExtra = lib.mkIf installBlesh (
+            lib.mkBefore ''
+              source -- "${pkgs.blesh}/share/blesh/ble.sh"
+            ''
+          );
 
-          home.packages = [ pkgs.blesh ];
+          home.packages = lib.mkIf installBlesh [ pkgs.blesh ];
 
-          xdg.configFile."blesh/init.sh".text = ''
-            bleopt highlight_syntax=on
-          '';
+          xdg.configFile."blesh/init.sh" = lib.mkIf installBlesh {
+            text = ''
+              bleopt highlight_syntax=on
+            '';
+          };
+
+          # Elvish: this HM pin has no programs.elvish integration toggle.
+          xdg.configFile."elvish/lib/atuin.elv" = lib.mkIf (builtins.elem "elvish" shells) {
+            text = ''
+              eval (atuin init elvish | slurp)
+            '';
+          };
         };
     })
   ];
