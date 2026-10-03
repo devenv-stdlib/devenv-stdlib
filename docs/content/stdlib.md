@@ -40,6 +40,19 @@ The other pure helpers live under `stdlib/`. The old paths re-export them:
 
 `mkTool` is `stdlib/tool.nix`, exported as `stdlib.mkTool`. `mkPreset` is not part of this export.
 
+## Preset attrpaths
+
+Building-block presets keep the hierarchy of their tools. Identity is a nested attrpath (`path = [ "python" "lint" "ruff" ]` → `presets.python.lint.ruff` and Den aspect `python.lint.ruff`), not a flat string name. Compose with attrpath refs:
+
+```nix
+includes = with presets; [
+  python.lint.ruff
+  terminal.quake
+];
+```
+
+`mkPreset includes` rejects string literals. `stdlib/preset.nix` exports `mkRef` / `refsFromPaths` for the `with presets; …` registry.
+
 ## Categories
 
 `stdlib/categories.nix` is a tree. Each node has one cardinality. The names in the tree are hyphenated compounds: exactly one, any of, zero or one, and bundle. Resolve a node with a dotted path such as `lang.python.linters` or `harness`. Sibling exclusion, when presets grow it, stays inside that node.

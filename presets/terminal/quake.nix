@@ -1,12 +1,15 @@
 # Quake dropdown: exactly one terminal provider (B1) plus GNOME wiring.
 { lib, ... }:
 let
-  inherit (import ../stdlib/preset.nix { inherit lib; }) mkPreset;
+  inherit (import ../../stdlib/preset.nix { inherit lib; }) mkPreset;
 in
 {
   imports = [
     (mkPreset {
-      name = "terminal-quake";
+      path = [
+        "terminal"
+        "quake"
+      ];
       description = "Exactly one quake terminal provider, plus the GNOME dropdown wiring.";
 
       extraOptions.provider = lib.mkOption {
@@ -21,13 +24,13 @@ in
         '';
       };
 
-      tools = cfg: [ cfg.presets.terminal-quake.provider ];
+      tools = cfg: [ cfg.presets.terminal.quake.provider ];
 
       configure = cfg: {
-        terminal.provider = cfg.presets.terminal-quake.provider;
+        terminal.provider = cfg.presets.terminal.quake.provider;
       };
 
-      homeManager.imports = [ ../home/terminal.nix ];
+      homeManager.imports = [ ../../home/terminal.nix ];
     })
   ];
 }
