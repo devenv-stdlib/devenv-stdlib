@@ -88,6 +88,7 @@ let
           children.linters = n "bundle" "Python linters and formatters." { };
         };
         rust = n "bundle" "Rust tools that are not linters (for example cargo-nextest)." {
+          categoryPolicy = "rust";
           children.linters = n "bundle" "Rust linters and formatters." { };
         };
         typescript = n "bundle" "TypeScript tools that are not linters (for example pnpm)." {

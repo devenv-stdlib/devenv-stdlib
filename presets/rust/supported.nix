@@ -1,3 +1,4 @@
+# when inherits rust category policy (languages.rust.enable or override).
 { lib, ... }:
 let
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
@@ -8,8 +9,7 @@ in
     "rust"
     "supported"
   ];
-  description = "supported.rust options and CI matrix flag when Rust is on.";
-  when = cfg: (cfg.languages.rust or { }).enable or false;
+  description = "supported.rust options and CI matrix flag when Rust is available.";
   module = _: {
     options.supported.rust = lib.mkOption {
       type = lib.types.submodule {

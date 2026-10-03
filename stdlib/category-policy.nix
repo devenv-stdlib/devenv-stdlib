@@ -4,12 +4,12 @@
 # under `<lang>.*` or tool under `lang.<lang>.*` is used/enabled, the category
 # policy's prerequisites must hold.
 #
-# Python is the first instance: Python must be available via
-# `languages.python.enable` or an explicit override
-# `stdlib.categoryPolicies.python.available = true`.
+# Each language id (python, rust, …) must be available via
+# `languages.<id>.enable` or an explicit override
+# `stdlib.categoryPolicies.<id>.available = true`.
 #
-# Other language categories follow the same shape — add an entry to `policies`
-# and set `categoryPolicy` on the matching `lang.<id>` node in categories.nix.
+# Add an entry to `policies` and set `categoryPolicy` on the matching
+# `lang.<id>` node in categories.nix.
 { lib }:
 let
   # Flexible "toolchain available somehow" for a devenv language id.
@@ -30,9 +30,11 @@ let
     '';
   };
 
-  # Only python is fully wired. Keys here are the extension point for rust/go/….
+  # Language categories with presets (python, rust, …). Add an entry and set
+  # categoryPolicy on lang.<id> in categories.nix.
   policies = {
     python = mkLanguagePolicy "python";
+    rust = mkLanguagePolicy "rust";
   };
 
   policyIds = lib.sort (a: b: a < b) (builtins.attrNames policies);
