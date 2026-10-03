@@ -27,3 +27,4 @@ in
 // (import ./stdlib-tools.nix harness)
 // (import ./stdlib-presets.nix harness)
 // (import ./presets-devenv.nix harness)
+// (import ./stdlib-packaging.nix harness)
