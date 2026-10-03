@@ -20,27 +20,33 @@ let
   };
 
   denOptions = {
-    options.den.aspects = lib.mkOption {
-      type = lib.types.lazyAttrsOf lib.types.raw;
-      default = { };
+    options = {
+      den = {
+        aspects = lib.mkOption {
+          type = lib.types.lazyAttrsOf lib.types.raw;
+          default = { };
+        };
+        policies = lib.mkOption {
+          type = lib.types.lazyAttrsOf lib.types.raw;
+          default = { };
+        };
+      };
+      tools = {
+        bash.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+        zsh.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+        elvish.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+      };
+      shell.preferred = shellLib.preferredOption;
     };
-    options.den.policies = lib.mkOption {
-      type = lib.types.lazyAttrsOf lib.types.raw;
-      default = { };
-    };
-    options.tools.bash.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    options.tools.zsh.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    options.tools.elvish.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    options.shell.preferred = shellLib.preferredOption;
   };
 
   eval =
@@ -120,7 +126,7 @@ in
   testPresetStrictFalseWarnsAndInert = {
     expr =
       let
-        result = (eval strictPreset { presets.demo.strict = false; }).config.presets.demo.result;
+        inherit ((eval strictPreset { presets.demo.strict = false; }).config.presets.demo) result;
       in
       {
         inherit (result)
@@ -175,7 +181,7 @@ in
   testTerminalQuakeExcludeStaysOnTerminalNode = {
     expr =
       let
-        result = (eval (import ../../presets/terminal/quake.nix) { }).config.presets.terminal.quake.result;
+        inherit ((eval (import ../../presets/terminal/quake.nix) { }).config.presets.terminal.quake) result;
       in
       {
         inherit (result) includeTools;
@@ -200,7 +206,7 @@ in
   testIdePresetDoesNotExcludeSiblingIdes = {
     expr =
       let
-        result = (eval (import ../../presets/ide.nix) { }).config.presets.ide.result;
+        inherit ((eval (import ../../presets/ide.nix) { }).config.presets.ide) result;
       in
       {
         includeTools = sort result.includeTools;
@@ -219,7 +225,9 @@ in
   testAlacrittyAtuinSingleShellOptionOptional = {
     expr =
       let
-        ok = (eval (import ../../presets/terminal/alacritty-atuin.nix) withBash).config.presets.terminal.alacritty-atuin;
+        ok =
+          (eval (import ../../presets/terminal/alacritty-atuin.nix) withBash)
+          .config.presets.terminal.alacritty-atuin;
         resolved = shellLib.resolve withBash ok.shell;
       in
       {
@@ -257,9 +265,10 @@ in
           (eval (import ../../presets/terminal/alacritty-atuin.nix) (
             multi // { presets.terminal.alacritty-atuin.shell = "zsh"; }
           )).config.presets.terminal.alacritty-atuin.result;
-        missingShell = builtins.tryEval (
-          (eval (import ../../presets/terminal/alacritty-atuin.nix) multi).config.presets.terminal.alacritty-atuin.result
-        );
+        missingShellExpr =
+          (eval (import ../../presets/terminal/alacritty-atuin.nix) multi)
+          .config.presets.terminal.alacritty-atuin.result;
+        missingShell = builtins.tryEval missingShellExpr;
       in
       {
         bashTools = sort onBash.includeTools;
@@ -292,7 +301,9 @@ in
         zshOnly = {
           tools.zsh.enable = true;
         };
-        ok = (eval (import ../../presets/terminal/alacritty-atuin.nix) zshOnly).config.presets.terminal.alacritty-atuin;
+        ok =
+          (eval (import ../../presets/terminal/alacritty-atuin.nix) zshOnly)
+          .config.presets.terminal.alacritty-atuin;
         resolved = shellLib.resolve zshOnly ok.shell;
       in
       {
@@ -315,11 +326,14 @@ in
   testHostHmOnlyGuardExcludesOsHostsOnly = {
     expr =
       let
-        result =
-          (eval (import ../../presets/host/hm-only-guard.nix) {
+        inherit
+          ((eval (import ../../presets/host/hm-only-guard.nix) {
             presets.host.hm-only-guard.hostClass = "nixos";
             presets.host.hm-only-guard.selected = [ "terminal" ];
-          }).config.presets.host.hm-only-guard.result;
+          }).config.presets.host.hm-only-guard
+          )
+          result
+          ;
         banned = [
           "alacritty-quake"
           "terminal"
@@ -371,7 +385,7 @@ in
             }
           ];
         };
-        result = (eval quiet { }).config.presets.demo.when.result;
+        inherit ((eval quiet { }).config.presets.demo.when) result;
       in
       {
         inherit (result)
