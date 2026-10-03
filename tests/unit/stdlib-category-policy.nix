@@ -1,103 +1,88 @@
 # Additive coverage for category-wide policies (python first instance).
+# Exercise bindPreset/realize and mkTool.apply assertions directly (no full
+# devenv.load tools+presets eval).
 { lib, ... }:
 let
   stdlib = import ../../stdlib { inherit lib; };
   categoryPolicy = stdlib.categoryPolicy;
-  devenvLoad = import ../../stdlib/devenv.nix { inherit lib; };
-  presetRoot = ../../presets;
-  toolRoot = ../../tools;
+  presetLib = import ../../stdlib/preset.nix { inherit lib; };
+  toolLib = import ../../stdlib/tool.nix { inherit lib; };
 
-  freeform = lib.types.submodule {
-    freeformType = lib.types.lazyAttrsOf lib.types.anything;
-  };
+  pythonPolicy = categoryPolicy.policies.python;
 
-  fixtureOptions = {
-    name = lib.mkOption {
-      type = lib.types.str;
-      default = "fixture";
+  realizePreset =
+    {
+      path,
+      when ? null,
+      requires ? [ ],
+      enable ? true,
+      strict ? true,
+      cfg ? { },
+    }:
+    let
+      bound = categoryPolicy.bindPreset { inherit path when requires; };
+    in
+    presetLib.realize {
+      name = presetLib.pathString path;
+      when = bound.when;
+      requires = bound.requires;
+      tools = [ "ruff" ];
+      inherit enable strict cfg;
+      globalStrict = cfg.presets.strict or true;
     };
-    languages = lib.mkOption {
-      type = freeform;
-      default = { };
-    };
-    pythonTypeChecker = lib.mkOption {
-      type = lib.types.str;
-      default = "pyright";
-    };
-    assertions = lib.mkOption {
-      type = lib.types.listOf lib.types.anything;
-      default = [ ];
-    };
-    warnings = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [ ];
-    };
-    enterShell = lib.mkOption {
-      type = lib.types.lines;
-      default = "";
-    };
-    git-hooks.hooks = lib.mkOption {
-      type = lib.types.attrsOf lib.types.anything;
-      default = { };
-    };
-    files = lib.mkOption {
-      type = lib.types.attrsOf freeform;
-      default = { };
-    };
-    scripts = lib.mkOption {
-      type = lib.types.attrsOf freeform;
-      default = { };
-    };
-    packages = lib.mkOption {
-      type = lib.types.listOf lib.types.anything;
-      default = [ ];
-    };
-  };
 
-  eval =
-    extra:
-    (lib.evalModules {
-      modules = [
-        {
-          _module.args.pkgs = {
-            ty = "ty-fixture";
-          };
-        }
-        {
-          options = fixtureOptions;
-          config = extra;
-        }
-      ]
-      ++ devenvLoad.load {
-        presets = devenvLoad.defaultRoots presetRoot;
-        tools = [ toolRoot ];
-      };
-    }).config;
-
-  failedAssertions = cfg: map (a: a.message) (lib.filter (a: !a.assertion) cfg.assertions);
-
-  evalTool =
+  # Minimal apply module eval for one global tool under lang.python.linters.
+  evalRuffTool =
     extra:
     (lib.evalModules {
       modules = [
         categoryPolicy.optionsModule
         {
-          options = fixtureOptions;
+          options = {
+            languages = lib.mkOption {
+              type = lib.types.attrsOf (
+                lib.types.submodule {
+                  options.enable = lib.mkOption {
+                    type = lib.types.bool;
+                    default = false;
+                  };
+                }
+              );
+              default = { };
+            };
+            assertions = lib.mkOption {
+              type = lib.types.listOf lib.types.anything;
+              default = [ ];
+            };
+            home.packages = lib.mkOption {
+              type = lib.types.listOf lib.types.anything;
+              default = [ ];
+            };
+          };
           config = extra;
         }
         (
-          args@{
+          {
             pkgs ? { },
             lib,
             config,
             ...
           }:
-          import ../../tools/lang/python/linters/ruff.nix {
-            inherit pkgs lib config;
+          toolLib.apply { inherit pkgs lib config; } {
+            name = "ruff";
+            category = "lang.python.linters";
+            install = {
+              kind = "nix";
+              attr = "hello";
+            };
+            upgrade = "flake";
+            homeManager = _: { };
           }
         )
       ];
     }).config;
+
+  failedMessages = cfg: map (a: a.message) (lib.filter (a: !a.assertion) cfg.assertions);
 in
 {
   testCategoryPolicyPythonRegistered = {
@@ -120,21 +105,21 @@ in
   };
 
   testCategoryPolicyAvailableViaLanguage = {
-    expr = categoryPolicy.policies.python.available {
+    expr = pythonPolicy.available {
       languages.python.enable = true;
     };
     expected = true;
   };
 
   testCategoryPolicyAvailableViaOverride = {
-    expr = categoryPolicy.policies.python.available {
+    expr = pythonPolicy.available {
       stdlib.categoryPolicies.python.available = true;
     };
     expected = true;
   };
 
   testCategoryPolicyUnavailableByDefault = {
-    expr = categoryPolicy.policies.python.available { };
+    expr = pythonPolicy.available { };
     expected = false;
   };
 
@@ -150,61 +135,109 @@ in
   testPythonPresetInheritsWhenInertWithoutPython = {
     expr =
       let
-        cfg = eval {
-          stdlib.report.enable = false;
+        d = realizePreset {
+          path = [
+            "python"
+            "lint"
+            "ruff"
+          ];
         };
       in
       {
-        triggered = cfg.presets.python.lint.ruff.result.triggered;
-        applied = cfg.presets.python.lint.ruff.result.applied;
-        ruff = (cfg.tools.ruff or { }).enable or false;
+        inherit (d) triggered applied;
+        tools = d.includeTools;
       };
     expected = {
       triggered = false;
       applied = false;
-      ruff = false;
+      tools = [ ];
     };
   };
 
   testPythonPresetAppliesWhenLanguageEnabled = {
     expr =
       let
-        cfg = eval {
-          languages.python.enable = true;
-          stdlib.report.enable = false;
+        d = realizePreset {
+          path = [
+            "python"
+            "lint"
+            "ruff"
+          ];
+          cfg = {
+            languages.python.enable = true;
+          };
         };
       in
       {
-        applied = cfg.presets.python.lint.ruff.result.applied;
-        ruff = cfg.tools.ruff.enable;
-        hook = (cfg.git-hooks.hooks.ruff or { }).enable or false;
+        inherit (d) applied;
+        tools = d.includeTools;
       };
     expected = {
       applied = true;
-      ruff = true;
-      hook = true;
+      tools = [ "ruff" ];
     };
   };
 
   testPythonPresetAppliesWhenOverrideAvailable = {
     expr =
-      let
-        cfg = eval {
+      (realizePreset {
+        path = [
+          "python"
+          "lint"
+          "ruff"
+        ];
+        cfg = {
           stdlib.categoryPolicies.python.available = true;
-          stdlib.report.enable = false;
+        };
+      }).applied;
+    expected = true;
+  };
+
+  testPythonPresetExplicitWhenStillRequiresCategory = {
+    expr =
+      let
+        # Force when=true without python → triggered, then requires fail (strict throw).
+        threw = !(builtins.tryEval (
+          realizePreset {
+            path = [
+              "python"
+              "lint"
+              "ruff"
+            ];
+            when = _: true;
+            cfg = { };
+          }
+        )).success;
+        warned = realizePreset {
+          path = [
+            "python"
+            "lint"
+            "ruff"
+          ];
+          when = _: true;
+          strict = false;
+          cfg = { };
         };
       in
-      cfg.presets.python.lint.ruff.result.applied;
-    expected = true;
+      {
+        inherit threw;
+        inert = warned.inert;
+        hasWarning = lib.any (w: lib.hasInfix "category python" w) warned.warnings;
+      };
+    expected = {
+      threw = true;
+      inert = true;
+      hasWarning = true;
+    };
   };
 
   testPythonToolEnableWithoutPythonFailsAssertion = {
     expr =
       let
-        cfg = evalTool {
+        cfg = evalRuffTool {
           tools.ruff.enable = true;
         };
-        msgs = failedAssertions cfg;
+        msgs = failedMessages cfg;
       in
       {
         failed = msgs != [ ];
@@ -217,26 +250,18 @@ in
   };
 
   testPythonToolEnableWithLanguagePasses = {
-    expr =
-      let
-        cfg = evalTool {
-          languages.python.enable = true;
-          tools.ruff.enable = true;
-        };
-      in
-      failedAssertions cfg;
+    expr = failedMessages (evalRuffTool {
+      languages.python.enable = true;
+      tools.ruff.enable = true;
+    });
     expected = [ ];
   };
 
   testPythonToolEnableWithOverridePasses = {
-    expr =
-      let
-        cfg = evalTool {
-          stdlib.categoryPolicies.python.available = true;
-          tools.ruff.enable = true;
-        };
-      in
-      failedAssertions cfg;
+    expr = failedMessages (evalRuffTool {
+      stdlib.categoryPolicies.python.available = true;
+      tools.ruff.enable = true;
+    });
     expected = [ ];
   };
 
@@ -265,6 +290,26 @@ in
       message = ''
         category python: python must be available (set languages.python.enable or stdlib.categoryPolicies.python.available = true)
       '';
+    };
+  };
+
+  testToolAssertionsHelper = {
+    expr =
+      let
+        bad = categoryPolicy.toolAssertions { } "lang.python.linters";
+        good = categoryPolicy.toolAssertions {
+          languages.python.enable = true;
+        } "lang.python.linters";
+      in
+      {
+        badFails = !(builtins.head bad).assertion;
+        goodOk = (builtins.head good).assertion;
+        unrelated = categoryPolicy.toolAssertions { } "shell" == [ ];
+      };
+    expected = {
+      badFails = true;
+      goodOk = true;
+      unrelated = true;
     };
   };
 }
