@@ -270,6 +270,8 @@ let
         inherit (decl) path;
         when = decl.when or null;
         requires = decl.requires or [ ];
+        # Optional override: string policy id, or false to skip category binding.
+        policy = decl.categoryPolicy or null;
       };
       # realize throws when strict requirements fail. Non-strict failures
       # come back as warnings and applied = false.

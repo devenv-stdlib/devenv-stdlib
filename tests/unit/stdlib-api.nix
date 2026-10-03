@@ -95,6 +95,7 @@ in
       "categoryPolicy.forToolCategory"
       "categoryPolicy.inheritedWhen"
       "categoryPolicy.languageAvailable"
+      "categoryPolicy.mkAnyLanguagePolicy"
       "categoryPolicy.mkLanguagePolicy"
       "categoryPolicy.optionsModule"
       "categoryPolicy.policies"

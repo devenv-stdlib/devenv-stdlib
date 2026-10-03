@@ -1,4 +1,4 @@
-# Thin tool preset: one prettier leaf for JS and TS.
+# when inherits javascript category policy (languages.javascript.enable or override).
 _: {
   path = [
     "javascript"
@@ -6,9 +6,5 @@ _: {
     "prettier"
   ];
   description = "Prettier git-hook and JS/TS editor formatter settings.";
-  when =
-    cfg:
-    ((cfg.languages.javascript or { }).enable or false)
-    || ((cfg.languages.typescript or { }).enable or false);
   tools = [ "prettier" ];
 }

@@ -1,4 +1,4 @@
-# Shared JS/TS editor pack (one extension set for both languages).
+# Shared JS/TS editor pack. Uses javascript-or-typescript category policy.
 { lib, ... }:
 let
   project = import ../../modules/lib/project.nix { inherit lib; };
@@ -9,10 +9,7 @@ in
     "ide"
   ];
   description = "TypeScript/JavaScript VS Code / Cursor extension pack.";
-  when =
-    cfg:
-    ((cfg.languages.javascript or { }).enable or false)
-    || ((cfg.languages.typescript or { }).enable or false);
+  categoryPolicy = "javascript-or-typescript";
   project.stdlib.lang.javascript = {
     vscodeIds = project.vscodeLanguageIds.typescript;
     extensionSet = "typescript";

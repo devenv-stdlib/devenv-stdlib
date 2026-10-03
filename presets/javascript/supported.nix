@@ -1,4 +1,6 @@
-# supported.javascript is shared with TypeScript (one matrix for both).
+# when inherits javascript category policy (languages.javascript.enable or override).
+# supported.javascript options are shared with TypeScript; the CI matrix flag
+# here is JavaScript-only (typescript.ci-matrix is separate).
 { lib, ... }:
 let
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
@@ -9,8 +11,7 @@ in
     "javascript"
     "supported"
   ];
-  description = "supported.javascript options; CI matrix flag when JavaScript is on.";
-  when = cfg: (cfg.languages.javascript or { }).enable or false;
+  description = "supported.javascript options; CI matrix flag when JavaScript is available.";
   module = _: {
     options.supported.javascript = lib.mkOption {
       type = lib.types.submodule {
