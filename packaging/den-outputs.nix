@@ -13,7 +13,7 @@
   },
 }:
 let
-  report = stdlib.report;
+  inherit (stdlib) report;
 
   # HM-side status summary (tools in this fixpoint). Matrix / git-hooks are
   # devenv-side; listed as unavailable here. Nested preset attrpaths land when
