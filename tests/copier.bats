@@ -20,14 +20,12 @@ setup() {
     cp -a "$REPO_DIR/$f" "$SRC/$f"
   done < <(git -C "$REPO_DIR" ls-files -co --exclude-standard -z)
 
-  # git -c: belt-and-suspenders with test-devenv's GIT_CONFIG maintenance.auto=false
-  # so a background geometric repack cannot delete loose objects mid-clone.
-  git -C "$SRC" -c maintenance.auto=false init -q -b master
-  git -C "$SRC" -c maintenance.auto=false config user.email tester@example.com
-  git -C "$SRC" -c maintenance.auto=false config user.name Tester
-  git -C "$SRC" -c maintenance.auto=false add -A
-  git -C "$SRC" -c maintenance.auto=false commit -qm "template"
-  git -C "$SRC" -c maintenance.auto=false tag v0.0.0
+  git -C "$SRC" init -q -b master
+  git -C "$SRC" config user.email tester@example.com
+  git -C "$SRC" config user.name Tester
+  git -C "$SRC" add -A
+  git -C "$SRC" commit -qm "template"
+  git -C "$SRC" tag v0.0.0
 }
 
 copy_template() {
@@ -38,11 +36,11 @@ copy_template() {
 
 init_dest_git() {
   local dest=${1:-$DEST}
-  git -C "$dest" -c maintenance.auto=false init -q -b main
-  git -C "$dest" -c maintenance.auto=false config user.email tester@example.com
-  git -C "$dest" -c maintenance.auto=false config user.name Tester
-  git -C "$dest" -c maintenance.auto=false add -A
-  git -C "$dest" -c maintenance.auto=false commit -qm "apply template"
+  git -C "$dest" init -q -b main
+  git -C "$dest" config user.email tester@example.com
+  git -C "$dest" config user.name Tester
+  git -C "$dest" add -A
+  git -C "$dest" commit -qm "apply template"
 }
 
 @test "copier copy writes devenv files and answers, excludes template metadata" {
