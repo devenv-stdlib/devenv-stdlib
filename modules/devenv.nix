@@ -7,10 +7,10 @@ in
   imports = [
     ./packages
     ./hooks/common.nix
-    # Language tool presets live under presets/lang/<lang>/ (per-tool, not
-    # megapresets). Old hook/IDE/Serena paths remain as shims and must not be
-    # imported here (the loader already applies their project payloads).
-    # presets/examples/ is documentation only — not loaded as defaults.
+    # Language tool presets live under presets/<lang>/<category>/ (attrpaths
+    # like python.lint.ruff). Old hook/IDE/Serena paths remain as shims and
+    # must not be imported here (the loader already applies their project
+    # payloads). presets/examples/ is documentation only — not loaded as defaults.
     ./debtmap/hooks.nix
     ./languages
     ./languages/versions.nix
@@ -20,5 +20,5 @@ in
     ./update
     ./test/devenv.nix
   ]
-  ++ devenvLoad.load [ ../presets/lang ];
+  ++ devenvLoad.load (devenvLoad.defaultRoots ../presets);
 }

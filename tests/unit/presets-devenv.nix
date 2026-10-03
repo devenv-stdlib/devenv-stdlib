@@ -82,10 +82,7 @@ let
           config = extra;
         }
       ]
-      ++ devenvLoad.load [
-        (presetRoot + "/lang")
-        (presetRoot + "/fixtures")
-      ];
+      ++ devenvLoad.load (devenvLoad.defaultRoots presetRoot);
     }).config;
 
   hookOn = cfg: name: (cfg.git-hooks.hooks.${name} or { }).enable or false;
@@ -100,9 +97,28 @@ in
   # P2 owns stdlib/preset.nix. mkPreset is a Den module, not the old stub attrset.
   testPresetSchemaComesFromP2 = {
     expr = builtins.isFunction (
-      (import ../../stdlib/preset.nix { inherit lib; }).mkPreset { name = "example"; }
+      (import ../../stdlib/preset.nix { inherit lib; }).mkPreset { path = [ "example" ]; }
     );
     expected = true;
+  };
+
+  testPythonLintRuffAttrpath = {
+    expr =
+      let
+        refs = devenvLoad.refsOf (devenvLoad.defaultRoots presetRoot);
+      in
+      {
+        path = refs.python.lint.ruff.path;
+        id = (import ../../stdlib/preset.nix { inherit lib; }).pathString refs.python.lint.ruff.path;
+      };
+    expected = {
+      path = [
+        "python"
+        "lint"
+        "ruff"
+      ];
+      id = "python.lint.ruff";
+    };
   };
 
   testLanguagesOffMatchHelpers = {
@@ -336,7 +352,7 @@ in
       let
         cfg = eval {
           languages.typescript.enable = true;
-          presets.typescript-bundler.strict = false;
+          presets.typescript.bundler.strict = false;
         };
       in
       {
@@ -359,8 +375,8 @@ in
       let
         cfg = eval {
           languages.python.enable = true;
-          presets.ruff.enable = false;
-          presets.serena-python.enable = false;
+          presets.python.lint.ruff.enable = false;
+          presets.python.serena.enable = false;
         };
       in
       {
