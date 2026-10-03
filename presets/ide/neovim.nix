@@ -16,7 +16,7 @@ in
         "neovim"
       ];
       description = "Enable the Neovim tool (nix-community/nixvim Home Manager module).";
-      tools = with tools; [ ide.neovim ];
+      tools = [ tools.ide.neovim ];
     })
   ];
 }
