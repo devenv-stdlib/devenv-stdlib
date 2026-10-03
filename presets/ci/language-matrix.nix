@@ -1,8 +1,7 @@
 # Composable CI preset: owns language/OS test.yml matrix generation.
 # Attrpath: ci.language-matrix — not a megapreset named "CI".
 # Behavior matches the former modules/languages/versions.nix module.
-{ ... }:
-{
+_: {
   path = [
     "ci"
     "language-matrix"
@@ -27,10 +26,15 @@
         catalog =
           if builtins.pathExists catalogFile then builtins.fromJSON (builtins.readFile catalogFile) else { };
       };
-      log = (import ../../stdlib {
-        inherit lib;
-        nix-log = null;
-      }).log;
+      inherit
+        (
+          (import ../../stdlib {
+            inherit lib;
+            nix-log = null;
+          })
+        )
+        log
+        ;
 
       # CI matrix inputs (supported.* and per-language ciMatrix) come from
       # presets/<lang>/supported.nix and related tool presets.
