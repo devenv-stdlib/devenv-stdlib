@@ -105,6 +105,7 @@ Merge scripts: extract a harness-agnostic `mcp.json` upsert/remove core from `me
 ### Neovim / nano
 
 - Move to `home/ides/` with unchanged behavior.
+- Neovim is configured through [nixvim](https://github.com/nix-community/nixvim): flake input `nixvim`, Den `home-cli` imports `inputs.nixvim.homeModules.nixvim`, and `tools/ide/neovim.nix` enables a minimal `programs.nixvim` (thin preset `ide.neovim`). Do not enable `programs.neovim` alongside it.
 - No shared extension sync with VS Code/Cursor in this change.
 - No MCP registration (they are not agent harnesses).
 

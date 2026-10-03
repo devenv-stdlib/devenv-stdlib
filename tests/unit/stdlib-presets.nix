@@ -222,6 +222,21 @@ in
     };
   };
 
+  testIdeNeovimPresetIsOneTool = {
+    expr =
+      let
+        result = (eval (import ../../presets/ide/neovim.nix) { }).config.presets.ide.neovim.result;
+      in
+      {
+        includeTools = sort result.includeTools;
+        inherit (result) excludeTools;
+      };
+    expected = {
+      includeTools = [ "neovim" ];
+      excludeTools = [ ];
+    };
+  };
+
   testAlacrittyAtuinSingleShellOptionOptional = {
     expr =
       let
