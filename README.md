@@ -20,10 +20,10 @@ Ubuntu 26.04 LTS and 24.04 LTS (x86_64 or aarch64) are the supported hosts.
 
 ```bash
 # After the first tagged release:
-copier copy <template-git-url> path/to/monorepo
+copier copy --trust <template-git-url> path/to/monorepo
 
 # This checkout, including work that is not tagged yet:
-copier copy --vcs-ref HEAD /path/to/devenv4monorepo path/to/monorepo
+copier copy --trust --vcs-ref HEAD /path/to/devenv4monorepo path/to/monorepo
 ```
 
 Answer the questionnaire (languages, min/max versions, Rust edition). Commit `.copier-answers.yml` and `devenv.local.nix`, then `./setup.sh` and `devenv shell`.

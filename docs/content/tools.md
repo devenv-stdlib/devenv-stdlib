@@ -50,12 +50,12 @@ Replaced files get a `.backup` suffix. On flakes-only hosts, `home-switch` and `
 [Copier](https://copier.readthedocs.io/en/stable) copies this template into a monorepo and later merges tagged updates. It is on PATH after `home-switch` and inside `devenv shell`.
 
 ```bash
-copier copy --vcs-ref HEAD /path/to/devenv4monorepo path/to/monorepo
-copier update
+copier copy --trust --vcs-ref HEAD /path/to/devenv4monorepo path/to/monorepo
+copier update --trust
 copier check-update
 ```
 
-`copier update` is how generated monorepos receive newer Serena/Headroom/MCP/debtmap pins. `update` / `devenv update` do not rewrite those files. See [Apply](#apply) and [Contribution guide](#contributing).
+`copier update --trust` is how generated monorepos receive newer Serena/Headroom/MCP/debtmap pins. `update` / `devenv update` do not rewrite those files. See [Apply](#apply) and [Contribution guide](#contributing).
 
 - Docs: [Copier](https://copier.readthedocs.io/en/stable)
 
