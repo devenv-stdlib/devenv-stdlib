@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ ... }:
 {
   path = [
     "python"
@@ -7,7 +7,8 @@
   ];
   description = "Astral ty type-checker hook when Python is on and pythonTypeChecker = ty.";
   when =
-    cfg: ((cfg.languages.python or { }).enable or false) && ((cfg.pythonTypeChecker or "pyright") == "ty");
+    cfg:
+    ((cfg.languages.python or { }).enable or false) && ((cfg.pythonTypeChecker or "pyright") == "ty");
   project =
     { pkgs, ... }:
     {
