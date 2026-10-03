@@ -1,20 +1,3 @@
-{
-  pkgs,
-  lib,
-  config,
-  ...
-}:
-let
-  ides = import ../lib.nix { inherit pkgs lib config; };
-in
-{
-  # Specializes the VS Code sync: same packs, Cursor extension root.
-  scripts.cursor-sync-extensions.exec = ides.mkSyncScript {
-    extensionsDir = "$HOME/.cursor/extensions";
-    logPrefix = "cursor";
-  };
-
-  enterShell = ''
-    cursor-sync-extensions
-  '';
-}
+# Compat shim. cursor-sync-extensions is emitted by stdlib.devenv.load from
+# presets/languages/*.nix. Do not import this file from the devenv barrel.
+{ }

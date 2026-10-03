@@ -1,10 +1,4 @@
-{ config, ... }:
-let
-  on = (config.languages.go or { }).enable or false;
-in
-{
-  git-hooks.hooks = {
-    gofmt.enable = on;
-    golangci-lint.enable = on;
-  };
-}
+# Compat shim. Go hook rules live in presets/languages/go.nix and are
+# applied by stdlib.devenv.load from modules/devenv.nix. Do not import this
+# file from the devenv barrel (that would apply the payload twice).
+{ }
