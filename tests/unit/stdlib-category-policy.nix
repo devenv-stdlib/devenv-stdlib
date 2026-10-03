@@ -9,6 +9,8 @@ let
   toolLib = import ../../stdlib/tool.nix { inherit lib; };
 
   goPolicy = categoryPolicy.policies.go;
+  javascriptPolicy = categoryPolicy.policies.javascript;
+  jsOrTsPolicy = categoryPolicy.policies.javascript-or-typescript;
   pythonPolicy = categoryPolicy.policies.python;
   rustPolicy = categoryPolicy.policies.rust;
 
@@ -102,12 +104,86 @@ in
     expected = {
       ids = [
         "go"
+        "javascript"
+        "javascript-or-typescript"
         "python"
         "rust"
       ];
       preset = "python";
       tool = "python";
       annotated = "python";
+    };
+  };
+
+  testCategoryPolicyJavascriptRegistered = {
+    expr = {
+      preset =
+        (categoryPolicy.forPresetPath [
+          "javascript"
+          "debtmap"
+        ]).id;
+      tool = (categoryPolicy.forToolCategory "lang.javascript.linters").id;
+      annotated = (stdlib.categories.resolve "lang.javascript").categoryPolicy;
+      available = javascriptPolicy.available { languages.javascript.enable = true; };
+      unavailable = javascriptPolicy.available { };
+      sharedTsOnly = jsOrTsPolicy.available { languages.typescript.enable = true; };
+      sharedNeither = jsOrTsPolicy.available { };
+    };
+    expected = {
+      preset = "javascript";
+      tool = "javascript";
+      annotated = "javascript";
+      available = true;
+      unavailable = false;
+      sharedTsOnly = true;
+      sharedNeither = false;
+    };
+  };
+
+  testJavascriptDebtmapInertWithoutJavascript = {
+    expr =
+      (realizePreset {
+        path = [
+          "javascript"
+          "debtmap"
+        ];
+      }).triggered;
+    expected = false;
+  };
+
+  testJavascriptSharedPresetAppliesForTypescriptOnly = {
+    expr =
+      let
+        bound = categoryPolicy.bindPreset {
+          path = [
+            "javascript"
+            "lint"
+            "prettier"
+          ];
+          policy = "javascript-or-typescript";
+        };
+        d = presetLib.realize {
+          name = "javascript.lint.prettier";
+          inherit (bound) when;
+          inherit (bound) requires;
+          tools = [ ];
+          enable = true;
+          strict = true;
+          cfg = {
+            languages.typescript.enable = true;
+          };
+          globalStrict = true;
+        };
+      in
+      {
+        inherit (d) applied;
+        inheritWhenTs = bound.when { languages.typescript.enable = true; };
+        inheritWhenNeither = bound.when { };
+      };
+    expected = {
+      applied = true;
+      inheritWhenTs = true;
+      inheritWhenNeither = false;
     };
   };
 
