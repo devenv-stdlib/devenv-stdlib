@@ -20,7 +20,4 @@ else
       project.git-hooks.hooks.gofmt.enable = true;
     };
   in
-  if args.__stdlibMeta or false then
-    tool.meta spec
-  else
-    tool.applyLocal args spec
+  if args.__stdlibMeta or false then tool.meta spec else tool.applyLocal args spec

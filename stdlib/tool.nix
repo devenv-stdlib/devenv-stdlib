@@ -73,8 +73,9 @@ let
     assert require (builtins.elem upgrade upgradeKinds)
       "mkTool ${name}: upgrade ${upgrade} is not one of ${builtins.toString upgradeKinds}";
     assert require (node ? cardinality) "mkTool ${name}: unknown category ${category}";
-    assert require (scopes != [ ])
-      "mkTool ${name}: set homeManager (global) and/or project (local) payload";
+    assert require (
+      scopes != [ ]
+    ) "mkTool ${name}: set homeManager (global) and/or project (local) payload";
     assert require (
       kind != "nix" || (install ? attr && builtins.isString install.attr && install.attr != "")
     ) "mkTool ${name}: install.kind = nix requires install.attr (a nixpkgs attribute name)";
@@ -85,8 +86,9 @@ let
     assert require (
       kind != "catalog" || (install ? name && builtins.isString install.name && install.name != "")
     ) "mkTool ${name}: install.kind = catalog requires install.name";
-    assert require (kind != "project" || builtins.elem "local" scopes)
-      "mkTool ${name}: install.kind = project requires a project (local) payload";
+    assert require (
+      kind != "project" || builtins.elem "local" scopes
+    ) "mkTool ${name}: install.kind = project requires a project (local) payload";
     spec
     // {
       inherit name category scopes;
@@ -147,8 +149,7 @@ let
       rendered = if builtins.isFunction raw then raw moduleArgs else raw;
       deps = checked.dependsOn;
     in
-    assert require checked.isLocal
-      "mkTool ${checked.name}: applyLocal is for local (project) tools";
+    assert require checked.isLocal "mkTool ${checked.name}: applyLocal is for local (project) tools";
     {
       imports = spec.imports or [ ];
       options = {
