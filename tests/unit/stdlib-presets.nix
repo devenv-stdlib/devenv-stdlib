@@ -1,4 +1,5 @@
 # Additive P2 coverage: strict throw, strict=false inert warning, node-scoped exclude.
+# Preset identity is nested attrpaths (presets.terminal.quake), not flat strings.
 { lib, ... }:
 let
   presetLib = import ../../stdlib/preset.nix { inherit lib; };
@@ -82,7 +83,7 @@ let
   };
 
   strictPreset = presetLib.mkPreset {
-    name = "demo";
+    path = [ "demo" ];
     requires = [
       {
         assertion = false;
@@ -90,6 +91,19 @@ let
       }
     ];
   };
+
+  # Example registry for attrpath includes.
+  presets = presetLib.refsFromPaths [
+    [
+      "python"
+      "lint"
+      "ruff"
+    ]
+    [
+      "terminal"
+      "quake"
+    ]
+  ];
 
 in
 {
@@ -161,7 +175,7 @@ in
   testTerminalQuakeExcludeStaysOnTerminalNode = {
     expr =
       let
-        result = (eval (import ../../presets/terminal-quake.nix) { }).config.presets.terminal-quake.result;
+        result = (eval (import ../../presets/terminal/quake.nix) { }).config.presets.terminal.quake.result;
       in
       {
         inherit (result) includeTools;
@@ -205,7 +219,7 @@ in
   testAlacrittyAtuinSingleShellOptionOptional = {
     expr =
       let
-        ok = (eval (import ../../presets/alacritty-atuin.nix) withBash).config.presets.alacritty-atuin;
+        ok = (eval (import ../../presets/terminal/alacritty-atuin.nix) withBash).config.presets.terminal.alacritty-atuin;
         resolved = shellLib.resolve withBash ok.shell;
       in
       {
@@ -236,15 +250,15 @@ in
           tools.zsh.enable = true;
         };
         onBash =
-          (eval (import ../../presets/alacritty-atuin.nix) (
-            multi // { presets.alacritty-atuin.shell = "bash"; }
-          )).config.presets.alacritty-atuin.result;
+          (eval (import ../../presets/terminal/alacritty-atuin.nix) (
+            multi // { presets.terminal.alacritty-atuin.shell = "bash"; }
+          )).config.presets.terminal.alacritty-atuin.result;
         onZsh =
-          (eval (import ../../presets/alacritty-atuin.nix) (
-            multi // { presets.alacritty-atuin.shell = "zsh"; }
-          )).config.presets.alacritty-atuin.result;
+          (eval (import ../../presets/terminal/alacritty-atuin.nix) (
+            multi // { presets.terminal.alacritty-atuin.shell = "zsh"; }
+          )).config.presets.terminal.alacritty-atuin.result;
         missingShell = builtins.tryEval (
-          (eval (import ../../presets/alacritty-atuin.nix) multi).config.presets.alacritty-atuin.result
+          (eval (import ../../presets/terminal/alacritty-atuin.nix) multi).config.presets.terminal.alacritty-atuin.result
         );
       in
       {
@@ -278,7 +292,7 @@ in
         zshOnly = {
           tools.zsh.enable = true;
         };
-        ok = (eval (import ../../presets/alacritty-atuin.nix) zshOnly).config.presets.alacritty-atuin;
+        ok = (eval (import ../../presets/terminal/alacritty-atuin.nix) zshOnly).config.presets.terminal.alacritty-atuin;
         resolved = shellLib.resolve zshOnly ok.shell;
       in
       {
@@ -302,10 +316,10 @@ in
     expr =
       let
         result =
-          (eval (import ../../presets/host-hm-only-guard.nix) {
-            presets.host-hm-only-guard.hostClass = "nixos";
-            presets.host-hm-only-guard.selected = [ "terminal" ];
-          }).config.presets.host-hm-only-guard.result;
+          (eval (import ../../presets/host/hm-only-guard.nix) {
+            presets.host.hm-only-guard.hostClass = "nixos";
+            presets.host.hm-only-guard.selected = [ "terminal" ];
+          }).config.presets.host.hm-only-guard.result;
         banned = [
           "alacritty-quake"
           "terminal"
@@ -345,7 +359,10 @@ in
     expr =
       let
         quiet = presetLib.mkPreset {
-          name = "demo-when";
+          path = [
+            "demo"
+            "when"
+          ];
           when = cfg: cfg.languages.python.enable or false;
           requires = [
             {
@@ -354,7 +371,7 @@ in
             }
           ];
         };
-        result = (eval quiet { }).config.presets.demo-when.result;
+        result = (eval quiet { }).config.presets.demo.when.result;
       in
       {
         inherit (result)
@@ -369,6 +386,40 @@ in
       applied = false;
       triggered = false;
       warnings = [ ];
+    };
+  };
+
+  testIncludesRejectStringLiterals = {
+    expr =
+      let
+        bad = builtins.tryEval (presetLib.normalizeInclude "ruff");
+        good = presetLib.normalizeInclude presets.python.lint.ruff;
+      in
+      {
+        rejectsString = !bad.success;
+        attrpath = good;
+      };
+    expected = {
+      rejectsString = true;
+      attrpath = "python.lint.ruff";
+    };
+  };
+
+  testRefsFromPathsAreAttrpaths = {
+    expr = {
+      ruff = presets.python.lint.ruff.path;
+      quake = presets.terminal.quake.path;
+    };
+    expected = {
+      ruff = [
+        "python"
+        "lint"
+        "ruff"
+      ];
+      quake = [
+        "terminal"
+        "quake"
+      ];
     };
   };
 }

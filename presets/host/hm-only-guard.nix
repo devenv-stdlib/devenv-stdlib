@@ -1,7 +1,7 @@
 # B3 re-homed: HM-only terminal aspects stay off nixos and darwin hosts.
 { lib, ... }:
 let
-  inherit (import ../stdlib/preset.nix { inherit lib; }) mkPreset hostClass;
+  inherit (import ../../stdlib/preset.nix { inherit lib; }) mkPreset hostClass;
 
   hmOnly = [
     "terminal"
@@ -14,7 +14,10 @@ in
 {
   imports = [
     (mkPreset {
-      name = "host-hm-only-guard";
+      path = [
+        "host"
+        "hm-only-guard"
+      ];
       description = "Exclude HM-only terminal aspects from nixos and darwin hosts.";
 
       extraOptions = {
@@ -39,8 +42,8 @@ in
           assertion =
             cfg:
             let
-              class = cfg.presets.host-hm-only-guard.hostClass or null;
-              selected = cfg.presets.host-hm-only-guard.selected or [ ];
+              class = cfg.presets.host.hm-only-guard.hostClass or null;
+              selected = cfg.presets.host.hm-only-guard.selected or [ ];
               dropped = lib.optionals (onOs class) hmOnly;
               remaining = lib.filter (name: builtins.elem name selected && !(builtins.elem name dropped)) hmOnly;
             in

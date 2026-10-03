@@ -6,7 +6,7 @@ in
 {
   imports = [
     (mkPreset {
-      name = "ide";
+      path = [ "ide" ];
       description = "Any of Cursor, VS Code, or Neovim. Does not exclude the other IDEs.";
 
       # ide cardinality is any-of, so listing these does not exclude nano or each other.

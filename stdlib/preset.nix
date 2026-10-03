@@ -1,5 +1,6 @@
 # mkPreset — when vs requires, strict flag, hub aspect + den.policies.
 # Category excludes stay on the selected tool's node (not cousins).
+# Preset identity is a nested attrpath (python.lint.ruff), not a flat string.
 {
   lib,
   categories ? import ./categories.nix { inherit lib; },
@@ -11,6 +12,55 @@ let
   categoriesTree = categories.tree or categories;
 
   load = import ./load.nix { inherit lib; };
+
+  # Attrpath segments for a building-block preset. Accept a list, or a single
+  # undotted leaf name (tests / one-segment hubs like `ide`).
+  normalizePath =
+    value:
+    if builtins.isList value then
+      assert lib.assertMsg (value != [ ] && lib.all builtins.isString value)
+        "mkPreset path: expected a non-empty list of attrpath segments";
+      value
+    else if builtins.isString value then
+      assert lib.assertMsg (value != "" && !(lib.hasInfix "." value))
+        "mkPreset path: use a segment list (e.g. [ \"python\" \"lint\" \"ruff\" ]), not a dotted string";
+      [ value ]
+    else
+      throw "mkPreset path: expected attrpath segments (list of strings) or one leaf name";
+
+  pathString = path: lib.concatStringsSep "." path;
+
+  mkRef = path: {
+    _type = "preset-ref";
+    path = normalizePath path;
+  };
+
+  # Nested attrset of refs so callers write `with presets; [ python.lint.ruff ]`.
+  refsFromPaths =
+    paths:
+    lib.foldl' (
+      tree: path: lib.recursiveUpdate tree (lib.setAttrByPath (normalizePath path) (mkRef path))
+    ) { } paths;
+
+  # includes take preset refs (attrpaths), never bare string literals.
+  normalizeInclude =
+    item:
+    if builtins.isAttrs item && item._type or null == "preset-ref" then
+      pathString item.path
+    else if builtins.isAttrs item && item ? path then
+      pathString (normalizePath item.path)
+    else if builtins.isList item then
+      pathString (normalizePath item)
+    else if builtins.isString item then
+      throw "mkPreset includes: use attrpath refs (e.g. with presets; [ python.lint.ruff ]), not string literals"
+    else
+      throw "mkPreset includes: expected a preset attrpath ref";
+
+  normalizeIncludes = items: map normalizeInclude items;
+
+  getPresetAttr =
+    cfg: path: attr:
+    lib.attrByPath (path ++ [ attr ]) null (cfg.presets or { });
 
   isExclusive = cardinality: cardinality == "exactly-one" || cardinality == "zero-or-one";
 
@@ -267,11 +317,21 @@ in
     categoryExcludes
     hostClass
     categoriesTree
+    normalizePath
+    pathString
+    mkRef
+    refsFromPaths
+    normalizeInclude
+    normalizeIncludes
+    getPresetAttr
     ;
 
   mkPreset =
     {
-      name,
+      # Nested attrpath identity: [ "python" "lint" "ruff" ] → presets.python.lint.ruff
+      # and Den aspect/policy key "python.lint.ruff". `name` is a one-segment alias.
+      path ? null,
+      name ? null,
       description ? "",
       when ? (_: true),
       requires ? [ ],
@@ -284,6 +344,17 @@ in
       aspectAlias ? { },
       extraOptions ? { },
     }:
+    let
+      presetPath =
+        if path != null then
+          normalizePath path
+        else if name != null then
+          normalizePath name
+        else
+          throw "mkPreset: path (attrpath segments) is required";
+      presetId = pathString presetPath;
+      includeIds = normalizeIncludes includes;
+    in
     {
       den,
       config,
@@ -292,46 +363,40 @@ in
     }:
     let
       globalStrict = config.presets.strict or true;
-      enable = config.presets.${name}.enable or true;
-      strict = config.presets.${name}.strict or true;
+      enable = getPresetAttr config presetPath "enable";
+      enable' = if enable == null then true else enable;
+      strict = getPresetAttr config presetPath "strict";
+      strict' = if strict == null then true else strict;
       result = realize {
+        name = presetId;
         inherit
-          name
           when
           requires
           tools
           exclude
           aspectAlias
-          enable
-          strict
-          globalStrict
           ;
+        enable = enable';
+        strict = strict';
+        inherit globalStrict;
         cfg = config;
       };
       aspectBody = {
         includes = [
-          den.policies.${name}
+          den.policies.${presetId}
         ]
         ++ aspectRefs den result.includeAspects
-        ++ aspectRefs den includes;
+        ++ aspectRefs den includeIds;
         homeManager = mergePayload config result configure homeManager;
       }
       // lib.optionalAttrs (builtins.isFunction project || project != { }) {
         project = mergePayload config result configure project;
       };
-    in
-    {
-      options.presets.strict = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "When false, failed preset requirements warn and the preset stays inert.";
-      };
-
-      options.presets.${name} = {
+      presetOptions = {
         enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
-          description = if description == "" then "Enable the ${name} preset." else description;
+          description = if description == "" then "Enable the ${presetId} preset." else description;
         };
         strict = lib.mkOption {
           type = lib.types.bool;
@@ -345,11 +410,19 @@ in
         };
       }
       // extraOptions;
+    in
+    {
+      options = lib.recursiveUpdate {
+        presets.strict = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "When false, failed preset requirements warn and the preset stays inert.";
+        };
+      } (lib.setAttrByPath ([ "presets" ] ++ presetPath) presetOptions);
 
-      config = {
-        presets.${name}.result = result;
-        den.aspects.${name} = lib.mkIf result.applied aspectBody;
-        den.policies.${name} = lib.mkIf result.applied (
+      config = lib.recursiveUpdate {
+        den.aspects.${presetId} = lib.mkIf result.applied aspectBody;
+        den.policies.${presetId} = lib.mkIf result.applied (
           ctx:
           let
             policy = den.lib.policy;
@@ -357,6 +430,6 @@ in
           map (aspect: policy.include aspect) (aspectRefs den result.includeAspects)
           ++ map (aspect: policy.exclude aspect) (aspectRefs den (result.excludeAspects ctx))
         );
-      };
+      } (lib.setAttrByPath ([ "presets" ] ++ presetPath ++ [ "result" ]) result);
     };
 }
