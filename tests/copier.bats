@@ -211,7 +211,7 @@ init_dest_git() {
   grep -q 'devenv-stdlib.url' "$DEST/flake.nix"
   grep -q 'inputs.devenv-stdlib.stdlib' "$DEST/flake.nix"
   grep -q 'devenv-stdlib/nixpkgs' "$DEST/flake.nix"
-  grep -q 'name = "omer"' "$DEST/presets/omer.nix"
+  grep -q 'path = \[ "omer" \]' "$DEST/presets/omer.nix"
   run ! grep -q 'import ./stdlib' "$DEST/flake.nix"
 
   commit=$(sed -n 's/^_commit: //p' "$DEST/.copier-answers.yml" | tr -d "'\"")
