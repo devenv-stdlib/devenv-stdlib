@@ -24,3 +24,4 @@ in
 // (import ./den-cutover-guards.nix harness)
 // (import ./den-os-classes.nix harness)
 // (import ./stdlib-api.nix harness)
+// (import ./stdlib-tools.nix harness)
