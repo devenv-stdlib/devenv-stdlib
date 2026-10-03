@@ -38,7 +38,7 @@ in
   harness = import ./harness.nix { inherit lib categories; };
   shell = import ./shell.nix { inherit lib; };
 
-  # P1 tool constructor. P0 does not define this.
+  # Public tool constructor (stdlib/tool.nix).
   mkTool = import ./tool.nix { inherit lib; };
 
   inherit (load) discover;

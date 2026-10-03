@@ -4,7 +4,7 @@
   ...
 }:
 let
-  # Import the loader file, not stdlib/default.nix (P0 owns that entrypoint).
+  # Import the devenv loader; stdlib/default.nix is the public stdlib entrypoint.
   devenvLoad = import ../stdlib/devenv.nix {
     inherit lib;
     nix-log = inputs.nix-log or null;
