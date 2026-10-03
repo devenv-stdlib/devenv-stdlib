@@ -62,7 +62,7 @@ When adding a non-Nix tool to the **template**: run `devenv tasks run non-nix:ad
 
 | File | Writer | Git |
 | --- | --- | --- |
-| `.github/workflows/test.yml` | `presets/ci/language-matrix.nix` (`ci.language-matrix`) | committed |
+| `.github/workflows/test.yml` | `presets/ci/github_actions/language-matrix.nix` (`ci.github_actions.language-matrix`) | committed |
 | `.vscode/extensions.json` | `presets/<lang>/<category>/*.nix` via `stdlib.devenv.load` | gitignored |
 | `.serena/project.yml` | `presets/<lang>/<category>/*.nix` via `stdlib.devenv.load` | gitignored |
 | `.vscode/settings.json` | `cursor-sync-extensions` / `vscode-sync-extensions` | committed when it changes |

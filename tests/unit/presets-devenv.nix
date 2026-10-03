@@ -124,6 +124,26 @@ in
     };
   };
 
+  testCiGithubActionsLanguageMatrixAttrpath = {
+    expr =
+      let
+        refs = devenvLoad.refsOf (devenvLoad.defaultRoots presetRoot);
+        inherit (import ../../stdlib/preset.nix { inherit lib; }) pathString;
+      in
+      {
+        path = refs.ci.github_actions.language-matrix.path;
+        id = pathString refs.ci.github_actions.language-matrix.path;
+      };
+    expected = {
+      path = [
+        "ci"
+        "github_actions"
+        "language-matrix"
+      ];
+      id = "ci.github_actions.language-matrix";
+    };
+  };
+
   testLanguagesOffMatchHelpers = {
     expr =
       let
