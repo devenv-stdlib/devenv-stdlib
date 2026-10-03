@@ -1,6 +1,5 @@
 # JS and TS share the Serena typescript server (lib.unique in the loader).
-{ ... }:
-{
+_: {
   path = [
     "javascript"
     "serena"
