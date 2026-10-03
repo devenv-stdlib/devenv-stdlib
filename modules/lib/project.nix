@@ -1,8 +1,8 @@
 { lib }:
 # Pure language enable → hooks / serena / vscode / debtmap helpers.
-# Cascade fan-out ("what does python enable?") lives in den/language-cascade.nix
-# and den.aspects.* includes — not in this file. Enable flags still come from
-# Copier / languages.*.enable.
+# Cascade fan-out ("what does python enable?") lives in
+# modules/den/_cascades/language-cascade.nix and den.aspects.* includes — not
+# in this file. Enable flags still come from Copier / languages.*.enable.
 rec {
   langOn = languages: name: (languages.${name} or { }).enable or false;
 

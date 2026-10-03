@@ -21,7 +21,7 @@ devenv shell
 
 `setup.sh` installs Nix, devenv, Cachix (`cachix use devenv`), and Home Manager, then applies the Den developer profile. After Alacritty, log out and back in once so GNOME Shell loads Quake Terminal.
 
-`home-switch` re-applies Home Manager after you edit Den aspects (`den/`) or `home.local.nix`.
+`home-switch` re-applies Home Manager after you edit Den aspects (`modules/aspects/`, `modules/den/`) or `home.local.nix`.
 
 ## Daily loop
 
@@ -37,9 +37,9 @@ devenv update git-hooks      # refresh only the git-hooks lock input
 
 `direnv allow` uses the committed `.envrc`. Alternatively `eval "$(devenv hook bash)"` plus `devenv allow`.
 
-Do not edit `.devenv/` or other generated files. User-facing Nix is `devenv.nix`, `devenv.yaml`, `flake.nix`, `den/`, `modules/`, and `home/`.
+Do not edit `.devenv/` or other generated files. User-facing Nix is `devenv.nix`, `devenv.yaml`, `flake.nix`, `modules/`, and `home/`.
 
-`modules/` is topical (`hooks/`, `languages/`, `ides/`, `debtmap/`, `packages/`, `update/`, `test/`, `lib/`). `home/ides/` holds editors and the MCP catalog. `modules/devenv.nix` is the barrel. Prefer small focused files over growing grab-bags; the Cursor rule `.cursor/rules/nix-module-split.mdc` (copied) requires a split when a module mixes concerns, grows past ~100 lines, or duplicates patterns in the same directory. Obvious cuts land in the same change; large ambiguous moves need a proposed tree first.
+`modules/` is topical: devenv (`hooks/`, `languages/`, `ides/`, `debtmap/`, `packages/`, `update/`, `test/`, `lib/`) plus Den (`aspects/`, `den/`, discovered by flake `import-tree`). `home/ides/` holds editors and the MCP catalog. `modules/devenv.nix` is the devenv barrel (`devenv.yaml` imports it explicitly). Prefer small focused files over growing grab-bags; the Cursor rule `.cursor/rules/nix-module-split.mdc` (copied) requires a split when a module mixes concerns, grows past ~100 lines, or duplicates patterns in the same directory. Obvious cuts land in the same change; large ambiguous moves need a proposed tree first.
 
 ## Maintainer workflow
 
@@ -165,7 +165,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `modules/update/` | `update` script (template pins vs consumer lock; copied) |
 | `docs/` | Pages site (not copied) |
 | `devenv.nix` / `devenv.yaml` / `devenv.lock` | Shell, inputs, lock |
-| `den/` + `flake.nix` | Den Home Manager composition |
+| `modules/{aspects,den}/` + `flake.nix` | Den Home Manager composition (import-tree) |
 | `home/` | Home Manager modules |
 | `home/navi.nix` | `NAVI_PATH` → pinned denisidoro/cheats |
 | `home/ides/` | Editors (Cursor, opt-in VS Code, neovim, nano), MCP catalog, Cursor LLM context |

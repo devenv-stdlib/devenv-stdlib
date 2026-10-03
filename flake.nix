@@ -1,8 +1,8 @@
 # Den HM + cascade flake — den.homes → homeConfigurations.developer
-# Sister libs (import-tree, flake-parts, den-diagram, zen, flake-aspects) intentionally omitted.
-# Phase 5: multi-OS class stubs (den.hosts + portable shell-tools); Ubuntu HM unchanged.
+# Layout: modules/aspects + modules/den via import-tree (devenv stays on modules/devenv.nix).
+# Phase 5 tip + import-tree unify: multi-OS stubs unchanged; no effects/zen.
 {
-  description = "devenv4monorepo Den Phase 5 multi-OS (hosts stubs + portable aspects)";
+  description = "devenv4monorepo Den + import-tree modules unify";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -10,8 +10,10 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Pinned release — sole composition dependency (den only).
+    # Pinned release — composition dependency.
     den.url = "github:denful/den/v0.18.0";
+    # Den templates / battery companion — scoped discovery of modules/{aspects,den}.
+    import-tree.url = "github:denful/import-tree/v0.2.0";
   };
 
   outputs =
@@ -19,20 +21,14 @@
     let
       lib = inputs.nixpkgs.lib;
 
+      # Recommended Den pattern (minimal template): import-tree discovers .nix modules.
+      # Scoped to Den subtrees so devenv modules under modules/ are not double-imported.
+      # modules/den/_cascades/ is skipped by import-tree's default `/_` filter (pure data).
       denModules = [
-        ./den/homes.nix
-        ./den/hosts.nix
-        ./den/classes/project.nix
-        ./den/aspects/cursor.nix
-        ./den/aspects/cursor-extensions.nix
-        ./den/aspects/cursor-llm.nix
-        ./den/aspects/terminal.nix
-        ./den/aspects/alacritty-quake.nix
-        ./den/aspects/warp-quake.nix
-        ./den/aspects/home-cli.nix
-        ./den/aspects/shell-tools.nix
-        ./den/aspects/languages.nix
-        ./den/aspects/project-ides.nix
+        (inputs.import-tree [
+          ./modules/aspects
+          ./modules/den
+        ])
       ];
 
       denConfig = lib.evalModules {
@@ -149,7 +145,7 @@
         && builtins.any (n: lib.hasPrefix "ripgrep" n || n == "ripgrep") denFp.packages;
 
       # --- Phase 4: Den/project goldens (aspect includes + pure helpers) ---
-      cascade = import ./den/language-cascade.nix;
+      cascade = import ./modules/den/_cascades/language-cascade.nix;
       project = import ./modules/lib/project.nix { inherit lib; };
       pythonOnFixture = {
         languages.python.enable = true;
@@ -277,10 +273,10 @@
     denConfig.config.flake
     // {
       # Cascade metadata + light eval helpers for tests (not HM activation).
-      denCursorCascade = import ./den/cursor-cascade.nix;
-      denTerminalCascade = import ./den/terminal-cascade.nix;
-      denLanguageCascade = import ./den/language-cascade.nix;
-      denIdeCascade = import ./den/ide-cascade.nix;
+      denCursorCascade = import ./modules/den/_cascades/cursor-cascade.nix;
+      denTerminalCascade = import ./modules/den/_cascades/terminal-cascade.nix;
+      denLanguageCascade = import ./modules/den/_cascades/language-cascade.nix;
+      denIdeCascade = import ./modules/den/_cascades/ide-cascade.nix;
       denAspectIncludes = {
         cursor = aspectIncludeNames "cursor";
         cursor-extensions = aspectIncludeNames "cursor-extensions";

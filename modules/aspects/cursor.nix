@@ -2,7 +2,7 @@
 # Includes the extensions pack and LLM/MCP stack (enable → cascade DAG).
 { den, ... }:
 let
-  cascade = import ../cursor-cascade.nix;
+  cascade = import ../den/_cascades/cursor-cascade.nix;
 in
 {
   den.aspects.cursor = {

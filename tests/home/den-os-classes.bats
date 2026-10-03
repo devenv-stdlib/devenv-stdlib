@@ -56,6 +56,6 @@ setup() {
 }
 
 @test "MULTI-OS docs mention unsupported quake" {
-  grep -qi 'quake' "$REPO_DIR/den/MULTI-OS.md"
-  grep -qi 'unsupported' "$REPO_DIR/den/MULTI-OS.md"
+  grep -qi 'quake' "$REPO_DIR/modules/den/MULTI-OS.md"
+  grep -qi 'unsupported' "$REPO_DIR/modules/den/MULTI-OS.md"
 }

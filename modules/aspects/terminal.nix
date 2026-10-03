@@ -1,9 +1,9 @@
 # Feature aspect: terminal hub (Starship + GNOME sync + provider selection).
 # Includes exactly one provider aspect (alacritty-quake XOR warp-quake).
-# Phase 5: Ubuntu/GNOME-only — no nixos/darwin class keys (see den/MULTI-OS.md).
+# Phase 5: Ubuntu/GNOME-only — no nixos/darwin class keys (see modules/den/MULTI-OS.md).
 { den, ... }:
 let
-  cascade = import ../terminal-cascade.nix;
+  cascade = import ../den/_cascades/terminal-cascade.nix;
 in
 {
   den.aspects.terminal = {

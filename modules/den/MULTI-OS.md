@@ -10,7 +10,7 @@ Ubuntu `den.homes` + `home-switch` remain the supported activation path.
 | `fixture-nixos` | `x86_64-linux` | `nixos` | none (`intoAttr = []`) |
 | `fixture-darwin` | `aarch64-darwin` | `darwin` | none (`intoAttr = []`) |
 
-Declared in `den/hosts.nix`. Instantiation is stubbed; real `nixosConfigurations` /
+Declared in `modules/den/hosts.nix`. Instantiation is stubbed; real `nixosConfigurations` /
 `darwinConfigurations` wait on product host matrix + nix-darwin input.
 
 ## Portable aspect

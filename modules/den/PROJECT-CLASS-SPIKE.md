@@ -9,8 +9,8 @@ documentation + HM-only Den.*
 
 | Check | Result |
 | --- | --- |
-| `den.classes.project` registered | Yes (`den/classes/project.nix`) |
-| Language aspects attach `project` class payloads | Yes (`den/aspects/languages.nix`) |
+| `den.classes.project` registered | Yes (`modules/den/classes/project.nix`) |
+| Language aspects attach `project` class payloads | Yes (`modules/aspects/languages.nix`) |
 | `den.lib.aspects.resolve "project" den.aspects.python` yields module | Yes (flake export `denProjectClass`) |
 | Resolved markers include hub includes + leaf concerns | Yes (hooks / ide-recs / serena / debtmap) |
 | Devenv CLI / `devenv.yaml` / CI matrix rewritten? | **No** — bridge is resolve → import |

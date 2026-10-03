@@ -2,7 +2,7 @@
 #
 # Supported Ubuntu hosts use Den:
 #   home-switch  →  home-manager switch --flake .#developer --impure
-# Composition lives in den/homes.nix + den/aspects/* (cursor, terminal, home-cli).
+# Composition lives in modules/den/homes.nix + modules/aspects/* (cursor, terminal, home-cli).
 # Optional host overrides: home.local.nix (imported by den.homes).
 #
 # Kept as a path so Copier destinations still receive a recognizable filename;

@@ -15,8 +15,10 @@ inputs:
       nixpkgs:
         follows: nixpkgs
 
+# Explicit barrel — Den lives under modules/{aspects,den} via flake import-tree;
+# do not import the whole modules/ directory into devenv (avoids double-import).
 imports:
-  - ./modules
+  - ./modules/devenv.nix
 
 # Pylance (and other Cursor language packs) are unfree; enabling Python
 # evaluates those packs for .vscode / cursor-sync.
