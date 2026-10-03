@@ -55,6 +55,23 @@ _: {
     jq --version
     mkdir -p "''${HOME}/.parallel"
     touch "''${HOME}/.parallel/will-cite"
+    # GNU parallel 20260722 (bats --jobs >1 backend) sanitises $XDG_CACHE_HOME and, on
+    # its first run on a machine (no ~/.parallel/tmp yet: every CI runner), exports
+    # it as "" to the jobs when it was unset. Nix then resolves its cache dir to
+    # the relative "nix": stray ./nix tree, `not an absolute path: "nix"` on the
+    # first real tarball fetch.
+    export XDG_CACHE_HOME="''${XDG_CACHE_HOME:-$HOME/.cache}"
+    # Warm the Nix fetchers before bats: the first import of a tarball on a
+    # machine logs `unpacking '…' into the Git cache` on stderr, and bats `run`
+    # folds stderr into $output, which the Den home tests compare verbatim.
+    # Pre-run the pure eval files once so that noise lands here, not in a test.
+    nix --extra-experimental-features 'nix-command flakes' flake prefetch-inputs "$DEVENV_ROOT" \
+      >/dev/null 2>&1 || echo "warn: nix flake prefetch-inputs failed; continuing"
+    for eval_file in "$DEVENV_ROOT"/tests/home/*-eval.nix; do
+      env NIX_CONFIG="experimental-features = nix-command flakes" \
+        nix-instantiate --eval --strict --impure "$eval_file" >/dev/null 2>&1 \
+        || echo "warn: warm-up eval of ''${eval_file##*/} failed; continuing"
+    done
     # git >= 2.55 runs geometric auto-maintenance detached after `git commit`
     # (maintenance.geometric-repack.auto = 100: two loose objects under
     # objects/17 are enough). copier.bats commits a ~500-object template and
@@ -65,8 +82,13 @@ _: {
     git_cfg_n="''${GIT_CONFIG_COUNT:-0}"
     export "GIT_CONFIG_KEY_$git_cfg_n=maintenance.auto" \
       "GIT_CONFIG_VALUE_$git_cfg_n=false" GIT_CONFIG_COUNT=$((git_cfg_n + 1))
-    # Serial bats: parallel jobs amplify the git maintenance race above and
-    # (once Den lands) also race Nix path: flake fetcher locks.
+    # Serial on purpose: `builtins.getFlake (toString ../..)` is a path: input
+    # (Nix never upgrades a string flakeref to git+file without a baseDir), so
+    # every Den eval copies the checkout into the store under the fetcher lock
+    # and a concurrent loser prints `waiting for another Nix process to finish
+    # fetching input …` at error level, into the `$output` those tests compare
+    # verbatim. --jobs 1 costs ~30 s on 4 cores; the warm-up above keeps the
+    # rest of the first-fetch noise out of the tests.
     bats --jobs 1 --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
   '';
 
