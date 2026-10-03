@@ -13,10 +13,10 @@ in
       description = "Any of Cursor, VS Code, or Neovim. Does not exclude the other IDEs.";
 
       # ide cardinality is any-of, so listing these does not exclude nano or each other.
-      tools = with tools; [
-        ide.cursor
-        ide.vscode
-        ide.neovim
+      tools = [
+        tools.ide.cursor
+        tools.ide.vscode
+        tools.ide.neovim
       ];
     })
   ];

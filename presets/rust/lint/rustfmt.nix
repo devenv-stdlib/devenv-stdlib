@@ -1,10 +1,16 @@
 # when inherits rust category policy (languages.rust.enable or override).
-{ tools, ... }: {
+_: {
   path = [
     "rust"
     "lint"
     "rustfmt"
   ];
   description = "rustfmt git-hook and edition-aware editor args when Rust is available.";
-  tools = with tools; [ rust.lint.rustfmt ];
+  tools = [
+    [
+      "rust"
+      "lint"
+      "rustfmt"
+    ]
+  ];
 }
