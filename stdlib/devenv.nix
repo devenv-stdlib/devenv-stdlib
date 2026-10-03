@@ -155,8 +155,9 @@ let
           type = lib.types.attrsOf langType;
           default = { };
           description = ''
-            Language-preset contributions. stdlib.devenv.load lowers these into
-            Serena, editor recommendations, debtmap, and CI matrix flags.
+            Per-tool language-scoped preset contributions. stdlib.devenv.load
+            lowers these into Serena, editor recommendations, debtmap, and CI
+            matrix flags. Not a megapreset API.
           '';
         };
 
