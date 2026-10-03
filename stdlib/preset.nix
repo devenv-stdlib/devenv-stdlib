@@ -18,12 +18,14 @@ let
   normalizePath =
     value:
     if builtins.isList value then
-      assert lib.assertMsg (value != [ ] && lib.all builtins.isString value)
-        "mkPreset path: expected a non-empty list of attrpath segments";
+      assert lib.assertMsg (
+        value != [ ] && lib.all builtins.isString value
+      ) "mkPreset path: expected a non-empty list of attrpath segments";
       value
     else if builtins.isString value then
-      assert lib.assertMsg (value != "" && !(lib.hasInfix "." value))
-        "mkPreset path: use a segment list (e.g. [ \"python\" \"lint\" \"ruff\" ]), not a dotted string";
+      assert lib.assertMsg (
+        value != "" && !(lib.hasInfix "." value)
+      ) "mkPreset path: use a segment list (e.g. [ \"python\" \"lint\" \"ruff\" ]), not a dotted string";
       [ value ]
     else
       throw "mkPreset path: expected attrpath segments (list of strings) or one leaf name";
@@ -112,8 +114,7 @@ let
         }) node.tools
       ) (indexTree categoriesTree);
       fromSpecs = map (found: {
-        name = found.spec.name;
-        category = found.spec.category;
+        inherit (found.spec) name category;
       }) (toolLib.specs (load.discover [ ../tools ]));
     in
     fromTree ++ fromSpecs;
@@ -425,7 +426,7 @@ in
         den.policies.${presetId} = lib.mkIf result.applied (
           ctx:
           let
-            policy = den.lib.policy;
+            inherit (den.lib) policy;
           in
           map (aspect: policy.include aspect) (aspectRefs den result.includeAspects)
           ++ map (aspect: policy.exclude aspect) (aspectRefs den (result.excludeAspects ctx))
