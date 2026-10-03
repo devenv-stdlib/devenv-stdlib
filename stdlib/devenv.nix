@@ -10,6 +10,10 @@
 # Logging goes through stdlib.log (nix-log is private). End-of-eval report
 # uses module warnings + enterShell — no wrapper scripts.
 #
+# Local mkTool leaves (project payload) live under tools/** and are lowered
+# here via applyLocal. Thin presets list tool names; when applied they set
+# tools.<name>.enable = true. Same public API as global tools.
+#
 # P0's stdlib/default.nix and stdlib/load.nix stay untouched. Call sites
 # import this file directly.
 {
@@ -18,6 +22,8 @@
 }:
 let
   presetLib = import ./preset.nix { inherit lib; };
+  toolLib = import ./tool.nix { inherit lib; };
+  loadLib = import ./load.nix { inherit lib; };
   projectLib = import ../modules/lib/project.nix { inherit lib; };
   log = import ./log.nix { inherit lib nix-log; };
   report = import ./report.nix { inherit lib log; };
@@ -241,6 +247,13 @@ let
       } (map (decl: lib.setAttrByPath ([ "presets" ] ++ decl.path) (leafOptions config decl)) decls);
     };
 
+  hasProjectPayload =
+    decl:
+    let
+      raw = decl.project or null;
+    in
+    raw != null && raw != { };
+
   applyPreset =
     decl:
     {
@@ -280,6 +293,19 @@ let
           ;
         includeTools = logged.includeTools or [ ];
       };
+      projectConfig =
+        if !(hasProjectPayload decl) then
+          { }
+        else if lib.isFunction decl.project then
+          decl.project {
+            inherit
+              config
+              lib
+              pkgs
+              ;
+          }
+        else
+          decl.project;
     in
     {
       imports = lib.optional (decl ? module && decl.module != null) decl.module;
@@ -289,19 +315,39 @@ let
         }
         (lib.setAttrByPath ([ "presets" ] ++ decl.path ++ [ "result" ]) result)
         (lib.mkIf logged.applied (
-          if lib.isFunction decl.project then
-            decl.project {
-              inherit
-                config
-                lib
-                pkgs
-                ;
-            }
-          else
-            decl.project
+          lib.mkMerge [
+            (lib.optionalAttrs ((logged.includeTools or [ ]) != [ ]) {
+              tools = lib.genAttrs logged.includeTools (_: {
+                enable = lib.mkDefault true;
+              });
+            })
+            projectConfig
+          ]
         ))
       ];
     };
+
+  # Local mkTool modules (isLocal / project payload). File is the module.
+  localToolModules =
+    toolRoots:
+    let
+      discovered = toolLib.specs (loadLib.discover toolRoots);
+      local = lib.filter (d: d.spec.isLocal) discovered;
+    in
+    map (d: d.file) local;
+
+  normalizeLoadArgs =
+    rootsOrAttrs:
+    if builtins.isList rootsOrAttrs then
+      {
+        presets = rootsOrAttrs;
+        tools = [ ];
+      }
+    else
+      {
+        presets = rootsOrAttrs.presets or [ ];
+        tools = rootsOrAttrs.tools or [ ];
+      };
 
   lower =
     {
@@ -431,20 +477,25 @@ in
     defaultRoots
     ;
 
-  # roots: list of category roots (e.g. presets/python). `_*.nix` helpers skip.
-  # Returns devenv modules (options, per-preset when/requires, and the
-  # project-payload lowerer). Never imports Den.
+  # rootsOrAttrs: list of preset category roots (legacy) or
+  # { presets = [...]; tools = [...]; }. `_*.nix` helpers skip.
+  # Returns devenv modules (local tool leaves, preset options/when/requires,
+  # and the project-payload lowerer). Never imports Den.
   load =
-    roots:
+    rootsOrAttrs:
     let
-      decls = declsOf roots;
+      args = normalizeLoadArgs rootsOrAttrs;
+      decls = declsOf args.presets;
+      tools = localToolModules args.tools;
     in
-    [
-      (presetOptions decls)
-    ]
-    ++ map applyPreset decls
-    ++ [
-      lower
-      reportModule
-    ];
+    if decls == [ ] && tools == [ ] then
+      [ ]
+    else
+      [ (presetOptions decls) ]
+      ++ tools
+      ++ map applyPreset decls
+      ++ [
+        lower
+        reportModule
+      ];
 }

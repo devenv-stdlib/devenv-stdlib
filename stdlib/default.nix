@@ -42,5 +42,6 @@ in
 
   inherit (load) discover;
   den.load = load.den;
-  devenv.load = load.devenv;
+  # Project/local tools + presets: stdlib/devenv.nix (never Den).
+  devenv.load = (import ./devenv.nix { inherit lib; }).load;
 }

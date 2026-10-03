@@ -92,7 +92,7 @@ The language/OS `test.yml` matrix strategy is the composable preset `presets/ci/
 
 `stdlib.discover` lists `.nix` files under the directories you pass. It skips names that start with `_`.
 
-`stdlib.den.load` lowers `tools/**/*.nix` into Den aspect modules. A missing directory still yields an empty list, so callers can concatenate the result. `stdlib.devenv.load` stays an empty list until preset project payloads exist.
+`stdlib.den.load` lowers **global** `tools/**/*.nix` (Home Manager payloads) into Den aspect modules. A missing directory still yields an empty list, so callers can concatenate the result. `stdlib.devenv.load` lowers **local** tools (`project` payloads via `applyLocal`) plus thin presets under `presets/` — never imports Den. Call it with `{ presets = [...]; tools = [...]; }` (a bare list is presets-only).
 
 ## No compat shims (pre-release)
 
@@ -122,7 +122,7 @@ nixpkgs.follows = "devenv-stdlib/nixpkgs";
 
 `terminal.quake`, `terminal.alacritty-atuin`, `ide`, `host.hm-only-guard`.
 
-Language support is **not** a megapreset named Python/Rust/…. Framework presets under `presets/<lang>/<category>/` are per-tool attrpaths (`python.lint.ruff`, `rust.lint.rustfmt`, `python.serena`, …), loaded by `stdlib.devenv.load`, each gated by `when = languages.<lang>.enable` in `devenv.local.nix`. Copier still decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
+Language support is **not** a megapreset named Python/Rust/…. Local language leaves are first-class `mkTool` modules under `tools/lang/<lang>/…` (same public API as global tools: `tools.<name>.enable`). Thin framework presets under `presets/<lang>/<category>/` keep attrpath identity (`python.lint.ruff`, `rust.lint.rustfmt`, …) and usually only declare `when` + `tools = [ "…" ]`; when applied they set `tools.<name>.enable = true`. Non-tool presets (serena, debtmap, ide, supported, bundler, ci.language-matrix, fixtures, …) stay as presets. Copier still decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
 
 ## Community tools and presets
 

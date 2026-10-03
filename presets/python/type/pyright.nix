@@ -9,5 +9,5 @@ _: {
     cfg:
     ((cfg.languages.python or { }).enable or false)
     && ((cfg.pythonTypeChecker or "pyright") == "pyright");
-  project.git-hooks.hooks.pyright.enable = true;
+  tools = [ "pyright" ];
 }

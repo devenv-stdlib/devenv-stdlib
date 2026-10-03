@@ -269,4 +269,75 @@ in
     expr = byName ? opencode || byName ? claude-code || byName ? codex;
     expected = false;
   };
+
+  testStdlibLocalLangTools = {
+    expr =
+      let
+        ruff = spec "ruff";
+        prettier = spec "prettier";
+        rustfmt = spec "rustfmt";
+        checkPython = spec "check-python";
+      in
+      {
+        ruff = {
+          inherit (ruff) category scopes isLocal isGlobal;
+          inherit (ruff.install) kind;
+          inherit (ruff) upgrade;
+        };
+        prettier.category = prettier.category;
+        rustfmt.category = rustfmt.category;
+        checkPython = {
+          inherit (checkPython) category isLocal;
+        };
+        denIgnoresLocal =
+          let
+            denMods = stdlib.den.load [ ../../tools ];
+            # den.load still returns modules for global tools; local names are absent.
+            names = map (d: d.spec.name) (lib.filter (d: d.spec.isLocal) discovered);
+          in
+          {
+            hasLocalFiles = names != [ ];
+            denNonEmpty = denMods != [ ];
+          };
+      };
+    expected = {
+      ruff = {
+        category = "lang.python.linters";
+        scopes = [ "local" ];
+        isLocal = true;
+        isGlobal = false;
+        kind = "project";
+        upgrade = "none";
+      };
+      prettier.category = "lang.javascript.linters";
+      rustfmt.category = "lang.rust.linters";
+      checkPython = {
+        category = "lang.python";
+        isLocal = true;
+      };
+      denIgnoresLocal = {
+        hasLocalFiles = true;
+        denNonEmpty = true;
+      };
+    };
+  };
+
+  testStdlibLocalToolNames = {
+    expr = lib.sort (a: b: a < b) (
+      map (d: d.spec.name) (lib.filter (d: d.spec.isLocal) discovered)
+    );
+    expected = [
+      "check-python"
+      "clippy"
+      "debug-statements"
+      "gofmt"
+      "golangci-lint"
+      "prettier"
+      "pyright"
+      "ruff"
+      "rustfmt"
+      "sort-requirements-txt"
+      "ty"
+    ];
+  };
 }

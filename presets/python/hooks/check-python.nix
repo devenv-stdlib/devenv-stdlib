@@ -6,5 +6,5 @@ _: {
   ];
   description = "git-hooks check-python when languages.python.enable.";
   when = cfg: (cfg.languages.python or { }).enable or false;
-  project.git-hooks.hooks.check-python.enable = true;
+  tools = [ "check-python" ];
 }
