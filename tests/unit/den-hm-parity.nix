@@ -1,6 +1,6 @@
 # Phase 3 W3.1: Den homeConfiguration fingerprint ≡ legacy home.nix (fixture).
 # Consumes flake exports denHmParity (see flake.nix).
-{ lib, ... }:
+_:
 let
   flake = builtins.getFlake (toString ../..);
   parity = flake.denHmParity;
