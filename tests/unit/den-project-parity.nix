@@ -1,5 +1,5 @@
 # Phase 3 W3.2: aspect-backed python fixture ≡ legacy project.nix helpers.
-{ lib, denProjectBridge, ... }:
+{ denProjectBridge, ... }:
 let
   flake = builtins.getFlake (toString ../..);
   parity = flake.denProjectParity;
