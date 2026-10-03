@@ -13,6 +13,7 @@ let
   jsOrTsPolicy = categoryPolicy.policies.javascript-or-typescript;
   pythonPolicy = categoryPolicy.policies.python;
   rustPolicy = categoryPolicy.policies.rust;
+  typescriptPolicy = categoryPolicy.policies.typescript;
 
   realizePreset =
     {
@@ -108,6 +109,7 @@ in
         "javascript-or-typescript"
         "python"
         "rust"
+        "typescript"
       ];
       preset = "python";
       tool = "python";
@@ -149,6 +151,78 @@ in
         ];
       }).triggered;
     expected = false;
+  };
+
+  testCategoryPolicyTypescriptRegistered = {
+    expr = {
+      preset =
+        (categoryPolicy.forPresetPath [
+          "typescript"
+          "bundler"
+        ]).id;
+      tool = (categoryPolicy.forToolCategory "lang.typescript.linters").id;
+      annotated = (stdlib.categories.resolve "lang.typescript").categoryPolicy;
+      available = typescriptPolicy.available { languages.typescript.enable = true; };
+      unavailable = typescriptPolicy.available { };
+    };
+    expected = {
+      preset = "typescript";
+      tool = "typescript";
+      annotated = "typescript";
+      available = true;
+      unavailable = false;
+    };
+  };
+
+  testTypescriptPresetInheritsWhenInertWithoutTypescript = {
+    expr =
+      (realizePreset {
+        path = [
+          "typescript"
+          "debtmap"
+        ];
+      }).triggered;
+    expected = false;
+  };
+
+  testTypescriptPresetAppliesWhenLanguageEnabled = {
+    expr =
+      (realizePreset {
+        path = [
+          "typescript"
+          "debtmap"
+        ];
+        cfg = {
+          languages.typescript.enable = true;
+        };
+      }).applied;
+    expected = true;
+  };
+
+  testTypescriptBundlerKeepsLeafRequires = {
+    expr =
+      let
+        bound = categoryPolicy.bindPreset {
+          path = [
+            "typescript"
+            "bundler"
+          ];
+          requires = [
+            {
+              assertion = cfg: (cfg.typescript.bundler or null) != null;
+              message = "bundler required";
+            }
+          ];
+        };
+      in
+      {
+        nRequires = builtins.length bound.requires;
+        inheritWhen = bound.when { languages.typescript.enable = true; };
+      };
+    expected = {
+      nRequires = 2;
+      inheritWhen = true;
+    };
   };
 
   testJavascriptSharedPresetAppliesForTypescriptOnly = {
