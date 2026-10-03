@@ -207,33 +207,35 @@ let
           '';
         };
 
-        stdlib.lang = lib.mkOption {
-          type = lib.types.attrsOf langType;
-          default = { };
-          description = ''
-            Per-tool language-scoped preset contributions. stdlib.devenv.load
-            lowers these into Serena, editor recommendations, debtmap, and CI
-            matrix flags. Not a megapreset API.
-          '';
-        };
-
-        stdlib.markers = lib.mkOption {
-          type = lib.types.attrsOf lib.types.anything;
-          default = { };
-          internal = true;
-          description = "Exemplar markers for fixture presets. Not a public API.";
-        };
-
-        stdlib.report = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Emit the stdlib status summary via warnings / enterShell.";
+        stdlib = {
+          lang = lib.mkOption {
+            type = lib.types.attrsOf langType;
+            default = { };
+            description = ''
+              Per-tool language-scoped preset contributions. stdlib.devenv.load
+              lowers these into Serena, editor recommendations, debtmap, and CI
+              matrix flags. Not a megapreset API.
+            '';
           };
-          enterShell = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Print the status summary on devenv enterShell.";
+
+          markers = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = { };
+            internal = true;
+            description = "Exemplar markers for fixture presets. Not a public API.";
+          };
+
+          report = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Emit the stdlib status summary via warnings / enterShell.";
+            };
+            enterShell = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Print the status summary on devenv enterShell.";
+            };
           };
         };
       } (map (decl: lib.setAttrByPath ([ "presets" ] ++ decl.path) (leafOptions config decl)) decls);

@@ -178,7 +178,7 @@ let
       ++ formatMatrix (inv.matrix or null)
     );
 
-  mkEvalWarning = inv: formatReport inv;
+  mkEvalWarning = formatReport;
 
   mkEnterShellSnippet =
     inv:
