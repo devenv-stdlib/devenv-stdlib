@@ -83,7 +83,7 @@ let
         }
       ]
       ++ devenvLoad.load [
-        (presetRoot + "/languages")
+        (presetRoot + "/lang")
         (presetRoot + "/fixtures")
       ];
     }).config;
@@ -336,20 +336,21 @@ in
       let
         cfg = eval {
           languages.typescript.enable = true;
-          presets.typescript.strict = false;
+          presets.typescript-bundler.strict = false;
         };
       in
       {
         failed = failedAssertions cfg;
         warnings = map (w: lib.hasInfix "typescript.bundler" w) cfg.warnings;
+        # Tool presets stay independent: bundler failure does not disable prettier/debtmap.
         prettier = hookOn cfg "prettier";
         debtmap = devenvLoad.debtmapLanguages cfg.stdlib.lang;
       };
     expected = {
       failed = [ ];
       warnings = [ true ];
-      prettier = false;
-      debtmap = [ ];
+      prettier = true;
+      debtmap = [ "typescript" ];
     };
   };
 
@@ -358,7 +359,8 @@ in
       let
         cfg = eval {
           languages.python.enable = true;
-          presets.python.enable = false;
+          presets.ruff.enable = false;
+          presets.serena-python.enable = false;
         };
       in
       {
@@ -382,12 +384,13 @@ in
       {
         failed = failedAssertions cfg;
         warned = cfg.warnings != [ ];
+        # prettier is a separate tool preset; global strict only affects requires.
         prettier = hookOn cfg "prettier";
       };
     expected = {
       failed = [ ];
       warned = true;
-      prettier = false;
+      prettier = true;
     };
   };
 
