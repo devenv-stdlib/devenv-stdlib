@@ -229,6 +229,24 @@ ensure_profile_pkg() {
   command -v "$name" >/dev/null 2>&1 || fail "$name is not on PATH after install"
 }
 
+# Install devenv from the locked modules rev so the CLI matches require_version.
+ensure_devenv() {
+  local lock=$REPO_ROOT/devenv.lock
+  local rev flakeref
+  [[ -f $lock ]] || fail "devenv.lock not found at $lock"
+  rev=$(jq -r '.nodes.devenv.locked.rev // empty' "$lock")
+  [[ -n $rev && $rev != null ]] || fail "devenv.lock has no nodes.devenv.locked.rev"
+  flakeref="github:cachix/devenv/${rev}"
+  if command -v devenv >/dev/null 2>&1 || profile_has devenv; then
+    step "replace profile devenv with locked ${rev:0:12}" \
+      nix_cmd profile remove devenv || true
+  fi
+  step "install devenv from locked rev ${rev:0:12}" \
+    nix_cmd profile add "$flakeref"
+  load_nix
+  command -v devenv >/dev/null 2>&1 || fail "devenv is not on PATH after install"
+}
+
 # ensure_nixpkgs_on_nix_path: shared with home-switch and test-devenv.
 # shellcheck disable=SC1091
 . "$REPO_ROOT/home/nix-path.sh"
@@ -382,7 +400,7 @@ main() {
   ensure_flakes
   load_nix
 
-  ensure_profile_pkg devenv
+  ensure_devenv
   ensure_profile_pkg cachix
   ensure_profile_pkg home-manager
 

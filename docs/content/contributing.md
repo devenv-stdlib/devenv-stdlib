@@ -52,7 +52,7 @@ devenv update git-hooks   # lock only; weekly CI already does this
 refresh-toolchain-latest  # endoflife catalog; separate from update
 ```
 
-`update` in this checkout does **not** run a full `devenv update`. Lock policy stays: `git-hooks` weekly; nixpkgs only when intended.
+`update` in this checkout does **not** run a full `devenv update`. Lock policy stays: `git-hooks` weekly; nixpkgs only when intended. Bump the `devenv` input (and matching `require_version` / CLI install pin) only when intentionally moving to a new devenv release.
 
 When adding a non-Nix tool to the **template**: run `devenv tasks run non-nix:add -- …` (or edit `modules/non-nix/catalog.toml` by hand) so each `[[tool]]` has a one-line `#` comment (what it does + docs URL), keep install via mise or the existing Docker/Marketplace path, and let `includes/update/non-nix.sh` bump the pin. Document it. Remove with `non-nix:remove`. Monorepo teams use `non-nix:add-local` / `non-nix:remove-local` against `modules/non-nix/catalog.local.toml` instead (committed; `update` refreshes them). The author Cursor rule enforces the comment shape. Consumers still get shipped pin moves only after a release + `copier update`. Vendored agent skills: `skills add … -a cursor -y` from the repo root (project mise PATH), then list the source in `.agents/skills/README.md`; `update` refreshes them via `includes/update/skills.sh`.
 
