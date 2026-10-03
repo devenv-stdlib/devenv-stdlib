@@ -1,5 +1,9 @@
 # yaml-language-server: $schema=https://devenv.sh/devenv.schema.json
 inputs:
+  # Latest stable release. Tag ships latest-version=2.3.1; we override to 2.4.0 in
+  # devenv.nix so require_version: true matches the release CLI.
+  devenv:
+    url: github:cachix/devenv/v2.4.0?dir=src/modules
   nixpkgs:
     url: github:cachix/devenv-nixpkgs/rolling
   git-hooks:
@@ -19,7 +23,7 @@ imports:
 nixpkgs:
   allow_unfree: true
 
-# Keep the devenv CLI aligned with the module set it evaluates.
+# CLI must match modules (devenv.latestVersion). CI/setup install the locked rev.
 require_version: true
 
 # Optional secrets (Brave, Firecrawl). Never in Nix or

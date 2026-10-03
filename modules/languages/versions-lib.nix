@@ -395,7 +395,7 @@ rec {
             name: devenv
         - name: Install devenv
           run: |
-            # Pin CLI to the locked modules rev (devenv.yaml require_version: true).
+            # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
             rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
             nix profile add "github:cachix/devenv/''${rev}"
         - name: Test

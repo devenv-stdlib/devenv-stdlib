@@ -353,6 +353,21 @@ in_setup() {
   [[ $output == *"profile upgrade home-manager"* ]]
 }
 
+@test "ensure_devenv installs from the locked devenv rev" {
+  link_real bash jq
+  stub nix 'printf "%s\n" "$*" >"$NIX_ARGS"
+            printf "#!/usr/bin/env bash\nexit 0\n" >"$STUB_DIR/devenv"
+            chmod +x "$STUB_DIR/devenv"'
+  NIX_ARGS="$BATS_TEST_TMPDIR/nix-args"
+  export NIX_ARGS STUB_DIR
+  rev=$(jq -r '.nodes.devenv.locked.rev' "$REPO_DIR/devenv.lock")
+  run env PATH="$STUB_DIR:/usr/bin:/bin" bash -c "source '$SETUP_SH' >/dev/null; load_nix() { :; }; profile_has() { return 1; }; ensure_devenv" </dev/null
+  [ "$status" -eq 0 ]
+  [[ $output == *"install devenv from locked rev"* ]]
+  run cat "$NIX_ARGS"
+  [[ $output == *"profile add github:cachix/devenv/${rev}"* ]]
+}
+
 @test "apply_home_manager switches with backup against home.nix" {
   stub home-manager 'printf "%s\n" "$*" >"$HM_ARGS"'
   HM_ARGS="$BATS_TEST_TMPDIR/hm-args"
