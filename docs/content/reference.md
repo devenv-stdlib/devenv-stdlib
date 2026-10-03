@@ -25,7 +25,7 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `home.local.nix` | Gitignored host overrides |
 | `secretspec.toml` | Optional Brave / Firecrawl secret names (values stay out of git) |
 | `.env` | Gitignored dotenv; Copier writes keys when you pasted them |
-| `stdlib/` | Framework import (`version`, categories, harness foundations, loaders). Shims under `modules/` and `home/` re-export the moved helpers. |
+| `stdlib/` | Framework import (`version`, categories, harness foundations, loaders). The same helpers are also reachable from the historical `modules/` and `home/` paths. |
 | `modules/` | Languages, versions, hooks, debtmap, packages, `update` |
 | `modules/languages/catalog.json` | Cycle → latest patch and EOL |
 | `hooks/reference-transaction` | Tag guard, installed on `devenv shell` |
