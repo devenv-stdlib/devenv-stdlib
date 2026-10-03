@@ -1,13 +1,13 @@
 # Plain devenv loader. Do not import Den here: devenv evaluation must not
-# fetch Den (that is the #22 CI failure surface). Den lowering lives in
-# stdlib.den.load, which P2 owns.
+# fetch Den (that is the #22 CI failure surface). Condition checks go through
+# P2's realize in stdlib/preset.nix. mkPreset's Den aspect module is not
+# imported into this evaluator.
 #
-# P0's stdlib/default.nix and stdlib/load.nix stay untouched on this branch.
-# After this PR is stacked, point P0's empty `devenv.load` at `load` below.
-# Call sites import this file directly until that wiring lands.
+# P0's stdlib/default.nix and stdlib/load.nix stay untouched. Call sites
+# import this file directly.
 { lib }:
 let
-  presetApi = import ./preset.nix { inherit lib; };
+  presetLib = import ./preset.nix { inherit lib; };
   projectLib = import ../modules/lib/project.nix { inherit lib; };
 
   # Selected-pack order matches modules/ides (rust, go, python, then the
@@ -55,20 +55,17 @@ let
     in
     map (name: dir + "/${name}") files ++ lib.concatMap (name: collect (dir + "/${name}")) dirs;
 
-  isPreset = value: value._type or null == "devenv-preset";
+  isPreset = value: builtins.isAttrs value && value ? name && builtins.isString value.name;
 
   loadFile =
     file:
     let
-      decl = import file {
-        inherit lib;
-        stdlib = presetApi;
-      };
+      decl = import file { inherit lib; };
     in
     if isPreset decl then
       decl
     else
-      throw "stdlib.devenv.load: ${toString file} must return stdlib.mkPreset";
+      throw "stdlib.devenv.load: ${toString file} must return a preset declaration";
 
   declsOf =
     roots:
@@ -181,27 +178,26 @@ let
       ...
     }:
     let
-      enabled = config.presets.${decl.name}.enable;
-      triggered = decl.when config;
-      strict = config.presets.${decl.name}.strict;
-      reqOk = req: if lib.isFunction req.assertion then req.assertion config else req.assertion;
-      reqsOk = lib.all reqOk decl.requires;
-      active = enabled && triggered && reqsOk;
-      failed = lib.filter (req: !reqOk req) decl.requires;
+      # P2 realize throws when strict requirements fail. Non-strict failures
+      # come back as warnings and applied = false.
+      decision = presetLib.realize {
+        inherit (decl) name;
+        when = decl.when or (_: true);
+        requires = decl.requires or [ ];
+        tools = decl.tools or [ ];
+        cfg = config;
+        enable = config.presets.${decl.name}.enable;
+        strict = config.presets.${decl.name}.strict;
+        globalStrict = config.presets.strict;
+      };
     in
     {
-      imports = lib.optional (decl.module != null) decl.module;
+      imports = lib.optional (decl ? module && decl.module != null) decl.module;
       config = lib.mkMerge [
         {
-          assertions = lib.optionals (enabled && triggered && strict) (
-            map (req: {
-              assertion = reqOk req;
-              inherit (req) message;
-            }) decl.requires
-          );
-          warnings = lib.optionals (enabled && triggered && !strict) (map (req: req.message) failed);
+          inherit (decision) assertions warnings;
         }
-        (lib.mkIf active (
+        (lib.mkIf decision.applied (
           if lib.isFunction decl.project then
             decl.project {
               inherit

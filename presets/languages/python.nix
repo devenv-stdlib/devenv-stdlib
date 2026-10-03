@@ -1,10 +1,10 @@
-{ lib, stdlib }:
+{ lib, ... }:
 let
   project = import ../../modules/lib/project.nix { inherit lib; };
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
   versionPolicy = import ./_version-policy.nix { inherit lib; };
 in
-stdlib.mkPreset {
+{
   name = "python";
   description = "Python hooks, Ruff IDE pack, Serena, debtmap, and CI matrix inputs.";
   when = cfg: (cfg.languages.python or { }).enable or false;
