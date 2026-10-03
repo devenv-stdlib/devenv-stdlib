@@ -14,6 +14,9 @@ inputs:
     inputs:
       nixpkgs:
         follows: nixpkgs
+  # Private backend for stdlib.log — tools/presets must use stdlib.log, not this input.
+  nix-log:
+    url: github:rvolosatovs/nix-log
 
 # Explicit barrel — Den lives under modules/{aspects,den} via flake import-tree;
 # do not import the whole modules/ directory into devenv (avoids double-import).

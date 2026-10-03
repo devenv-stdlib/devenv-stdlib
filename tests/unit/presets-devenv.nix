@@ -357,14 +357,15 @@ in
       in
       {
         failed = failedAssertions cfg;
-        warnings = map (w: lib.hasInfix "typescript.bundler" w) cfg.warnings;
+        # stdlib.report may also append a status warning; require the bundler one.
+        hasBundlerWarning = lib.any (w: lib.hasInfix "typescript.bundler" w) cfg.warnings;
         # Tool presets stay independent: bundler failure does not disable prettier/debtmap.
         prettier = hookOn cfg "prettier";
         debtmap = devenvLoad.debtmapLanguages cfg.stdlib.lang;
       };
     expected = {
       failed = [ ];
-      warnings = [ true ];
+      hasBundlerWarning = true;
       prettier = true;
       debtmap = [ "typescript" ];
     };
