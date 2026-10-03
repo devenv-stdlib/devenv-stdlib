@@ -1,6 +1,6 @@
 # Composable CI preset: owns language/OS test.yml matrix generation.
-# Attrpath: ci.github_actions.language-matrix — under ci/github_actions, not a
-# megapreset named "CI". Behavior matches the former modules/languages/versions.nix.
+# Attrpath: ci.github_actions.language-matrix.
+# Behavior matches the former modules/languages/versions.nix.
 _: {
   path = [
     "ci"
