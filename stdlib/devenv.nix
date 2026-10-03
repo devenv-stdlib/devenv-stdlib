@@ -26,6 +26,7 @@ let
   projectLib = import ../modules/lib/project.nix { inherit lib; };
   log = import ./log.nix { inherit lib nix-log; };
   report = import ./report.nix { inherit lib log; };
+  categoryWarnings = import ./category-warnings.nix { inherit lib; };
 
   # Selected-pack order matches former modules/ides (rust, go, python, then the
   # shared JS/TS pack). javascript is visited before typescript so lib.unique
@@ -475,17 +476,40 @@ let
     {
       config,
       lib,
+      options,
       ...
     }:
     let
-      inv = report.logInventory (
-        report.inventory {
-          presets = config.presets or { };
-          tools = config.tools or { };
-          gitHooks = (config.git-hooks or { }).hooks or { };
-          matrix = config.stdlib.markers.ciMatrix or null;
-        }
-      );
+      toolsCfg = if options ? tools then config.tools else { };
+      unusedCategories =
+        if config.stdlib.categoryWarnings.enable or true then
+          categoryWarnings.unusedPaths {
+            inherit config;
+            tools = config.stdlib.categoryWarnings.toolIndex or [ ];
+            presets = config.presets or { };
+          }
+        else
+          [ ];
+      inv =
+        let
+          raw = report.logInventory (
+            report.inventory {
+              presets = config.presets or { };
+              tools = toolsCfg;
+              gitHooks = (config.git-hooks or { }).hooks or { };
+              matrix = config.stdlib.markers.ciMatrix or null;
+              inherit unusedCategories;
+            }
+          );
+        in
+        # Force stdlib.log warn when available categories are unused.
+        if unusedCategories == [ ] then
+          raw
+        else
+          log.warn' "unused available categories" {
+            count = builtins.length unusedCategories;
+            paths = unusedCategories;
+          } raw;
       summary = report.mkEvalWarning inv;
     in
     {
@@ -530,11 +554,16 @@ in
       decls = declsOf args.presets;
       tools = localToolModules args.tools;
     in
-    if decls == [ ] && tools == [ ] then
-      [ categoryPolicy.optionsModule ]
+if decls == [ ] && tools == [ ] then
+      [
+        categoryPolicy.optionsModule
+        categoryWarnings.optionsModule
+        categoryWarnings.module
+      ]
     else
       [
         categoryPolicy.optionsModule
+        categoryWarnings.optionsModule
         (presetOptions decls)
       ]
       ++ tools
@@ -542,6 +571,7 @@ in
       ++ map enablePresetTools decls
       ++ [
         lower
+        categoryWarnings.module
         reportModule
       ];
 }
