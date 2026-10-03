@@ -84,9 +84,14 @@ OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.
 
 `stdlib.den.load` lowers `tools/**/*.nix` into Den aspect modules. A missing directory still yields an empty list, so callers can concatenate the result. `stdlib.devenv.load` stays an empty list until preset project payloads exist.
 
-## Compat shims
+## No compat shims (pre-release)
 
-Existing tests and modules keep the old import paths. Re-exports forward every argument. A later cleanup is the first change allowed to delete them and retarget those tests.
+There is no released public API yet, so empty re-export shims for old
+`modules/hooks/*.nix`, `modules/ides/{cursor,vscode}`, and
+`modules/languages/serena.nix` paths are **not** kept. Callers use
+`presets/languages/*.nix` via `stdlib.devenv.load` (and `modules/ides/lib.nix`
+for shared IDE helpers). Do not reintroduce dead shim files for paths that
+never shipped.
 
 ## What Copier writes
 
