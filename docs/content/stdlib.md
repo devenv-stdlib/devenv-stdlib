@@ -103,14 +103,14 @@ nixpkgs.follows = "devenv-stdlib/nixpkgs";
 
 ## Presets this template enables
 
-`presets/omer.nix` is the selection. It calls `mkPreset` from `stdlib/preset.nix`. Its `includes` are names:
+`presets/omer.nix` is the selection. It calls `mkPreset` from `stdlib/preset.nix`. Its HM `includes` are cohesive bundles:
 
-`terminal-quake`, `alacritty-atuin`, `ide`, `host-hm-only-guard`, `python`, `rust`, `go`, `javascript`, `typescript`.
+`terminal-quake`, `alacritty-atuin`, `ide`, `host-hm-only-guard`.
 
-Language names stay gated by each preset's `when` (`languages.<lang>.enable` in `devenv.local.nix`). Copier still decides which languages are on.
+Language support is **not** a megapreset named Python/Rust/…. Framework presets under `presets/lang/<lang>/` are per-tool (`ruff`, `rustfmt`, `serena-python`, …), loaded by `stdlib.devenv.load`, each gated by `when = languages.<lang>.enable` in `devenv.local.nix`. Copier still decides which languages are on; disable one building block with `presets.<tool>.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
 
 ## Community tools and presets
 
 Tool files under `tools/` are Home Manager modules. They call `stdlib/tool.nix` with `install.kind` (`nix`, `catalog`, `hm-program`, `vscode-extension`, or `docker-image`) and `upgrade` (`flake`, `catalog`, or `self`). `stdlib.den.load` reads that tree.
 
-Preset files under `presets/` call `mkPreset` from `stdlib/preset.nix` (`name`, `when`, `requires`, `tools`, `includes`). `mkPreset` is not on the flake `stdlib` attrset.
+Preset files under `presets/` call `mkPreset` from `stdlib/preset.nix` (`name`, `when`, `requires`, `tools`, `includes`). Default is one preset per tool; bundle only when tools must ship together. `mkPreset` is not on the flake `stdlib` attrset.

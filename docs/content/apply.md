@@ -22,7 +22,7 @@ Commit `.copier-answers.yml` and `devenv.local.nix` in the monorepo. Do not comm
 
 The generated `flake.nix` depends on `github:thedrow/devenv4monorepo/<commit>`, where `<commit>` is the `_commit` Copier stored in `.copier-answers.yml`. `outputs.stdlib` and `outputs.lib` on that pin are one attrset (`mkTool`, `den.load`, `devenv.load`). `mkPreset` is `stdlib/preset.nix` on the same pin. See [Standard library](#stdlib).
 
-`presets/omer.nix` enables the template's preset list by name (`terminal-quake`, `alacritty-atuin`, `ide`, `host-hm-only-guard`, and the language presets). Language presets follow `languages.<lang>.enable` from `devenv.local.nix`. The generated flake loads `"${inputs.devenv-stdlib}/presets"` and `./presets`.
+`presets/omer.nix` enables the template's HM bundles by name (`terminal-quake`, `alacritty-atuin`, `ide`, `host-hm-only-guard`). Language **tool** presets under `presets/lang/` follow `languages.<lang>.enable` from `devenv.local.nix` — there is no framework megapreset named after a language. The generated flake loads `"${inputs.devenv-stdlib}/presets"` and `./presets`.
 
 ## User workflow
 
