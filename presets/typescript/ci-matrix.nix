@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   path = [
     "typescript"
     "ci-matrix"
