@@ -128,7 +128,7 @@ let
   # normalize sets missing bin to null; `e.bin or e.name` would stay null.
   binName = e: if e.bin != null then e.bin else e.name;
 
-  # Quoted tool key when it contains ':' (ubi:/npm:/pipx: backends).
+  # Quoted tool key when it contains ':' (github:/ubi:/npm:/pipx: backends).
   # Optional aube options → object form (trust exclude / builds / low downloads).
   tomlToolLine =
     e:
