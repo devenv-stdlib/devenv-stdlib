@@ -74,8 +74,7 @@ in
   testStdlibValgrindInstall = {
     expr = {
       inherit (valgrind) category upgrade;
-      attr = valgrind.install.attr;
-      kind = valgrind.install.kind;
+      inherit (valgrind.install) attr kind;
     };
     expected = {
       category = "profilers.memory";
@@ -88,7 +87,7 @@ in
   testStdlibCargoValgrindDependsOnValgrind = {
     expr = {
       inherit (cargoValgrind) category dependsOn;
-      attr = cargoValgrind.install.attr;
+      inherit (cargoValgrind.install) attr;
     };
     expected = {
       category = "profilers.memory";
@@ -153,11 +152,13 @@ in
   testStdlibShellResolveSingleDefault = {
     expr =
       let
-        shell = stdlib.shell;
+        inherit (stdlib) shell;
         config = {
-          tools.bash.enable = true;
-          tools.zsh.enable = false;
-          tools.elvish.enable = false;
+          tools = {
+            bash.enable = true;
+            zsh.enable = false;
+            elvish.enable = false;
+          };
         };
       in
       {
@@ -175,11 +176,13 @@ in
   testStdlibShellMultiBleShOnlyBash = {
     expr =
       let
-        shell = stdlib.shell;
+        inherit (stdlib) shell;
         config = {
-          tools.bash.enable = true;
-          tools.zsh.enable = true;
-          tools.elvish.enable = false;
+          tools = {
+            bash.enable = true;
+            zsh.enable = true;
+            elvish.enable = false;
+          };
         };
         resolvedBash = shell.resolve config "bash";
         resolvedZsh = shell.resolve config "zsh";
@@ -208,11 +211,13 @@ in
   testStdlibShellNoBashSkipsBlesh = {
     expr =
       let
-        shell = stdlib.shell;
+        inherit (stdlib) shell;
         config = {
-          tools.bash.enable = false;
-          tools.zsh.enable = true;
-          tools.elvish.enable = false;
+          tools = {
+            bash.enable = false;
+            zsh.enable = true;
+            elvish.enable = false;
+          };
         };
         resolved = shell.resolve config null;
       in
@@ -220,9 +225,11 @@ in
         inherit resolved;
         blesh = shell.shouldInstallBlesh resolved;
         mandatoryWithoutOption = shell.resolve {
-          tools.bash.enable = false;
-          tools.zsh.enable = true;
-          tools.elvish.enable = true;
+          tools = {
+            bash.enable = false;
+            zsh.enable = true;
+            elvish.enable = true;
+          };
         } null;
       };
     expected = {
