@@ -25,12 +25,14 @@ A breaking change to exported attribute paths uses the commit subject `feat(stdl
 
 ## Helpers
 
-Pure helpers live under `stdlib/`. The old paths re-export them:
+`tests/integration/default.nix` copies `modules/lib/project.nix` and `modules/languages/versions-lib.nix` into the Nix store as single files and evaluates those copies on their own. Those two bodies stay in the historical files. `stdlib/project.nix` and `stdlib/versions.nix` re-export them.
 
-| Implementation | Shim |
+The other pure helpers live under `stdlib/`. The old paths re-export them:
+
+| Implementation | Re-export |
 | --- | --- |
-| `stdlib/project.nix` | `modules/lib/project.nix` |
-| `stdlib/versions.nix` | `modules/languages/versions-lib.nix` |
+| `modules/lib/project.nix` | `stdlib/project.nix` |
+| `modules/languages/versions-lib.nix` | `stdlib/versions.nix` |
 | `stdlib/terminal.nix` | `home/terminal-lib.nix` |
 | `stdlib/ide-ext.nix` | `home/ides/ext-lib.nix` |
 | `stdlib/catalog.nix` | `modules/non-nix/lib.nix` |
@@ -64,4 +66,4 @@ OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.
 
 ## Compat shims
 
-Existing tests and modules keep the old import paths. The shims forward every argument. A later cleanup is the first change allowed to delete them and retarget those tests.
+Existing tests and modules keep the old import paths. Re-exports forward every argument. A later cleanup is the first change allowed to delete them and retarget those tests.
