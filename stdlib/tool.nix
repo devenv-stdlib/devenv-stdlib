@@ -1,4 +1,4 @@
-# mkTool — public tool constructor (P1).
+# mkTool — public tool constructor.
 #
 # One API for every tool. Internally a tool is global (Home Manager / user
 # profile), local (project / devenv), or both — inferred from which payloads
@@ -7,7 +7,8 @@
 # A tool file is a module. Call it with `__stdlibMeta = true` to read the
 # declaration without evaluating the module body.
 #
-# P0 owns categories and the loader. This file is the tool schema.
+# Categories and the loader live on stdlib/default.nix; this file is the
+# tool schema.
 { lib }:
 let
   categories = import ./categories.nix { inherit lib; };

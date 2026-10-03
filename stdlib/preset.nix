@@ -11,7 +11,7 @@
   categoryPolicy ? import ./category-policy.nix { inherit lib; },
 }:
 let
-  # P1 stdlib/categories.nix is `{ tree, resolve, ... }`. A raw node tree
+  # stdlib/categories.nix is `{ tree, resolve, ... }`. A raw node tree
   # (the nested-exclude test) is handled by categoryExcludes directly.
   categoriesTree = categories.tree or categories;
 
@@ -106,7 +106,7 @@ let
     in
     lib.unique (lib.concatLists (map atNode (indexTree tree)));
 
-  # Tool names live on mkTool specs (P1). A few nodes also list `tools` in
+  # Tool names live on mkTool specs. A few nodes also list `tools` in
   # categories.nix. Siblings are names that share one category path.
   registry =
     let

@@ -1,8 +1,6 @@
 # Plain devenv loader. Do not import Den here: devenv evaluation must not
-# ci: hooks retrigger marker
-# fetch Den (that is the #22 CI failure surface). Condition checks go through
-# P2's realize in stdlib/preset.nix. mkPreset's Den aspect module is not
-# imported into this evaluator.
+# fetch Den. Condition checks go through realize in stdlib/preset.nix.
+# mkPreset's Den aspect module is not imported into this evaluator.
 #
 # Preset identity is a nested attrpath mirroring tool categories
 # (python.lint.ruff), not a flat string name.
@@ -14,8 +12,8 @@
 # here via applyLocal. Thin presets list tool names; when applied they set
 # tools.<name>.enable = true. Same public API as global tools.
 #
-# P0's stdlib/default.nix and stdlib/load.nix stay untouched. Call sites
-# import this file directly.
+# Call sites import this file directly; stdlib/default.nix and
+# stdlib/load.nix remain the public stdlib entrypoints.
 {
   lib,
   nix-log ? null,
@@ -273,7 +271,7 @@ let
         when = decl.when or null;
         requires = decl.requires or [ ];
       };
-      # P2 realize throws when strict requirements fail. Non-strict failures
+      # realize throws when strict requirements fail. Non-strict failures
       # come back as warnings and applied = false.
       decision = presetLib.realize {
         inherit (decl) name;
