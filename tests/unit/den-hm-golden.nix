@@ -52,9 +52,7 @@ in
   };
 
   testDenHmGoldenRipgrepAsPackage = {
-    expr = builtins.any (
-      n: lib.hasPrefix "ripgrep" n || n == "ripgrep"
-    ) golden.fingerprint.packages;
+    expr = builtins.any (n: lib.hasPrefix "ripgrep" n || n == "ripgrep") golden.fingerprint.packages;
     expected = true;
   };
 }

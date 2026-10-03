@@ -1,5 +1,5 @@
 # Phase 4: assert dual-run shim adapters are gone from the tree.
-{ lib, ... }:
+_:
 let
   root = toString ../..;
   shimGone = path: !(builtins.pathExists (root + "/" + path));
