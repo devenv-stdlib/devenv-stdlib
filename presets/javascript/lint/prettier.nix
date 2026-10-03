@@ -1,5 +1,5 @@
 # One prettier preset for JS and TS (shared hook + formatter settings).
-{ lib, ... }:
+{ ... }:
 {
   path = [
     "javascript"
