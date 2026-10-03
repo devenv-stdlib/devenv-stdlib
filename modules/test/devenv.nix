@@ -67,6 +67,12 @@
       # GNU parallel prompts once for a citation; silence that in CI/noninteractive.
       mkdir -p "''${HOME}/.parallel"
       touch "''${HOME}/.parallel/will-cite"
+      # GNU parallel 20260722 (bats --jobs backend) sanitises $XDG_CACHE_HOME and, on
+      # its first run on a machine (no ~/.parallel/tmp yet: every CI runner), exports
+      # it as "" to the jobs when it was unset. Nix then resolves its cache dir to
+      # the relative "nix": stray ./nix tree, `not an absolute path: "nix"` on the
+      # first real tarball fetch.
+      export XDG_CACHE_HOME="''${XDG_CACHE_HOME:-$HOME/.cache}"
       bats_jobs="$(nproc 2>/dev/null || echo 2)"
       # tap + report-formatter: pretty writes to a pipe and bats-format-junit
       # exits 141 (SIGPIPE) when stdout is not a TTY (CI, act, devenv tasks).
