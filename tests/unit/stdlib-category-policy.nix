@@ -105,8 +105,10 @@ in
     expected = {
       ids = [
         "go"
+        "haskell"
         "javascript"
         "javascript-or-typescript"
+        "nix"
         "python"
         "rust"
         "typescript"
@@ -114,6 +116,21 @@ in
       preset = "python";
       tool = "python";
       annotated = "python";
+    };
+  };
+
+  testCategoryPolicyHaskellNixAnnotated = {
+    expr = {
+      haskell = (stdlib.categories.resolve "lang.haskell").categoryPolicy;
+      nix = (stdlib.categories.resolve "lang.nix").categoryPolicy;
+      haskellTool = (categoryPolicy.forToolCategory "lang.haskell.linters").id;
+      nixTool = (categoryPolicy.forToolCategory "lang.nix.linters").id;
+    };
+    expected = {
+      haskell = "haskell";
+      nix = "nix";
+      haskellTool = "haskell";
+      nixTool = "nix";
     };
   };
 
