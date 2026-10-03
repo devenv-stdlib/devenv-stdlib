@@ -1,9 +1,9 @@
+# when inherits javascript category policy (languages.javascript.enable or override).
 _: {
   path = [
     "javascript"
     "debtmap"
   ];
-  description = "debtmap javascript language id when languages.javascript.enable.";
-  when = cfg: (cfg.languages.javascript or { }).enable or false;
+  description = "debtmap javascript language id when JavaScript is available.";
   project.stdlib.lang.javascript.debtmap = [ "javascript" ];
 }

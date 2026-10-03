@@ -76,6 +76,7 @@ let
           children.linters = n "bundle" "Haskell linters and formatters." { };
         };
         javascript = n "bundle" "JavaScript tools." {
+          categoryPolicy = "javascript";
           children.linters = n "bundle" "JavaScript linters and formatters." { };
         };
         nix = n "bundle" "Nix tools." {
