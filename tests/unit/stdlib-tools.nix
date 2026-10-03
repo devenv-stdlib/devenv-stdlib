@@ -280,7 +280,12 @@ in
       in
       {
         ruff = {
-          inherit (ruff) category scopes isLocal isGlobal;
+          inherit (ruff)
+            category
+            scopes
+            isLocal
+            isGlobal
+            ;
           inherit (ruff.install) kind;
           inherit (ruff) upgrade;
         };
@@ -323,9 +328,7 @@ in
   };
 
   testStdlibLocalToolNames = {
-    expr = lib.sort (a: b: a < b) (
-      map (d: d.spec.name) (lib.filter (d: d.spec.isLocal) discovered)
-    );
+    expr = lib.sort (a: b: a < b) (map (d: d.spec.name) (lib.filter (d: d.spec.isLocal) discovered));
     expected = [
       "check-python"
       "clippy"
