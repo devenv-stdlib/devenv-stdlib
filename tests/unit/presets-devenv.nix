@@ -5,7 +5,7 @@
   ...
 }:
 let
-  stdlib = import ../../stdlib { inherit lib; };
+  devenvLoad = import ../../stdlib/devenv.nix { inherit lib; };
   presetRoot = ../../presets;
 
   freeform = lib.types.submodule {
@@ -82,7 +82,7 @@ let
           config = extra;
         }
       ]
-      ++ stdlib.devenv.load [
+      ++ devenvLoad.load [
         (presetRoot + "/languages")
         (presetRoot + "/fixtures")
       ];
@@ -111,7 +111,7 @@ in
         serena = serenaServers cfg;
         inherit ((vscodeFile cfg)) recommendations;
         unwanted = (vscodeFile cfg).unwantedRecommendations;
-        debtmap = stdlib.devenv.debtmapLanguages cfg.stdlib.lang;
+        debtmap = devenvLoad.debtmapLanguages cfg.stdlib.lang;
         ruff = hookOn cfg "ruff";
         prettier = hookOn cfg "prettier";
         rustfmt = hookOn cfg "rustfmt";
@@ -147,7 +147,7 @@ in
         serena = serenaServers cfg;
         inherit ((vscodeFile cfg)) recommendations;
         unwanted = (vscodeFile cfg).unwantedRecommendations;
-        debtmap = stdlib.devenv.debtmapLanguages cfg.stdlib.lang;
+        debtmap = devenvLoad.debtmapLanguages cfg.stdlib.lang;
         got = {
           ruff = hookOn cfg "ruff";
           ruff-format = hookOn cfg "ruff-format";
@@ -220,7 +220,7 @@ in
       in
       {
         serena = serenaServers cfg;
-        debtmap = stdlib.devenv.debtmapLanguages cfg.stdlib.lang;
+        debtmap = devenvLoad.debtmapLanguages cfg.stdlib.lang;
         rustfmt = hookOn cfg "rustfmt";
         clippy = hookOn cfg "clippy";
         args = cfg.git-hooks.hooks.rustfmt.args;
@@ -272,9 +272,9 @@ in
         jsSerena = serenaServers js;
         tsSerena = serenaServers ts;
         bothSerena = serenaServers both;
-        jsDebt = stdlib.devenv.debtmapLanguages js.stdlib.lang;
-        tsDebt = stdlib.devenv.debtmapLanguages ts.stdlib.lang;
-        bothDebt = stdlib.devenv.debtmapLanguages both.stdlib.lang;
+        jsDebt = devenvLoad.debtmapLanguages js.stdlib.lang;
+        tsDebt = devenvLoad.debtmapLanguages ts.stdlib.lang;
+        bothDebt = devenvLoad.debtmapLanguages both.stdlib.lang;
         jsPrettier = hookOn js "prettier";
         tsPrettier = hookOn ts "prettier";
         bothPrettier = hookOn both "prettier";
@@ -345,7 +345,7 @@ in
         failed = failedAssertions cfg;
         warnings = map (w: lib.hasInfix "typescript.bundler" w) cfg.warnings;
         prettier = hookOn cfg "prettier";
-        debtmap = stdlib.devenv.debtmapLanguages cfg.stdlib.lang;
+        debtmap = devenvLoad.debtmapLanguages cfg.stdlib.lang;
       };
     expected = {
       failed = [ ];
