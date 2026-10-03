@@ -6,9 +6,36 @@
   inputs,
   root,
   lib ? inputs.nixpkgs.lib,
-  stdlib ? import (root + "/stdlib") { inherit lib; },
+  stdlib ? import (root + "/stdlib") {
+    inherit lib;
+    # Private flake input — stdlib.log wraps it; callers never see nix-log.
+    nix-log = inputs.nix-log or null;
+  },
 }:
 let
+  report = stdlib.report;
+
+  # HM-side status summary (tools in this fixpoint). Matrix / git-hooks are
+  # devenv-side; listed as unavailable here. Nested preset attrpaths land when
+  # imported into denModules.
+  hmReportModule =
+    {
+      config,
+      lib,
+      ...
+    }:
+    let
+      inv = report.inventory {
+        presets = config.presets or { };
+        tools = config.tools or { };
+        gitHooks = { };
+        matrix = null;
+      };
+    in
+    {
+      warnings = lib.mkAfter [ (report.mkEvalWarning inv) ];
+    };
+
   # Recommended Den pattern (minimal template): import-tree discovers .nix modules.
   # Scoped to Den subtrees so devenv modules under modules/ are not double-imported.
   # modules/den/_cascades/ is skipped by import-tree's default `/_` filter (pure data).
@@ -19,6 +46,16 @@ let
       (root + "/modules/aspects")
       (root + "/modules/den")
     ])
+    (
+      { den, lib, ... }:
+      {
+        den.aspects.stdlib-report = {
+          homeManager = hmReportModule;
+        };
+        # Append — do not replace cursor/terminal/home-cli from homes.nix.
+        den.aspects.developer.includes = lib.mkAfter [ den.aspects.stdlib-report ];
+      }
+    )
   ]
   ++ (stdlib.den.load [ (root + "/tools") ]);
 

@@ -7,12 +7,20 @@
 # Preset identity is a nested attrpath mirroring tool categories
 # (python.lint.ruff), not a flat string name.
 #
+# Logging goes through stdlib.log (nix-log is private). End-of-eval report
+# uses module warnings + enterShell — no wrapper scripts.
+#
 # P0's stdlib/default.nix and stdlib/load.nix stay untouched. Call sites
 # import this file directly.
-{ lib }:
+{
+  lib,
+  nix-log ? null,
+}:
 let
   presetLib = import ./preset.nix { inherit lib; };
   projectLib = import ../modules/lib/project.nix { inherit lib; };
+  log = import ./log.nix { inherit lib nix-log; };
+  report = import ./report.nix { inherit lib log; };
 
   # Selected-pack order matches former modules/ides (rust, go, python, then the
   # shared JS/TS pack). javascript is visited before typescript so lib.unique
@@ -172,6 +180,16 @@ let
         default = config.presets.strict;
         description = "Unmet requires throw. Set false to warn and skip ${id}.";
       };
+      result = lib.mkOption {
+        type = lib.types.attrsOf lib.types.anything;
+        default = {
+          applied = false;
+          triggered = false;
+          inert = true;
+        };
+        internal = true;
+        description = "Realize decision for ${id} (stdlib.report).";
+      };
     };
 
   presetOptions =
@@ -205,6 +223,19 @@ let
           internal = true;
           description = "Exemplar markers for fixture presets. Not a public API.";
         };
+
+        stdlib.report = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Emit the stdlib status summary via warnings / enterShell.";
+          };
+          enterShell = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Print the status summary on devenv enterShell.";
+          };
+        };
       } (map (decl: lib.setAttrByPath ([ "presets" ] ++ decl.path) (leafOptions config decl)) decls);
     };
 
@@ -231,14 +262,31 @@ let
         strict = if strict == null then true else strict;
         globalStrict = config.presets.strict;
       };
+      logged =
+        if decision.applied then
+          log.info' "preset applied" { inherit (decl) name; } decision
+        else if decision.triggered then
+          log.debug' "preset inert" { inherit (decl) name; } decision
+        else
+          log.debug' "preset not triggered" { inherit (decl) name; } decision;
+      result = {
+        inherit (logged)
+          applied
+          triggered
+          inert
+          warnings
+          ;
+        includeTools = logged.includeTools or [ ];
+      };
     in
     {
       imports = lib.optional (decl ? module && decl.module != null) decl.module;
       config = lib.mkMerge [
         {
-          inherit (decision) assertions warnings;
+          inherit (logged) assertions warnings;
         }
-        (lib.mkIf decision.applied (
+        (lib.setAttrByPath ([ "presets" ] ++ decl.path ++ [ "result" ]) result)
+        (lib.mkIf logged.applied (
           if lib.isFunction decl.project then
             decl.project {
               inherit
@@ -334,6 +382,32 @@ let
       };
     };
 
+  # Forced summary after all presets realize. warnings = end of eval;
+  # enterShell = Nix-built echo (not a wrapper script).
+  reportModule =
+    {
+      config,
+      lib,
+      ...
+    }:
+    let
+      inv = report.logInventory (
+        report.inventory {
+          presets = config.presets or { };
+          tools = config.tools or { };
+          gitHooks = (config.git-hooks or { }).hooks or { };
+          matrix = config.stdlib.markers.ciMatrix or null;
+        }
+      );
+      summary = report.mkEvalWarning inv;
+    in
+    {
+      config = lib.mkIf config.stdlib.report.enable {
+        warnings = [ summary ];
+        enterShell = lib.mkIf config.stdlib.report.enterShell (report.mkEnterShellSnippet inv);
+      };
+    };
+
   defaultRoots = root: [
     (root + "/python")
     (root + "/rust")
@@ -367,5 +441,8 @@ in
       (presetOptions decls)
     ]
     ++ map applyPreset decls
-    ++ [ lower ];
+    ++ [
+      lower
+      reportModule
+    ];
 }
