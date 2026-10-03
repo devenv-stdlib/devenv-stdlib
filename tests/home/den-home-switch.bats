@@ -12,7 +12,7 @@ setup() {
   if ! command -v nix >/dev/null 2>&1; then
     skip "nix not installed"
   fi
-  run env NIX_CONFIG="experimental-features = nix-command flakes" \
+  run --separate-stderr env NIX_CONFIG="experimental-features = nix-command flakes" \
     nix eval --impure --json "$REPO_DIR#denHmGolden.match"
   [ "$status" -eq 0 ]
   # nix may print dirty-tree warnings before the JSON value (no trailing newline).
@@ -23,7 +23,7 @@ setup() {
   if ! command -v nix >/dev/null 2>&1; then
     skip "nix not installed"
   fi
-  run env NIX_CONFIG="experimental-features = nix-command flakes" \
+  run --separate-stderr env NIX_CONFIG="experimental-features = nix-command flakes" \
     nix-instantiate --eval --strict --impure "$EVAL"
   [ "$status" -eq 0 ]
   [ "$output" = "true" ]
@@ -39,7 +39,7 @@ setup() {
   if ! command -v nix >/dev/null 2>&1; then
     skip "nix not installed"
   fi
-  run env NIX_CONFIG="experimental-features = nix-command flakes" \
+  run --separate-stderr env NIX_CONFIG="experimental-features = nix-command flakes" \
     nix eval --impure --expr "builtins.hasAttr \"developer\" (builtins.getFlake \"${REPO_DIR}\").homeConfigurations"
   [ "$status" -eq 0 ]
   [ "$output" = "true" ]
