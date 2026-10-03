@@ -1,7 +1,7 @@
 # Thin dual-write shim: devenv modules / project helpers read the Den language
 # includes DAG without grepping langOn for "what does python enable?".
 # Enable flags still come from Copier → devenv.local.nix (languages.*.enable).
-{ lib }:
+_:
 let
   cascade = import ../../den/language-cascade.nix;
   ideCascade = import ../../den/ide-cascade.nix;
@@ -53,10 +53,7 @@ rec {
     debtmap = "debtmap languages + hook files (modules/debtmap)";
   };
 
-  hubs = cascade.hubs;
-
-  # JS+TS dedupe contract (must stay aligned with project.javascriptOn).
-  shared = cascade.shared;
+  inherit (cascade) hubs shared;
 
   projectIdeIncludes = ideCascade.project-ides.includes;
 }
