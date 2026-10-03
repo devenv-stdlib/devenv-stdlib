@@ -89,7 +89,7 @@ OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.
 There is no released public API yet, so empty re-export shims for old
 `modules/hooks/*.nix`, `modules/ides/{cursor,vscode}`, and
 `modules/languages/serena.nix` paths are **not** kept. Callers use
-`presets/lang/<lang>/*.nix` via `stdlib.devenv.load` (and `modules/ides/lib.nix`
+`presets/<lang>/<category>/*.nix` via `stdlib.devenv.load` (and `modules/ides/lib.nix`
 for shared IDE helpers). Do not reintroduce dead shim files for paths that
 never shipped.
 
