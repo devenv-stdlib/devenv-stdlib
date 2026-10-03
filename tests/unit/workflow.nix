@@ -55,6 +55,8 @@
         policyMin = contains "supported.python.min" yaml;
         cache = contains "cache-nix-action/restore" yaml;
         cacheSave = contains "cache-nix-action/save" yaml;
+        # Own-workspace chown must tolerate vanished /nix store locks under act.
+        actOwnFallback = contains ''if ! sudo chown -R "$(id -u):$(id -g)" /nix; then'' yaml;
       };
     expected = {
       call = true;
@@ -67,6 +69,7 @@
       policyMin = true;
       cache = true;
       cacheSave = true;
+      actOwnFallback = true;
     };
   };
 
