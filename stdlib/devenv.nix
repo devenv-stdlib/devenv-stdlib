@@ -13,7 +13,7 @@ let
   presetLib = import ./preset.nix { inherit lib; };
   projectLib = import ../modules/lib/project.nix { inherit lib; };
 
-  # Selected-pack order matches modules/ides (rust, go, python, then the
+  # Selected-pack order matches former modules/ides (rust, go, python, then the
   # shared JS/TS pack). javascript is visited before typescript so lib.unique
   # keeps a single typescript server / extension pack.
   surfaceOrder = [
