@@ -55,7 +55,7 @@ _: {
     jq --version
     mkdir -p "''${HOME}/.parallel"
     touch "''${HOME}/.parallel/will-cite"
-    # GNU parallel 20260722 (bats --jobs backend) sanitises $XDG_CACHE_HOME and, on
+    # GNU parallel 20260722 (bats --jobs >1 backend) sanitises $XDG_CACHE_HOME and, on
     # its first run on a machine (no ~/.parallel/tmp yet: every CI runner), exports
     # it as "" to the jobs when it was unset. Nix then resolves its cache dir to
     # the relative "nix": stray ./nix tree, `not an absolute path: "nix"` on the
@@ -72,15 +72,24 @@ _: {
         nix-instantiate --eval --strict --impure "$eval_file" >/dev/null 2>&1 \
         || echo "warn: warm-up eval of ''${eval_file##*/} failed; continuing"
     done
-    # act copies the workspace without .git, so each `nix eval` re-imports it as a
-    # path: input under the fetcher lock and a concurrent loser logs `waiting for
-    # another Nix process to finish fetching input …` at error level. Serialise.
-    if [ -n "''${ACT:-}" ]; then
-      bats_jobs=1
-    else
-      bats_jobs="$(nproc 2>/dev/null || echo 2)"
-    fi
-    bats --jobs "$bats_jobs" --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
+    # git >= 2.55 runs geometric auto-maintenance detached after `git commit`
+    # (maintenance.geometric-repack.auto = 100: two loose objects under
+    # objects/17 are enough). copier.bats commits a ~500-object template and
+    # copier then clones it / rmtree()s its throwaway repos while that repack
+    # is still deleting loose objects: `failed to copy file …: No such file`,
+    # `Directory not empty: '…/.git/objects'`. Turn it off for every git the
+    # tests spawn, appending to any GIT_CONFIG_* the caller already set.
+    git_cfg_n="''${GIT_CONFIG_COUNT:-0}"
+    export "GIT_CONFIG_KEY_$git_cfg_n=maintenance.auto" \
+      "GIT_CONFIG_VALUE_$git_cfg_n=false" GIT_CONFIG_COUNT=$((git_cfg_n + 1))
+    # Serial on purpose: `builtins.getFlake (toString ../..)` is a path: input
+    # (Nix never upgrades a string flakeref to git+file without a baseDir), so
+    # every Den eval copies the checkout into the store under the fetcher lock
+    # and a concurrent loser prints `waiting for another Nix process to finish
+    # fetching input …` at error level, into the `$output` those tests compare
+    # verbatim. --jobs 1 costs ~30 s on 4 cores; the warm-up above keeps the
+    # rest of the first-fetch noise out of the tests.
+    bats --jobs 1 --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
   '';
 
   scripts.home-switch.exec = ''
