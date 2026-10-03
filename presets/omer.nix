@@ -4,8 +4,8 @@
 # HM includes below are cohesive bundles (quake XOR, ble.sh+atuin, ide any-of).
 # Language tool presets live under presets/<lang>/<category>/ and are loaded by
 # stdlib.devenv.load — each gated by `when = languages.<lang>.enable` from
-# devenv.local.nix. There is no framework megapreset named python/rust/….
-# Disable one building block with e.g. presets.python.lint.ruff.enable = false.
+# devenv.local.nix. Disable one building block with e.g.
+# presets.python.lint.ruff.enable = false.
 { lib, ... }:
 let
   inherit (import ../stdlib/preset.nix { inherit lib; }) mkPreset refsFromPaths;

@@ -2,7 +2,8 @@
 # Category excludes stay on the selected tool's node (not cousins).
 # Preset identity is a nested attrpath (python.lint.ruff), not a flat string.
 # Composability: one preset per tool by default; bundle only when tools must
-# ship together (e.g. terminal.alacritty-atuin). Language megapresets are out of scope.
+# ship together (e.g. terminal.alacritty-atuin). Multi-tool language stacks
+# belong in consumer compositions (see presets/examples/).
 {
   lib,
   categories ? import ./categories.nix { inherit lib; },

@@ -1,6 +1,5 @@
 # Example composition only — not loaded by modules/devenv.nix.
-# Shows how a consumer would assemble Python tool presets. The framework
-# does not ship a megapreset named "python".
+# Shows how a consumer assembles Python tool presets via attrpath includes.
 #
 # Building blocks keep tool hierarchy via attrpaths (python.lint.ruff), not
 # flat string literals:
