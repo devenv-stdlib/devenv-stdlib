@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Phase 4: Den-only HM path — home-switch → flake #developer; Den goldens.
 
+bats_require_minimum_version 1.5.0
+
 setup() {
   REPO_DIR="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   EVAL="$REPO_DIR/tests/home/den-hm-golden-eval.nix"
@@ -29,8 +31,8 @@ setup() {
 
 @test "home-switch script is Den flake-only" {
   grep -qE 'home-manager switch -b backup --flake .*#developer.*--impure' "$REPO_DIR/devenv.nix"
-  ! grep -q 'home-switch-den' "$REPO_DIR/devenv.nix"
-  ! grep -qE 'home-manager switch .* -f .*home\.nix' "$REPO_DIR/devenv.nix"
+  run ! grep -q 'home-switch-den' "$REPO_DIR/devenv.nix"
+  run ! grep -qE 'home-manager switch .* -f .*home\.nix' "$REPO_DIR/devenv.nix"
 }
 
 @test "Den developer homeConfiguration exists" {
