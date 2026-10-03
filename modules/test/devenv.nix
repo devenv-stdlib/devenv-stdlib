@@ -84,7 +84,14 @@
           nix-instantiate --eval --strict --impure "$eval_file" >/dev/null 2>&1 \
           || echo "warn: warm-up eval of ''${eval_file##*/} failed; continuing"
       done
-      bats_jobs="$(nproc 2>/dev/null || echo 2)"
+      # act copies the workspace without .git, so each `nix eval` re-imports it as a
+      # path: input under the fetcher lock and a concurrent loser logs `waiting for
+      # another Nix process to finish fetching input …` at error level. Serialise.
+      if [ -n "''${ACT:-}" ]; then
+        bats_jobs=1
+      else
+        bats_jobs="$(nproc 2>/dev/null || echo 2)"
+      fi
       # tap + report-formatter: pretty writes to a pipe and bats-format-junit
       # exits 141 (SIGPIPE) when stdout is not a TTY (CI, act, devenv tasks).
       if bats --jobs "$bats_jobs" --formatter tap --report-formatter junit --output "$junit_dir" \
@@ -177,28 +184,45 @@
         if [ -n "$ACT_GITHUB_TOKEN_OPTS" ]; then
           act_opts="$act_opts $ACT_GITHUB_TOKEN_OPTS"
         fi
-        # act --concurrent-jobs 1 still overlapped matrix cells on the shared /nix
-        # volume (ENOSPC). Run each listed job id with -j so only one cell fills it.
+        # act --concurrent-jobs 1 only bounds whole jobs: every matrix cell of a job
+        # still starts at once on the shared /nix volume (ENOSPC, `chown -R /nix`
+        # racing another cell's install-nix, and parallel `nix eval`s contending for
+        # the fetcher lock on the path: workspace). Enumerate the cells from a dry
+        # run and run exactly one per act call by pinning every matrix key.
+        # Matrix values come from our own generators and contain no whitespace.
         run_act_serial() {
           local workflow=$1
+<<<<<<< HEAD
           local job
           while read -r job; do
+=======
+          local job filters
+          local act_env=()
+          if [ -n "''${GITHUB_TOKEN:-}" ]; then
+            act_env=(--env GITHUB_TOKEN)
+          fi
+          while read -r job filters; do
+>>>>>>> 382d147 (fix(test): run act matrix cells one at a time)
             [ -n "$job" ] || continue
-            echo "==> act -j $job ($workflow)"
+            echo "==> act -j $job $filters ($workflow)"
+            # shellcheck disable=SC2086
             act workflow_call \
               --pull=false \
               --concurrent-jobs 1 \
               "''${ACT_GITHUB_TOKEN_ARGS[@]}" \
               --container-options "$act_opts" \
-              -j "$job" \
+              -j "$job" $filters \
               -W "$workflow" \
               -P ubuntu-24.04=devenv-act:24.04 \
               -P ubuntu-26.04=devenv-act:24.04 || return 1
           done < <(
-            act -W "$workflow" -l --pull=false \
+            act workflow_call -W "$workflow" -n --json --pull=false \
               -P ubuntu-24.04=devenv-act:24.04 \
               -P ubuntu-26.04=devenv-act:24.04 2>/dev/null \
-              | awk 'NR > 1 && $2 != "" && $2 != "ID" { print $2 }' | sort -u
+              | jq -r 'select(.jobID != null)
+                  | [.jobID, ((.matrix // {}) | to_entries | map("--matrix=\(.key):\(.value)") | join(" "))]
+                  | join(" ")' \
+              | sort -u
           )
         }
         if [ -z "''${GITHUB_ACTIONS:-}" ] && [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then

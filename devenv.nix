@@ -72,7 +72,15 @@ _: {
         nix-instantiate --eval --strict --impure "$eval_file" >/dev/null 2>&1 \
         || echo "warn: warm-up eval of ''${eval_file##*/} failed; continuing"
     done
-    bats --jobs "$(nproc 2>/dev/null || echo 2)" --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
+    # act copies the workspace without .git, so each `nix eval` re-imports it as a
+    # path: input under the fetcher lock and a concurrent loser logs `waiting for
+    # another Nix process to finish fetching input …` at error level. Serialise.
+    if [ -n "''${ACT:-}" ]; then
+      bats_jobs=1
+    else
+      bats_jobs="$(nproc 2>/dev/null || echo 2)"
+    fi
+    bats --jobs "$bats_jobs" --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
   '';
 
   scripts.home-switch.exec = ''
