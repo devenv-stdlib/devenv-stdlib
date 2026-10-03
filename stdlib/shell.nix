@@ -9,7 +9,8 @@ let
     "elvish"
   ];
 
-  enabledShells = config: lib.filter (name: config.tools.${name}.enable or false) knownShells;
+  enabledShells =
+    config: lib.filter (name: (config.tools.${name} or { }).enable or false) knownShells;
 
   # Sole enabled shell tool, or null when zero or more than one are on.
   soleEnabled =
