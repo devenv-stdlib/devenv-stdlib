@@ -1,10 +1,10 @@
+# when inherits go category policy (languages.go.enable or override).
 _: {
   path = [
     "go"
     "lint"
     "gofmt"
   ];
-  description = "gofmt git-hook when languages.go.enable.";
-  when = cfg: (cfg.languages.go or { }).enable or false;
+  description = "gofmt git-hook when Go is available.";
   tools = [ "gofmt" ];
 }
