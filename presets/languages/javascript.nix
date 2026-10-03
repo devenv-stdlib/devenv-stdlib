@@ -1,10 +1,10 @@
-{ lib, stdlib }:
+{ lib, ... }:
 let
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
   versionPolicy = import ./_version-policy.nix { inherit lib; };
   shared = import ./_js-shared.nix { inherit lib; };
 in
-stdlib.mkPreset {
+{
   name = "javascript";
   description = "JavaScript hooks, shared TS IDE pack, Serena, debtmap, and CI matrix inputs.";
   when = cfg: (cfg.languages.javascript or { }).enable or false;

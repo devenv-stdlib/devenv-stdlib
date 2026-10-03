@@ -1,10 +1,10 @@
-{ lib, stdlib }:
+{ lib, ... }:
 let
   project = import ../../modules/lib/project.nix { inherit lib; };
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
   versionPolicy = import ./_version-policy.nix { inherit lib; };
 in
-stdlib.mkPreset {
+{
   name = "rust";
   description = "Rust hooks, IDE pack, Serena, debtmap, and CI matrix inputs.";
   when = cfg: (cfg.languages.rust or { }).enable or false;
