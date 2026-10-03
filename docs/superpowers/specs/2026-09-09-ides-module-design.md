@@ -9,7 +9,7 @@ Also own **MCP registration** in the IDE/harness layer: one shared catalog of MC
 ## Non-goals
 
 - Installing the VS Code application by default.
-- Changing Serena’s **project** config (`modules/languages/serena.nix` → `.serena/project.yml`); that stays language-gated. Only the **MCP server entry** (how Serena is registered with an IDE/harness) moves into the shared MCP catalog.
+- Changing Serena’s **project** config (`.serena/project.yml` `language_servers`); that stays language-gated via `presets/languages/*.nix`. Only the **MCP server entry** (how Serena is registered with an IDE/harness) moves into the shared MCP catalog.
 - Changing which language packs exist or how Copier enables `languages.*`.
 - Adopting `programs.vscode` / `programs.cursor` (they overwrite user settings JSON).
 - Implementing Claude Code / Codex / Cortex harnesses in this change (layout and catalog must make them additive).
@@ -60,7 +60,7 @@ home.nix                   # imports ./home/ides (not individual editors / llm-c
 modules/devenv.nix         # ./ides instead of ./languages/cursor.nix
 ```
 
-`modules/languages/serena.nix` remains under languages (project `language_servers` only).
+Serena project `language_servers` come from `presets/languages/*.nix` (no empty `modules/languages/serena.nix` shim — pre-release, no public API to preserve).
 
 ## Home Manager behavior
 
