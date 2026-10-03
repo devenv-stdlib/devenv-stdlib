@@ -103,14 +103,14 @@ nixpkgs.follows = "devenv-stdlib/nixpkgs";
 
 ## Presets this template enables
 
-`presets/omer.nix` is the selection. It calls `mkPreset` from `stdlib/preset.nix`. Its HM `includes` are cohesive bundles:
+`presets/omer.nix` is the selection. It calls `mkPreset` from `stdlib/preset.nix`. Its HM `includes` are cohesive bundles via attrpaths:
 
-`terminal-quake`, `alacritty-atuin`, `ide`, `host-hm-only-guard`.
+`terminal.quake`, `terminal.alacritty-atuin`, `ide`, `host.hm-only-guard`.
 
-Language support is **not** a megapreset named Python/Rust/…. Framework presets under `presets/lang/<lang>/` are per-tool (`ruff`, `rustfmt`, `serena-python`, …), loaded by `stdlib.devenv.load`, each gated by `when = languages.<lang>.enable` in `devenv.local.nix`. Copier still decides which languages are on; disable one building block with `presets.<tool>.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
+Language support is **not** a megapreset named Python/Rust/…. Framework presets under `presets/<lang>/<category>/` are per-tool attrpaths (`python.lint.ruff`, `rust.lint.rustfmt`, `python.serena`, …), loaded by `stdlib.devenv.load`, each gated by `when = languages.<lang>.enable` in `devenv.local.nix`. Copier still decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
 
 ## Community tools and presets
 
 Tool files under `tools/` are Home Manager modules. They call `stdlib/tool.nix` with `install.kind` (`nix`, `catalog`, `hm-program`, `vscode-extension`, or `docker-image`) and `upgrade` (`flake`, `catalog`, or `self`). `stdlib.den.load` reads that tree.
 
-Preset files under `presets/` call `mkPreset` from `stdlib/preset.nix` (`name`, `when`, `requires`, `tools`, `includes`). Default is one preset per tool; bundle only when tools must ship together. `mkPreset` is not on the flake `stdlib` attrset.
+Preset files under `presets/` call `mkPreset` from `stdlib/preset.nix` (`path`, `when`, `requires`, `tools`, `includes`). Default is one preset per tool; bundle only when tools must ship together. `includes` takes attrpath refs (`with presets; [ python.lint.ruff ]`), not string literals. `mkPreset` is not on the flake `stdlib` attrset.
