@@ -1,7 +1,7 @@
 # Phase 5 W5.1: portable shell CLIs / integrations across OS classes.
 # One shared payload lands on nixos + darwin (no copy-paste). Ubuntu HM packages
 # stay in home-cli; this aspect documents the portable tool list for host stubs.
-{ den, ... }:
+_:
 let
   # Single definition → both OS classes (Phase 5 acceptance).
   portable = {
