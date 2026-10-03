@@ -11,9 +11,10 @@ in
     # like python.lint.ruff), applied below via stdlib.devenv.load. No empty
     # compat shims for the old modules/hooks or modules/ides paths — pre-release,
     # nothing public to break. presets/examples/ is documentation only.
+    # CI language/OS matrix strategy is presets/ci/language-matrix.nix
+    # (attrpath ci.language-matrix).
     ./debtmap/hooks.nix
     ./languages
-    ./languages/versions.nix
     ./debtmap
     ./mise
     ./non-nix
