@@ -1,6 +1,10 @@
 # Plain devenv loader. Do not import Den here: devenv evaluation must not
 # fetch Den (that is the #22 CI failure surface). Den lowering lives in
 # stdlib.den.load, which P2 owns.
+#
+# P0's stdlib/default.nix and stdlib/load.nix stay untouched on this branch.
+# After this PR is stacked, point P0's empty `devenv.load` at `load` below.
+# Call sites import this file directly until that wiring lands.
 { lib }:
 let
   presetApi = import ./preset.nix { inherit lib; };
