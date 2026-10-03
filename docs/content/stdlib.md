@@ -78,6 +78,10 @@ Profilers are not one flat node. `profilers.cpu` and `profilers.memory` are sepa
 
 OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.com/thedrow/devenv4monorepo/issues/33), [issue #34](https://github.com/thedrow/devenv4monorepo/issues/34), and [issue #35](https://github.com/thedrow/devenv4monorepo/issues/35). This file does not install them. Follow-up tools land at `tools/harness/<name>.nix`.
 
+## CI language matrix
+
+The language/OS `test.yml` matrix strategy is the composable preset `presets/ci/language-matrix.nix` (attrpath `ci.language-matrix`), not a megapreset named “CI”.
+
 ## Loaders
 
 `stdlib.discover` lists `.nix` files under the directories you pass. It skips names that start with `_`.

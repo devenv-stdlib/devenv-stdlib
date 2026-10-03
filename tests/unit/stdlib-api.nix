@@ -174,6 +174,7 @@ in
       "versions.jsRuntimes"
       "versions.languageJobs"
       "versions.matchesCycle"
+      "versions.matrixReport"
       "versions.matrixRow"
       "versions.nodePackage"
       "versions.omitsPatch"
