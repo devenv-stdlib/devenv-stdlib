@@ -63,8 +63,8 @@ When adding a non-Nix tool to the **template**: run `devenv tasks run non-nix:ad
 | File | Writer | Git |
 | --- | --- | --- |
 | `.github/workflows/test.yml` | `modules/languages/versions.nix` | committed |
-| `.vscode/extensions.json` | `presets/languages/*.nix` via `stdlib.devenv.load` | gitignored |
-| `.serena/project.yml` | `presets/languages/*.nix` via `stdlib.devenv.load` | gitignored |
+| `.vscode/extensions.json` | `presets/lang/<lang>/*.nix` via `stdlib.devenv.load` | gitignored |
+| `.serena/project.yml` | `presets/lang/<lang>/*.nix` via `stdlib.devenv.load` | gitignored |
 | `.vscode/settings.json` | `cursor-sync-extensions` / `vscode-sync-extensions` | committed when it changes |
 | `.debtmap.toml` | `modules/debtmap/` | gitignored |
 | `mise.toml` | `modules/mise/` from `modules/non-nix/catalog.toml` (+ `catalog.local.toml`) | gitignored |
