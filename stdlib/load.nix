@@ -1,6 +1,6 @@
 # File discovery for tool and preset directories.
-# den.load / devenv.load return module lists. P0 does not lower mkTool or
-# mkPreset (those land in later phases), so the lists stay empty.
+# den.load lowers tools/**/*.nix into Den aspects. devenv.load stays empty
+# until preset project payloads exist. Missing roots still return [].
 { lib }:
 rec {
   discoverOne =
@@ -34,8 +34,36 @@ rec {
   # start with `_` (same idea as import-tree's `/_` filter).
   discover = roots: lib.sort (a: b: toString a < toString b) (lib.concatMap discoverOne roots);
 
-  # Den modules for flake.nix. Empty until mkTool / mkPreset lowering exists.
-  den = _roots: [ ];
+  # Den modules for flake.nix. Empty when no tool files are discovered.
+  den =
+    roots:
+    let
+      mkTool = import ./tool.nix { inherit lib; };
+      discovered = mkTool.specs (discover roots);
+      tools = lib.listToAttrs (map (d: lib.nameValuePair d.spec.name d) discovered);
+      depFile =
+        spec: dep:
+        if tools ? ${dep} then
+          tools.${dep}.file
+        else
+          throw "stdlib.den.load: ${spec.name} depends on unknown tool ${dep}";
+    in
+    if discovered == [ ] then
+      [ ]
+    else
+      [
+        (
+          { den, ... }:
+          {
+            den.aspects = lib.mapAttrs (_: d: {
+              includes = map (dep: den.aspects.${dep}) d.spec.dependsOn;
+              # Import the dependency module here too, so tools.<dep>.enable
+              # exists in the same Home Manager module set as the dependent tool.
+              homeManager.imports = [ d.file ] ++ map (depFile d.spec) d.spec.dependsOn;
+            }) tools;
+          }
+        )
+      ];
 
   # Project payloads for the devenv evaluator. Empty until that lowering exists.
   devenv = _roots: [ ];

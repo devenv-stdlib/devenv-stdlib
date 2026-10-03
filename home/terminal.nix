@@ -20,6 +20,7 @@ in
   imports = [
     ./alacritty.nix
     ./warp.nix
+    ../tools/shell/prompt/starship.nix
   ];
 
   options.terminal = {
@@ -83,11 +84,6 @@ in
   };
 
   config = {
-    programs.starship = {
-      enable = true;
-      enableBashIntegration = true;
-    };
-
     # Home Manager replaces this array wholesale. Listing only the active
     # provider's shortcut is what stops a stale Warp binding from fighting the
     # Quake extension over the same key after a switch.

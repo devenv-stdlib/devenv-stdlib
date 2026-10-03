@@ -20,16 +20,20 @@
     inputs:
     let
       lib = inputs.nixpkgs.lib;
+      stdlib = import ./stdlib { inherit lib; };
 
       # Recommended Den pattern (minimal template): import-tree discovers .nix modules.
       # Scoped to Den subtrees so devenv modules under modules/ are not double-imported.
       # modules/den/_cascades/ is skipped by import-tree's default `/_` filter (pure data).
+      # stdlib.den.load registers tools/** as leaf aspects (P1). Profilers stay opt-in.
+      # The loader returns a list so an empty tools dir stays concatenable.
       denModules = [
         (inputs.import-tree [
           ./modules/aspects
           ./modules/den
         ])
-      ];
+      ]
+      ++ (stdlib.den.load [ ./tools ]);
 
       denConfig = lib.evalModules {
         modules = denModules;
