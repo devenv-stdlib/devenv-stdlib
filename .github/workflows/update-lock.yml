@@ -34,7 +34,10 @@ jobs:
           name: devenv
 
       - name: Install devenv
-        run: nix profile add nixpkgs#devenv
+        run: |
+          # Pin CLI to the locked modules rev (devenv.yaml require_version: true).
+          rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
+          nix profile add "github:cachix/devenv/${rev}"
 
       - name: Refresh the git-hooks lock and open a pull request
         run: |
