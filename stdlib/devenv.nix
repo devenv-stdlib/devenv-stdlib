@@ -340,6 +340,7 @@ let
     (root + "/go")
     (root + "/javascript")
     (root + "/typescript")
+    (root + "/ci")
     (root + "/fixtures")
   ];
 in
