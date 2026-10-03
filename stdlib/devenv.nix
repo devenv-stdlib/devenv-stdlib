@@ -314,17 +314,48 @@ let
           inherit (logged) assertions warnings;
         }
         (lib.setAttrByPath ([ "presets" ] ++ decl.path ++ [ "result" ]) result)
-        (lib.mkIf logged.applied (
-          lib.mkMerge [
-            (lib.optionalAttrs ((logged.includeTools or [ ]) != [ ]) {
-              tools = lib.genAttrs logged.includeTools (_: {
-                enable = lib.mkDefault true;
-              });
-            })
-            projectConfig
-          ]
-        ))
+        # Project payload only. Tool enables are lowered in enablePresetTools
+        # so tools.* merges do not re-enter realize via mkIf logged.applied.
+        (lib.mkIf logged.applied projectConfig)
       ];
+    };
+
+  # After applyPreset writes presets.<path>.result, enable the local tools that
+  # result.includeTools lists. Reading result.applied (not re-running realize)
+  # keeps this out of the tools↔presets fixed-point cycle.
+  enablePresetTools =
+    decl:
+    {
+      config,
+      options,
+      lib,
+      ...
+    }:
+    let
+      presets = config.presets or { };
+      applied = lib.attrByPath (
+        decl.path
+        ++ [
+          "result"
+          "applied"
+        ]
+      ) false presets;
+      includeTools = lib.attrByPath (
+        decl.path
+        ++ [
+          "result"
+          "includeTools"
+        ]
+      ) [ ] presets;
+      # Presets may list HM-only / aspect names; only wire declared local tools.
+      names = lib.filter (name: options ? tools && options.tools ? ${name}) includeTools;
+    in
+    {
+      config = lib.mkIf (applied && names != [ ]) {
+        tools = lib.genAttrs names (_: {
+          enable = lib.mkDefault true;
+        });
+      };
     };
 
   # Local mkTool modules (isLocal / project payload). File is the module.
@@ -494,6 +525,7 @@ in
       [ (presetOptions decls) ]
       ++ tools
       ++ map applyPreset decls
+      ++ map enablePresetTools decls
       ++ [
         lower
         reportModule
