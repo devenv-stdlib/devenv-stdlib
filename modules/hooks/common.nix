@@ -51,7 +51,8 @@
         '';
       in
       {
-        enable = true;
+        # Off for now. Keep this retry wrapper and lychee.toml.
+        enable = false;
         files = "\\.(md|html)$";
         package = pkgs.lychee;
         entry = lib.getExe lycheeRetry;
