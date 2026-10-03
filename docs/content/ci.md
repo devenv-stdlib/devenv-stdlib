@@ -3,7 +3,7 @@
 [BATS](https://bats-core.readthedocs.io/) tests live in `tests/`:
 
 ```bash
-bats -r --jobs "$(nproc)" tests   # full suite (parallel; needs GNU parallel)
+bats -r --jobs 1 tests   # full suite (serial; git 2.55 + Nix fetcher races)
 bats tests/setup                  # setup.sh only
 bats tests/home                   # terminal-lib, bashrc.d, Cursor LLM merge
 ```
