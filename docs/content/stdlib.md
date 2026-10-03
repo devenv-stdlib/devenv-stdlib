@@ -74,7 +74,7 @@ Profilers are not one flat node. `profilers.cpu` and `profilers.memory` are sepa
 
 `stdlib/category-policy.nix` (exported as `stdlib.categoryPolicy`) declares **category-wide** prerequisites once per namespaced language category. Enabling any preset under `<lang>.*` or tool under `lang.<lang>.*` requires that category’s toolchain to be available — leaves do not copy the same `when` / `requires` clause.
 
-**Wired languages:** each of `go`, `javascript`, `python`, and `rust` is available when `languages.<id>.enable` is true **or** `stdlib.categoryPolicies.<id>.available = true` (explicit override when the toolchain is provided outside devenv `languages.*`). The matching `lang.<id>` node sets `categoryPolicy = "<id>"`; descendants inherit.
+**Wired languages:** each of `go`, `javascript`, `python`, `rust`, and `typescript` is available when `languages.<id>.enable` is true **or** `stdlib.categoryPolicies.<id>.available = true` (explicit override when the toolchain is provided outside devenv `languages.*`). The matching `lang.<id>` node sets `categoryPolicy = "<id>"`; descendants inherit. Leaf-specific `requires` (for example `typescript.bundler`) stay on the leaf.
 
 Shared JS/TS presets under `javascript.*` (`javascript.lint.prettier`, `javascript.ide`, `javascript.serena`) set `categoryPolicy = "javascript-or-typescript"` so they inherit when either language is available. JavaScript-only leaves (`javascript.debtmap`, `javascript.supported`) keep the plain `javascript` policy.
 
