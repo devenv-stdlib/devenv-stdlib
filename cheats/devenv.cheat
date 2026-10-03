@@ -27,10 +27,10 @@ systemctl --user enable --now docker
 loginctl enable-linger "$USER"
 
 # Apply this template to a monorepo (latest tagged release)
-copier copy <template-git-url> <dest>
+copier copy --trust <template-git-url> <dest>
 
 # Apply this checkout, including work not tagged yet
-copier copy --vcs-ref HEAD <template-path> <dest>
+copier copy --trust --vcs-ref HEAD <template-path> <dest>
 
 % devenv, update
 
@@ -50,10 +50,10 @@ devenv update git-hooks
 copier check-update
 
 # Pull the latest tagged template into an existing monorepo copy
-copier update
+copier update --trust
 
 # Pull template changes from a branch or HEAD (keep working tree clean)
-copier update --vcs-ref HEAD
+copier update --trust --vcs-ref HEAD
 
 # After copier update: re-apply Home Manager when home/ changed
 home-switch

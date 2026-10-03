@@ -134,7 +134,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 
 ## Copier exclusions
 
-`copier.yml` `_exclude` replaces Copier’s defaults. Keep generated noise **and** template-only paths: `includes`, `docs`, `tests/copier.bats`, `.github/workflows/pages.yml`, `.cursor/rules/non-nix-update.mdc`. If you add another template-only path, exclude it and assert that in `tests/copier.bats`.
+`copier.yml` `_exclude` replaces Copier’s defaults. Keep generated noise **and** template-only paths: `includes`, `docs`, `tests/copier.bats`, `.github/workflows/pages.yml`, `.cursor/rules/non-nix-update.mdc`, `/flake.nix`, `/flake.lock`, `/stdlib`, `/packaging`. Copier applies those patterns to the destination path, so the consumer flake is rendered as `consumer-flake.nix` and `_tasks` moves it to `flake.nix`. If you add another template-only path, exclude it and assert that in `tests/copier.bats`.
 
 `_skip_if_exists` leaves a destination `README.md` alone. Questionnaire output is `devenv.local.nix`, not a Jinja `devenv.nix`.
 
@@ -161,7 +161,12 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `modules/update/` | `update` script (template pins vs consumer lock; copied) |
 | `docs/` | Pages site (not copied) |
 | `devenv.nix` / `devenv.yaml` / `devenv.lock` | Shell, inputs, lock |
-| `modules/{aspects,den}/` + `flake.nix` | Den Home Manager composition (import-tree) |
+| `flake.nix` | Publisher flake (template repo only). Outputs `stdlib` and `lib` are the devenv-stdlib attrset |
+| `consumer-flake.nix.jinja` | Consumer flake template. `_tasks` moves the render onto `flake.nix` |
+| `stdlib/` | `mkTool`, `mkPreset`, `den.load`, `devenv.load`, `version.nix` (not copied) |
+| `packaging/den-outputs.nix` | Den flake body. Publisher passes `root = ./.`; consumers import it from the pin |
+| `presets/omer.nix` | Preset names this template enables (copied) |
+| `modules/{aspects,den}/` | Den Home Manager composition (import-tree) |
 | `home/` | Home Manager modules |
 | `home/navi.nix` | `NAVI_PATH` → pinned denisidoro/cheats |
 | `home/ides/` | Editors (Cursor, opt-in VS Code, neovim, nano), MCP catalog, Cursor LLM context |
