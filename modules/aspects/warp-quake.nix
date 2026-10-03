@@ -3,7 +3,7 @@
 # Phase 5: unsupported on darwin/nixos — HM-only (no OS class keys).
 { den, ... }:
 let
-  cascade = import ../terminal-cascade.nix;
+  cascade = import ../den/_cascades/terminal-cascade.nix;
 in
 {
   den.aspects.warp-quake = {

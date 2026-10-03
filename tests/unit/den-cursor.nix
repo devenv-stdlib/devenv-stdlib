@@ -1,7 +1,7 @@
 # Phase 1: Den cursor aspect includes DAG (pure cascade metadata).
 { lib, ... }:
 let
-  cascade = import ../../den/cursor-cascade.nix;
+  cascade = import ../../modules/den/_cascades/cursor-cascade.nix;
   includesOf = name: cascade.${name}.includes or [ ];
   hasInclude = aspect: child: builtins.elem child (includesOf aspect);
 in

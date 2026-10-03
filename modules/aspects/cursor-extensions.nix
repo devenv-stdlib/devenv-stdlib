@@ -1,7 +1,7 @@
 # Feature aspect: common Cursor extensions under ~/.cursor/extensions.
 { den, ... }:
 let
-  cascade = import ../cursor-cascade.nix;
+  cascade = import ../den/_cascades/cursor-cascade.nix;
 in
 {
   den.aspects.cursor-extensions = {

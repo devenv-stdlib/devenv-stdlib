@@ -7,16 +7,17 @@
 
 ## Prefer: new feature as an aspect
 
-1. **Pick the cascade file** (`den/cursor-cascade.nix`, `terminal-cascade.nix`,
+1. **Pick the cascade file** (`modules/den/_cascades/cursor-cascade.nix`, `terminal-cascade.nix`,
    `language-cascade.nix`, `ide-cascade.nix`) and add the hub/leaf `includes`
    edge as a string name.
-2. **Add `den/aspects/<name>.nix`** (or extend `languages.nix` / `project-ides.nix`)
+2. **Add `modules/aspects/<name>.nix`** (or extend `languages.nix` / `project-ides.nix`)
    mapping those names onto `den.aspects.*` with:
    - `includes = map (n: den.aspects.${n}) cascade.<name>.includes;`
    - `homeManager = { … }` for user-profile features, **or**
    - `project = { … }` for devenv/toolchain features (custom class).
-3. **Wire the module** into `flake.nix` `denModules` (and into
-   `den.aspects.developer.includes` when it belongs on every developer home).
+3. **Drop the file under `modules/aspects/` or `modules/den/`** — flake
+   `import-tree` discovers it (and into `den.aspects.developer.includes`
+   when it belongs on every developer home).
 4. **Tests:** extend the matching `tests/unit/den-*.nix` includes asserts; keep
    `nix-unit tests/unit/default.nix` and `bats -r tests` green.
 5. **Do not** add zen / flake-aspects / dendrix. Sister libs only if a phase
@@ -31,8 +32,8 @@
 | Host OS (NixOS / Darwin stubs) | `nixos` / `darwin` | `den.hosts` (Phase 5; stubs until real hosts) |
 
 Portable features: one shared payload on `nixos` + `darwin` (see
-`den/aspects/shell-tools.nix`). Ubuntu-only GNOME quake stays HM-only —
-do not add OS class keys (`den/MULTI-OS.md`).
+`modules/aspects/shell-tools.nix`). Ubuntu-only GNOME quake stays HM-only —
+do not add OS class keys (`modules/den/MULTI-OS.md`).
 
 GUI terminal / Cursor stay **out of** devenv PATH — same architecture rule,
 now visible as two class keys on one aspect when needed.
@@ -40,7 +41,7 @@ now visible as two class keys on one aspect when needed.
 ## Avoid
 
 - Grepping `project.nix` `langOn` to learn fan-out — read aspect `includes` /
-  `den/CASCADES.md` first.
+  `modules/den/CASCADES.md` first.
 - Reviving a parallel legacy HM root (`home-manager -f home.nix`).
 - Putting Copier questionnaire logic into Den policies.
 - Forking devenv or migrating to flake-parts `devenv.shells` for the project
@@ -50,7 +51,7 @@ now visible as two class keys on one aspect when needed.
 ## HM modules
 
 Small HM CLIs land as `home/<tool>.nix` imported from
-`den/aspects/home-cli.nix` (or a dedicated aspect). New cascades should still
+`modules/aspects/home-cli.nix` (or a dedicated aspect). New cascades should still
 get an aspect name + includes edge so the DAG stays readable.
 
 `home.nix` is a **compat stub** that fails if evaluated with `-f`; do not use it.

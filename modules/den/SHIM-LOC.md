@@ -14,11 +14,11 @@ still grep `project.nix` instead of `includes` DAGs.
 #   modules/lib/den-project-bridge.nix (deleted)
 #   legacy home-switch -f home.nix     (deleted; stub only)
 #
-# den/**/*.nix .................... 440 LOC (composition, not dual-write)
+# modules/{aspects,den}/**/*.nix .................... 440 LOC (composition, not dual-write)
 # Dual-write shim tax ............. 0 LOC  (cleared)
 ```
 
-Cascade readability: `den/*-cascade.nix` + `den/aspects/*` `includes`.
+Cascade readability: `modules/den/_cascades/*-cascade.nix` + `modules/aspects/*` `includes`.
 `modules/lib/project.nix` keeps **pure** enable→list helpers for debtmap /
 serena / vscode / hooks — not a fan-out god-table.
 
