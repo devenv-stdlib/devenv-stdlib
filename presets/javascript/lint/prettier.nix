@@ -1,6 +1,5 @@
 # One prettier preset for JS and TS (shared hook + formatter settings).
-_:
-{
+_: {
   path = [
     "javascript"
     "lint"

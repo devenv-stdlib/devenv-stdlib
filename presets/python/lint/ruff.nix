@@ -1,6 +1,5 @@
 # Tool preset: Ruff lint + format hooks and editor formatter wiring.
-_:
-{
+_: {
   path = [
     "python"
     "lint"
