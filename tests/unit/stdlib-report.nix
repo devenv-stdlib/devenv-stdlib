@@ -1,4 +1,4 @@
-# Additive: stdlib.log API, report inventory, ci.language-matrix preset.
+# Additive: stdlib.log API, report inventory, ci.github_actions.language-matrix preset.
 {
   lib,
   versions,
@@ -193,8 +193,10 @@ in
         };
       in
       {
-        applied = cfg.presets.ci.language-matrix.result.applied or false;
-        attrpath = contains "ci.language-matrix" (lib.concatStringsSep "\n" (map (w: w) cfg.warnings));
+        applied = cfg.presets.ci.github_actions.language-matrix.result.applied or false;
+        attrpath = contains "ci.github_actions.language-matrix" (
+          lib.concatStringsSep "\n" (map (w: w) cfg.warnings)
+        );
         hasMarker = cfg.stdlib.markers ? ciMatrix;
         matrixEmpty = (cfg.stdlib.markers.ciMatrix or { }).empty or true;
         hasSync = cfg.scripts ? sync-language-versions-workflow;
