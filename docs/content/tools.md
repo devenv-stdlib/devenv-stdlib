@@ -326,9 +326,16 @@ Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (fre
 
 ### Neovim and nano
 
-User-global [Neovim](https://neovim.io/) (no plugins yet) and [nano](https://www.nano-editor.org/) with bundled syntax files.
+User-global [Neovim](https://neovim.io/) via [nixvim](https://github.com/nix-community/nixvim) (`programs.nixvim`) and [nano](https://www.nano-editor.org/) with bundled syntax files.
+
+The `neovim` tool (`tools/ide/neovim.nix`, category `ide`) enables a minimal nixvim config (no plugins; Ruby/Python providers off). The flake input `nixvim` is imported on the `home-cli` Den aspect; extend with nixvim modules in `home.local.nix` or compose the thin preset `ide.neovim`. The hub preset `ide` still enables Cursor, VS Code, and Neovim together.
+
+```bash
+nvim --version
+```
 
 - Neovim: [neovim.io](https://neovim.io/) · Donate: [neovim.io/sponsors](https://neovim.io/sponsors/)
+- nixvim: [nix-community/nixvim](https://github.com/nix-community/nixvim) · [docs](https://nix-community.github.io/nixvim/)
 - nano: [nano-editor.org](https://www.nano-editor.org/)
 
 ## Quality and release

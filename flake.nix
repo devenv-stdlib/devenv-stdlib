@@ -18,6 +18,9 @@
     import-tree.url = "github:denful/import-tree/v0.2.0";
     # Private backend for stdlib.log (not part of the public stdlib API).
     nix-log.url = "github:rvolosatovs/nix-log";
+    # Neovim configuration — tools/ide/neovim.nix enables programs.nixvim.
+    # Do not follows nixpkgs: nixvim is tested against its own pin.
+    nixvim.url = "github:nix-community/nixvim";
   };
 
   outputs =

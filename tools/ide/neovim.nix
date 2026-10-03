@@ -1,4 +1,5 @@
-# Neovim on PATH. Plugins are a later TODO.
+# Neovim via nix-community/nixvim (programs.nixvim). Minimal enable — compose
+# plugins/LSP with nixvim modules in home.local.nix or a follow-up preset.
 args@{
   pkgs,
   lib,
@@ -17,7 +18,8 @@ else
       category = "ide";
       install = {
         kind = "hm-program";
-        program = "neovim";
+        # nixvim's Home Manager module (inputs.nixvim.homeModules.nixvim).
+        program = "nixvim";
       };
       upgrade = "flake";
       defaultEnable = true;
@@ -30,9 +32,11 @@ else
       spec
       // {
         homeManager = _: {
-          programs.neovim = {
+          # Module import lives on den.aspects.home-cli (inputs available there).
+          # Incompatible with programs.neovim.enable — nixvim asserts that.
+          programs.nixvim = {
             enable = true;
-            # Adopt the 26.05 defaults now so providers are not pulled in unused.
+            # Match prior programs.neovim wiring: do not pull unused providers.
             withRuby = false;
             withPython3 = false;
           };
