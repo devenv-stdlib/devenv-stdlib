@@ -1,4 +1,4 @@
-# Thin language-scoped options + CI matrix flag (not a tool megapreset).
+# Thin language-scoped options + CI matrix flag.
 { lib, ... }:
 let
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };

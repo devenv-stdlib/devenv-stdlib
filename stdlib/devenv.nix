@@ -221,7 +221,7 @@ let
             description = ''
               Per-tool language-scoped preset contributions. stdlib.devenv.load
               lowers these into Serena, editor recommendations, debtmap, and CI
-              matrix flags. Not a megapreset API.
+              matrix flags.
             '';
           };
 

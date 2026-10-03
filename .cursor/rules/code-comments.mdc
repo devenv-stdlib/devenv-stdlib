@@ -1,0 +1,31 @@
+---
+description: Keep code comments reader-relevant; omit change-process rationale
+alwaysApply: true
+---
+
+# Code comments: reader facts, not change rationale
+
+Write comments for the **reader of the code**, not for the agent/coordinator who made the change.
+
+## Do
+
+- State what the file/attrpath does, how to enable/disable it, and migration or API notes callers need.
+- Mention history/compat only when behavior changed, an API broke, or callers must migrate.
+
+```
+# ✅ GOOD — attrpath + behavior callers need
+# Attrpath: ci.github_actions.language-matrix.
+# Behavior matches the former modules/languages/versions.nix.
+```
+
+## Do not
+
+- Explain *why we were instructed* to change something, preference history, stacked-PR chatter, or agent/coordinator intent.
+- Negate discarded alternatives (“not a megapreset named CI”, “we were told not to…”) unless that negation is itself an API contract the caller must know.
+
+```
+# ❌ BAD — process / preference rationale
+# Attrpath: ci.github_actions.language-matrix — not a megapreset named "CI".
+```
+
+Put lasting design preferences in project store `preferences.md` (or real docs), not in file headers.
