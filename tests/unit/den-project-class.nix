@@ -1,5 +1,5 @@
 # Phase 3 W3.3: custom project class registration + resolve → markers.
-{ lib, ... }:
+_:
 let
   flake = builtins.getFlake (toString ../..);
   klass = flake.denProjectClass;
