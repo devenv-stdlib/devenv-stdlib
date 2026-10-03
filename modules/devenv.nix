@@ -1,7 +1,14 @@
-{ lib, ... }:
+{
+  lib,
+  inputs ? { },
+  ...
+}:
 let
   # Import the loader file, not stdlib/default.nix (P0 owns that entrypoint).
-  devenvLoad = import ../stdlib/devenv.nix { inherit lib; };
+  devenvLoad = import ../stdlib/devenv.nix {
+    inherit lib;
+    nix-log = inputs.nix-log or null;
+  };
 in
 {
   imports = [

@@ -1,12 +1,21 @@
 # devenv-stdlib. External flakes use this attrset (flake output `stdlib`).
-{ lib }:
+# `nix-log` is a private implementation detail for stdlib.log — callers must
+# not take inputs.nix-log; use stdlib.log only.
+{
+  lib,
+  nix-log ? null,
+}:
 let
   versionInfo = import ./version.nix;
   load = import ./load.nix { inherit lib; };
   categories = import ./categories.nix { inherit lib; };
+  log = import ./log.nix { inherit lib nix-log; };
+  report = import ./report.nix { inherit lib log; };
 in
 {
   inherit (versionInfo) version apiVersion;
+
+  inherit log report;
 
   project = import ./project.nix { inherit lib; };
   versions =
