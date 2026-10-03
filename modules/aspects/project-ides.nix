@@ -1,6 +1,7 @@
 # Project IDE / sync aspects (Phase 2 W2.4).
 # vscode recommendations + cursor-sync-extensions on enterShell.
-# Writers stay in modules/ides; this DAG is the composition surface.
+# Writers live in presets/languages/*.nix (stdlib.devenv.load); this DAG is
+# the composition surface.
 { den, ... }:
 let
   cascade = import ../den/_cascades/ide-cascade.nix;
