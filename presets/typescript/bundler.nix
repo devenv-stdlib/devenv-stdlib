@@ -1,4 +1,5 @@
-# Thin gate: TypeScript enable requires a bundler choice.
+# Thin gate: TypeScript availability requires a bundler choice.
+# when inherits typescript category policy; bundler assertion stays leaf-specific.
 { lib, ... }:
 let
   project = import ../../modules/lib/project.nix { inherit lib; };
@@ -9,8 +10,7 @@ in
     "typescript"
     "bundler"
   ];
-  description = "Requires typescript.bundler when languages.typescript.enable.";
-  when = cfg: (cfg.languages.typescript or { }).enable or false;
+  description = "Requires typescript.bundler when TypeScript is available.";
   requires = [
     {
       assertion = cfg: (cfg.typescript.bundler or null) != null;
