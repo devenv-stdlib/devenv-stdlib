@@ -33,6 +33,7 @@ let
   # Language categories with presets (python, rust, …). Add an entry and set
   # categoryPolicy on lang.<id> in categories.nix.
   policies = {
+    go = mkLanguagePolicy "go";
     python = mkLanguagePolicy "python";
     rust = mkLanguagePolicy "rust";
   };

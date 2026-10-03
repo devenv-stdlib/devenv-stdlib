@@ -69,6 +69,7 @@ let
     lang = n "bundle" "Language toolchains. Linters nest one level down." {
       children = {
         go = n "bundle" "Go tools." {
+          categoryPolicy = "go";
           children.linters = n "bundle" "Go linters and formatters." { };
         };
         haskell = n "bundle" "Haskell tools. No framework Haskell tool presets yet." {
