@@ -92,7 +92,11 @@ in
 {
   testCategoryPolicyPythonRegistered = {
     expr = {
-      ids = categoryPolicy.policyIds;
+      hasPython = lib.elem "python" categoryPolicy.policyIds;
+      hasZig = lib.elem "zig" categoryPolicy.policyIds;
+      hasJsOrTs = lib.elem "javascript-or-typescript" categoryPolicy.policyIds;
+      hasPostgres = lib.elem "services.postgres" categoryPolicy.policyIds;
+      nPolicies = builtins.length categoryPolicy.policyIds;
       preset =
         (categoryPolicy.forPresetPath [
           "python"
@@ -103,16 +107,12 @@ in
       annotated = (stdlib.categories.resolve "lang.python").categoryPolicy;
     };
     expected = {
-      ids = [
-        "go"
-        "haskell"
-        "javascript"
-        "javascript-or-typescript"
-        "nix"
-        "python"
-        "rust"
-        "typescript"
-      ];
+      # 58 languages + 43 services + javascript-or-typescript
+      nPolicies = 102;
+      hasPython = true;
+      hasZig = true;
+      hasJsOrTs = true;
+      hasPostgres = true;
       preset = "python";
       tool = "python";
       annotated = "python";
@@ -131,6 +131,34 @@ in
       nix = "nix";
       haskellTool = "haskell";
       nixTool = "nix";
+    };
+  };
+
+  testCategoryPolicyServiceAnnotated = {
+    expr = {
+      annotated = (stdlib.categories.resolve "services.postgres").categoryPolicy;
+      tool = (categoryPolicy.forToolCategory "services.postgres").id;
+      preset =
+        (categoryPolicy.forPresetPath [
+          "services"
+          "postgres"
+          "usql"
+        ]).id;
+      availableOff = categoryPolicy.policies."services.postgres".available { };
+      availableOn = categoryPolicy.policies."services.postgres".available {
+        services.postgres.enable = true;
+      };
+      availableOverride = categoryPolicy.policies."services.postgres".available {
+        stdlib.categoryPolicies."services.postgres".available = true;
+      };
+    };
+    expected = {
+      annotated = "services.postgres";
+      tool = "services.postgres";
+      preset = "services.postgres";
+      availableOff = false;
+      availableOn = true;
+      availableOverride = true;
     };
   };
 
