@@ -1,5 +1,6 @@
 import apply from "../content/apply.md?raw";
 import architecture from "../content/architecture.md?raw";
+import stdlib from "../content/stdlib.md?raw";
 import bootstrap from "../content/bootstrap.md?raw";
 import ci from "../content/ci.md?raw";
 import contributing from "../content/contributing.md?raw";
@@ -37,6 +38,7 @@ function section(id: string, title: string, source: string): DocSection {
 export const sections: DocSection[] = [
   section("overview", "Overview", overview),
   section("architecture", "Architecture", architecture),
+  section("stdlib", "Standard library", stdlib),
   section("apply", "Apply to a monorepo", apply),
   section("bootstrap", "Bootstrap", bootstrap),
   section("tools", "Tools and CLI", tools),
