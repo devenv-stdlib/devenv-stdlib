@@ -18,7 +18,7 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `.cursor/rules/navi-cheatsheets.mdc` | Prefer extending `cheats/*.cheat`; navi syntax; no community-sheet copies |
 | `.agents/skills/` / `skills-lock.json` | 54 vendored Cursor skills (Vercel skills CLI); `README.md` there lists sources and licenses |
 | `cheats/` | Repo-local [navi](https://github.com/denisidoro/navi) sheets (`NAVI_PATH` in `devenv shell`) |
-| `den/` + `flake.nix` | Den aspects / `den.homes` → `homeConfigurations.developer`; Phase 5 `den.hosts` stubs + OS classes |
+| `modules/{aspects,den}/` + `flake.nix` | Den aspects / `den.homes` → `homeConfigurations.developer` (import-tree); Phase 5 `den.hosts` stubs + OS classes |
 | `home/` | Home Manager modules (imported by Den aspects) |
 | `home.nix` | Compat stub only — do not use `-f home.nix` |
 | `home/navi.nix` | `NAVI_PATH` → pinned [denisidoro/cheats](https://github.com/denisidoro/cheats) |

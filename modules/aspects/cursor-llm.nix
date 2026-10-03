@@ -2,7 +2,7 @@
 # Imperative merge scripts + SecretSpec watch stay outside Den; this only composes HM modules.
 { den, ... }:
 let
-  cascade = import ../cursor-cascade.nix;
+  cascade = import ../den/_cascades/cursor-cascade.nix;
 in
 {
   den.aspects.cursor-llm = {

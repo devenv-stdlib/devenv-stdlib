@@ -14,7 +14,7 @@
     };
 
     # Template developer home — cursor + terminal + home-cli.
-    # Language / project-ide aspects use the project class (see den/classes/project.nix).
+    # Language / project-ide aspects use the project class (see modules/den/classes/project.nix).
     homes.x86_64-linux.developer = { };
 
     aspects.developer = {
@@ -33,8 +33,8 @@
           localOverride =
             if pwdLocal != null && builtins.pathExists pwdLocal then
               pwdLocal
-            else if builtins.pathExists ../home.local.nix then
-              ../home.local.nix
+            else if builtins.pathExists ../../home.local.nix then
+              ../../home.local.nix
             else
               null;
         in
@@ -62,7 +62,7 @@
               assertion = config.home.username != "" && config.home.homeDirectory != "";
               message = ''
                 home.username / home.homeDirectory are empty. Run `home-switch` from a
-                login shell (USER and HOME set), or set them in den/homes.nix /
+                login shell (USER and HOME set), or set them in modules/den/homes.nix /
                 home.local.nix.
               '';
             }

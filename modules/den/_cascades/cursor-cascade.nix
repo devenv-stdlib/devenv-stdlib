@@ -1,5 +1,5 @@
 # Pure cascade metadata for the Phase 1 Den HM spike.
-# Aspects under den/aspects/ map these names onto den.aspects.* includes.
+# Aspects under modules/aspects/ map these names onto den.aspects.* includes.
 # cursor → cursor-extensions + cursor-llm (mcp-stack).
 {
   cursor = {

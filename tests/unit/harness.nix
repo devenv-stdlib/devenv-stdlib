@@ -6,9 +6,9 @@
   project = import ../../modules/lib/project.nix { inherit lib; };
   debtmap = import ../../modules/debtmap/lib.nix { inherit lib; };
   term = import ../../home/terminal-lib.nix { inherit lib; };
-  terminalCascade = import ../../den/terminal-cascade.nix;
-  languageCascade = import ../../den/language-cascade.nix;
-  ideCascade = import ../../den/ide-cascade.nix;
+  terminalCascade = import ../../modules/den/_cascades/terminal-cascade.nix;
+  languageCascade = import ../../modules/den/_cascades/language-cascade.nix;
+  ideCascade = import ../../modules/den/_cascades/ide-cascade.nix;
 
   # Expected language hub → leaf names (cascade goldens; was den-language-shim).
   expectedLanguageChildren = {
