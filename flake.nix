@@ -272,6 +272,9 @@
     in
     denConfig.config.flake
     // {
+      # Publishable devenv-stdlib. External flakes read version, apiVersion, and loaders.
+      stdlib = import ./stdlib { inherit lib; };
+
       # Cascade metadata + light eval helpers for tests (not HM activation).
       denCursorCascade = import ./modules/den/_cascades/cursor-cascade.nix;
       denTerminalCascade = import ./modules/den/_cascades/terminal-cascade.nix;

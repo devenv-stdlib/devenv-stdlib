@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Refresh modules/non-nix/catalog.toml pins (and a few install-side hashes).
 # CLI tools install via mise (or Nix when promoted); images via docker pull;
-# devenv VS Code extension still uses home/ides/ext-lib.nix for the VSIX hash.
+# devenv VS Code extension hash: home/ides/ext-lib.nix (shim) and
+# stdlib/ide-ext.nix defaultDevenvExtensionSha256.
 # Pin edits are line-local so per-tool comments stay intact.
 set -euo pipefail
 
@@ -105,6 +106,9 @@ bump_vscode() {
   hash=$(prefetch_url_hash "$url" nix32)
   catalog_set_pin "$name" "$version"
   replace_nix_string_assign "$root/home/ides/ext-lib.nix" sha256 "$hash"
+  if [[ -f "$root/stdlib/ide-ext.nix" ]]; then
+    replace_nix_string_assign "$root/stdlib/ide-ext.nix" defaultDevenvExtensionSha256 "$hash"
+  fi
 }
 
 print_promotable() {
