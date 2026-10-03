@@ -1,10 +1,12 @@
 # The Pages site 404s until the first successful deploy of pages.yml.
 # Open Collective often 403s CI crawlers.
 # endoflife.date homepage occasionally resets CI connections (API still used by tooling).
+# conventionalcommits.org occasionally resets CI connections (same content via commitlint docs).
 exclude = [
   '^https://devenv4monorepo\.github\.io',
   '^https://opencollective\.com/',
   '^https://endoflife\.date/?$',
+  '^https://(www\.)?conventionalcommits\.org/',
 ]
 # CI runners occasionally reset/timeout on nixos.org / brave.com.
 max_retries = 3
