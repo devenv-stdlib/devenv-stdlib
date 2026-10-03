@@ -1,4 +1,4 @@
-# Additive coverage for category-wide policies (python first instance).
+# Additive coverage for category-wide policies (python, rust, …).
 # Exercise bindPreset/realize and mkTool.apply assertions directly (no full
 # devenv.load tools+presets eval).
 { lib, ... }:
@@ -9,6 +9,7 @@ let
   toolLib = import ../../stdlib/tool.nix { inherit lib; };
 
   pythonPolicy = categoryPolicy.policies.python;
+  rustPolicy = categoryPolicy.policies.rust;
 
   realizePreset =
     {
@@ -98,11 +99,73 @@ in
       annotated = (stdlib.categories.resolve "lang.python").categoryPolicy;
     };
     expected = {
-      ids = [ "python" ];
+      ids = [
+        "python"
+        "rust"
+      ];
       preset = "python";
       tool = "python";
       annotated = "python";
     };
+  };
+
+  testCategoryPolicyRustRegistered = {
+    expr = {
+      preset =
+        (categoryPolicy.forPresetPath [
+          "rust"
+          "lint"
+          "clippy"
+        ]).id;
+      tool = (categoryPolicy.forToolCategory "lang.rust.linters").id;
+      annotated = (stdlib.categories.resolve "lang.rust").categoryPolicy;
+      available = rustPolicy.available { languages.rust.enable = true; };
+      unavailable = rustPolicy.available { };
+    };
+    expected = {
+      preset = "rust";
+      tool = "rust";
+      annotated = "rust";
+      available = true;
+      unavailable = false;
+    };
+  };
+
+  testRustPresetInheritsWhenInertWithoutRust = {
+    expr =
+      let
+        d = realizePreset {
+          path = [
+            "rust"
+            "lint"
+            "clippy"
+          ];
+        };
+      in
+      {
+        inherit (d) triggered applied;
+        tools = d.includeTools;
+      };
+    expected = {
+      triggered = false;
+      applied = false;
+      tools = [ ];
+    };
+  };
+
+  testRustPresetAppliesWhenLanguageEnabled = {
+    expr =
+      (realizePreset {
+        path = [
+          "rust"
+          "lint"
+          "clippy"
+        ];
+        cfg = {
+          languages.rust.enable = true;
+        };
+      }).applied;
+    expected = true;
   };
 
   testCategoryPolicyAvailableViaLanguage = {
