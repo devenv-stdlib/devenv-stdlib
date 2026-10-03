@@ -495,15 +495,23 @@ let
       };
     };
 
-  defaultRoots = root: [
-    (root + "/python")
-    (root + "/rust")
-    (root + "/go")
-    (root + "/javascript")
-    (root + "/typescript")
-    (root + "/ci")
-    (root + "/fixtures")
-  ];
+  # One root per devenv language dir under presets/, plus services/, ci/, fixtures/.
+  # Missing dirs are skipped so scaffolds can land before leaves exist.
+  defaultRoots =
+    root:
+    let
+      supported = import ./devenv-supported.nix;
+      existing =
+        path:
+        if builtins.pathExists path then
+          [ path ]
+        else
+          [ ];
+    in
+    lib.concatMap (lang: existing (root + "/${lang}")) supported.languages
+    ++ existing (root + "/services")
+    ++ existing (root + "/ci")
+    ++ existing (root + "/fixtures");
 in
 {
   inherit

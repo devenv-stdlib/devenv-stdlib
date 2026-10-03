@@ -35,6 +35,8 @@ in
 
   inherit categories;
   categoryPolicy = import ./category-policy.nix { inherit lib; };
+  # Flat lists of devenv languages.* / services.* ids (category scaffold source).
+  devenvSupported = import ./devenv-supported.nix;
   harness = import ./harness.nix { inherit lib categories; };
   shell = import ./shell.nix { inherit lib; };
 

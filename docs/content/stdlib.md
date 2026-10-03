@@ -72,9 +72,11 @@ Profilers are not one flat node. `profilers.cpu` and `profilers.memory` are sepa
 
 ## Category policies
 
-`stdlib/category-policy.nix` (exported as `stdlib.categoryPolicy`) declares **category-wide** prerequisites once per namespaced language category. Enabling any preset under `<lang>.*` or tool under `lang.<lang>.*` requires that category’s toolchain to be available — leaves do not copy the same `when` / `requires` clause.
+`stdlib/category-policy.nix` (exported as `stdlib.categoryPolicy`) declares **category-wide** prerequisites once per namespaced language or service category. Enabling any preset under `<lang>.*` or tool under `lang.<lang>.*` requires that category’s toolchain to be available — leaves do not copy the same `when` / `requires` clause. Service categories use the same pattern with policy id `services.<id>` against `services.<id>.enable`.
 
-**Wired languages:** each of `go`, `haskell`, `javascript`, `nix`, `python`, `rust`, and `typescript` is available when `languages.<id>.enable` is true **or** `stdlib.categoryPolicies.<id>.available = true` (explicit override when the toolchain is provided outside devenv `languages.*`). The matching `lang.<id>` node sets `categoryPolicy = "<id>"`; descendants inherit. Leaf-specific `requires` (for example `typescript.bundler`) stay on the leaf. `haskell` and `nix` are annotated for future tools/presets (no framework leaves yet).
+**Wired languages and services:** every devenv `languages.*` / `services.*` id from `stdlib/devenv-supported.nix` (cachix/devenv v2.4.0 modules) has a `lang.<id>` (with `linters` child) or `services.<id>` node and a matching policy. A language is available when `languages.<id>.enable` is true **or** `stdlib.categoryPolicies.<id>.available = true`. A service is available when `services.<id>.enable` is true **or** `stdlib.categoryPolicies."services.<id>".available = true`. Descendants inherit. Leaf-specific `requires` (for example `typescript.bundler`) stay on the leaf.
+
+Empty directory scaffolds live under `tools/lang/<id>/`, `presets/<id>/`, and `presets/services/<id>/` (README markers only; loaders skip `_*.nix` and non-`.nix` files). Framework tool leaves exist only for languages that already ship presets (python, rust, go, javascript, typescript, …).
 
 Shared JS/TS presets under `javascript.*` (`javascript.lint.prettier`, `javascript.ide`, `javascript.serena`) set `categoryPolicy = "javascript-or-typescript"` so they inherit when either language is available. JavaScript-only leaves (`javascript.debtmap`, `javascript.supported`) keep the plain `javascript` policy.
 
@@ -83,7 +85,7 @@ Shared JS/TS presets under `javascript.*` (`javascript.lint.prettier`, `javascri
 | Presets (`python.lint.ruff`, `rust.lint.clippy`, `go.lint.gofmt`, …) | Omit `when` → inherit category `available` as `when`. Category `requires` are always appended (strict throw / warn+inert via existing `realize`). Optional `categoryPolicy` on a leaf overrides the path-derived policy id. |
 | Tools (`tools.ruff` under `lang.python.linters`, …) | When `tools.<name>.enable`, module `assertions` require category availability. |
 
-To add another language category: register it in `categoryPolicy.policies` (or `mkLanguagePolicy "<id>"`) and set `categoryPolicy = "<id>"` on `lang.<id>` in `categories.nix`. Leaf presets under `presets/<id>/` can omit the duplicated language `when`.
+To add another language after a devenv bump: append the id to `stdlib/devenv-supported.nix` and add the matching `tools/lang/<id>/` + `presets/<id>/` README scaffolds. Policies and `lang.<id>` nodes are generated from that list.
 
 ## Coding harnesses
 

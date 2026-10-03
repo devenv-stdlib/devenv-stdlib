@@ -1,8 +1,12 @@
 # Nested category tree. Each node has its own cardinality. `tools` lists
 # registered names only — this file does not define tool modules.
 # Profilers are not flat: cpu and memory are separate nodes (Omer, 2026-10-03).
+# `lang.*` and `services.*` mirror every devenv language/service id
+# (stdlib/devenv-supported.nix).
 { lib }:
 let
+  supported = import ./devenv-supported.nix;
+
   cardinalities = [
     "exactly-one"
     "any-of"
@@ -28,6 +32,44 @@ let
       "tools"
       "children"
     ];
+
+  # Optional richer descriptions for languages that already have framework notes.
+  langDescriptions = {
+    go = "Go tools.";
+    haskell = "Haskell tools. No framework Haskell tool presets yet.";
+    javascript = "JavaScript tools.";
+    nix = "Nix tools.";
+    python = "Python tools.";
+    rust = "Rust tools that are not linters (for example cargo-nextest).";
+    typescript = "TypeScript tools that are not linters (for example pnpm).";
+  };
+
+  mkLangNode =
+    lang:
+    n "bundle" (langDescriptions.${lang} or "${lang} tools.") {
+      categoryPolicy = lang;
+      children.linters = n "bundle" "${lang} linters and formatters." { };
+    };
+
+  langChildren = lib.listToAttrs (
+    map (lang: {
+      name = lang;
+      value = mkLangNode lang;
+    }) supported.languages
+  );
+
+  mkServiceNode =
+    svc:
+    n "bundle" "devenv services.${svc} wiring and adjacent tool presets." {
+      categoryPolicy = "services.${svc}";
+    };
+
+  serviceChildren = lib.listToAttrs (
+    map (svc: {
+      name = svc;
+      value = mkServiceNode svc;
+    }) supported.services
+  );
 
   tree = {
     ai-gateways = n "zero-or-one" "Local model router. Both leaves are shelved." {
@@ -66,41 +108,14 @@ let
         };
       };
     };
-    lang = n "bundle" "Language toolchains. Linters nest one level down." {
-      children = {
-        go = n "bundle" "Go tools." {
-          categoryPolicy = "go";
-          children.linters = n "bundle" "Go linters and formatters." { };
-        };
-        haskell = n "bundle" "Haskell tools. No framework Haskell tool presets yet." {
-          categoryPolicy = "haskell";
-          children.linters = n "bundle" "Haskell linters and formatters." { };
-        };
-        javascript = n "bundle" "JavaScript tools." {
-          categoryPolicy = "javascript";
-          children.linters = n "bundle" "JavaScript linters and formatters." { };
-        };
-        nix = n "bundle" "Nix tools." {
-          categoryPolicy = "nix";
-          children.linters = n "bundle" "Nix linters and formatters." { };
-        };
-        python = n "bundle" "Python tools." {
-          # Category-wide policy id (stdlib/category-policy.nix). Descendants
-          # inherit: enabling any lang.python* tool or python.* preset requires
-          # Python to be available somehow.
-          categoryPolicy = "python";
-          children.linters = n "bundle" "Python linters and formatters." { };
-        };
-        rust = n "bundle" "Rust tools that are not linters (for example cargo-nextest)." {
-          categoryPolicy = "rust";
-          children.linters = n "bundle" "Rust linters and formatters." { };
-        };
-        typescript = n "bundle" "TypeScript tools that are not linters (for example pnpm)." {
-          categoryPolicy = "typescript";
-          children.linters = n "bundle" "TypeScript linters and formatters." { };
-        };
-      };
+    lang = n "bundle" "Language toolchains. One child per devenv languages.* id. Linters nest one level down." {
+      children = langChildren;
     };
+    services =
+      n "bundle" "devenv services.*. Client CLIs stay under data/; servers stay devenv modules."
+        {
+          children = serviceChildren;
+        };
     linters =
       n "bundle" "Cross-cutting formatters and linters. Language-specific ones live under lang/."
         { };
@@ -243,5 +258,6 @@ assert lib.assertMsg (
     paths
     resolve
     cardinalityViolation
+    supported
     ;
 }
