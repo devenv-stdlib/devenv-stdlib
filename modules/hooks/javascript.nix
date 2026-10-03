@@ -1,11 +1,5 @@
-{ lib, config, ... }:
-let
-  project = import ../lib/project.nix { inherit lib; };
-  on = project.javascriptOn (config.languages or { });
-in
-{
-  git-hooks.hooks.prettier = {
-    enable = on;
-    files = "\\.(cjs|js|jsx|mjs|ts|tsx)$";
-  };
-}
+# Compat shim. JavaScript/TypeScript prettier rules live in
+# presets/languages/{javascript,typescript}.nix and are applied by
+# stdlib.devenv.load from modules/devenv.nix. Do not import this file from
+# the devenv barrel (that would apply the payload twice).
+{ }
