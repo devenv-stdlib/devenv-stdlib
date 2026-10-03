@@ -25,6 +25,7 @@ let
     ++ names "catalog" stdlib.catalog
     ++ names "categories" stdlib.categories
     ++ names "harness" stdlib.harness
+    ++ names "shell" stdlib.shell
     ++ names "den" stdlib.den
     ++ names "devenv" stdlib.devenv
     ++ names "versions" (stdlib.versions { })
@@ -126,6 +127,21 @@ in
       "project.vscodeLanguageIds"
       "project.vscodeRecommendations"
       "project.vscodeUnwanted"
+      "shell"
+      "shell.category"
+      "shell.enableIntegrations"
+      "shell.enabledShells"
+      "shell.hmModule"
+      "shell.knownShells"
+      "shell.mkShellOption"
+      "shell.policyShells"
+      "shell.preferredOption"
+      "shell.requireResolved"
+      "shell.resolve"
+      "shell.shellType"
+      "shell.shouldInstallBlesh"
+      "shell.soleEnabled"
+      "shell.toolPath"
       "terminal"
       "terminal.desktopIds"
       "terminal.mkDesktopEntry"

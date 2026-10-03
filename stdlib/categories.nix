@@ -126,13 +126,22 @@ let
     };
     scanners = n "bundle" "Secret, dependency, and image scanners. Not lang/ and not linters/." { };
     secrets = n "bundle" "Decrypt and inject secrets. Not scanners." { };
-    shell = n "bundle" "Interactive shell extras. Completion stays on this node." {
-      children = {
-        history = n "zero-or-one" "Shell history (atuin)." { };
-        nav = n "bundle" "Directory navigation (zoxide, fzf)." { };
-        prompt = n "zero-or-one" "Shell prompt (starship)." { };
-      };
-    };
+    shell =
+      n "bundle"
+        "Interactive shells and extras. bash/zsh/elvish are tools; completion stays on this node."
+        {
+          tools = [
+            "bash"
+            "zsh"
+            "elvish"
+            "blesh"
+          ];
+          children = {
+            history = n "zero-or-one" "Shell history (atuin)." { };
+            nav = n "bundle" "Directory navigation (zoxide, fzf)." { };
+            prompt = n "zero-or-one" "Shell prompt (starship)." { };
+          };
+        };
     tasks = n "bundle" "Task runners and file watchers beside devenv tasks." { };
     terminal = n "exactly-one" "One terminal provider." {
       children.mux = n "zero-or-one" "Optional terminal multiplexer." { };

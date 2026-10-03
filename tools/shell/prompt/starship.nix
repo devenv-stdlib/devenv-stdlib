@@ -1,4 +1,4 @@
-# Starship prompt. On for every terminal provider (not only Alacritty).
+# Starship prompt. Integrations follow enabled shell tools.
 args@{
   pkgs,
   lib,
@@ -12,6 +12,7 @@ if false then
 else
   let
     tool = import ../../../stdlib/tool.nix { inherit lib; };
+    shell = import ../../../stdlib/shell.nix { inherit lib; };
     spec = {
       name = "starship";
       category = "shell.prompt";
@@ -29,11 +30,18 @@ else
     tool.apply args (
       spec
       // {
-        homeManager = _: {
-          programs.starship = {
-            enable = true;
-            enableBashIntegration = true;
+        homeManager =
+          { config, ... }:
+          let
+            resolved = shell.resolve config config.shell.preferred;
+            shells = shell.policyShells config resolved;
+            integrations = shell.enableIntegrations (if shells != [ ] then shells else [ "bash" ]);
+          in
+          {
+            programs.starship = {
+              enable = true;
+              inherit (integrations) enableBashIntegration enableZshIntegration;
+            };
           };
-        };
       }
     )
