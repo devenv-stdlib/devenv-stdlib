@@ -95,7 +95,7 @@ let
     path = normalizePath path;
   };
 
-  # Nested attrset of refs so callers write `with tools; [ python.lint.pyright ]`.
+  # Nested attrset of refs so callers write `tools = [ tools.python.lint.pyright ]`.
   refsFromPaths =
     paths:
     lib.foldl' (

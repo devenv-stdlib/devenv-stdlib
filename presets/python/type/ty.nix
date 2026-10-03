@@ -1,7 +1,8 @@
-{ lib, ... }:
+{ lib, tools, ... }:
 let
   categoryPolicy = import ../../../stdlib/category-policy.nix { inherit lib; };
-  python = categoryPolicy.policies.python;
+  # Named pythonPolicy so `tools.python…` is not shadowed by a `python` binding.
+  pythonPolicy = categoryPolicy.policies.python;
 in
 {
   path = [
@@ -10,13 +11,6 @@ in
     "ty"
   ];
   description = "Astral ty type-checker hook when Python is available and pythonTypeChecker = ty.";
-  when = cfg: (python.available cfg) && ((cfg.pythonTypeChecker or "pyright") == "ty");
-  # Attrpath tools.python.lint.ty (path list — avoids `with tools` shadowing `python`).
-  tools = [
-    [
-      "python"
-      "lint"
-      "ty"
-    ]
-  ];
+  when = cfg: (pythonPolicy.available cfg) && ((cfg.pythonTypeChecker or "pyright") == "ty");
+  tools = [ tools.python.lint.ty ];
 }

@@ -1,16 +1,10 @@
 # when inherits go category policy (languages.go.enable or override).
-_: {
+{ tools, ... }: {
   path = [
     "go"
     "lint"
     "golangci-lint"
   ];
   description = "golangci-lint git-hook when Go is available.";
-  tools = [
-    [
-      "go"
-      "lint"
-      "golangci-lint"
-    ]
-  ];
+  tools = [ tools.go.lint.golangci-lint ];
 }
