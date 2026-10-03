@@ -1,5 +1,5 @@
 # Den cascade diagrams (Phase 2 W2.5 — hand-maintained; den-diagram deferred).
-# Source of truth for edges: den/*-cascade.nix. Read includes there first.
+# Source of truth for edges: modules/den/_cascades/*-cascade.nix. Read includes there first.
 
 ## Cursor (Phase 1)
 
@@ -50,8 +50,8 @@ developer ──includes──► cursor
 ```
 
 `home-switch` → flake `#developer` only. Language hubs use the custom
-**`project`** class (not HM). See `den/PROJECT-CLASS-SPIKE.md` and
-`den/CONTRIBUTING-ASPECTS.md`.
+**`project`** class (not HM). See `modules/den/PROJECT-CLASS-SPIKE.md` and
+`modules/den/CONTRIBUTING-ASPECTS.md`.
 
 ## Multi-OS (Phase 5)
 
@@ -61,6 +61,6 @@ fixture-darwin ──includes──► shell-tools
 ```
 
 `shell-tools` is the first portable aspect with non-empty `nixos` **and**
-`darwin` from one let-bound attrset. Host stubs: `den/hosts.nix`
+`darwin` from one let-bound attrset. Host stubs: `modules/den/hosts.nix`
 (`intoAttr = []`). Quake / GNOME terminal leaves stay HM-only — see
-`den/MULTI-OS.md`.
+`modules/den/MULTI-OS.md`.

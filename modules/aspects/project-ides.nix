@@ -3,7 +3,7 @@
 # Writers stay in modules/ides; this DAG is the composition surface.
 { den, ... }:
 let
-  cascade = import ../ide-cascade.nix;
+  cascade = import ../den/_cascades/ide-cascade.nix;
   mkLeaf = name: {
     includes = map (n: den.aspects.${n}) (cascade.${name}.includes or [ ]);
   };

@@ -4,7 +4,7 @@
 # Copier still owns languages.*.enable (W4.4 — no aspect-includes questionnaire).
 { den, lib, ... }:
 let
-  cascade = import ../language-cascade.nix;
+  cascade = import ../den/_cascades/language-cascade.nix;
 
   # Leaf aspect: includes + project-class marker for the concern it documents.
   mkLeaf = name: concern: {
