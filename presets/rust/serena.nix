@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   path = [
     "rust"
     "serena"
