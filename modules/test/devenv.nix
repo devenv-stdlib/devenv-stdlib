@@ -201,17 +201,8 @@
         # Matrix values come from our own generators and contain no whitespace.
         run_act_serial() {
           local workflow=$1
-<<<<<<< HEAD
-          local job
-          while read -r job; do
-=======
           local job filters
-          local act_env=()
-          if [ -n "''${GITHUB_TOKEN:-}" ]; then
-            act_env=(--env GITHUB_TOKEN)
-          fi
           while read -r job filters; do
->>>>>>> 382d147 (fix(test): run act matrix cells one at a time)
             [ -n "$job" ] || continue
             echo "==> act -j $job $filters ($workflow)"
             # shellcheck disable=SC2086
