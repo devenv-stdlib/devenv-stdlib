@@ -10,4 +10,4 @@ jobs:
         os: [ubuntu-24.04, ubuntu-26.04]
     runs-on: ${{ matrix.os }}
     steps:
-      - run: echo No languages enabled; skipping per-version devenv test.
+      - run: echo "No languages enabled; skipping per-version devenv test."
