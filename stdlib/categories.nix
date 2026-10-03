@@ -94,6 +94,7 @@ let
           children.linters = n "bundle" "Rust linters and formatters." { };
         };
         typescript = n "bundle" "TypeScript tools that are not linters (for example pnpm)." {
+          categoryPolicy = "typescript";
           children.linters = n "bundle" "TypeScript linters and formatters." { };
         };
       };
