@@ -1,5 +1,5 @@
 # Sync script for Cursor and VS Code extension roots.
-# Language packs are chosen by presets/lang/<lang>/ide.nix; this file only
+# Language packs are chosen by presets/<lang>/ide.nix; this file only
 # materializes the symlink script.
 {
   pkgs,

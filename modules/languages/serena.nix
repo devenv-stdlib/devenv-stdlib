@@ -1,4 +1,4 @@
 # Compat shim. Serena language_servers are contributed by
-# presets/lang/<lang>/serena.nix and written by stdlib.devenv.load. Do not import
+# presets/<lang>/serena.nix and written by stdlib.devenv.load. Do not import
 # this file from the devenv barrel (that would define the project file twice).
 { }
