@@ -372,7 +372,7 @@ Always-on in the devenv hook set: [nixfmt](https://github.com/NixOS/nixfmt), [st
 
 ### debtmap
 
-[debtmap](https://github.com/iepathos/debtmap) (pin in `modules/non-nix/catalog.toml`; Nix when promotable else project mise) runs when any of rust/python/javascript/typescript/go is on. `devenv shell` writes `.debtmap.toml` (gitignored). Override thresholds in `devenv.local.nix`.
+[debtmap](https://github.com/iepathos/debtmap) (pin in `modules/non-nix/catalog.toml` as `github:iepathos/debtmap`; Nix when promotable else project mise) runs when any of rust/python/javascript/typescript/go is on. `devenv shell` writes `.debtmap.toml` (gitignored). Override thresholds in `devenv.local.nix`.
 
 ```bash
 debtmap --help
