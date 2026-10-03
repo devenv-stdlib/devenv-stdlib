@@ -102,6 +102,9 @@ in
       alacritty = (spec "alacritty").category;
       warp = (spec "warp").category;
       zellij = (spec "zellij").category;
+      bash = (spec "bash").category;
+      zsh = (spec "zsh").category;
+      elvish = (spec "elvish").category;
       atuin = (spec "atuin").category;
       blesh = (spec "blesh").category;
       starship = (spec "starship").category;
@@ -114,6 +117,9 @@ in
       alacritty = "terminal";
       warp = "terminal";
       zellij = "terminal.mux";
+      bash = "shell";
+      zsh = "shell";
+      elvish = "shell";
       atuin = "shell.history";
       blesh = "shell";
       starship = "shell.prompt";
@@ -121,6 +127,108 @@ in
       vscode = "ide";
       neovim = "ide";
       nano = "ide";
+    };
+  };
+
+  testStdlibShellToolsDefaults = {
+    expr = {
+      bash = (spec "bash").defaultEnable;
+      zsh = (spec "zsh").defaultEnable;
+      elvish = (spec "elvish").defaultEnable;
+      registered = lib.sort (a: b: a < b) (stdlib.categories.resolve "shell").tools;
+    };
+    expected = {
+      bash = true;
+      zsh = false;
+      elvish = false;
+      registered = [
+        "bash"
+        "blesh"
+        "elvish"
+        "zsh"
+      ];
+    };
+  };
+
+  testStdlibShellResolveSingleDefault = {
+    expr =
+      let
+        shell = stdlib.shell;
+        config = {
+          tools.bash.enable = true;
+          tools.zsh.enable = false;
+          tools.elvish.enable = false;
+        };
+      in
+      {
+        resolved = shell.resolve config null;
+        optional = shell.soleEnabled config == "bash";
+        blesh = shell.shouldInstallBlesh (shell.resolve config null);
+      };
+    expected = {
+      resolved = "bash";
+      optional = true;
+      blesh = true;
+    };
+  };
+
+  testStdlibShellMultiBleShOnlyBash = {
+    expr =
+      let
+        shell = stdlib.shell;
+        config = {
+          tools.bash.enable = true;
+          tools.zsh.enable = true;
+          tools.elvish.enable = false;
+        };
+        resolvedBash = shell.resolve config "bash";
+        resolvedZsh = shell.resolve config "zsh";
+        policy = shell.policyShells config resolvedBash;
+      in
+      {
+        policy = lib.sort (a: b: a < b) policy;
+        bleshOnBash = shell.shouldInstallBlesh resolvedBash;
+        bleshOnZsh = shell.shouldInstallBlesh resolvedZsh;
+        integrations = shell.enableIntegrations policy;
+      };
+    expected = {
+      policy = [
+        "bash"
+        "zsh"
+      ];
+      bleshOnBash = true;
+      bleshOnZsh = false;
+      integrations = {
+        enableBashIntegration = true;
+        enableZshIntegration = true;
+      };
+    };
+  };
+
+  testStdlibShellNoBashSkipsBlesh = {
+    expr =
+      let
+        shell = stdlib.shell;
+        config = {
+          tools.bash.enable = false;
+          tools.zsh.enable = true;
+          tools.elvish.enable = false;
+        };
+        resolved = shell.resolve config null;
+      in
+      {
+        inherit resolved;
+        blesh = shell.shouldInstallBlesh resolved;
+        mandatoryWithoutOption = shell.resolve {
+          tools.bash.enable = false;
+          tools.zsh.enable = true;
+          tools.elvish.enable = true;
+        } null;
+      };
+    expected = {
+      resolved = "zsh";
+      blesh = false;
+      mandatoryWithoutOption = null;
     };
   };
 
