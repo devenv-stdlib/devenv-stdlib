@@ -510,7 +510,7 @@ rec {
                 os: [${lib.concatStringsSep ", " ubuntuRunners}]
             runs-on: ''${{ matrix.os }}
             steps:
-              - run: echo No languages enabled; skipping per-version devenv test.
+              - run: echo "No languages enabled; skipping per-version devenv test."
       ''
     else
       ''
