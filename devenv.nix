@@ -61,6 +61,17 @@ _: {
     # the relative "nix": stray ./nix tree, `not an absolute path: "nix"` on the
     # first real tarball fetch.
     export XDG_CACHE_HOME="''${XDG_CACHE_HOME:-$HOME/.cache}"
+    # Warm the Nix fetchers before bats: the first import of a tarball on a
+    # machine logs `unpacking '…' into the Git cache` on stderr, and bats `run`
+    # folds stderr into $output, which the Den home tests compare verbatim.
+    # Pre-run the pure eval files once so that noise lands here, not in a test.
+    nix --extra-experimental-features 'nix-command flakes' flake prefetch-inputs "$DEVENV_ROOT" \
+      >/dev/null 2>&1 || echo "warn: nix flake prefetch-inputs failed; continuing"
+    for eval_file in "$DEVENV_ROOT"/tests/home/*-eval.nix; do
+      env NIX_CONFIG="experimental-features = nix-command flakes" \
+        nix-instantiate --eval --strict --impure "$eval_file" >/dev/null 2>&1 \
+        || echo "warn: warm-up eval of ''${eval_file##*/} failed; continuing"
+    done
     bats --jobs "$(nproc 2>/dev/null || echo 2)" --print-output-on-failure --recursive "$DEVENV_ROOT/tests"
   '';
 
