@@ -31,7 +31,7 @@ setup() {
 copy_template() {
   local dest=${1:-$DEST}
   shift || true
-  copier copy --defaults --quiet --vcs-ref v0.0.0 "$@" "$SRC" "$dest"
+  copier copy --defaults --quiet --trust --vcs-ref v0.0.0 "$@" "$SRC" "$dest"
 }
 
 init_dest_git() {
@@ -194,6 +194,35 @@ init_dest_git() {
   [ ! -e "$DEST/includes" ]
 }
 
+@test "copier copy pins devenv-stdlib and leaves stdlib sources out" {
+  run copy_template
+  [ "$status" -eq 0 ]
+
+  [ -f "$DEST/flake.nix" ]
+  [ -f "$DEST/presets/omer.nix" ]
+  [ -f "$DEST/modules/devenv.nix" ]
+  [ ! -e "$DEST/stdlib" ]
+  [ ! -e "$DEST/packaging" ]
+  [ ! -e "$DEST/flake.lock" ]
+  [ ! -e "$DEST/flake.nix.jinja" ]
+  [ ! -e "$DEST/consumer-flake.nix" ]
+  [ ! -e "$DEST/consumer-flake.nix.jinja" ]
+
+  grep -q 'devenv-stdlib.url' "$DEST/flake.nix"
+  grep -q 'inputs.devenv-stdlib.stdlib' "$DEST/flake.nix"
+  grep -q 'devenv-stdlib/nixpkgs' "$DEST/flake.nix"
+  grep -q 'name = "omer"' "$DEST/presets/omer.nix"
+  run ! grep -q 'import ./stdlib' "$DEST/flake.nix"
+
+  commit=$(sed -n 's/^_commit: //p' "$DEST/.copier-answers.yml" | tr -d "'\"")
+  [ -n "$commit" ]
+  grep -q "github:thedrow/devenv4monorepo/${commit}" "$DEST/flake.nix"
+
+  if command -v nix-instantiate >/dev/null; then
+    nix-instantiate --parse "$DEST/flake.nix" >/dev/null
+  fi
+}
+
 @test "copier update applies a newer template tag" {
   run copy_template
   [ "$status" -eq 0 ]
@@ -204,7 +233,7 @@ init_dest_git() {
   git -C "$SRC" commit -qm "feat: probe update"
   git -C "$SRC" tag v0.0.1
 
-  run copier update --defaults --quiet --vcs-ref v0.0.1 "$DEST"
+  run copier update --defaults --quiet --trust --vcs-ref v0.0.1 "$DEST"
   [ "$status" -eq 0 ]
   grep -q 'copier-template-probe' "$DEST/devenv.nix"
   grep -q '_commit:' "$DEST/.copier-answers.yml"
