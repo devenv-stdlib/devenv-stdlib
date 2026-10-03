@@ -524,10 +524,13 @@ in
       onExt = "mtxr.sqltools";
       onRec = true;
       tools = [
-        [
-          "data"
-          "usql"
-        ]
+        {
+          _type = "tool-ref";
+          path = [
+            "data"
+            "usql"
+          ];
+        }
       ];
     };
   };

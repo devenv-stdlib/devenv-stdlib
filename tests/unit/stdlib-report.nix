@@ -77,8 +77,7 @@ let
       ]
       ++ devenvLoad.load {
         presets = devenvLoad.defaultRoots presetRoot;
-        # Local mkTool leaves hold project payloads (e.g. ruff hooks); thin
-        # presets only list tool names, so unit eval must load tools roots.
+        # Tool roots required so thin presets can resolve tools.<attrpath> refs.
         tools = [ ../../tools ];
       };
     }).config;

@@ -216,7 +216,7 @@ let
         aspect = item.aspect or built.name;
       }
     else if builtins.isString item then
-      throw "mkPreset tools: use attrpath refs (e.g. with tools; [ python.lint.pyright ]), not string literals"
+      throw "mkPreset tools: use attrpath refs (e.g. tools = [ tools.python.lint.pyright ]), not string literals"
     else
       throw "mkPreset tools: expected a tool attrpath ref or mkTool attrset";
 

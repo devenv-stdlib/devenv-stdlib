@@ -1,4 +1,4 @@
-_: {
+{ tools, ... }: {
   path = [
     "python"
     "hooks"
@@ -6,10 +6,5 @@ _: {
   ];
   description = "git-hooks check-python when languages.python.enable.";
   # when inherits python category policy (languages.python.enable or override).
-  tools = [
-    [
-      "python"
-      "check-python"
-    ]
-  ];
+  tools = [ tools.python.check-python ];
 }
