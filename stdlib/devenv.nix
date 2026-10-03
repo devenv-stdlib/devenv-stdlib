@@ -1,4 +1,5 @@
 # Plain devenv loader. Do not import Den here: devenv evaluation must not
+# ci: hooks retrigger marker
 # fetch Den (that is the #22 CI failure surface). Condition checks go through
 # P2's realize in stdlib/preset.nix. mkPreset's Den aspect module is not
 # imported into this evaluator.
