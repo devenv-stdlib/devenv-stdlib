@@ -81,6 +81,10 @@ let
           children.linters = n "bundle" "Nix linters and formatters." { };
         };
         python = n "bundle" "Python tools." {
+          # Category-wide policy id (stdlib/category-policy.nix). Descendants
+          # inherit: enabling any lang.python* tool or python.* preset requires
+          # Python to be available somehow.
+          categoryPolicy = "python";
           children.linters = n "bundle" "Python linters and formatters." { };
         };
         rust = n "bundle" "Rust tools that are not linters (for example cargo-nextest)." {

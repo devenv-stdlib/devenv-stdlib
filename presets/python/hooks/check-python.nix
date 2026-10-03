@@ -5,6 +5,6 @@ _: {
     "check-python"
   ];
   description = "git-hooks check-python when languages.python.enable.";
-  when = cfg: (cfg.languages.python or { }).enable or false;
+  # when inherits python category policy (languages.python.enable or override).
   tools = [ "check-python" ];
 }

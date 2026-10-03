@@ -10,7 +10,6 @@ in
     "supported"
   ];
   description = "supported.python options and CI matrix flag when Python is on.";
-  when = cfg: (cfg.languages.python or { }).enable or false;
   module = _: {
     options.supported.python = lib.mkOption {
       type = lib.types.submodule {
