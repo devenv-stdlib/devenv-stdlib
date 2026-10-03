@@ -1,17 +1,24 @@
 # Standard library
 
-`stdlib/` is the framework tools and presets import. The directory name stays `stdlib`. A top-level `lib/` is not the public import path.
+`stdlib/` is the framework tools and presets import. The directory name stays `stdlib`. A top-level `lib/` directory is not the public import path. The flake output `lib` is the same attrset as `stdlib`.
 
 ## Import path
 
-Nix in this repo imports `stdlib/default.nix`, or a shim that re-exports it. The flake publishes the same attrset as `stdlib`:
+Nix in this repo imports `stdlib/default.nix`, or a shim that re-exports it. `flake.nix` evaluates `packaging/den-outputs.nix` and publishes that attrset as both `stdlib` and `lib`:
 
 ```nix
-inputs.devenv4monorepo.url = "github:thedrow/devenv4monorepo";
-# stdlib = inputs.devenv4monorepo.stdlib;
+inputs.devenv-stdlib.url = "github:thedrow/devenv4monorepo/<commit>";
+# inputs.devenv-stdlib.stdlib.version
+# inputs.devenv-stdlib.stdlib.apiVersion
+# inputs.devenv-stdlib.stdlib.mkTool
+# inputs.devenv-stdlib.stdlib.den.load
+# inputs.devenv-stdlib.stdlib.devenv.load
+# inputs.devenv-stdlib.lib  — same attrset as stdlib
 ```
 
-Read `stdlib.version`, `stdlib.apiVersion`, `stdlib.den.load`, and `stdlib.devenv.load` from that output. Copier still copies `stdlib/` into a generated tree; a later packaging change will switch generated flakes to this input instead of vendoring the sources.
+`mkPreset` stays in `stdlib/preset.nix`. It is not an attribute of this attrset.
+
+Generated monorepos pin that GitHub input. Copier does not copy `stdlib/` or `packaging/`.
 
 ## Version and stability
 
@@ -80,3 +87,30 @@ OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.
 ## Compat shims
 
 Existing tests and modules keep the old import paths. Re-exports forward every argument. A later cleanup is the first change allowed to delete them and retarget those tests.
+
+## What Copier writes
+
+`copier copy --trust` renders `consumer-flake.nix.jinja`, then a task moves that file to `flake.nix`. The publisher `flake.nix`, `flake.lock`, `stdlib/`, and `packaging/` stay here (`copier.yml` `_exclude`). `--trust` is required because that move is a Copier task.
+
+The generated input is pinned to the template commit Copier recorded:
+
+```nix
+devenv-stdlib.url = "github:thedrow/devenv4monorepo/{{ _commit }}";
+nixpkgs.follows = "devenv-stdlib/nixpkgs";
+```
+
+`copier update --trust` moves `_commit` and that pin together. Den outputs still build from the generated tree (`root = ./.`), so copied `modules/` and `home/` stay local. `mkTool` and `mkPreset` come from the pin.
+
+## Presets this template enables
+
+`presets/omer.nix` is the selection. It calls `mkPreset` from `stdlib/preset.nix`. Its `includes` are names:
+
+`terminal-quake`, `alacritty-atuin`, `ide`, `host-hm-only-guard`, `python`, `rust`, `go`, `javascript`, `typescript`.
+
+Language names stay gated by each preset's `when` (`languages.<lang>.enable` in `devenv.local.nix`). Copier still decides which languages are on.
+
+## Community tools and presets
+
+Tool files under `tools/` are Home Manager modules. They call `stdlib/tool.nix` with `install.kind` (`nix`, `catalog`, `hm-program`, `vscode-extension`, or `docker-image`) and `upgrade` (`flake`, `catalog`, or `self`). `stdlib.den.load` reads that tree.
+
+Preset files under `presets/` call `mkPreset` from `stdlib/preset.nix` (`name`, `when`, `requires`, `tools`, `includes`). `mkPreset` is not on the flake `stdlib` attrset.

@@ -39,8 +39,8 @@ That is `home-manager switch -b backup --flake .#developer --impure`. `home-swit
 | Command | Purpose |
 | --- | --- |
 | `./setup.sh` | Install or update Nix, devenv, Cachix, and Home Manager |
-| `copier copy <src> <dest>` | Apply this template to a monorepo |
-| `copier update` | Pull a newer tagged template into an existing copy (Serena, Headroom, MCP pins, debtmap, agent skills, …) |
+| `copier copy --trust <src> <dest>` | Apply this template to a monorepo |
+| `copier update --trust` | Pull a newer tagged template into an existing copy (Serena, Headroom, MCP pins, debtmap, agent skills, …) |
 | `copier check-update` | Report whether a newer template tag exists |
 | `update` | Our devenv script (`devenv run update`): in a generated repo, `devenv update`, then `catalog.local.toml` (Nix or mise), then `update.local.sh`; in this template, refresh shipped non-Nix pins. Not the devenv CLI. |
 | `non-nix:add-local` / `non-nix:remove-local` | Add or remove a team tool in `modules/non-nix/catalog.local.toml` (creates the file from root `catalog.local.toml.example` if missing). Example: `devenv tasks run non-nix:add-local -- --name example-cli --kind cli --scope project --pin 1.0.0 --mise ubi:owner/example-cli --docs 'Example CLI. Docs: https://example.com'`. |
