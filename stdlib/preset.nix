@@ -341,6 +341,9 @@ in
       # null = inherit category-policy when (or always-true when no policy).
       when ? null,
       requires ? [ ],
+      # null = derive from path; string = policies.<id>; false = unbound.
+      # Named policyId so it does not shadow the categoryPolicy import.
+      policyId ? null,
       tools ? [ ],
       configure ? { },
       homeManager ? { },
@@ -363,6 +366,7 @@ in
       bound = categoryPolicy.bindPreset {
         path = presetPath;
         inherit when requires;
+        policy = policyId;
       };
     in
     {

@@ -30,10 +30,35 @@ let
     '';
   };
 
+  # Shared JS/TS presets live under javascript.* but apply when either
+  # language is available. Leaves set categoryPolicy = "javascript-or-typescript".
+  mkAnyLanguagePolicy =
+    langs:
+    let
+      id = lib.concatStringsSep "-or-" langs;
+      listed = lib.concatStringsSep " / " (
+        map (lang: "languages.${lang}.enable or stdlib.categoryPolicies.${lang}.available") langs
+      );
+    in
+    {
+      inherit id;
+      presetRoot = builtins.head langs;
+      toolCategoryPrefix = "lang.${builtins.head langs}";
+      available = cfg: lib.any (lang: languageAvailable lang cfg) langs;
+      message = ''
+        category ${builtins.head langs}: one of ${lib.concatStringsSep ", " langs} must be available (set ${listed} = true)
+      '';
+    };
+
   # Language categories with presets (python, rust, …). Add an entry and set
   # categoryPolicy on lang.<id> in categories.nix.
   policies = {
     go = mkLanguagePolicy "go";
+    javascript = mkLanguagePolicy "javascript";
+    javascript-or-typescript = mkAnyLanguagePolicy [
+      "javascript"
+      "typescript"
+    ];
     python = mkLanguagePolicy "python";
     rust = mkLanguagePolicy "rust";
   };
@@ -81,19 +106,27 @@ let
   # Effective when/requires for a preset declaration under a category policy.
   # Omitting `when` inherits the category available predicate. Category requires
   # are always appended so an explicit `when = _: true` still fails closed.
+  # `policy` null → derive from path head; false → unbound; string → policies.<id>.
   bindPreset =
     {
       path,
       when ? null,
       requires ? [ ],
+      policy ? null,
     }:
     let
-      policy = forPresetPath path;
+      resolved =
+        if policy == false then
+          null
+        else if builtins.isString policy then
+          forId policy
+        else
+          forPresetPath path;
     in
     {
-      inherit policy;
-      when = if when != null then when else inheritedWhen policy;
-      requires = requires ++ requiresOf policy;
+      policy = resolved;
+      when = if when != null then when else inheritedWhen resolved;
+      requires = requires ++ requiresOf resolved;
     };
 
   # Module assertions for an enabled tool under a category policy.
@@ -137,6 +170,7 @@ in
     policyIds
     languageAvailable
     mkLanguagePolicy
+    mkAnyLanguagePolicy
     forId
     forPresetPath
     forToolCategory
