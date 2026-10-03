@@ -1,6 +1,7 @@
 { lib, ... }:
 let
-  stdlib = import ../stdlib { inherit lib; };
+  # Import the loader file, not stdlib/default.nix (P0 owns that entrypoint).
+  devenvLoad = import ../stdlib/devenv.nix { inherit lib; };
 in
 {
   imports = [
@@ -18,5 +19,5 @@ in
     ./update
     ./test/devenv.nix
   ]
-  ++ stdlib.devenv.load [ ../presets/languages ];
+  ++ devenvLoad.load [ ../presets/languages ];
 }
