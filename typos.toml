@@ -1,0 +1,3 @@
+[default.extend-words]
+# Product/service name (MQTT broker), not the insect.
+mosquitto = "mosquitto"
