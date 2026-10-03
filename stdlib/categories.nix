@@ -71,7 +71,7 @@ let
         go = n "bundle" "Go tools." {
           children.linters = n "bundle" "Go linters and formatters." { };
         };
-        haskell = n "bundle" "Haskell tools. No framework language preset yet." {
+        haskell = n "bundle" "Haskell tools. No framework Haskell tool presets yet." {
           children.linters = n "bundle" "Haskell linters and formatters." { };
         };
         javascript = n "bundle" "JavaScript tools." {

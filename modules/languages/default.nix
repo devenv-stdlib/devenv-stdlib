@@ -38,8 +38,8 @@ in
     };
   };
 
-  # TypeScript's bundler check is presets/languages/typescript.nix `requires`
-  # (assertion by default; presets.typescript.strict = false warns instead).
+  # TypeScript's bundler check is presets/lang/typescript/bundler.nix `requires`
+  # (assertion by default; presets.typescript-bundler.strict = false warns instead).
   config.packages = lib.optionals config.python.extensionToolchain [
     pkgs.stdenv.cc
     pkgs.gnumake

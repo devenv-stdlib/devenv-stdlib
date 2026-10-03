@@ -7,9 +7,10 @@ in
   imports = [
     ./packages
     ./hooks/common.nix
-    # Language hooks, IDE sync, and Serena moved to presets/languages/*.nix.
-    # Old paths remain as shims and must not be imported here (the loader
-    # already applies their project payloads).
+    # Language tool presets live under presets/lang/<lang>/ (per-tool, not
+    # megapresets). Old hook/IDE/Serena paths remain as shims and must not be
+    # imported here (the loader already applies their project payloads).
+    # presets/examples/ is documentation only — not loaded as defaults.
     ./debtmap/hooks.nix
     ./languages
     ./languages/versions.nix
@@ -19,5 +20,5 @@ in
     ./update
     ./test/devenv.nix
   ]
-  ++ devenvLoad.load [ ../presets/languages ];
+  ++ devenvLoad.load [ ../presets/lang ];
 }
