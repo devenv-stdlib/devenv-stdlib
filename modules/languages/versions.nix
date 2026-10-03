@@ -13,7 +13,7 @@ let
   };
 
   # CI matrix inputs (supported.* options and per-language ciMatrix flags) live in
-  # presets/lang/<lang>/*-supported.nix and related tool presets. Fall back to
+  # presets/<lang>/supported.nix and related tool presets. Fall back to
   # languages.*.enable when this module is imported without stdlib.devenv.load.
   langOn = name: (config.languages.${name} or { }).enable or false;
   usePresets = config ? stdlib.lang;
@@ -49,7 +49,7 @@ let
   );
 in
 {
-  # supported.* option declarations moved to presets/lang/<lang>/supported.nix.
+  # supported.* option declarations moved to presets/<lang>/supported.nix.
   config = {
     scripts.sync-language-versions-workflow.exec = ''
       set -euo pipefail

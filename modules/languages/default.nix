@@ -38,7 +38,7 @@ in
     };
   };
 
-  # TypeScript's bundler check is presets/lang/typescript/bundler.nix `requires`
+  # TypeScript's bundler check is presets/typescript/bundler.nix `requires`
   # (assertion by default; presets.typescript-bundler.strict = false warns instead).
   config.packages = lib.optionals config.python.extensionToolchain [
     pkgs.stdenv.cc

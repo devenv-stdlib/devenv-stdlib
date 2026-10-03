@@ -3,6 +3,9 @@
 # P2's realize in stdlib/preset.nix. mkPreset's Den aspect module is not
 # imported into this evaluator.
 #
+# Preset identity is a nested attrpath mirroring tool categories
+# (python.lint.ruff), not a flat string name.
+#
 # P0's stdlib/default.nix and stdlib/load.nix stay untouched. Call sites
 # import this file directly.
 { lib }:
@@ -43,42 +46,75 @@ let
     };
   };
 
+  # Collect .nix files with path segments relative to `root`, prefixed by the
+  # root directory basename (presets/python/lint/ruff.nix → python.lint.ruff).
   collect =
-    dir:
+    root: prefix:
     let
-      entries = builtins.readDir dir;
+      entries = builtins.readDir root;
       names = lib.sort (a: b: a < b) (builtins.attrNames entries);
       files = lib.filter (
         name: entries.${name} == "regular" && lib.hasSuffix ".nix" name && !(lib.hasPrefix "_" name)
       ) names;
       dirs = lib.filter (name: entries.${name} == "directory" && !(lib.hasPrefix "_" name)) names;
     in
-    map (name: dir + "/${name}") files ++ lib.concatMap (name: collect (dir + "/${name}")) dirs;
+    map (name: {
+      file = root + "/${name}";
+      path = prefix ++ [ (lib.removeSuffix ".nix" name) ];
+    }) files
+    ++ lib.concatMap (name: collect (root + "/${name}") (prefix ++ [ name ])) dirs;
 
-  isPreset = value: builtins.isAttrs value && value ? name && builtins.isString value.name;
+  isPreset =
+    value:
+    builtins.isAttrs value
+    && (
+      (value ? path && builtins.isList value.path)
+      || (value ? name && builtins.isString value.name)
+    );
 
-  loadFile =
-    file:
+  loadEntry =
+    entry:
     let
-      decl = import file { inherit lib; };
+      decl = import entry.file { inherit lib; };
+      presetPath =
+        if decl ? path then
+          presetLib.normalizePath decl.path
+        else if decl ? name then
+          # Directory layout is authoritative when name is a leftover leaf.
+          entry.path
+        else
+          entry.path;
+      presetId = presetLib.pathString presetPath;
     in
     if isPreset decl then
       decl
+      // {
+        path = presetPath;
+        name = presetId;
+      }
     else
-      throw "stdlib.devenv.load: ${toString file} must return a preset declaration";
+      throw "stdlib.devenv.load: ${toString entry.file} must return a preset declaration";
 
   declsOf =
     roots:
     let
-      files = lib.concatMap collect roots;
-      decls = map loadFile files;
-      names = map (decl: decl.name) decls;
-      dupes = lib.filter (name: lib.count (x: x == name) names > 1) (lib.unique names);
+      entries = lib.concatMap (
+        root:
+        let
+          base = baseNameOf (toString root);
+        in
+        collect root [ base ]
+      ) roots;
+      decls = map loadEntry entries;
+      ids = map (decl: decl.name) decls;
+      dupes = lib.filter (id: lib.count (x: x == id) ids > 1) (lib.unique ids);
     in
     if dupes != [ ] then
-      throw "stdlib.devenv.load: duplicate preset names: ${toString dupes}"
+      throw "stdlib.devenv.load: duplicate preset attrpaths: ${toString dupes}"
     else
       decls;
+
+  refsOf = roots: presetLib.refsFromPaths (map (decl: decl.path) (declsOf roots));
 
   debtmapLanguages = langs: lib.concatMap (name: (langs.${name} or { }).debtmap or [ ]) debtmapOrder;
 
@@ -122,34 +158,38 @@ let
     };
   };
 
+  leafOptions =
+    config: decl:
+    let
+      id = decl.name;
+    in
+    {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Apply the ${id} preset when its when condition holds.";
+      };
+      strict = lib.mkOption {
+        type = lib.types.bool;
+        default = config.presets.strict;
+        description = "Unmet requires throw. Set false to warn and skip ${id}.";
+      };
+    };
+
   presetOptions =
     decls:
     { config, ... }:
     {
-      options = {
-        presets = {
-          strict = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = ''
-              When true, unmet preset requires fail evaluation.
-              When false, devenv warns and leaves the preset inert.
-              presets.<name>.strict overrides this per preset.
-            '';
-          };
-        }
-        // lib.genAttrs (map (decl: decl.name) decls) (name: {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Apply the ${name} preset when its when condition holds.";
-          };
-          strict = lib.mkOption {
-            type = lib.types.bool;
-            default = config.presets.strict;
-            description = "Unmet requires throw. Set false to warn and skip ${name}.";
-          };
-        });
+      options = lib.foldl' lib.recursiveUpdate {
+        presets.strict = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            When true, unmet preset requires fail evaluation.
+            When false, devenv warns and leaves the preset inert.
+            presets.<attrpath>.strict overrides this per preset.
+          '';
+        };
 
         stdlib.lang = lib.mkOption {
           type = lib.types.attrsOf langType;
@@ -167,7 +207,7 @@ let
           internal = true;
           description = "Exemplar markers for fixture presets. Not a public API.";
         };
-      };
+      } (map (decl: lib.setAttrByPath ([ "presets" ] ++ decl.path) (leafOptions config decl)) decls);
     };
 
   applyPreset =
@@ -179,6 +219,8 @@ let
       ...
     }:
     let
+      enable = presetLib.getPresetAttr config decl.path "enable";
+      strict = presetLib.getPresetAttr config decl.path "strict";
       # P2 realize throws when strict requirements fail. Non-strict failures
       # come back as warnings and applied = false.
       decision = presetLib.realize {
@@ -187,8 +229,8 @@ let
         requires = decl.requires or [ ];
         tools = decl.tools or [ ];
         cfg = config;
-        enable = config.presets.${decl.name}.enable;
-        strict = config.presets.${decl.name}.strict;
+        enable = if enable == null then true else enable;
+        strict = if strict == null then true else strict;
         globalStrict = config.presets.strict;
       };
     in
@@ -293,6 +335,15 @@ let
         '';
       };
     };
+
+  defaultRoots = root: [
+    (root + "/python")
+    (root + "/rust")
+    (root + "/go")
+    (root + "/javascript")
+    (root + "/typescript")
+    (root + "/fixtures")
+  ];
 in
 {
   inherit
@@ -300,9 +351,12 @@ in
     serenaLanguageServers
     surfaceOrder
     debtmapOrder
+    declsOf
+    refsOf
+    defaultRoots
     ;
 
-  # roots: list of directories. `_*.nix` files are helpers, not presets.
+  # roots: list of category roots (e.g. presets/python). `_*.nix` helpers skip.
   # Returns devenv modules (options, per-preset when/requires, and the
   # project-payload lowerer). Never imports Den.
   load =
