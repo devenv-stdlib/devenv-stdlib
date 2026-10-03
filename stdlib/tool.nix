@@ -131,11 +131,15 @@ let
             tools = lib.genAttrs deps (_: {
               enable = true;
             });
-            assertions = map (dep: {
-              assertion = moduleArgs.config.tools.${dep}.enable;
-              message = "tools.${checked.name}.enable requires tools.${dep}.enable";
-            }) deps;
           })
+          {
+            assertions =
+              (map (dep: {
+                assertion = moduleArgs.config.tools.${dep}.enable;
+                message = "tools.${checked.name}.enable requires tools.${dep}.enable";
+              }) deps)
+              ++ policyAssertions;
+          }
           rendered
         ]
       );
@@ -150,6 +154,7 @@ let
       raw = spec.project or { };
       rendered = if builtins.isFunction raw then raw moduleArgs else raw;
       deps = checked.dependsOn;
+      policyAssertions = categoryPolicy.toolAssertions moduleArgs.config checked.category;
     in
     assert require checked.isLocal "mkTool ${checked.name}: applyLocal is for local (project) tools";
     {
