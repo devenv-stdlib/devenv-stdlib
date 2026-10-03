@@ -530,4 +530,42 @@ rec {
         jobs:
         ${jobs}
       '';
+
+  # Structured view of the same strategy that workflowText emits (for stdlib.report).
+  matrixReport =
+    {
+      pythonOn ? false,
+      rustOn ? false,
+      goOn ? false,
+      javascriptOn ? false,
+      python ? emptyPython,
+      rust ? emptyRust,
+      go ? emptyGo,
+      javascript ? emptyJavascript,
+    }@args:
+    let
+      empty = languageJobs args == "";
+    in
+    {
+      inherit empty;
+      runners = ubuntuRunners;
+      languages = {
+        python = {
+          enabled = pythonOn;
+          rows = if pythonOn then crossOs (pythonRows python) else [ ];
+        };
+        rust = {
+          enabled = rustOn;
+          rows = if rustOn then crossOs (rustRows rust) else [ ];
+        };
+        go = {
+          enabled = goOn;
+          rows = if goOn then crossOs (goRows go) else [ ];
+        };
+        javascript = {
+          enabled = javascriptOn;
+          rows = if javascriptOn then crossOs (javascriptRows javascript) else [ ];
+        };
+      };
+    };
 }
