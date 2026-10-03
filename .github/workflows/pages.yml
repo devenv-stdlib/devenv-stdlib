@@ -11,8 +11,11 @@ permissions:
   pages: write
   id-token: write
 
+# Per-ref groups so stacked PR Docs builds do not cancel each other.
+# A shared `pages` group made required `build` fail with:
+# "Canceling since a higher priority waiting request for pages exists".
 concurrency:
-  group: pages
+  group: pages-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
