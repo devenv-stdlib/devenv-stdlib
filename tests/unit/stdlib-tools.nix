@@ -348,4 +348,55 @@ in
       "ty"
     ];
   };
+
+  testStdlibToolAttrpathsMirrorCategories = {
+    expr =
+      let
+        refs = stdlib.mkTool.refsFromSpecs discovered;
+      in
+      {
+        pyright = (spec "pyright").path;
+        ruff = (spec "ruff").path;
+        bash = (spec "bash").path;
+        atuin = (spec "atuin").path;
+        blesh = (spec "blesh").path;
+        samply = (spec "samply").path;
+        ref = refs.python.lint.pyright.path;
+      };
+    expected = {
+      pyright = [
+        "python"
+        "lint"
+        "pyright"
+      ];
+      ruff = [
+        "python"
+        "lint"
+        "ruff"
+      ];
+      bash = [
+        "shell"
+        "bash"
+      ];
+      atuin = [
+        "shell"
+        "history"
+        "atuin"
+      ];
+      blesh = [
+        "shell"
+        "blesh"
+      ];
+      samply = [
+        "profilers"
+        "cpu"
+        "samply"
+      ];
+      ref = [
+        "python"
+        "lint"
+        "pyright"
+      ];
+    };
+  };
 }

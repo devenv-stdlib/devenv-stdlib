@@ -1,11 +1,11 @@
-# Thin tool preset: enable local mkTool `ruff` when Python is on.
+# Thin tool preset: enable local mkTool `python.lint.ruff` when Python is on.
 # when inherits python category policy (languages.python.enable or override).
-_: {
+{ tools, ... }: {
   path = [
     "python"
     "lint"
     "ruff"
   ];
   description = "Ruff lint/format hooks and Python editor formatter settings.";
-  tools = [ "ruff" ];
+  tools = with tools; [ python.lint.ruff ];
 }

@@ -2,6 +2,9 @@
 { lib, ... }:
 let
   inherit (import ../stdlib/preset.nix { inherit lib; }) mkPreset;
+  toolLib = import ../stdlib/tool.nix { inherit lib; };
+  loadLib = import ../stdlib/load.nix { inherit lib; };
+  tools = toolLib.refsFromSpecs (toolLib.specs (loadLib.discover [ ../tools ]));
 in
 {
   imports = [
@@ -10,10 +13,10 @@ in
       description = "Any of Cursor, VS Code, or Neovim. Does not exclude the other IDEs.";
 
       # ide cardinality is any-of, so listing these does not exclude nano or each other.
-      tools = [
-        "cursor"
-        "vscode"
-        "neovim"
+      tools = with tools; [
+        ide.cursor
+        ide.vscode
+        ide.neovim
       ];
     })
   ];

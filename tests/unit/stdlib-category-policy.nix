@@ -31,7 +31,13 @@ let
       name = presetLib.pathString path;
       inherit (bound) when;
       inherit (bound) requires;
-      tools = [ "ruff" ];
+      tools = [
+        [
+          "python"
+          "lint"
+          "ruff"
+        ]
+      ];
       inherit enable strict cfg;
       globalStrict = cfg.presets.strict or true;
     };

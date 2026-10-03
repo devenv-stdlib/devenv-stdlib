@@ -1,4 +1,4 @@
-_: {
+{ tools, ... }: {
   path = [
     "python"
     "hooks"
@@ -6,5 +6,5 @@ _: {
   ];
   description = "Reject Python debug leftovers in git-hooks.";
   # when inherits python category policy (languages.python.enable or override).
-  tools = [ "debug-statements" ];
+  tools = with tools; [ python.debug-statements ];
 }

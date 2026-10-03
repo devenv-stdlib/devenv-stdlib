@@ -5,12 +5,16 @@
 # Preset identity is a nested attrpath mirroring tool categories
 # (python.lint.ruff), not a flat string name.
 #
+# Tool inclusion uses the same attrpath style (python.lint.pyright), via
+# tool-ref values from refsOfTools / mkTool.refsFromSpecs. Enable options
+# stay at tools.<leaf>.enable; global vs local is an internal payload split.
+#
 # Logging goes through stdlib.log (nix-log is private). End-of-eval report
 # uses module warnings + enterShell — no wrapper scripts.
 #
 # Local mkTool leaves (project payload) live under tools/** and are lowered
-# here via applyLocal. Thin presets list tool names; when applied they set
-# tools.<name>.enable = true. Same public API as global tools.
+# here via applyLocal. Thin presets list tool attrpath refs; when applied
+# they set tools.<leaf>.enable = true.
 #
 # Call sites import this file directly; stdlib/default.nix and
 # stdlib/load.nix remain the public stdlib entrypoints.
@@ -85,9 +89,11 @@ let
     && ((value ? path && builtins.isList value.path) || (value ? name && builtins.isString value.name));
 
   loadEntry =
-    entry:
+    entry: tools:
     let
-      decl = import entry.file { inherit lib; };
+      decl = import entry.file {
+        inherit lib tools;
+      };
       presetPath =
         if decl ? path then
           presetLib.normalizePath decl.path
@@ -107,8 +113,10 @@ let
     else
       throw "stdlib.devenv.load: ${toString entry.file} must return a preset declaration";
 
+  refsOfTools = toolRoots: toolLib.refsFromSpecs (toolLib.specs (loadLib.discover toolRoots));
+
   declsOf =
-    roots:
+    roots: tools:
     let
       entries = lib.concatMap (
         root:
@@ -117,7 +125,7 @@ let
         in
         collect root [ base ]
       ) roots;
-      decls = map loadEntry entries;
+      decls = map (entry: loadEntry entry tools) entries;
       ids = map (decl: decl.name) decls;
       dupes = lib.filter (id: lib.count (x: x == id) ids > 1) (lib.unique ids);
     in
@@ -126,7 +134,20 @@ let
     else
       decls;
 
-  refsOf = roots: presetLib.refsFromPaths (map (decl: decl.path) (declsOf roots));
+  # Nested preset refs from directory layout (no import — tools args unused).
+  refsOf =
+    roots:
+    presetLib.refsFromPaths (
+      map (entry: entry.path) (
+        lib.concatMap (
+          root:
+          let
+            base = baseNameOf (toString root);
+          in
+          collect root [ base ]
+        ) roots
+      )
+    );
 
   debtmapLanguages = langs: lib.concatMap (name: (langs.${name} or { }).debtmap or [ ]) debtmapOrder;
 
@@ -540,6 +561,7 @@ in
     debtmapOrder
     declsOf
     refsOf
+    refsOfTools
     defaultRoots
     ;
 
@@ -551,10 +573,11 @@ in
     rootsOrAttrs:
     let
       args = normalizeLoadArgs rootsOrAttrs;
-      decls = declsOf args.presets;
-      tools = localToolModules args.tools;
+      toolRefs = refsOfTools args.tools;
+      decls = declsOf args.presets toolRefs;
+      toolModules = localToolModules args.tools;
     in
-    if decls == [ ] && tools == [ ] then
+    if decls == [ ] && toolModules == [ ] then
       [
         categoryPolicy.optionsModule
         categoryWarnings.optionsModule
@@ -566,7 +589,7 @@ in
         categoryWarnings.optionsModule
         (presetOptions decls)
       ]
-      ++ tools
+      ++ toolModules
       ++ map applyPreset decls
       ++ map enablePresetTools decls
       ++ [
