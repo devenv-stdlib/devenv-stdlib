@@ -33,7 +33,7 @@
       denConfigNoCursor = lib.evalModules {
         modules = denModules ++ [
           (
-            { den, lib, ... }:
+            { lib, ... }:
             {
               den.aspects.developer.includes = lib.mkForce [ ];
             }
@@ -48,9 +48,9 @@
       denCursorCascade = import ./den/cursor-cascade.nix;
       denAspectIncludes = {
         cursor = map (a: a.name or "<aspect>") denConfig.config.den.aspects.cursor.includes;
-        cursor-extensions =
-          map (a: a.name or "<aspect>")
-            denConfig.config.den.aspects.cursor-extensions.includes;
+        cursor-extensions = map (
+          a: a.name or "<aspect>"
+        ) denConfig.config.den.aspects.cursor-extensions.includes;
         cursor-llm = map (a: a.name or "<aspect>") denConfig.config.den.aspects.cursor-llm.includes;
       };
       # Cursor-off fixture homeConfigurations for cascade bats.
