@@ -31,6 +31,14 @@ _exclude:
   - docs
   - .github/workflows/pages.yml
   - .cursor/rules/non-nix-update.mdc
+  # Publisher flake.nix stays out of the copy. consumer-flake.nix.jinja
+  # renders the pin, and _tasks moves it onto flake.nix. stdlib/ is not copied.
+  - /flake.nix
+  - /flake.lock
+  - /stdlib
+  - /stdlib/**
+  - /packaging
+  - /packaging/**
 
 # Recreated on update if missing. Existing monorepo README is left alone.
 # devenv.local.nix is generated from the questions below.
@@ -238,6 +246,12 @@ firecrawl_api_key:
   help: >-
     Firecrawl API key (optional). Firecrawl has a free tier (https://www.firecrawl.dev/). Leave empty to skip the Firecrawl MCP. The key is stored with SecretSpec / gitignored .env, not in .copier-answers.yml.
 
+# Copier matches exclusions against the destination path, so a template whose
+# output name is flake.nix would be dropped by `/flake.nix`. Render beside it
+# and move into place after the copy.
+_tasks:
+  - mv consumer-flake.nix flake.nix
+
 _message_after_copy: |
   devenv4monorepo is in {{ _copier_conf.dst_path }}.
   Languages and the shell name are in devenv.local.nix.
@@ -248,7 +262,10 @@ _message_after_copy: |
     2. Run ./setup.sh, then devenv shell
     3. Add extra options from devenv.local.nix.example if you need them
 
-  Later: copier update   (latest Git tag) or copier update --vcs-ref HEAD
+  flake.nix pins devenv-stdlib to this template commit. stdlib/ stays in the
+  template repository. presets/omer.nix names the presets that commit enables.
+
+  Later: copier update --trust   (latest Git tag) or copier update --trust --vcs-ref HEAD
   copier update re-asks these questions (defaults are your last answers).
 
 _message_after_update: |
