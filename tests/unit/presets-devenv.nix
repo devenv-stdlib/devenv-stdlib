@@ -82,7 +82,10 @@ let
           config = extra;
         }
       ]
-      ++ devenvLoad.load (devenvLoad.defaultRoots presetRoot);
+      ++ devenvLoad.load {
+        presets = devenvLoad.defaultRoots presetRoot;
+        tools = [ ../../tools ];
+      };
     }).config;
 
   hookOn = cfg: name: (cfg.git-hooks.hooks.${name} or { }).enable or false;
@@ -383,10 +386,32 @@ in
       {
         ruff = hookOn cfg "ruff";
         serena = serenaServers cfg;
+        # Thin preset did not enable the mkTool leaf.
+        tool = (cfg.tools.ruff or { }).enable or false;
       };
     expected = {
       ruff = false;
       serena = project.serenaLanguageServers { };
+      tool = false;
+    };
+  };
+
+  testThinPresetEnablesLocalTool = {
+    expr =
+      let
+        cfg = eval {
+          languages.python.enable = true;
+        };
+      in
+      {
+        tool = cfg.tools.ruff.enable;
+        hook = hookOn cfg "ruff";
+        format = hookOn cfg "ruff-format";
+      };
+    expected = {
+      tool = true;
+      hook = true;
+      format = true;
     };
   };
 

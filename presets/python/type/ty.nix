@@ -8,16 +8,5 @@ _: {
   when =
     cfg:
     ((cfg.languages.python or { }).enable or false) && ((cfg.pythonTypeChecker or "pyright") == "ty");
-  project =
-    { pkgs, ... }:
-    {
-      git-hooks.hooks.ty = {
-        enable = true;
-        name = "ty";
-        description = "Astral ty type checker (beta)";
-        package = pkgs.ty;
-        entry = "${pkgs.ty}/bin/ty check";
-        files = "\\.py$";
-      };
-    };
+  tools = [ "ty" ];
 }
