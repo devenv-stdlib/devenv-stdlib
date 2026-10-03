@@ -1,11 +1,14 @@
 # Remaining HM modules not owned by cursor/terminal aspects (developer home).
 # Cursor stack + terminal/provider stay in their aspects (avoid double-enable).
-_: {
+{ lib, ... }:
+{
   den.aspects.home-cli = {
     includes = [ ];
 
     homeManager = {
       imports = [
+        # Shared preferred-shell option for shell tools (atuin, blesh, starship).
+        (import ../../stdlib/shell.nix { inherit lib; }).hmModule
         ../../home/bash.nix
         # IDEs not on the cursor cascade (cursor*/mise stay in cursor aspects).
         ../../home/ides/vscode.nix

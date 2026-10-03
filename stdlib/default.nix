@@ -26,6 +26,7 @@ in
 
   inherit categories;
   harness = import ./harness.nix { inherit lib categories; };
+  shell = import ./shell.nix { inherit lib; };
 
   # P1 tool constructor. P0 does not define this.
   mkTool = import ./tool.nix { inherit lib; };
