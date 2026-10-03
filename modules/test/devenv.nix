@@ -151,27 +151,27 @@
           chown -R "$(id -u):$(id -g)" /nix /home/runner/.cache/nix
         # TMPDIR/RUNNER_TEMP: install-nix-action uses set -u and expands RUNNER_TEMP
         # when TMPDIR is unset (cachix/install-nix-action#197).
-        # GITHUB_TOKEN: mise ubi (debtmap) needs authenticated GitHub API in nested act.
+        # Explicit GitHub tokens: nested act + mise (debtmap) need a real value;
+        # name-only --env lets act inject an empty/dummy secret → 401.
+        # shellcheck disable=SC1091
+        . "$DEVENV_ROOT/modules/test/act-github-env.sh"
+        act_github_token_prepare
         act_opts="--user runner --env HOME=/home/runner --env TMPDIR=/tmp --env RUNNER_TEMP=/tmp --env RUNNER_TOOL_CACHE=/tmp/toolcache -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix"
-        if [ -n "''${GITHUB_TOKEN:-}" ]; then
-          act_opts="$act_opts --env GITHUB_TOKEN"
+        if [ -n "$ACT_GITHUB_TOKEN_OPTS" ]; then
+          act_opts="$act_opts $ACT_GITHUB_TOKEN_OPTS"
         fi
         # act --concurrent-jobs 1 still overlapped matrix cells on the shared /nix
         # volume (ENOSPC). Run each listed job id with -j so only one cell fills it.
         run_act_serial() {
           local workflow=$1
           local job
-          local act_env=()
-          if [ -n "''${GITHUB_TOKEN:-}" ]; then
-            act_env=(--env GITHUB_TOKEN)
-          fi
           while read -r job; do
             [ -n "$job" ] || continue
             echo "==> act -j $job ($workflow)"
             act workflow_call \
               --pull=false \
               --concurrent-jobs 1 \
-              "''${act_env[@]}" \
+              "''${ACT_GITHUB_TOKEN_ARGS[@]}" \
               --container-options "$act_opts" \
               -j "$job" \
               -W "$workflow" \

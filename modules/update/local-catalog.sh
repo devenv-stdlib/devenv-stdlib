@@ -13,9 +13,9 @@ fi
 # shellcheck disable=SC1091
 source "$root/modules/update/pin-lib.sh"
 
-ubi_owner_repo() {
+forge_owner_repo() {
   local mise=$1 rest
-  rest=${mise#ubi:}
+  rest=${mise#*:}
   printf '%s %s\n' "${rest%%/*}" "$(cut -d/ -f2 <<<"$rest")"
 }
 
@@ -32,8 +32,8 @@ bump_cli_at() {
   local catalog=$1 name=$2 mise=$3 current latest owner repo
   current=$(catalog_read_pin "$name" "$catalog")
   case $mise in
-    ubi:*)
-      read -r owner repo < <(ubi_owner_repo "$mise")
+    ubi:* | github:*)
+      read -r owner repo < <(forge_owner_repo "$mise")
       latest=$(github_latest_version "$owner" "$repo")
       ;;
     pipx:*)

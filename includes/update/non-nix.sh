@@ -8,10 +8,10 @@ set -euo pipefail
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
-ubi_owner_repo() {
-  # ubi:owner/repo[/…] → owner repo
+forge_owner_repo() {
+  # ubi:owner/repo[/…] or github:owner/repo[/…] → owner repo
   local mise=$1 rest
-  rest=${mise#ubi:}
+  rest=${mise#*:}
   printf '%s %s\n' "${rest%%/*}" "$(cut -d/ -f2 <<<"$rest")"
 }
 
@@ -29,8 +29,8 @@ bump_cli() {
   local name=$1 mise=$2 current latest owner repo pkg
   current=$(catalog_read_pin "$name")
   case $mise in
-    ubi:*)
-      read -r owner repo < <(ubi_owner_repo "$mise")
+    ubi:* | github:*)
+      read -r owner repo < <(forge_owner_repo "$mise")
       latest=$(github_latest_version "$owner" "$repo")
       ;;
     pipx:*)
