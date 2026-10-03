@@ -110,6 +110,7 @@ in
       "harness.presetPath"
       "harness.toolPath"
       "ideExt"
+      "mkTool"
       "project"
       "project.alwaysOnHookNames"
       "project.debtmapFiles"

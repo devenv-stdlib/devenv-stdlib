@@ -1,17 +1,22 @@
-# Provider leaf: Alacritty + Zellij + Quake GNOME extension.
-# Mutual exclusion with warp-quake is enforced by terminal hub includes (XOR).
-# Phase 5: unsupported on darwin/nixos — HM-only (no OS class keys).
+# Provider leaf. HM modules come from the generated tool aspects
+# (alacritty, zellij, atuin, blesh). terminal.nix still owns provider
+# options and the GNOME dash sync until presets land.
 { den, ... }:
 let
   cascade = import ../den/_cascades/terminal-cascade.nix;
 in
 {
   den.aspects.alacritty-quake = {
-    includes = map (name: den.aspects.${name}) cascade.alacritty-quake.includes;
-
+    includes = map (name: den.aspects.${name}) (
+      cascade.alacritty-quake.includes
+      ++ [
+        "alacritty"
+        "zellij"
+        "atuin"
+        "blesh"
+      ]
+    );
     homeManager = {
-      # Shared terminal.nix still imports alacritty.nix behind mkIf.
-      # Setting provider makes the include → install edge explicit for Den path.
       imports = [ ../../home/terminal.nix ];
       terminal.provider = "alacritty";
     };
