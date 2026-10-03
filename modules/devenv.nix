@@ -8,6 +8,7 @@ in
     ./packages
     ./hooks/common.nix
 <<<<<<< HEAD
+<<<<<<< HEAD
     # Language tool presets live under presets/<lang>/<category>/ (attrpaths
     # like python.lint.ruff). Old hook/IDE/Serena paths remain as shims and
     # must not be imported here (the loader already applies their project
@@ -25,6 +26,12 @@ in
     # to break.
 >>>>>>> 9b0e804 (chore: drop empty pre-release stdlib compat shims)
 >>>>>>> 9cb15d5 (chore: drop empty pre-release stdlib compat shims)
+=======
+    # Language tool presets live under presets/lang/<lang>/ (per-tool, not
+    # megapresets), applied below via stdlib.devenv.load. No empty compat
+    # shims for the old modules/hooks or modules/ides paths — pre-release,
+    # nothing public to break. presets/examples/ is documentation only.
+>>>>>>> 4a400b5 (docs(stdlib): point writers at per-tool presets/lang)
     ./debtmap/hooks.nix
     ./languages
     ./languages/versions.nix
