@@ -2,6 +2,7 @@
 { lib, ... }:
 let
   presetLib = import ../../stdlib/preset.nix { inherit lib; };
+  shellLib = import ../../stdlib/shell.nix { inherit lib; };
 
   denStub = {
     lib.policy = {
@@ -26,6 +27,19 @@ let
       type = lib.types.lazyAttrsOf lib.types.raw;
       default = { };
     };
+    options.tools.bash.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    options.tools.zsh.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    options.tools.elvish.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    options.shell.preferred = shellLib.preferredOption;
   };
 
   eval =
@@ -38,6 +52,11 @@ let
         extra
       ];
     };
+
+  # Default fixture: bash is the sole enabled shell tool (option optional).
+  withBash = {
+    tools.bash.enable = true;
+  };
 
   sort = names: lib.sort (a: b: a < b) names;
 
@@ -183,37 +202,99 @@ in
     };
   };
 
-  testAlacrittyAtuinRequiresBothTools = {
+  testAlacrittyAtuinSingleShellOptionOptional = {
     expr =
       let
-        ok = (eval (import ../../presets/alacritty-atuin.nix) { }).config.presets.alacritty-atuin.result;
-        dropped = presetLib.mkPreset {
-          name = "alacritty-atuin";
-          tools = [ "atuin" ];
-          requires = [
-            {
-              assertion = cfg: builtins.elem "blesh" (cfg.presets.alacritty-atuin.tools or [ ]);
-              message = "alacritty-atuin requires the blesh tool to be enabled";
-            }
-          ];
-          extraOptions.tools = lib.mkOption {
-            type = lib.types.listOf lib.types.str;
-            default = [ "atuin" ];
-          };
-        };
+        ok = (eval (import ../../presets/alacritty-atuin.nix) withBash).config.presets.alacritty-atuin;
+        resolved = shellLib.resolve withBash ok.shell;
       in
       {
-        inherit (ok) applied;
-        tools = sort ok.includeTools;
-        threw = !(builtins.tryEval (eval dropped { }).config.presets.alacritty-atuin.result).success;
+        inherit (ok.result) applied;
+        tools = sort ok.result.includeTools;
+        shellOption = ok.shell;
+        inherit resolved;
+        blesh = shellLib.shouldInstallBlesh resolved;
       };
     expected = {
       applied = true;
       tools = [
         "atuin"
+        "bash"
         "blesh"
       ];
-      threw = true;
+      shellOption = null;
+      resolved = "bash";
+      blesh = true;
+    };
+  };
+
+  testAlacrittyAtuinMultiShellBleShOnlyBash = {
+    expr =
+      let
+        multi = {
+          tools.bash.enable = true;
+          tools.zsh.enable = true;
+        };
+        onBash =
+          (eval (import ../../presets/alacritty-atuin.nix) (
+            multi // { presets.alacritty-atuin.shell = "bash"; }
+          )).config.presets.alacritty-atuin.result;
+        onZsh =
+          (eval (import ../../presets/alacritty-atuin.nix) (
+            multi // { presets.alacritty-atuin.shell = "zsh"; }
+          )).config.presets.alacritty-atuin.result;
+        missingShell = builtins.tryEval (
+          (eval (import ../../presets/alacritty-atuin.nix) multi).config.presets.alacritty-atuin.result
+        );
+      in
+      {
+        bashTools = sort onBash.includeTools;
+        zshTools = sort onZsh.includeTools;
+        bashHasBlesh = builtins.elem "blesh" onBash.includeTools;
+        zshHasBlesh = builtins.elem "blesh" onZsh.includeTools;
+        mandatory = !missingShell.success;
+      };
+    expected = {
+      bashTools = [
+        "atuin"
+        "bash"
+        "blesh"
+        "zsh"
+      ];
+      zshTools = [
+        "atuin"
+        "bash"
+        "zsh"
+      ];
+      bashHasBlesh = true;
+      zshHasBlesh = false;
+      mandatory = true;
+    };
+  };
+
+  testAlacrittyAtuinNoBashSkipsBlesh = {
+    expr =
+      let
+        zshOnly = {
+          tools.zsh.enable = true;
+        };
+        ok = (eval (import ../../presets/alacritty-atuin.nix) zshOnly).config.presets.alacritty-atuin;
+        resolved = shellLib.resolve zshOnly ok.shell;
+      in
+      {
+        inherit (ok.result) applied;
+        tools = sort ok.result.includeTools;
+        inherit resolved;
+        blesh = builtins.elem "blesh" ok.result.includeTools;
+      };
+    expected = {
+      applied = true;
+      tools = [
+        "atuin"
+        "zsh"
+      ];
+      resolved = "zsh";
+      blesh = false;
     };
   };
 
