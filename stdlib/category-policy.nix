@@ -61,6 +61,7 @@ let
     ];
     python = mkLanguagePolicy "python";
     rust = mkLanguagePolicy "rust";
+    typescript = mkLanguagePolicy "typescript";
   };
 
   policyIds = lib.sort (a: b: a < b) (builtins.attrNames policies);
