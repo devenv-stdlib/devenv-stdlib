@@ -4,17 +4,25 @@
 
 ```bash
 # Latest tagged release (PEP 440). Use this after CI has published tags.
-copier copy <template-git-url> path/to/monorepo
+copier copy --trust <template-git-url> path/to/monorepo
 
 # This checkout, including work that is not tagged yet
-copier copy --vcs-ref HEAD /path/to/devenv4monorepo path/to/monorepo
+copier copy --trust --vcs-ref HEAD /path/to/devenv4monorepo path/to/monorepo
 ```
+
+`--trust` is required. The template runs a task that moves `consumer-flake.nix` onto `flake.nix` so the generated project pins devenv-stdlib.
 
 Copier asks for the devenv shell name and which languages to enable (Rust, Go, Python, JavaScript, TypeScript), then min/max versions, the Rust edition when Rust is on, and the options those languages require. Each max defaults to the latest stable shipped in `includes/toolchain-latest.yml` (from [endoflife.date](https://endoflife.date), aligned so min and max differ in one component). Leave a max empty for no upper bound. Answers are written to `devenv.local.nix`.
 
 Optional [Brave Search](https://brave.com/search/api/) and [Firecrawl](https://www.firecrawl.dev/) API keys are asked (Firecrawl has a free tier). Leave a key empty to skip that MCP. Values go to [SecretSpec](https://devenv.sh/integrations/secretspec/). This template defaults to the dotenv provider (gitignored `.env`, CI-safe). Override with `SECRETSPEC_PROVIDER` or `devenv.local.yaml` (`keyring`, `env`, `onepassword`, …). They are **not** stored in `.copier-answers.yml`. That file keeps `brave_search` and `firecrawl` booleans. An existing destination `.env` is left in place (`_skip_if_exists`).
 
 Commit `.copier-answers.yml` and `devenv.local.nix` in the monorepo. Do not commit `.env`. Do not edit the answers file by hand. Then `./setup.sh` and `devenv shell`. An existing `README.md` is left in place.
+
+## devenv-stdlib
+
+The generated `flake.nix` depends on `github:thedrow/devenv4monorepo/<commit>`, where `<commit>` is the `_commit` Copier stored in `.copier-answers.yml`. `outputs.stdlib` and `outputs.lib` on that pin are one attrset (`mkTool`, `den.load`, `devenv.load`). `mkPreset` is `stdlib/preset.nix` on the same pin. See [Standard library](#stdlib).
+
+`presets/omer.nix` enables the template's preset list by name (`terminal-quake`, `alacritty-atuin`, `ide`, `host-hm-only-guard`, and the language presets). Language presets follow `languages.<lang>.enable` from `devenv.local.nix`. The generated flake loads `"${inputs.devenv-stdlib}/presets"` and `./presets`.
 
 ## User workflow
 
@@ -47,7 +55,7 @@ A generated monorepo is a **copy** of the template, plus your `devenv.local.nix`
 
    ```bash
    copier check-update
-   copier update          # latest Git tag from this project
+   copier update --trust  # latest Git tag from this project
    home-switch            # if home/ changed
    devenv shell           # pick up modules/ and lock from the merge
    ```
@@ -62,9 +70,9 @@ Context compaction is the user-global Ponytail rule plus Headroom MCP (`headroom
 
 ```bash
 cd path/to/monorepo
-copier update                 # latest Git tag
-copier update --vcs-ref HEAD  # template branch
-copier check-update           # report whether a newer tag exists
+copier update --trust                 # latest Git tag
+copier update --trust --vcs-ref HEAD  # template branch
+copier check-update                   # report whether a newer tag exists
 ```
 
 Keep the destination git working tree clean before `copier update`. Inline conflict markers are rejected by the `check-merge-conflicts` hook.

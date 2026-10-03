@@ -18,7 +18,9 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `.cursor/rules/navi-cheatsheets.mdc` | Prefer extending `cheats/*.cheat`; navi syntax; no community-sheet copies |
 | `.agents/skills/` / `skills-lock.json` | 54 vendored Cursor skills (Vercel skills CLI); `README.md` there lists sources and licenses |
 | `cheats/` | Repo-local [navi](https://github.com/denisidoro/navi) sheets (`NAVI_PATH` in `devenv shell`) |
-| `modules/{aspects,den}/` + `flake.nix` | Den aspects / `den.homes` → `homeConfigurations.developer` (import-tree); Phase 5 `den.hosts` stubs + OS classes |
+| `flake.nix` | Moved from `consumer-flake.nix` after copy. Pins `devenv-stdlib` to the template `_commit` and builds Den outputs with `root` = this tree |
+| `presets/omer.nix` | Names of the framework presets this template enables. Bodies stay on the `devenv-stdlib` pin |
+| `modules/{aspects,den}/` + Den outputs | Den aspects / `den.homes` → `homeConfigurations.developer` (import-tree); Phase 5 `den.hosts` stubs + OS classes |
 | `home/` | Home Manager modules (imported by Den aspects) |
 | `home.nix` | Compat stub only — do not use `-f home.nix` |
 | `home/navi.nix` | `NAVI_PATH` → pinned [denisidoro/cheats](https://github.com/denisidoro/cheats) |
@@ -35,3 +37,5 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `.github/workflows/test.yml` | Written by devenv on `enterShell`; **commit** this file |
 
 An existing destination `README.md` is left in place. This documentation site is not copied into the monorepo; use [devenv4monorepo.github.io](https://devenv4monorepo.github.io/).
+
+`stdlib/`, `packaging/`, the publisher `flake.nix`, and `flake.lock` are template-only. The consumer flake reads the framework from the `devenv-stdlib` input. Details: [Standard library](#stdlib).

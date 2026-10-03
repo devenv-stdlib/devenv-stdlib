@@ -2,7 +2,7 @@
 
 This repository is a [Copier](https://copier.readthedocs.io/en/stable) template for a Linux monorepo: a [devenv](https://devenv.sh/) project toolchain plus a [Home Manager](https://nix-community.github.io/home-manager/) module for the user-global terminal, Starship, and Cursor.
 
-A monorepo copies the template once, then runs `copier update` when a new tagged release ships. Clone this repo only to develop the template itself; see the [Contribution guide](#contributing).
+A monorepo copies the template once (`copier copy --trust`), then runs `copier update --trust` when a new tagged release ships. Clone this repo only to develop the template itself; see the [Contribution guide](#contributing).
 
 The dropdown terminal is **not** part of the devenv PATH: you already have a terminal open to enter it.
 
@@ -22,6 +22,7 @@ This template splits those problems:
 | Compilers, linters, and hooks for *this* tree | devenv (`devenv.nix` + generated `devenv.local.nix`) |
 | Terminal, prompt, and editor on every host | Home Manager (Den `home-switch`) |
 | CI that matches the versions developers can use | `supported.<lang>.*` and a generated `test.yml` |
+| Shared tools and presets | devenv-stdlib flake input (`stdlib` / `lib`) |
 
 Languages stay **off** in this template repo so work on the skeleton does not pull Rust, Go, Python, or Node. Generated monorepos turn them on through the Copier questionnaire.
 

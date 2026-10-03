@@ -1,13 +1,13 @@
 % copier, apply
 
 # Copy monorepo from latest tagged template release
-copier copy <template_url> <dest>
+copier copy --trust <template_url> <dest>
 
 $ template_url: echo 'https://github.com/devenv4monorepo/devenv4monorepo.git'
 $ dest: echo 'path/to/monorepo'
 
 # Copy from local devenv4monorepo checkout (unreleased template work)
-copier copy --vcs-ref HEAD <template_dir> <dest>
+copier copy --trust --vcs-ref HEAD <template_dir> <dest>
 
 $ template_dir: echo '/path/to/devenv4monorepo'
 $ dest: echo 'path/to/monorepo'
@@ -24,10 +24,10 @@ devenv shell
 copier check-update
 
 # Update monorepo from latest template Git tag (keep working tree clean)
-copier update
+copier update --trust
 
 # Update from template branch (unreleased template work)
-copier update --vcs-ref HEAD
+copier update --trust --vcs-ref HEAD
 
 # Pick up home/ and modules/ after template merge
 home-switch
