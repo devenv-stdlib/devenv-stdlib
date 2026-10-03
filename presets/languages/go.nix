@@ -1,9 +1,9 @@
-{ lib, stdlib }:
+{ lib, ... }:
 let
   project = import ../../modules/lib/project.nix { inherit lib; };
   versionPolicy = import ./_version-policy.nix { inherit lib; };
 in
-stdlib.mkPreset {
+{
   name = "go";
   description = "Go hooks, IDE pack, Serena, debtmap, and CI matrix inputs.";
   when = cfg: (cfg.languages.go or { }).enable or false;

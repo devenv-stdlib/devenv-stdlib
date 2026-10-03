@@ -1,10 +1,10 @@
-{ lib, stdlib }:
+{ lib, ... }:
 let
   project = import ../../modules/lib/project.nix { inherit lib; };
   shared = import ./_js-shared.nix { inherit lib; };
   bundlers = project.typescriptBundlers;
 in
-stdlib.mkPreset {
+{
   name = "typescript";
   description = "TypeScript hooks, shared TS IDE pack, Serena, debtmap, and CI matrix inputs.";
   when = cfg: (cfg.languages.typescript or { }).enable or false;
