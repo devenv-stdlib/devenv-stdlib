@@ -269,16 +269,16 @@ let
       # Category policy: omit `when` to inherit category availability; category
       # requires are always appended (fail closed if when is forced true).
       bound = categoryPolicy.bindPreset {
-        path = decl.path;
-        when = if decl ? when then decl.when else null;
+        inherit (decl) path;
+        when = decl.when or null;
         requires = decl.requires or [ ];
       };
       # P2 realize throws when strict requirements fail. Non-strict failures
       # come back as warnings and applied = false.
       decision = presetLib.realize {
         inherit (decl) name;
-        when = bound.when;
-        requires = bound.requires;
+        inherit (bound) when;
+        inherit (bound) requires;
         tools = decl.tools or [ ];
         cfg = config;
         enable = if enable == null then true else enable;

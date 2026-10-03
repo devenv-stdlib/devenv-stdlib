@@ -378,8 +378,8 @@ in
       strict' = if strict == null then true else strict;
       result = realize {
         name = presetId;
-        when = bound.when;
-        requires = bound.requires;
+        inherit (bound) when;
+        inherit (bound) requires;
         inherit
           tools
           exclude
