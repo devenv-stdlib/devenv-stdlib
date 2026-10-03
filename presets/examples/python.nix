@@ -17,9 +17,8 @@
 #       python.ide
 #       python.supported
 #     ];
-#     # Thin tool presets declare tools via attrpath segments, e.g.:
-#     # tools = [ [ "python" "lint" "pyright" ] ];
-#     # or tool refs: tools = [ tools.python.lint.pyright ];
+#     # Thin tool presets declare tools via attrpath refs, e.g.:
+#     # tools = [ tools.python.lint.pyright ];
 #   }
 #
 # With the devenv loader, the same building blocks are separate presets

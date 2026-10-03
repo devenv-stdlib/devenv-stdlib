@@ -3,34 +3,22 @@
 let
   presetLib = import ../../stdlib/preset.nix { inherit lib; };
   inherit (presetLib) mkPreset normalizeTool;
+  toolLib = import ../../stdlib/tool.nix { inherit lib; };
+  loadLib = import ../../stdlib/load.nix { inherit lib; };
   shell = import ../../stdlib/shell.nix { inherit lib; };
+  tools = toolLib.refsFromSpecs (toolLib.specs (loadLib.discover [ ../../tools ]));
 
   resolvedOf = cfg: shell.resolve cfg cfg.presets.terminal.alacritty-atuin.shell;
-
-  # Shell leaf names stay strings for shell.policyShells; wrap as attrpath segments.
-  shellPath = name: [
-    "shell"
-    name
-  ];
 
   toolsFor =
     cfg:
     let
       resolved = resolvedOf cfg;
-      shells = map shellPath (shell.policyShells cfg resolved);
+      shells = map (name: tools.shell.${name}) (shell.policyShells cfg resolved);
     in
     shells
-    ++ [
-      [
-        "shell"
-        "history"
-        "atuin"
-      ]
-    ]
-    ++ lib.optional (shell.shouldInstallBlesh resolved) [
-      "shell"
-      "blesh"
-    ];
+    ++ [ tools.shell.history.atuin ]
+    ++ lib.optional (shell.shouldInstallBlesh resolved) tools.shell.blesh;
 
   namesOf = cfg: map (t: (normalizeTool t).name) (toolsFor cfg);
 in

@@ -56,9 +56,11 @@ includes = with presets; [
   python.lint.ruff
   terminal.quake
 ];
+
+tools = [ tools.python.lint.pyright ];
 ```
 
-`mkPreset includes` rejects string literals. `stdlib/preset.nix` exports `mkRef` / `refsFromPaths` for the `with presets; …` registry.
+`mkPreset includes` and `tools` reject string literals. Prefer explicit `tools.<attrpath>` over `with tools;` when a binding would shadow the registry. `stdlib/preset.nix` exports `mkRef` / `refsFromPaths` for the `with presets; …` registry.
 
 ## Categories
 
@@ -151,10 +153,10 @@ nixpkgs.follows = "devenv-stdlib/nixpkgs";
 
 `terminal.quake`, `terminal.alacritty-atuin`, `ide`, `host.hm-only-guard`.
 
-Language support is **not** a megapreset named Python/Rust/…. Local language leaves are first-class `mkTool` modules under `tools/lang/<lang>/…` (same public API as global tools: `tools.<name>.enable`). Thin framework presets under `presets/<lang>/<category>/` keep attrpath identity (`python.lint.ruff`, `rust.lint.rustfmt`, …) and usually only declare `tools = [ "…" ]` (plus an explicit `when` when needed); language gating comes from the category policy, not a copied `when` on every leaf. When applied, thin presets set `tools.<name>.enable = true`. Non-tool presets (serena, debtmap, ide, supported, bundler, ci presets, fixtures, …) stay as presets. Copier still decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
+Language support is **not** a megapreset named Python/Rust/…. Local language leaves are first-class `mkTool` modules under `tools/lang/<lang>/…` (same public API as global tools: `tools.<name>.enable`). Thin framework presets under `presets/<lang>/<category>/` keep attrpath identity (`python.lint.ruff`, `rust.lint.rustfmt`, …) and declare `tools = [ tools.python.lint.ruff ]` (plus an explicit `when` when needed); language gating comes from the category policy, not a copied `when` on every leaf. When applied, thin presets set `tools.<name>.enable = true`. Non-tool presets (serena, debtmap, ide, supported, bundler, ci presets, fixtures, …) stay as presets. Copier still decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
 
 ## Community tools and presets
 
 Tool files under `tools/` are Home Manager modules. They call `stdlib/tool.nix` with `install.kind` (`nix`, `catalog`, `hm-program`, `vscode-extension`, or `docker-image`) and `upgrade` (`flake`, `catalog`, or `self`). `stdlib.den.load` reads that tree.
 
-Preset files under `presets/` call `mkPreset` from `stdlib/preset.nix` (`path`, `when`, `requires`, `tools`, `includes`). Default is one preset per tool; bundle only when tools must ship together. `includes` takes attrpath refs (`with presets; [ python.lint.ruff ]`), not string literals. `mkPreset` is not on the flake `stdlib` attrset.
+Preset files under `presets/` call `mkPreset` from `stdlib/preset.nix` (`path`, `when`, `requires`, `tools`, `includes`). Default is one preset per tool; bundle only when tools must ship together. `includes` takes attrpath refs (`with presets; [ python.lint.ruff ]`); `tools` takes tool attrpath refs (`tools = [ tools.python.lint.pyright ]`), not string literals. Prefer explicit `tools.<attrpath>` over `with tools;` when a `python` (or other) binding would shadow the registry. `mkPreset` is not on the flake `stdlib` attrset.
