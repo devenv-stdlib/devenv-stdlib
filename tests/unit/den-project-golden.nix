@@ -1,5 +1,5 @@
 # Phase 4: Den/project goldens — aspect includes + pure helpers (python-on).
-{ lib, ... }:
+_:
 let
   flake = builtins.getFlake (toString ../..);
   golden = flake.denProjectGolden;
