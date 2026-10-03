@@ -25,6 +25,7 @@ let
     ++ names "catalog" stdlib.catalog
     ++ names "categories" stdlib.categories
     ++ names "categoryPolicy" stdlib.categoryPolicy
+    ++ names "categoryWarnings" stdlib.categoryWarnings
     ++ names "harness" stdlib.harness
     ++ names "shell" stdlib.shell
     ++ names "log" stdlib.log
@@ -216,6 +217,15 @@ in
       "categoryPolicy.serviceAvailable"
       "categoryPolicy.supported"
       "categoryPolicy.toolAssertions"
+      "categoryWarnings"
+      "categoryWarnings.categoryHasPrefix"
+      "categoryWarnings.checks"
+      "categoryWarnings.mkWarning"
+      "categoryWarnings.module"
+      "categoryWarnings.optionsModule"
+      "categoryWarnings.pathHasPrefix"
+      "categoryWarnings.unusedPaths"
+      "categoryWarnings.unusedWarnings"
       "debtmap"
       "debtmap.defaultGodObject"
       "debtmap.godLimitsToml"

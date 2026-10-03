@@ -120,6 +120,8 @@ let
       tools ? { },
       gitHooks ? { },
       matrix ? null,
+      # Dotted category paths available but unused (stdlib.categoryWarnings).
+      unusedCategories ? [ ],
     }:
     {
       presets = presetInventory presets;
@@ -128,6 +130,7 @@ let
         enabled = enabledHookNames gitHooks;
       };
       matrix = if matrix == null then null else matrixInventory matrix;
+      unusedCategories = sort unusedCategories;
     };
 
   formatSection =
@@ -175,6 +178,7 @@ let
       ++ formatSection "Inert presets (triggered, not applied)" (inv.presets.inert or [ ])
       ++ formatSection "Enabled tools" (inv.tools.enabled or [ ])
       ++ formatSection "Enabled git-hooks / pre-commit" (inv.gitHooks.enabled or [ ])
+      ++ formatSection "Unused available categories" (inv.unusedCategories or [ ])
       ++ formatMatrix (inv.matrix or null)
     );
 
@@ -198,6 +202,7 @@ let
       log.debug' "stdlib.report inventory" {
         applied = builtins.length (inv.presets.applied or [ ]);
         hooks = builtins.length (inv.gitHooks.enabled or [ ]);
+        unusedCategories = builtins.length (inv.unusedCategories or [ ]);
         matrixEmpty = (inv.matrix or { }).empty or null;
       } inv;
 in
