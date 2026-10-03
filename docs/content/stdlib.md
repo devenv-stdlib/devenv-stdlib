@@ -99,7 +99,7 @@ OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.
 
 `stdlib.report` builds an inventory of applied presets (nested attrpaths like `python.lint.ruff`), enabled tools, enabled `git-hooks` / pre-commit hooks, and the CI build matrix. The devenv loader forces that summary through module `warnings` and a Nix-built `enterShell` `printf` (no wrapper scripts). Toggle with `stdlib.report.enable` and `stdlib.report.enterShell`.
 
-The language/OS `test.yml` matrix strategy is the composable preset `presets/ci/github_actions/language-matrix.nix` (attrpath `ci.github_actions.language-matrix`), not a megapreset named “CI”.
+The language/OS `test.yml` matrix strategy is the composable preset `presets/ci/github_actions/language-matrix.nix` (attrpath `ci.github_actions.language-matrix`).
 
 ## Loaders
 
