@@ -73,6 +73,7 @@ let
           children.linters = n "bundle" "Go linters and formatters." { };
         };
         haskell = n "bundle" "Haskell tools. No framework Haskell tool presets yet." {
+          categoryPolicy = "haskell";
           children.linters = n "bundle" "Haskell linters and formatters." { };
         };
         javascript = n "bundle" "JavaScript tools." {
@@ -80,6 +81,7 @@ let
           children.linters = n "bundle" "JavaScript linters and formatters." { };
         };
         nix = n "bundle" "Nix tools." {
+          categoryPolicy = "nix";
           children.linters = n "bundle" "Nix linters and formatters." { };
         };
         python = n "bundle" "Python tools." {

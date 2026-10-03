@@ -54,11 +54,13 @@ let
   # categoryPolicy on lang.<id> in categories.nix.
   policies = {
     go = mkLanguagePolicy "go";
+    haskell = mkLanguagePolicy "haskell";
     javascript = mkLanguagePolicy "javascript";
     javascript-or-typescript = mkAnyLanguagePolicy [
       "javascript"
       "typescript"
     ];
+    nix = mkLanguagePolicy "nix";
     python = mkLanguagePolicy "python";
     rust = mkLanguagePolicy "rust";
     typescript = mkLanguagePolicy "typescript";
