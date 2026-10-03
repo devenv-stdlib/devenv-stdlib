@@ -8,6 +8,7 @@ let
   presetLib = import ../../stdlib/preset.nix { inherit lib; };
   toolLib = import ../../stdlib/tool.nix { inherit lib; };
 
+  goPolicy = categoryPolicy.policies.go;
   pythonPolicy = categoryPolicy.policies.python;
   rustPolicy = categoryPolicy.policies.rust;
 

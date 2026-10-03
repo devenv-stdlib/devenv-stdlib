@@ -74,11 +74,11 @@ Profilers are not one flat node. `profilers.cpu` and `profilers.memory` are sepa
 
 `stdlib/category-policy.nix` (exported as `stdlib.categoryPolicy`) declares **category-wide** prerequisites once per namespaced language category. Enabling any preset under `<lang>.*` or tool under `lang.<lang>.*` requires that category’s toolchain to be available — leaves do not copy the same `when` / `requires` clause.
 
-**Wired languages:** each of `python` and `rust` is available when `languages.<id>.enable` is true **or** `stdlib.categoryPolicies.<id>.available = true` (explicit override when the toolchain is provided outside devenv `languages.*`). The matching `lang.<id>` node sets `categoryPolicy = "<id>"`; descendants inherit.
+**Wired languages:** each of `go`, `python`, and `rust` is available when `languages.<id>.enable` is true **or** `stdlib.categoryPolicies.<id>.available = true` (explicit override when the toolchain is provided outside devenv `languages.*`). The matching `lang.<id>` node sets `categoryPolicy = "<id>"`; descendants inherit.
 
 | Surface | Enforcement |
 | --- | --- |
-| Presets (`python.lint.ruff`, `rust.lint.clippy`, …) | Omit `when` → inherit category `available` as `when`. Category `requires` are always appended (strict throw / warn+inert via existing `realize`). |
+| Presets (`python.lint.ruff`, `rust.lint.clippy`, `go.lint.gofmt`, …) | Omit `when` → inherit category `available` as `when`. Category `requires` are always appended (strict throw / warn+inert via existing `realize`). |
 | Tools (`tools.ruff` under `lang.python.linters`, …) | When `tools.<name>.enable`, module `assertions` require category availability. |
 
 To add another language category: register it in `categoryPolicy.policies` (or `mkLanguagePolicy "<id>"`) and set `categoryPolicy = "<id>"` on `lang.<id>` in `categories.nix`. Leaf presets under `presets/<id>/` can omit the duplicated language `when`.

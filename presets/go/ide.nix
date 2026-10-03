@@ -1,3 +1,4 @@
+# when inherits go category policy (languages.go.enable or override).
 { lib, ... }:
 let
   project = import ../../modules/lib/project.nix { inherit lib; };
@@ -8,7 +9,6 @@ in
     "ide"
   ];
   description = "Go VS Code / Cursor extension pack and format-on-save defaults.";
-  when = cfg: (cfg.languages.go or { }).enable or false;
   project.stdlib.lang.go = {
     vscodeIds = project.vscodeLanguageIds.go;
     extensionSet = "go";
