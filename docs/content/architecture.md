@@ -14,7 +14,7 @@ host (Ubuntu 24.04 or 26.04 LTS)  --home-switch-->  user profile (terminal, Curs
 
 ## Three layers
 
-**Template (this git repo).** Copier questions (`copier.yml`), the toolchain catalog, the docs site, and the shared Nix modules. You develop the template here. `docs/` and `.github/workflows/pages.yml` stay here; Copier does not copy them into monorepos.
+**Template (this git repo).** Copier questions (`copier.yml`), the toolchain catalog, the docs site, and the shared Nix modules. The framework import path is [`stdlib/`](#stdlib) (flake output `stdlib`). You develop the template here. `docs/` and `.github/workflows/pages.yml` stay here; Copier does not copy them into monorepos.
 
 **Monorepo (the destination).** After `copier copy`, the tree has `devenv.nix`, `devenv.yaml`, `modules/` (devenv barrel + Den `aspects/` / `den/` via import-tree), Den `flake.nix`, `setup.sh`, and a generated `devenv.local.nix`. `devenv shell` is the project toolchain: git hooks, language versions, generated `.github/workflows/test.yml`. Leaving the directory (or `direnv`) drops that PATH.
 
