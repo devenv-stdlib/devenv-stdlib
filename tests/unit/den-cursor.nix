@@ -37,10 +37,7 @@ in
     expr =
       let
         developerIncludes = [ ]; # cursor aspect not listed
-        reachable =
-          lib.concatMap (
-            name: [ name ] ++ (includesOf name)
-          ) developerIncludes;
+        reachable = lib.concatMap (name: [ name ] ++ (includesOf name)) developerIncludes;
       in
       reachable;
     expected = [ ];
@@ -50,9 +47,7 @@ in
     expr =
       let
         developerIncludes = [ "cursor" ];
-        reachable = lib.unique (
-          lib.concatMap (name: [ name ] ++ (includesOf name)) developerIncludes
-        );
+        reachable = lib.unique (lib.concatMap (name: [ name ] ++ (includesOf name)) developerIncludes);
       in
       lib.sort (a: b: a < b) reachable;
     expected = [

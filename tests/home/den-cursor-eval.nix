@@ -21,9 +21,7 @@ assert must "cursor-off: no cursor option or disabled" (
   !(offCfg ? cursor) || !offCfg.cursor.enable
 );
 assert must "cursor-off: no llmContext or disabled" (
-  !(offCfg ? cursor)
-  || !(offCfg.cursor ? llmContext)
-  || !offCfg.cursor.llmContext.enable
+  !(offCfg ? cursor) || !(offCfg.cursor ? llmContext) || !offCfg.cursor.llmContext.enable
 );
 assert must "cascade metadata lists llm" (
   builtins.elem "cursor-llm" flake.denCursorCascade.cursor.includes
