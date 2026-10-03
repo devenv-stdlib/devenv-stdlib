@@ -56,6 +56,9 @@ jobs:
 
       - name: Test devenv
         # --show-output: devenv tasks hide captured stdout unless showOutput / this flag
+        # GITHUB_TOKEN: nested act (mise ubi installs) hits api.github.com without it → 403.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: devenv tasks run --show-output devenv:test-devenv
 
       - name: Upload JUnit reports
