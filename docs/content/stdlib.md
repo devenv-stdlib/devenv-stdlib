@@ -87,6 +87,18 @@ Shared JS/TS presets under `javascript.*` (`javascript.lint.prettier`, `javascri
 
 To add another language after a devenv bump: append the id to `stdlib/devenv-supported.nix` and add the matching `tools/lang/<id>/` + `presets/<id>/` README scaffolds. Policies and `lang.<id>` nodes are generated from that list.
 
+## Unused category warnings
+
+`stdlib/category-warnings.nix` (exported as `stdlib.categoryWarnings`) warns when a language or service category is **available** but **unused**: no enabled tool under that category prefix and no applied preset under the matching attrpath.
+
+| Category path | Preset attrpath | Availability |
+| --- | --- | --- |
+| `lang.<id>` | `<id>.*` | `languages.<id>.enable` or `categoryPolicies.<id>.available` |
+| `lang.<id>.linters` | `<id>.lint.*` | same as `lang.<id>` |
+| `services.<id>` | `services.<id>.*` | `services.<id>.enable` or `categoryPolicies."services.<id>".available` |
+
+Warnings go through module `warnings`, `stdlib.log.warn'` during the status inventory, and the report section **Unused available categories**. Opt out with `stdlib.categoryWarnings.enable = false`. Optional tool inventory: `stdlib.categoryWarnings.toolIndex` (`[ { name, category, enable } ]`) so enabled tools count as usage.
+
 ## Coding harnesses
 
 `stdlib/harness.nix` is the shared foundation from [issue #32](https://github.com/thedrow/devenv4monorepo/issues/32): option shapes, a config path under `$HOME`, install kinds (`nix`, `catalog`, `self`), and a split between a devenv `project` payload and a Home Manager payload.

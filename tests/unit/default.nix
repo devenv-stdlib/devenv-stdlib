@@ -27,6 +27,7 @@ in
 // (import ./stdlib-tools.nix harness)
 // (import ./stdlib-presets.nix harness)
 // (import ./stdlib-category-policy.nix harness)
+// (import ./stdlib-category-warnings.nix harness)
 // (import ./presets-devenv.nix harness)
 // (import ./stdlib-packaging.nix harness)
 // (import ./stdlib-report.nix harness)
