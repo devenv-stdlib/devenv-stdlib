@@ -1,10 +1,10 @@
+# when inherits rust category policy (languages.rust.enable or override).
 _: {
   path = [
     "rust"
     "lint"
     "clippy"
   ];
-  description = "clippy git-hook when languages.rust.enable.";
-  when = cfg: (cfg.languages.rust or { }).enable or false;
+  description = "clippy git-hook when Rust is available.";
   tools = [ "clippy" ];
 }
