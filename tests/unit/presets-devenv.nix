@@ -124,6 +124,28 @@ in
     };
   };
 
+  testPythonLintPyrightToolAttrpath = {
+    expr =
+      let
+        tools = devenvLoad.refsOfTools [ ../../tools ];
+        normalized =
+          (import ../../stdlib/preset.nix { inherit lib; }).normalizeTool
+            tools.python.lint.pyright;
+      in
+      {
+        path = tools.python.lint.pyright.path;
+        inherit (normalized) name;
+      };
+    expected = {
+      path = [
+        "python"
+        "lint"
+        "pyright"
+      ];
+      name = "pyright";
+    };
+  };
+
   testCiGithubActionsLanguageMatrixAttrpath = {
     expr =
       let
@@ -491,7 +513,6 @@ in
         inherit
           (import ../../presets/fixtures/postgres.nix {
             inherit lib;
-            stdlib = import ../../stdlib/preset.nix { inherit lib; };
           })
           tools
           ;
@@ -502,7 +523,12 @@ in
       onPackages = [ "usql-fixture" ];
       onExt = "mtxr.sqltools";
       onRec = true;
-      tools = [ "usql" ];
+      tools = [
+        [
+          "data"
+          "usql"
+        ]
+      ];
     };
   };
 

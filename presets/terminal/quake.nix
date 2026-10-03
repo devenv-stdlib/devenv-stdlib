@@ -2,6 +2,9 @@
 { lib, ... }:
 let
   inherit (import ../../stdlib/preset.nix { inherit lib; }) mkPreset;
+  toolLib = import ../../stdlib/tool.nix { inherit lib; };
+  loadLib = import ../../stdlib/load.nix { inherit lib; };
+  tools = toolLib.refsFromSpecs (toolLib.specs (loadLib.discover [ ../../tools ]));
 in
 {
   imports = [
@@ -24,7 +27,7 @@ in
         '';
       };
 
-      tools = cfg: [ cfg.presets.terminal.quake.provider ];
+      tools = cfg: [ tools.terminal.${cfg.presets.terminal.quake.provider} ];
 
       configure = cfg: {
         terminal.provider = cfg.presets.terminal.quake.provider;

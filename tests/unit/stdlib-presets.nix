@@ -434,6 +434,35 @@ in
     };
   };
 
+  testToolsRejectStringLiterals = {
+    expr =
+      let
+        toolLib = import ../../stdlib/tool.nix { inherit lib; };
+        tools = toolLib.refsFromPaths [
+          [
+            "python"
+            "lint"
+            "pyright"
+          ]
+        ];
+        bad = builtins.tryEval (presetLib.normalizeTool "pyright");
+        good = presetLib.normalizeTool tools.python.lint.pyright;
+      in
+      {
+        rejectsString = !bad.success;
+        inherit (good) name path;
+      };
+    expected = {
+      rejectsString = true;
+      name = "pyright";
+      path = [
+        "python"
+        "lint"
+        "pyright"
+      ];
+    };
+  };
+
   testRefsFromPathsAreAttrpaths = {
     expr = {
       ruff = presets.python.lint.ruff.path;

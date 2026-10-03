@@ -1,8 +1,8 @@
 # Example composition only — not loaded by modules/devenv.nix.
 # Shows how a consumer assembles Python tool presets via attrpath includes.
 #
-# Building blocks keep tool hierarchy via attrpaths (python.lint.ruff), not
-# flat string literals:
+# Building-block presets and their tools use category attrpaths, not string
+# literals:
 #
 #   mkPreset {
 #     path = [ "my" "python" ];
@@ -17,6 +17,8 @@
 #       python.ide
 #       python.supported
 #     ];
+#     # Thin tool presets declare tools the same way, e.g.:
+#     # tools = with tools; [ python.lint.pyright ];
 #   }
 #
 # With the devenv loader, the same building blocks are separate presets

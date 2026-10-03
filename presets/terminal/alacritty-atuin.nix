@@ -1,18 +1,29 @@
 # Atuin (+ ble.sh on bash). Shell option is mandatory unless exactly one shell tool is on.
 { lib, ... }:
 let
-  inherit (import ../../stdlib/preset.nix { inherit lib; }) mkPreset;
+  presetLib = import ../../stdlib/preset.nix { inherit lib; };
+  inherit (presetLib) mkPreset normalizeTool;
   shell = import ../../stdlib/shell.nix { inherit lib; };
+  toolLib = import ../../stdlib/tool.nix { inherit lib; };
+  loadLib = import ../../stdlib/load.nix { inherit lib; };
+  tools = toolLib.refsFromSpecs (toolLib.specs (loadLib.discover [ ../../tools ]));
 
   resolvedOf = cfg: shell.resolve cfg cfg.presets.terminal.alacritty-atuin.shell;
+
+  # Shell leaf names stay strings for shell.policyShells; wrap as tool refs.
+  shellRef = name: tools.shell.${name};
 
   toolsFor =
     cfg:
     let
       resolved = resolvedOf cfg;
-      shells = shell.policyShells cfg resolved;
+      shells = map shellRef (shell.policyShells cfg resolved);
     in
-    shells ++ [ "atuin" ] ++ lib.optional (shell.shouldInstallBlesh resolved) "blesh";
+    shells
+    ++ [ tools.shell.history.atuin ]
+    ++ lib.optional (shell.shouldInstallBlesh resolved) tools.shell.blesh;
+
+  namesOf = cfg: map (t: (normalizeTool t).name) (toolsFor cfg);
 in
 {
   imports = [
@@ -35,12 +46,12 @@ in
           message = "presets.terminal.alacritty-atuin.shell is required unless exactly one of tools.{bash,zsh,elvish} is enabled";
         }
         {
-          assertion = cfg: builtins.elem "atuin" (toolsFor cfg);
+          assertion = cfg: builtins.elem "atuin" (namesOf cfg);
           message = "terminal.alacritty-atuin requires the atuin tool";
         }
         {
           assertion =
-            cfg: !(shell.shouldInstallBlesh (resolvedOf cfg)) || builtins.elem "blesh" (toolsFor cfg);
+            cfg: !(shell.shouldInstallBlesh (resolvedOf cfg)) || builtins.elem "blesh" (namesOf cfg);
           message = "terminal.alacritty-atuin requires blesh when the resolved shell is bash";
         }
       ];

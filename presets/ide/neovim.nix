@@ -4,6 +4,9 @@
 { lib, ... }:
 let
   inherit (import ../../stdlib/preset.nix { inherit lib; }) mkPreset;
+  toolLib = import ../../stdlib/tool.nix { inherit lib; };
+  loadLib = import ../../stdlib/load.nix { inherit lib; };
+  tools = toolLib.refsFromSpecs (toolLib.specs (loadLib.discover [ ../../tools ]));
 in
 {
   imports = [
@@ -13,7 +16,7 @@ in
         "neovim"
       ];
       description = "Enable the Neovim tool (nix-community/nixvim Home Manager module).";
-      tools = [ "neovim" ];
+      tools = with tools; [ ide.neovim ];
     })
   ];
 }
