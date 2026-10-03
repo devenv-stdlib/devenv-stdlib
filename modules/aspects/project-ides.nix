@@ -1,6 +1,6 @@
 # Project IDE / sync aspects (Phase 2 W2.4).
 # vscode recommendations + cursor-sync-extensions on enterShell.
-# Writers live in presets/lang/<lang>/*.nix (stdlib.devenv.load); this DAG is
+# Writers live in presets/<lang>/<category>/*.nix (stdlib.devenv.load); this DAG is
 # the composition surface.
 { den, ... }:
 let

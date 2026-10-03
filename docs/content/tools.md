@@ -208,7 +208,7 @@ GNOME extension that drops the terminal from the top of the screen.
 
 ### Cursor
 
-[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager (`home/ides/cursor.nix`) — no website AppImage. The launcher always passes `--no-sandbox` (Chromium only; the store `chrome-sandbox` cannot be root-owned 4755). Agent terminal sandbox is separate: on Ubuntu, `./setup.sh` installs AppArmor profiles under `includes/cursor-agent-sandbox/`. Common extensions (devenv, navi cheatsheet language, Nix IDE, EditorConfig, …) are user-global under `~/.cursor/extensions`. Language packs follow `languages.*` and are installed when you `devenv shell` (`presets/lang/<lang>/*.nix`, `cursor-sync-extensions`). Users may add their own extensions; sync only adds missing links.
+[Cursor](https://cursor.com/) is installed from nixpkgs (`code-cursor`) via Home Manager (`home/ides/cursor.nix`) — no website AppImage. The launcher always passes `--no-sandbox` (Chromium only; the store `chrome-sandbox` cannot be root-owned 4755). Agent terminal sandbox is separate: on Ubuntu, `./setup.sh` installs AppArmor profiles under `includes/cursor-agent-sandbox/`. Common extensions (devenv, navi cheatsheet language, Nix IDE, EditorConfig, …) are user-global under `~/.cursor/extensions`. Language packs follow `languages.*` and are installed when you `devenv shell` (`presets/<lang>/<category>/*.nix`, `cursor-sync-extensions`). Users may add their own extensions; sync only adds missing links.
 
 ```bash
 # skip the editor
