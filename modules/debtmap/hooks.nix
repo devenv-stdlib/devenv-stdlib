@@ -6,6 +6,7 @@
 }:
 let
   project = import ../lib/project.nix { inherit lib; };
+  stdlibDevenv = import ../../stdlib/devenv.nix { inherit lib; };
   nonNix = import ../non-nix/lib.nix { inherit lib; };
   debtmapEntry = nonNix.resolvedByName pkgs "debtmap";
   # binName treats missing catalog.bin as null (normalize), not e.name.
@@ -40,8 +41,12 @@ let
         ''}
         exec ${lib.getExe pkgs.mise} exec -- ${bin} "$@"
       '';
-  languages = config.languages or { };
-  on = project.debtmapLanguages languages != [ ];
+  enabled =
+    if config ? stdlib.lang then
+      stdlibDevenv.debtmapLanguages config.stdlib.lang
+    else
+      project.debtmapLanguages (config.languages or { });
+  on = enabled != [ ];
 in
 {
   git-hooks.hooks.debtmap = {
@@ -50,7 +55,11 @@ in
     description = "Analyze technical debt for enabled languages";
     package = debtmapPkg;
     entry = "${lib.getExe debtmapPkg} analyze . --no-tui --quiet";
-    files = project.debtmapFiles languages;
+    files = project.debtmapFiles (
+      lib.genAttrs enabled (_: {
+        enable = true;
+      })
+    );
     pass_filenames = false;
   };
 }

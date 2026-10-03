@@ -6,7 +6,6 @@
 }:
 let
   project = import ../lib/project.nix { inherit lib; };
-  typescriptOn = (config.languages.typescript or { }).enable or false;
   bundlers = project.typescriptBundlers;
 in
 {
@@ -39,22 +38,15 @@ in
     };
   };
 
-  config.packages =
-    lib.throwIf (project.typescriptBundlerMissing typescriptOn config.typescript.bundler)
-      ''
-        languages.typescript.enable requires typescript.bundler to be one of:
-          ${lib.concatStringsSep " | " bundlers}
-        Use rspack for legacy webpack applications.
-      ''
-      (
-        lib.optionals config.python.extensionToolchain [
-          pkgs.stdenv.cc
-          pkgs.gnumake
-          pkgs.pkg-config
-          pkgs.rustc
-          pkgs.cargo
-        ]
-      );
+  # TypeScript's bundler check is presets/languages/typescript.nix `requires`
+  # (assertion by default; presets.typescript.strict = false warns instead).
+  config.packages = lib.optionals config.python.extensionToolchain [
+    pkgs.stdenv.cc
+    pkgs.gnumake
+    pkgs.pkg-config
+    pkgs.rustc
+    pkgs.cargo
+  ];
 
   # Toolchains stay off in this repo. Generated monorepos enable them
   # via the Copier questionnaire (devenv.local.nix). That also installs matching Cursor

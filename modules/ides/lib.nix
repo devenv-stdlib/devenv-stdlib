@@ -1,130 +1,29 @@
+# Sync script for Cursor and VS Code extension roots.
+# Language packs are chosen by presets/languages/*.nix; this file only
+# materializes the symlink script.
 {
   pkgs,
   lib,
-  config,
 }:
 let
   ext = import ../../home/ides/ext-lib.nix { inherit pkgs; };
-  project = import ../lib/project.nix { inherit lib; };
-
-  languages = config.languages or { };
-  langOn = name: project.langOn languages name;
-  typescriptOn = project.javascriptOn languages;
-
-  selected =
-    lib.optionals (langOn "rust") ext.rust
-    ++ lib.optionals (langOn "go") ext.go
-    ++ lib.optionals (langOn "python") ext.python
-    ++ lib.optionals typescriptOn ext.typescript;
-
-  unwantedRecommendations = project.vscodeUnwanted languages;
-
-  recommendations = project.vscodeAlwaysRecommend ++ map ext.id selected;
-
-  nixSettings = {
-    "nix.enableLanguageServer" = true;
-    "nix.serverPath" = [
-      "devenv"
-      "lsp"
-    ];
-    "[nix]" = {
-      "editor.defaultFormatter" = "jnoortheen.nix-ide";
-      "editor.insertSpaces" = true;
-      "editor.tabSize" = 2;
-    };
-  };
-
-  rustEdition = config.supported.rust.edition or null;
-
-  rustSettings = {
-    "[rust]" = {
-      "editor.defaultFormatter" = "rust-lang.rust-analyzer";
-      "editor.formatOnSave" = true;
-    };
-  }
-  // lib.optionalAttrs (rustEdition != null) {
-    "rust-analyzer.rustfmt.extraArgs" = [
-      "--edition"
-      rustEdition
-    ];
-  };
-
-  goSettings = {
-    "go.useLanguageServer" = true;
-    "[go]" = {
-      "editor.defaultFormatter" = "golang.go";
-      "editor.formatOnSave" = true;
-    };
-  };
-
-  pythonSettings = {
-    "python.languageServer" = "Pylance";
-    "[python]" = {
-      "editor.defaultFormatter" = "charliermarsh.ruff";
-      "editor.formatOnSave" = true;
-      "editor.codeActionsOnSave" = {
-        "source.fixAll.ruff" = "explicit";
-        "source.organizeImports.ruff" = "explicit";
-      };
-    };
-  };
-
-  typescriptSettings = {
-    "eslint.validate" = [
-      "javascript"
-      "javascriptreact"
-      "typescript"
-      "typescriptreact"
-    ];
-    "[typescript]" = {
-      "editor.defaultFormatter" = "esbenp.prettier-vscode";
-      "editor.formatOnSave" = true;
-    };
-    "[typescriptreact]" = {
-      "editor.defaultFormatter" = "esbenp.prettier-vscode";
-      "editor.formatOnSave" = true;
-    };
-    "[javascript]" = {
-      "editor.defaultFormatter" = "esbenp.prettier-vscode";
-      "editor.formatOnSave" = true;
-    };
-    "[javascriptreact]" = {
-      "editor.defaultFormatter" = "esbenp.prettier-vscode";
-      "editor.formatOnSave" = true;
-    };
-  };
-
-  settings =
-    nixSettings
-    // lib.optionalAttrs (langOn "rust") rustSettings
-    // lib.optionalAttrs (langOn "go") goSettings
-    // lib.optionalAttrs (langOn "python") pythonSettings
-    // lib.optionalAttrs typescriptOn typescriptSettings;
-
-  settingsJson = pkgs.writeText "settings.json" (builtins.toJSON settings);
-
-  manifest = pkgs.writeText "ide-ext-manifest" (
-    lib.concatMapStringsSep "\n" (e: "${ext.id e}|${ext.root e}") selected
-  );
 in
 {
-  inherit
-    ext
-    selected
-    recommendations
-    unwantedRecommendations
-    settings
-    settingsJson
-    manifest
-    ;
+  inherit ext;
 
-  # extensionsDir is expanded by the shell ($HOME/...). Only adds missing
-  # symlinks; never deletes user-installed extensions.
   mkSyncScript =
     {
       extensionsDir,
       logPrefix ? "ides",
+      selected,
+      settings,
     }:
+    let
+      settingsJson = pkgs.writeText "settings.json" (builtins.toJSON settings);
+      manifest = pkgs.writeText "ide-ext-manifest" (
+        lib.concatMapStringsSep "\n" (e: "${ext.id e}|${ext.root e}") selected
+      );
+    in
     ''
       set -euo pipefail
       dest_root="${extensionsDir}"

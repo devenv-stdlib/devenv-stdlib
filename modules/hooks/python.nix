@@ -1,27 +1,4 @@
-{
-  pkgs,
-  config,
-  ...
-}:
-let
-  on = (config.languages.python or { }).enable or false;
-  checker = config.pythonTypeChecker or "pyright";
-in
-{
-  git-hooks.hooks = {
-    ruff.enable = on;
-    ruff-format.enable = on;
-    check-python.enable = on;
-    python-debug-statements.enable = on;
-    sort-requirements-txt.enable = on;
-    pyright.enable = on && checker == "pyright";
-    ty = {
-      enable = on && checker == "ty";
-      name = "ty";
-      description = "Astral ty type checker (beta)";
-      package = pkgs.ty;
-      entry = "${pkgs.ty}/bin/ty check";
-      files = "\\.py$";
-    };
-  };
-}
+# Compat shim. Python hook rules live in presets/languages/python.nix and are
+# applied by stdlib.devenv.load from modules/devenv.nix. Do not import this
+# file from the devenv barrel (that would apply the payload twice).
+{ }
