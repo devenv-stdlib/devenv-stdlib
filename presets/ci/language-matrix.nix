@@ -27,6 +27,11 @@
         catalog =
           if builtins.pathExists catalogFile then builtins.fromJSON (builtins.readFile catalogFile) else { };
       };
+      log = (import ../../stdlib {
+        inherit lib;
+        nix-log = null;
+      }).log;
+
       # CI matrix inputs (supported.* and per-language ciMatrix) come from
       # presets/<lang>/supported.nix and related tool presets.
       langOn = name: (config.languages.${name} or { }).enable or false;
@@ -41,20 +46,30 @@
         else
           langOn "javascript" || langOn "typescript";
 
-      snapshot = {
-        inherit
-          pythonOn
-          rustOn
-          goOn
-          javascriptOn
-          ;
-        inherit (config.supported)
-          python
-          rust
-          go
-          javascript
-          ;
-      };
+      snapshot =
+        log.debug' "ci.language-matrix snapshot"
+          {
+            inherit
+              pythonOn
+              rustOn
+              goOn
+              javascriptOn
+              ;
+          }
+          {
+            inherit
+              pythonOn
+              rustOn
+              goOn
+              javascriptOn
+              ;
+            inherit (config.supported)
+              python
+              rust
+              go
+              javascript
+              ;
+          };
 
       problemList = versions.problems snapshot;
 
@@ -63,7 +78,7 @@
       );
     in
     {
-      # Structured matrix snapshot (consumers / status report).
+      # Structured matrix for stdlib.report (devenv evaluator).
       stdlib.markers.ciMatrix = versions.matrixReport snapshot;
 
       scripts.sync-language-versions-workflow.exec = ''

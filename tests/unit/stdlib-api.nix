@@ -26,6 +26,8 @@ let
     ++ names "categories" stdlib.categories
     ++ names "harness" stdlib.harness
     ++ names "shell" stdlib.shell
+    ++ names "log" stdlib.log
+    ++ names "report" stdlib.report
     ++ names "den" stdlib.den
     ++ names "devenv" stdlib.devenv
     ++ names "versions" (stdlib.versions { })
@@ -111,6 +113,17 @@ in
       "harness.presetPath"
       "harness.toolPath"
       "ideExt"
+      "log"
+      "log.debug"
+      "log.debug'"
+      "log.info"
+      "log.info'"
+      "log.trace"
+      "log.trace'"
+      "log.usingNixLog"
+      "log.warn"
+      "log.warn'"
+      "log.warnIf"
       "mkTool"
       "project"
       "project.alwaysOnHookNames"
@@ -127,6 +140,15 @@ in
       "project.vscodeLanguageIds"
       "project.vscodeRecommendations"
       "project.vscodeUnwanted"
+      "report"
+      "report.enabledHookNames"
+      "report.flattenPresetLeaves"
+      "report.formatReport"
+      "report.inventory"
+      "report.logInventory"
+      "report.matrixInventory"
+      "report.mkEnterShellSnippet"
+      "report.mkEvalWarning"
       "shell"
       "shell.category"
       "shell.enableIntegrations"

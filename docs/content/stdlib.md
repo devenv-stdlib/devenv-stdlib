@@ -78,9 +78,15 @@ Profilers are not one flat node. `profilers.cpu` and `profilers.memory` are sepa
 
 OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.com/thedrow/devenv4monorepo/issues/33), [issue #34](https://github.com/thedrow/devenv4monorepo/issues/34), and [issue #35](https://github.com/thedrow/devenv4monorepo/issues/35). This file does not install them. Follow-up tools land at `tools/harness/<name>.nix`.
 
-## CI language matrix
+## Logging
 
-The language/OS `test.yml` matrix strategy is the composable preset `presets/ci/language-matrix.nix` (attrpath `ci.language-matrix`), not a megapreset named “CI”.
+`stdlib.log` is the only logging API for tools and presets (`trace` / `debug` / `info` / `warn` / `warnIf` and the `'` variants). It wraps [nix-log](https://github.com/rvolosatovs/nix-log) privately via `mkLog`. Do **not** import `inputs.nix-log` or the raw nix-log library — nix-log is an implementation detail of `stdlib/log.nix`. Level is gated by `NIX_LOG` (default `WARN`).
+
+## Status report
+
+`stdlib.report` builds an inventory of applied presets (nested attrpaths like `python.lint.ruff`), enabled tools, enabled `git-hooks` / pre-commit hooks, and the CI build matrix. The devenv loader forces that summary through module `warnings` and a Nix-built `enterShell` `printf` (no wrapper scripts). Toggle with `stdlib.report.enable` and `stdlib.report.enterShell`.
+
+The language/OS `test.yml` matrix strategy is the composable preset `presets/ci/language-matrix.nix` (attrpath `ci.language-matrix`) from the prior stack rung.
 
 ## Loaders
 

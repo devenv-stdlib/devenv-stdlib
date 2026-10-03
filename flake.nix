@@ -16,6 +16,8 @@
     den.url = "github:denful/den/v0.18.0";
     # Den templates / battery companion — scoped discovery of modules/{aspects,den}.
     import-tree.url = "github:denful/import-tree/v0.2.0";
+    # Private backend for stdlib.log (not part of the public stdlib API).
+    nix-log.url = "github:rvolosatovs/nix-log";
   };
 
   outputs =
