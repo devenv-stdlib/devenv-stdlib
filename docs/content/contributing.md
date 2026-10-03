@@ -107,7 +107,7 @@ build-act-image              # devenv-act:24.04 for local act
 
 | Suite | Role |
 | --- | --- |
-| `tests/unit/` | nix-unit (versions, hooks, debtmap, vscode helpers, Serena, terminal, …) |
+| `tests/unit/` | nix-unit (versions, hooks, debtmap, vscode helpers, Serena, terminal, stdlib API snapshot, …) |
 | `tests/setup/setup.bats` | `setup.sh` (sources the script; `main` guard) |
 | `tests/copier.bats` | `copier copy` / `update`; answers omit secret keys; not copied into monorepos |
 | `tests/update.bats` | `update` template vs consumer; pin helpers; skills refresher (stubbed `npx`); no live registry |
@@ -175,6 +175,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `home/nix-path.sh` | `nixpkgs=flake:nixpkgs` fallback, drops missing `NIX_PATH` dirs; used by `setup.sh`, `home-switch`, `test-devenv` |
 | `home/docker-rootless.sh` | Default `DOCKER_HOST` to `$XDG_RUNTIME_DIR/docker.sock` |
 | `.env.jinja` | Renders gitignored `.env` when Copier was given those keys |
+| `stdlib/` | Framework API (`default.nix`, `version.nix`, categories, harness foundations). Import path is `stdlib`, not `lib/` |
 | `modules/` | Barrel `devenv.nix` plus topical packages, languages, ides, hooks, debtmap, mise, non-nix, update, test, lib |
 | `hooks/reference-transaction` | Tag guard |
 | `commitlint.config.mjs` / `.releaserc.json` | Commits and releases |
