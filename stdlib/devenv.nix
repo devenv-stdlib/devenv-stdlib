@@ -67,10 +67,7 @@ let
   isPreset =
     value:
     builtins.isAttrs value
-    && (
-      (value ? path && builtins.isList value.path)
-      || (value ? name && builtins.isString value.name)
-    );
+    && ((value ? path && builtins.isList value.path) || (value ? name && builtins.isString value.name));
 
   loadEntry =
     entry:
