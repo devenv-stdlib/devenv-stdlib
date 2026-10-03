@@ -1,6 +1,7 @@
-# File discovery for tool and preset directories.
-# den.load lowers tools/**/*.nix into Den aspects. devenv.load stays empty
-# until preset project payloads exist. Missing roots still return [].
+# File discovery for tool directories.
+# den.load lowers global tools/**/*.nix into Den aspects.
+# Local (project) tools are lowered by stdlib/devenv.nix — never import Den there.
+# Missing roots still return [].
 { lib }:
 rec {
   discoverOne =
@@ -34,21 +35,22 @@ rec {
   # start with `_` (same idea as import-tree's `/_` filter).
   discover = roots: lib.sort (a: b: toString a < toString b) (lib.concatMap discoverOne roots);
 
-  # Den modules for flake.nix. Empty when no tool files are discovered.
+  # Den modules for flake.nix. Global tools only (homeManager payload).
   den =
     roots:
     let
       mkTool = import ./tool.nix { inherit lib; };
       discovered = mkTool.specs (discover roots);
-      tools = lib.listToAttrs (map (d: lib.nameValuePair d.spec.name d) discovered);
+      global = lib.filter (d: d.spec.isGlobal) discovered;
+      tools = lib.listToAttrs (map (d: lib.nameValuePair d.spec.name d) global);
       depFile =
         spec: dep:
         if tools ? ${dep} then
           tools.${dep}.file
         else
-          throw "stdlib.den.load: ${spec.name} depends on unknown tool ${dep}";
+          throw "stdlib.den.load: ${spec.name} depends on unknown global tool ${dep}";
     in
-    if discovered == [ ] then
+    if global == [ ] then
       [ ]
     else
       [
@@ -64,7 +66,4 @@ rec {
           }
         )
       ];
-
-  # Project payloads for the devenv evaluator. Empty until that lowering exists.
-  devenv = _roots: [ ];
 }

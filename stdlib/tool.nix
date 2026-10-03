@@ -1,7 +1,11 @@
 # mkTool — public tool constructor (P1).
 #
-# A tool file is a Home Manager module. Call it with `__stdlibMeta = true`
-# to read the declaration without evaluating the module body.
+# One API for every tool. Internally a tool is global (Home Manager / user
+# profile), local (project / devenv), or both — inferred from which payloads
+# are present. Callers still use mkTool + tools.<name>.enable.
+#
+# A tool file is a module. Call it with `__stdlibMeta = true` to read the
+# declaration without evaluating the module body.
 #
 # P0 owns categories and the loader. This file is the tool schema.
 { lib }:
@@ -14,15 +18,43 @@ let
     "hm-program"
     "vscode-extension"
     "docker-image"
+    # Local-only wiring (git-hooks / project config) with no discrete package pin.
+    "project"
   ];
 
   upgradeKinds = [
     "flake"
     "catalog"
     "self"
+    # No pin to bump; project-scoped hook/config only.
+    "none"
   ];
 
   require = cond: message: if cond then true else throw message;
+
+  hasPayload =
+    spec: attr:
+    let
+      value = spec.${attr} or null;
+    in
+    value != null && value != { };
+
+  # Global = HM profile; local = devenv/project. Same constructor either way.
+  # When payloads are only attached in apply()/applyLocal (common for migrated
+  # HM leaves), infer from install.kind so __stdlibMeta still works.
+  scopesOf =
+    spec:
+    let
+      global = hasPayload spec "homeManager";
+      local = hasPayload spec "project";
+      kind = (spec.install or { }).kind or null;
+    in
+    if global || local then
+      lib.optional global "global" ++ lib.optional local "local"
+    else if kind == "project" then
+      [ "local" ]
+    else
+      [ "global" ];
 
   meta =
     spec:
@@ -34,12 +66,15 @@ let
       upgrade = spec.upgrade or (throw "mkTool ${name}: upgrade is required");
       # categories.resolve throws on an unknown path.
       node = categories.resolve category;
+      scopes = scopesOf spec;
     in
     assert require (builtins.elem kind installKinds)
       "mkTool ${name}: install.kind ${kind} is not one of ${builtins.toString installKinds}";
     assert require (builtins.elem upgrade upgradeKinds)
       "mkTool ${name}: upgrade ${upgrade} is not one of ${builtins.toString upgradeKinds}";
     assert require (node ? cardinality) "mkTool ${name}: unknown category ${category}";
+    assert require (scopes != [ ])
+      "mkTool ${name}: set homeManager (global) and/or project (local) payload";
     assert require (
       kind != "nix" || (install ? attr && builtins.isString install.attr && install.attr != "")
     ) "mkTool ${name}: install.kind = nix requires install.attr (a nixpkgs attribute name)";
@@ -50,13 +85,26 @@ let
     assert require (
       kind != "catalog" || (install ? name && builtins.isString install.name && install.name != "")
     ) "mkTool ${name}: install.kind = catalog requires install.name";
+    assert require (kind != "project" || builtins.elem "local" scopes)
+      "mkTool ${name}: install.kind = project requires a project (local) payload";
     spec
     // {
-      inherit name category;
+      inherit name category scopes;
       categoryNode = node;
       dependsOn = spec.dependsOn or [ ];
+      isGlobal = builtins.elem "global" scopes;
+      isLocal = builtins.elem "local" scopes;
     };
 
+  enableOption =
+    checked:
+    lib.mkOption {
+      type = lib.types.bool;
+      default = checked.defaultEnable or false;
+      description = "Enable the ${checked.name} tool (${checked.category}; ${lib.concatStringsSep "+" checked.scopes}).";
+    };
+
+  # Home Manager / Den leaf (global scope).
   apply =
     moduleArgs: spec:
     let
@@ -65,14 +113,46 @@ let
       rendered = (spec.homeManager or (_: { })) moduleArgs;
       deps = checked.dependsOn;
     in
+    assert require checked.isGlobal
+      "mkTool ${checked.name}: apply is for global (homeManager) tools; use applyLocal for project payloads";
     {
       imports = spec.imports or [ ];
       options = {
-        tools.${checked.name}.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = spec.defaultEnable or false;
-          description = "Enable the ${checked.name} tool (${checked.category}).";
-        };
+        tools.${checked.name}.enable = enableOption checked;
+      }
+      // (spec.options or { });
+      config = lib.mkIf cfgEnable (
+        lib.mkMerge [
+          (lib.optionalAttrs (deps != [ ]) {
+            tools = lib.genAttrs deps (_: {
+              enable = true;
+            });
+            assertions = map (dep: {
+              assertion = moduleArgs.config.tools.${dep}.enable;
+              message = "tools.${checked.name}.enable requires tools.${dep}.enable";
+            }) deps;
+          })
+          rendered
+        ]
+      );
+    };
+
+  # devenv / project leaf (local scope). Never imports Den.
+  applyLocal =
+    moduleArgs: spec:
+    let
+      checked = meta spec;
+      cfgEnable = moduleArgs.config.tools.${checked.name}.enable;
+      raw = spec.project or { };
+      rendered = if builtins.isFunction raw then raw moduleArgs else raw;
+      deps = checked.dependsOn;
+    in
+    assert require checked.isLocal
+      "mkTool ${checked.name}: applyLocal is for local (project) tools";
+    {
+      imports = spec.imports or [ ];
+      options = {
+        tools.${checked.name}.enable = enableOption checked;
       }
       // (spec.options or { });
       config = lib.mkIf cfgEnable (
@@ -104,23 +184,27 @@ let
         upgrade = spec.upgrade or "flake";
         defaultEnable = spec.defaultEnable or false;
         dependsOn = spec.dependsOn or [ ];
+      }
+      // lib.optionalAttrs (spec ? project) { inherit (spec) project; }
+      // lib.optionalAttrs (!(spec ? project && !(spec ? homeManager))) {
+        # Default global install unless the caller only passed project.
+        homeManager =
+          spec.homeManager or (
+            { pkgs, ... }:
+            {
+              home.packages = [ pkgs.${spec.attr} ];
+            }
+          );
       };
     in
     if args.__stdlibMeta or false then
       meta base
+    else if (meta base).isGlobal then
+      apply args base
     else
-      apply args (
-        base
-        // {
-          homeManager =
-            { pkgs, ... }:
-            {
-              home.packages = [ pkgs.${spec.attr} ];
-            };
-        }
-      );
+      applyLocal args base;
 
-  # Read tool declarations without evaluating Home Manager bodies.
+  # Read tool declarations without evaluating Home Manager / devenv bodies.
   specs =
     files:
     let
@@ -147,8 +231,10 @@ in
   inherit
     meta
     apply
+    applyLocal
     nixLeaf
     specs
+    scopesOf
     installKinds
     upgradeKinds
     ;
