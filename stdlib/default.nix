@@ -34,6 +34,7 @@ in
     import ./ide-ext.nix { inherit pkgs devenvExtensionSha256; };
 
   inherit categories;
+  categoryPolicy = import ./category-policy.nix { inherit lib; };
   harness = import ./harness.nix { inherit lib categories; };
   shell = import ./shell.nix { inherit lib; };
 

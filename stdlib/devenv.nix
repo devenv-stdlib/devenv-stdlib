@@ -24,6 +24,7 @@ let
   presetLib = import ./preset.nix { inherit lib; };
   toolLib = import ./tool.nix { inherit lib; };
   loadLib = import ./load.nix { inherit lib; };
+  categoryPolicy = import ./category-policy.nix { inherit lib; };
   projectLib = import ../modules/lib/project.nix { inherit lib; };
   log = import ./log.nix { inherit lib nix-log; };
   report = import ./report.nix { inherit lib log; };
@@ -265,12 +266,19 @@ let
     let
       enable = presetLib.getPresetAttr config decl.path "enable";
       strict = presetLib.getPresetAttr config decl.path "strict";
+      # Category policy: omit `when` to inherit category availability; category
+      # requires are always appended (fail closed if when is forced true).
+      bound = categoryPolicy.bindPreset {
+        path = decl.path;
+        when = if decl ? when then decl.when else null;
+        requires = decl.requires or [ ];
+      };
       # P2 realize throws when strict requirements fail. Non-strict failures
       # come back as warnings and applied = false.
       decision = presetLib.realize {
         inherit (decl) name;
-        when = decl.when or (_: true);
-        requires = decl.requires or [ ];
+        when = bound.when;
+        requires = bound.requires;
         tools = decl.tools or [ ];
         cfg = config;
         enable = if enable == null then true else enable;
@@ -520,9 +528,12 @@ in
       tools = localToolModules args.tools;
     in
     if decls == [ ] && tools == [ ] then
-      [ ]
+      [ categoryPolicy.optionsModule ]
     else
-      [ (presetOptions decls) ]
+      [
+        categoryPolicy.optionsModule
+        (presetOptions decls)
+      ]
       ++ tools
       ++ map applyPreset decls
       ++ map enablePresetTools decls

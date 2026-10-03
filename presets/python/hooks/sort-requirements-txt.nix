@@ -5,6 +5,6 @@ _: {
     "sort-requirements-txt"
   ];
   description = "Sort requirements.txt in git-hooks when Python is on.";
-  when = cfg: (cfg.languages.python or { }).enable or false;
+  # when inherits python category policy (languages.python.enable or override).
   tools = [ "sort-requirements-txt" ];
 }

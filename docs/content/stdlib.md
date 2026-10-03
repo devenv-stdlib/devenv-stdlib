@@ -70,6 +70,19 @@ Profilers are not one flat node. `profilers.cpu` and `profilers.memory` are sepa
 
 `ai-gateways` is zero-or-one. `9router` and `litellm` are shelved and are not registered tools.
 
+## Category policies
+
+`stdlib/category-policy.nix` (exported as `stdlib.categoryPolicy`) declares **category-wide** prerequisites once per namespaced language category. Enabling any preset under `<lang>.*` or tool under `lang.<lang>.*` requires that category’s toolchain to be available — leaves do not copy the same `when` / `requires` clause.
+
+**Python (first instance):** Python is available when `languages.python.enable` is true **or** `stdlib.categoryPolicies.python.available = true` (explicit override for Python provided outside devenv `languages.*`). The `lang.python` node sets `categoryPolicy = "python"`; descendants inherit.
+
+| Surface | Enforcement |
+| --- | --- |
+| Presets (`python.lint.ruff`, …) | Omit `when` → inherit category `available` as `when`. Category `requires` are always appended (strict throw / warn+inert via existing `realize`). |
+| Tools (`tools.ruff` under `lang.python.linters`, …) | When `tools.<name>.enable`, module `assertions` require category availability. |
+
+To add another language category: register it in `categoryPolicy.policies` (or `mkLanguagePolicy "<id>"`) and set `categoryPolicy = "<id>"` on `lang.<id>` in `categories.nix`. Leaf presets under `presets/<id>/` can omit the duplicated language `when`.
+
 ## Coding harnesses
 
 `stdlib/harness.nix` is the shared foundation from [issue #32](https://github.com/thedrow/devenv4monorepo/issues/32): option shapes, a config path under `$HOME`, install kinds (`nix`, `catalog`, `self`), and a split between a devenv `project` payload and a Home Manager payload.
@@ -122,7 +135,7 @@ nixpkgs.follows = "devenv-stdlib/nixpkgs";
 
 `terminal.quake`, `terminal.alacritty-atuin`, `ide`, `host.hm-only-guard`.
 
-Language support is **not** a megapreset named Python/Rust/…. Local language leaves are first-class `mkTool` modules under `tools/lang/<lang>/…` (same public API as global tools: `tools.<name>.enable`). Thin framework presets under `presets/<lang>/<category>/` keep attrpath identity (`python.lint.ruff`, `rust.lint.rustfmt`, …) and usually only declare `when` + `tools = [ "…" ]`; when applied they set `tools.<name>.enable = true`. Non-tool presets (serena, debtmap, ide, supported, bundler, ci.language-matrix, fixtures, …) stay as presets. Copier still decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
+Language support is **not** a megapreset named Python/Rust/…. Local language leaves are first-class `mkTool` modules under `tools/lang/<lang>/…` (same public API as global tools: `tools.<name>.enable`). Thin framework presets under `presets/<lang>/<category>/` keep attrpath identity (`python.lint.ruff`, `rust.lint.rustfmt`, …) and usually only declare `tools = [ "…" ]` (plus an explicit `when` when needed); language gating comes from the category policy, not a copied `when` on every leaf. When applied, thin presets set `tools.<name>.enable = true`. Non-tool presets (serena, debtmap, ide, supported, bundler, ci presets, fixtures, …) stay as presets. Copier still decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
 
 ## Community tools and presets
 
