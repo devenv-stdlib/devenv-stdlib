@@ -176,6 +176,33 @@ jobs:
     if: needs.has-test-workflow.outputs.exists == 'true'
     uses: ./.github/workflows/test.yml
 
+  # Ruleset requires bare contexts "test-devenv" and "test". Matrix jobs report
+  # as "test-devenv (ubuntu-…)" and the reusable workflow as "test / …".
+  ruleset-test-devenv:
+    name: test-devenv
+    needs: test-devenv
+    if: always() && !cancelled()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require test-devenv matrix success
+        run: test "${{ needs.test-devenv.result }}" = "success"
+
+  ruleset-test:
+    name: test
+    needs: [has-test-workflow, test]
+    if: always() && !cancelled() && needs.has-test-workflow.result == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require reusable test workflow success or skip
+        run: |
+          exists="${{ needs.has-test-workflow.outputs.exists }}"
+          result="${{ needs.test.result }}"
+          if [ "$exists" = "true" ]; then
+            test "$result" = "success"
+          else
+            test "$result" = "skipped" || test "$result" = "success"
+          fi
+
   release:
     needs: test-devenv
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
