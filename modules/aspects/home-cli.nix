@@ -1,9 +1,15 @@
 # Remaining HM modules not owned by cursor/terminal aspects (developer home).
 # Cursor stack + terminal/provider stay in their aspects (avoid double-enable).
-{ lib, inputs, ... }:
+{
+  den,
+  lib,
+  inputs,
+  ...
+}:
 {
   den.aspects.home-cli = {
-    includes = [ ];
+    # mr-boxington is opt-in (tools.mr-boxington.enable / presets.cache.mr-boxington).
+    includes = [ den.aspects.mr-boxington ];
 
     homeManager = {
       imports = [

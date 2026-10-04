@@ -210,7 +210,8 @@ let
     {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = true;
+        # Opt-in presets set defaultEnable = false on the thin declaration.
+        default = decl.defaultEnable or true;
         description = "Apply the ${id} preset when its when condition holds.";
       };
       strict = lib.mkOption {
@@ -570,7 +571,8 @@ let
       };
     };
 
-  # One root per devenv language dir under presets/, plus services/, ci/, fixtures/.
+  # One root per devenv language dir under presets/, plus services/, ci/,
+  # fixtures/, and cache/ (compile-cache presets such as mr-boxington).
   # Missing dirs are skipped so scaffolds can land before leaves exist.
   defaultRoots =
     root:
@@ -581,7 +583,8 @@ let
     lib.concatMap (lang: existing (root + "/${lang}")) supported.languages
     ++ existing (root + "/services")
     ++ existing (root + "/ci")
-    ++ existing (root + "/fixtures");
+    ++ existing (root + "/fixtures")
+    ++ existing (root + "/cache");
 in
 {
   inherit

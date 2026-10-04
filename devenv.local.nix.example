@@ -20,6 +20,11 @@
   # supported.rust.channels = [ "stable" "beta" ];
   # supported.rust.edition = "2024"; # rustfmt + rust-analyzer; 2024 needs rustc 1.85+
 
+  # mr-boxington (mbx) Cargo build cache for this repository only.
+  # For user-global install, set scope = "global" in home.local.nix instead.
+  # presets.cache.mr-boxington.enable = true;
+  # presets.cache.mr-boxington.scope = "local"; # default
+
   # languages.go.enable = true;
   # supported.go.min = "1.22.0";
   # supported.go.max = "1.24.0";

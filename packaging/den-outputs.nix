@@ -56,6 +56,8 @@ let
         den.aspects.developer.includes = lib.mkAfter [ den.aspects.stdlib-report ];
       }
     )
+    # Opt-in cache.mr-boxington (scope = local|global); enable defaults false.
+    (root + "/presets/cache/mr-boxington.nix")
   ]
   ++ (stdlib.den.load [ (root + "/tools") ]);
 
