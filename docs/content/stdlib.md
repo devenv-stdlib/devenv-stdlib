@@ -19,7 +19,7 @@ Read `stdlib.version`, `stdlib.apiVersion`, `stdlib.den.load`, and `stdlib.deven
 
 On a release, semantic-release runs `includes/update/stdlib-version.sh` and commits the rewritten `version`. `@semantic-release/git` records `stdlib/version.nix`.
 
-A breaking change to exported attribute paths uses the commit subject `feat(stdlib)!:` (a `BREAKING CHANGE:` footer is the same signal). semantic-release then bumps the major, and `apiVersion` follows. New attributes that keep the old paths use `feat(stdlib):`.
+A breaking change to exported attribute paths needs a `BREAKING CHANGE:` footer. semantic-release uses the angular preset, which reads that footer and bumps the major, so `apiVersion` follows. New attributes that keep the old paths use `feat(stdlib):`.
 
 `tests/unit/stdlib-api.nix` snapshots every exported path. An API edit that does not update that list fails nix-unit.
 
