@@ -1,10 +1,9 @@
 % coderabbit, ide
 
-# Enable the CodeRabbit Open VSX extension tool
-echo "tools.coderabbit.enable = true;" && home-switch
+# Enable the CodeRabbit Open VSX extension tool — add tools.coderabbit.enable = true; to home.local.nix, then:
+home-switch
 
-# Preset: extension + CLI (tools.coderabbit + tools.coderabbit-cli)
-echo "presets.ide.coderabbit.enable = true;"
+# Preset: extension + CLI — add presets.ide.coderabbit.enable = true; to home.local.nix when needed
 
-# Disable the extension after opting out
-echo "tools.coderabbit.enable = false;" && home-switch
+# Disable the extension after opting out — set tools.coderabbit.enable = false; in home.local.nix, then:
+home-switch
