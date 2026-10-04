@@ -3,24 +3,33 @@
 
 Merges into ~/.serena/serena_config.yml (or a path passed as argv[1]).
 On create: seeds projects: [] and trusted_project_path_patterns: [] (Serena
-defaults a missing trust key to ["**"]). Rejects duplicate YAML mapping keys.
-When fixed_tools is in use, removes search_for_pattern from that list only
-(never empties it; never pairs nonempty fixed_tools with excluded_tools).
-Idempotent.
+defaults a missing trust key to ["**"]). Rejects duplicate YAML mapping keys
+while still accepting YAML merge keys (`<<:`). When fixed_tools is in use,
+removes search_for_pattern from that list only (never empties it; never pairs
+nonempty fixed_tools with excluded_tools). Writes atomically. Idempotent.
 """
 
 from __future__ import annotations
 
+import os
+import stat
 import sys
+import tempfile
 from pathlib import Path
 
 try:
     import yaml
+    from yaml.constructor import SafeConstructor
 except ImportError as e:  # pragma: no cover
     print(f"ensure-serena-config: PyYAML required: {e}", file=sys.stderr)
     sys.exit(1)
-
 TOOL = "search_for_pattern"
+_MERGE_TAGS = frozenset(
+    {
+        "tag:yaml.org,2002:merge",
+        "tag:yaml.org,2002:value",
+    }
+)
 
 
 class DuplicateKeyError(ValueError):
@@ -31,14 +40,19 @@ def _no_duplicates_loader() -> type[yaml.SafeLoader]:
     class Loader(yaml.SafeLoader):
         pass
 
-    def construct_mapping(loader: yaml.SafeLoader, node: yaml.nodes.MappingNode, deep: bool = False):
-        mapping: dict = {}
-        for key_node, value_node in node.value:
+    def construct_mapping(
+        loader: yaml.SafeLoader, node: yaml.nodes.MappingNode, deep: bool = False
+    ):
+        # Reject duplicate explicit keys, then let SafeConstructor flatten merges.
+        seen: set[object] = set()
+        for key_node, _value_node in node.value:
+            if key_node.tag in _MERGE_TAGS:
+                continue
             key = loader.construct_object(key_node, deep=deep)
-            if key in mapping:
+            if key in seen:
                 raise DuplicateKeyError(f"duplicate YAML key: {key!r}")
-            mapping[key] = loader.construct_object(value_node, deep=deep)
-        return mapping
+            seen.add(key)
+        return SafeConstructor.construct_mapping(loader, node, deep=deep)
 
     Loader.add_constructor(
         yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
@@ -60,6 +74,30 @@ def _load_mapping(text: str) -> dict:
         print("ensure-serena-config: expected a YAML mapping", file=sys.stderr)
         sys.exit(1)
     return data
+
+
+def _atomic_write(path: Path, text: str) -> None:
+    """Replace path only after a full write; keep existing mode bits when present."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        dir=str(path.parent),
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as tmp:
+            tmp.write(text)
+            tmp.flush()
+            os.fsync(tmp.fileno())
+        if path.is_file():
+            os.chmod(tmp_name, stat.S_IMODE(path.stat().st_mode))
+        os.replace(tmp_name, path)
+    except BaseException:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
 
 
 def ensure(path: Path) -> bool:
@@ -115,17 +153,18 @@ def ensure(path: Path) -> bool:
         changed = True
     else:
         data["excluded_tools"] = list(tools)
+
     if not changed:
         return False
 
-    path.write_text(
+    _atomic_write(
+        path,
         yaml.safe_dump(
             data,
             default_flow_style=False,
             sort_keys=False,
             allow_unicode=True,
         ),
-        encoding="utf-8",
     )
     return True
 

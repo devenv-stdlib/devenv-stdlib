@@ -131,6 +131,44 @@ EOF
   [ "$(cat "$CONFIG")" = "$before" ]
 }
 
+@test "accepts YAML merge keys when updating" {
+  cat >"$CONFIG" <<'EOF'
+defaults: &defaults
+  language_backend: LSP
+  projects: []
+
+<<: *defaults
+excluded_tools:
+  - read_file
+EOF
+  run python3 "$ENSURE" "$CONFIG"
+  [ "$status" -eq 0 ]
+  run python3 -c "
+import yaml, sys
+d = yaml.safe_load(open(sys.argv[1]))
+assert d['language_backend'] == 'LSP', d
+assert d['projects'] == [], d
+assert d['excluded_tools'] == ['read_file', 'search_for_pattern'], d
+" "$CONFIG"
+  [ "$status" -eq 0 ]
+}
+
+@test "atomic write preserves existing file mode" {
+  cat >"$CONFIG" <<'EOF'
+projects: []
+excluded_tools: []
+EOF
+  chmod 600 "$CONFIG"
+  run python3 "$ENSURE" "$CONFIG"
+  [ "$status" -eq 0 ]
+  # Portable mode check (no GNU stat required).
+  run python3 -c "
+import os, stat, sys
+mode = stat.S_IMODE(os.stat(sys.argv[1]).st_mode)
+assert mode == 0o600, oct(mode)
+" "$CONFIG"
+  [ "$status" -eq 0 ]
+}
 @test "appends when excluded_tools is empty list" {
   cat >"$CONFIG" <<'EOF'
 excluded_tools: []
