@@ -5,7 +5,8 @@
 let
   node = categories.resolve "harness";
 
-  envName = value: builtins.match "[A-Z_][A-Z0-9_]*" value != null;
+  # POSIX reserves lowercase names for applications (e.g. npm_config_token).
+  envName = value: builtins.match "[A-Za-z_][A-Za-z0-9_]*" value != null;
 in
 {
   category = "harness";
