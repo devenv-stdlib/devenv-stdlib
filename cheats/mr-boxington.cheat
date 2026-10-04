@@ -1,0 +1,23 @@
+% mr-boxington, cache, mbx
+
+# Cargo build through mbx (after setup)
+mbx build
+
+# Workspace test through mbx
+mbx test --workspace
+
+# Check tools, setup, and cache access
+mbx doctor
+
+# Explain the last recorded build
+mbx explain --last
+
+# Enable for this repository only (devenv.local.nix), then re-enter the shell:
+#   presets.cache.mr-boxington.enable = true;
+#   # scope defaults to "local"
+devenv shell
+
+# Enable user-global via home-switch (home.local.nix):
+#   presets.cache.mr-boxington.enable = true;
+#   presets.cache.mr-boxington.scope = "global";
+home-switch

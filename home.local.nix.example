@@ -12,6 +12,14 @@
   # Language packs follow devenv languages.* (see devenv.local.nix).
   # cursor.enable = false;
 
+  # mr-boxington (mbx) Cargo build cache for this user (home-switch).
+  # For repository-only install, enable the preset in devenv.local.nix with
+  # scope = "local" (the default) instead.
+  # presets.cache.mr-boxington.enable = true;
+  # presets.cache.mr-boxington.scope = "global";
+  # # Or flip the tool leaf directly (always global setup):
+  # tools.mr-boxington.enable = true;
+
   # Serena / Headroom / MCP catalog for Cursor (default: cursor.enable).
   # cursor.llmContext.enable = false;
 
