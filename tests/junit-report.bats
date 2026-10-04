@@ -51,6 +51,33 @@ EOF
   grep -q 'name="teeLiveStdout"' "$out"
 }
 
+@test "nix-unit --quiet hides pass lines and still shows failures" {
+  fake="$BATS_TEST_TMPDIR/fake-nix-unit"
+  out="$BATS_TEST_TMPDIR/nix-unit.xml"
+  cat >"$fake" <<'EOF'
+#!/usr/bin/env bash
+echo '✅ quietPassHidden'
+echo '❌ quietFailShown'
+echo 'boom'
+echo '😢 0/2 successful'
+echo 'error: Tests failed'
+EOF
+  chmod +x "$fake"
+  run python3 "$REPORT" nix-unit \
+    --quiet \
+    --nix-unit "$fake" \
+    --suite "$REPO_DIR/tests/unit/default.nix" \
+    --unit-dir "$REPO_DIR/tests/unit" \
+    --root "$REPO_DIR" \
+    --output "$out"
+  [ "$status" -eq 1 ]
+  [[ "$output" != *quietPassHidden* ]]
+  [[ "$output" == *quietFailShown* ]]
+  [[ "$output" == *"1 passed, 1 failed/error"* ]]
+  grep -q 'name="quietPassHidden"' "$out"
+  grep -q 'name="quietFailShown"' "$out"
+}
+
 @test "nixos-test junit can record a skipped run" {
   out="$BATS_TEST_TMPDIR/nixos-skip.xml"
   run python3 "$REPORT" nixos-test --skipped --status 0 --output "$out" --root "$REPO_DIR"

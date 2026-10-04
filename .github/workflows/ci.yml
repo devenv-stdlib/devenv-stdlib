@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-devenv:
+  test-devenv-unit:
     strategy:
       fail-fast: false
       matrix:
@@ -30,7 +30,12 @@ jobs:
         run: |
           sudo mkdir -p /home/runner/.cache/nix /nix
           # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
-          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}" /home/runner/.cache /nix
+          # Nested act matrix cells share one /nix volume; recursive chown races with
+          # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
+          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}" /home/runner/.cache
+          if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
+            sudo chown "$(id -u):$(id -g)" /nix
+          fi
 
       - uses: cachix/install-nix-action@v31
 
@@ -54,9 +59,91 @@ jobs:
           rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
           nix profile add "github:cachix/devenv/${rev}"
 
-      - name: Test devenv
+      - name: Unit suite
         # --show-output: devenv tasks hide captured stdout unless showOutput / this flag
-        run: devenv tasks run --show-output devenv:test-devenv
+        run: devenv tasks run --show-output devenv:test-devenv-unit
+
+      - name: Upload JUnit reports
+        if: ${{ always() && !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-test-devenv-unit-${{ matrix.os }}
+          path: junit/**/*.xml
+          if-no-files-found: ignore
+
+      - name: Publish test results
+        if: ${{ always() && !env.ACT }}
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          check_name: Test devenv unit (${{ matrix.os }})
+          files: |
+            junit/**/*.xml
+          comment_mode: always
+          check_run_annotations: none
+
+      - name: Save Nix store
+        if: ${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
+          gc-max-store-size-linux: 5G
+
+  # Integration matrix starts only after every unit matrix cell succeeds.
+  test-devenv:
+    needs: test-devenv-unit
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-26.04]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      issues: read
+      actions: write
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Own workspace under act
+        if: ${{ env.ACT }}
+        run: |
+          sudo mkdir -p /home/runner/.cache/nix /nix
+          # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
+          # Nested act matrix cells share one /nix volume; recursive chown races with
+          # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
+          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}" /home/runner/.cache
+          if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
+            sudo chown "$(id -u):$(id -g)" /nix
+          fi
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Restore Nix store
+        id: nix-cache
+        if: ${{ !env.ACT }}
+        uses: nix-community/cache-nix-action/restore@v7
+        with:
+          primary-key: nix-${{ matrix.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix') }}
+          restore-prefixes-first-match: nix-${{ matrix.os }}-${{ github.job }}-
+
+      - uses: cachix/cachix-action@v16
+        with:
+          name: devenv
+
+      - name: Install devenv
+        run: |
+          # Pin CLI to the locked modules rev (devenv.yaml require_version: true).
+          rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
+          nix profile add "github:cachix/devenv/${rev}"
+
+      - name: Integration suite
+        # --show-output: devenv tasks hide captured stdout unless showOutput / this flag
+        # GITHUB_TOKEN: nested act forwards this (and MISE_GITHUB_TOKEN/GH_TOKEN) so mise
+        # can install github:/ubi: release tools (debtmap). Empty/dummy tokens → 401/403.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: devenv tasks run --show-output devenv:test-devenv-integration
 
       - name: Upload JUnit reports
         if: ${{ always() && !env.ACT }}
@@ -102,6 +189,33 @@ jobs:
     needs: has-test-workflow
     if: needs.has-test-workflow.outputs.exists == 'true'
     uses: ./.github/workflows/test.yml
+
+  # Ruleset requires bare contexts "test-devenv" and "test". Matrix jobs report
+  # as "test-devenv (ubuntu-…)" and the reusable workflow as "test / …".
+  ruleset-test-devenv:
+    name: test-devenv
+    needs: test-devenv
+    if: always() && !cancelled()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require test-devenv matrix success
+        run: test "${{ needs.test-devenv.result }}" = "success"
+
+  ruleset-test:
+    name: test
+    needs: [has-test-workflow, test]
+    if: always() && !cancelled() && needs.has-test-workflow.result == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require reusable test workflow success or skip
+        run: |
+          exists="${{ needs.has-test-workflow.outputs.exists }}"
+          result="${{ needs.test.result }}"
+          if [ "$exists" = "true" ]; then
+            test "$result" = "success"
+          else
+            test "$result" = "skipped" || test "$result" = "success"
+          fi
 
   release:
     needs: test-devenv

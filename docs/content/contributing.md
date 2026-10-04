@@ -29,7 +29,9 @@ devenv shell
 devenv shell                 # or direnv allow once
 # edit modules/, home/, copier.yml, docs/content/, …
 devenv test                  # enterTest + BATS
-test-devenv                  # nix-unit, BATS, nixosTest, actionlint, act
+test-devenv                  # unit then integration (nix-unit, BATS, nixosTest, actionlint, act)
+test-devenv-unit             # nix-unit + BATS
+test-devenv-integration      # nixosTest, actionlint, act
 devenv update git-hooks      # refresh only the git-hooks lock input
 ```
 
@@ -97,7 +99,9 @@ bats -r --jobs "$(nproc)" tests
 bats tests/setup
 bats tests/home
 bats tests/copier.bats
-test-devenv                  # also writes junit/*.xml; runs bats with --jobs
+test-devenv                  # unit then integration; writes junit/*.xml
+test-devenv-unit             # nix-unit + BATS
+test-devenv-integration      # nixosTest, actionlint, act
 build-act-image              # devenv-act:24.04 for local act
 ```
 
@@ -118,7 +122,7 @@ build-act-image              # devenv-act:24.04 for local act
 | `tests/tag-hook.bats` | failing suite blocks `git tag` |
 | `tests/integration/` | nixosTest (generated `test.yml` + eval asserts) |
 
-`test-devenv` `actionlint`s generated `test.yml` and fixtures, then `act workflow_call` on the Python fixture. Skip nested act when `ACT` is set. `.actrc` maps `ubuntu-24.04` and `ubuntu-26.04` to `devenv-act:24.04` (no `act-26.04` image yet). `.github/actionlint.yaml` lists `ubuntu-26.04` until actionlint's built-in runner list includes it.
+`test-devenv-integration` `actionlint`s generated `test.yml` and fixtures, then `act workflow_call` on the Python fixture. Skip nested act when `ACT` is set. `.actrc` maps `ubuntu-24.04` and `ubuntu-26.04` to `devenv-act:24.04` (no `act-26.04` image yet). `.github/actionlint.yaml` lists `ubuntu-26.04` until actionlint's built-in runner list includes it.
 
 ## Commits and tags
 
