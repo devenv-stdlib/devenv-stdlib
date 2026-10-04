@@ -182,6 +182,56 @@ in
     };
   };
 
+  # Nested tools.<category>….<leaf>.enable trees must list dotted attrpaths.
+  # Top-level-only inventory would report Enabled tools: (none) for these.
+  testReportInventoryWalksNamespacedToolTrees = {
+    expr =
+      let
+        inv = stdlib.report.inventory {
+          tools = {
+            python = {
+              lint = {
+                ruff = {
+                  enable = true;
+                };
+                pyright = {
+                  enable = false;
+                };
+              };
+            };
+            javascript = {
+              lint = {
+                prettier = {
+                  enable = true;
+                };
+              };
+            };
+            alacritty = {
+              enable = true;
+            };
+            warp = {
+              enable = false;
+            };
+          };
+        };
+        text = stdlib.report.formatReport inv;
+      in
+      {
+        tools = inv.tools.enabled;
+        hasNamespaced = contains "python.lint.ruff" text;
+        notNone = !(contains "Enabled tools: (none)" text);
+      };
+    expected = {
+      tools = [
+        "alacritty"
+        "javascript.lint.prettier"
+        "python.lint.ruff"
+      ];
+      hasNamespaced = true;
+      notNone = true;
+    };
+  };
+
   testCiLanguageMatrixPresetOwnsWorkflow = {
     expr =
       let
@@ -214,6 +264,32 @@ in
       enterHasReport = true;
       reportListsHooks = true;
       hooksIncludeRuff = true;
+    };
+  };
+
+  # Thin presets set tools.<leaf>.enable; the status report must list those leaves.
+  testReportListsToolsEnabledByThinPresets = {
+    expr =
+      let
+        cfg = eval {
+          languages.python.enable = true;
+          supported.python.min = "3.12";
+        };
+        report = lib.findFirst (w: lib.hasInfix "stdlib status:" w) "" cfg.warnings;
+      in
+      {
+        ruffEnable = cfg.tools.ruff.enable;
+        pyrightEnable = cfg.tools.pyright.enable;
+        reportListsRuff = contains "  - ruff" report;
+        reportListsPyright = contains "  - pyright" report;
+        toolsNotNone = !(contains "Enabled tools: (none)" report);
+      };
+    expected = {
+      ruffEnable = true;
+      pyrightEnable = true;
+      reportListsRuff = true;
+      reportListsPyright = true;
+      toolsNotNone = true;
     };
   };
 

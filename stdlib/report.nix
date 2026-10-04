@@ -70,12 +70,33 @@ let
         ;
     };
 
+  # Walk nested tools.* trees. A leaf is any attrs with a bool `enable`
+  # (tools.<leaf>.enable today; tools.<category>….<leaf>.enable if nested).
+  flattenToolLeaves =
+    tools:
+    let
+      walk =
+        path: value:
+        if !(builtins.isAttrs value) then
+          [ ]
+        else if builtins.isBool (value.enable or null) then
+          [
+            {
+              inherit path;
+              inherit (value) enable;
+              id = pathString path;
+            }
+          ]
+        else
+          lib.concatLists (lib.mapAttrsToList (name: child: walk (path ++ [ name ]) child) value);
+    in
+    walk [ ] (asAttrs tools);
+
   toolInventory =
     tools:
     let
-      tools' = asAttrs tools;
-      names = sort (builtins.attrNames tools');
-      enabled = lib.filter (name: (tools'.${name} or { }).enable or false) names;
+      leaves = flattenToolLeaves tools;
+      enabled = sort (map (leaf: leaf.id) (lib.filter (leaf: leaf.enable) leaves));
     in
     {
       inherit enabled;
@@ -215,6 +236,7 @@ in
     enabledHookNames
     matrixInventory
     flattenPresetLeaves
+    flattenToolLeaves
     logInventory
     ;
 }
