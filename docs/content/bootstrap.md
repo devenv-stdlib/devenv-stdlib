@@ -30,6 +30,8 @@ The shell banner uses the Copier `name` (this template prints `devenv4monorepo r
 home-switch
 ```
 
+Supported platforms: x86_64 Linux (Ubuntu) only. aarch64 is not supported yet.
+
 That is `home-manager switch -b backup --flake .#developer --impure`. `home-switch` loads secrets with `secretspec export` (whatever provider is configured: dotenv, keyring, env, …) and falls back to sourcing gitignored `.env` if export is unavailable. Activation then sees `BRAVE_API_KEY` / `FIRECRAWL_API_KEY`. Existing files Home Manager needs to replace are moved aside with a `.backup` suffix. On flakes-only hosts, `home-switch` and `setup.sh` set `NIX_PATH=nixpkgs=flake:nixpkgs` when `NIX_PATH` has no `nixpkgs=` entry, and drop search-path directories that do not exist (such as `~/.nix-defexpr/channels` without channels), which Nix would otherwise warn about on every evaluation.
 
 ## Everyday commands
