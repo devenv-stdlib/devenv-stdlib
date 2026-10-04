@@ -494,7 +494,7 @@ in
       {
         badFails = !(builtins.head bad).assertion;
         goodOk = (builtins.head good).assertion;
-        unrelated = categoryPolicy.toolAssertions { } "shell" == [ ];
+        unrelated = categoryPolicy.toolAssertions { } "not-a-policy" == [ ];
       };
     expected = {
       badFails = true;

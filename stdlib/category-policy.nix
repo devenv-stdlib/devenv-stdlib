@@ -135,11 +135,17 @@ let
   toolAssertions =
     config: categoryOrPolicy:
     let
+      # Dotted strings are tool categories (lang.python.linters). Bare names are
+      # explicit policy ids (javascript-or-typescript). Do not treat bare language
+      # ids from devenvSupported as tool categories — "shell" is a language policy
+      # after scaffold but is not a toolAssertions category path.
       policy =
-        if builtins.isString categoryOrPolicy && policies ? ${categoryOrPolicy} then
+        if builtins.isString categoryOrPolicy && lib.hasInfix "." categoryOrPolicy then
+          forToolCategory categoryOrPolicy
+        else if builtins.isString categoryOrPolicy && policies ? ${categoryOrPolicy} then
           forId categoryOrPolicy
         else
-          forToolCategory categoryOrPolicy;
+          null;
     in
     map (req: {
       assertion = if builtins.isFunction req.assertion then req.assertion config else req.assertion;
