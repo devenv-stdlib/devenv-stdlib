@@ -87,12 +87,15 @@ let
     }) supported.services
   );
 
-  policies = languagePolicies // servicePolicies // {
-    javascript-or-typescript = mkAnyLanguagePolicy [
-      "javascript"
-      "typescript"
-    ];
-  };
+  policies =
+    languagePolicies
+    // servicePolicies
+    // {
+      javascript-or-typescript = mkAnyLanguagePolicy [
+        "javascript"
+        "typescript"
+      ];
+    };
 
   policyIds = lib.sort (a: b: a < b) (builtins.attrNames policies);
 
