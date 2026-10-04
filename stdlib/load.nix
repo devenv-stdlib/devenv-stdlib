@@ -63,6 +63,8 @@ rec {
               includes = map (dep: den.aspects.${dep}) d.spec.dependsOn;
               # Import the dependency module here too, so tools.<dep>.enable
               # exists in the same Home Manager module set as the dependent tool.
+              # Keep path imports (not function wrappers) so the module system
+              # deduplicates the same leaf across dependsOn edges.
               homeManager.imports = [ d.file ] ++ map (depFile d.spec) d.spec.dependsOn;
             }) tools;
           }

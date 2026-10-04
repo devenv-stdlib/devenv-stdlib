@@ -67,6 +67,10 @@ let
               type = lib.types.attrsOf freeform;
               default = { };
             };
+            tasks = lib.mkOption {
+              type = freeform;
+              default = { };
+            };
           };
           config = extra;
         }
