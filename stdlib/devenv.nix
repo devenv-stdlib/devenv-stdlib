@@ -94,9 +94,16 @@ let
       decl = import entry.file {
         inherit lib tools;
       };
+      # File location is identity for refsOf (no import). Declared path must match.
       presetPath =
         if decl ? path then
-          presetLib.normalizePath decl.path
+          let
+            declared = presetLib.normalizePath decl.path;
+          in
+          if declared != entry.path then
+            throw "stdlib.devenv.load: ${toString entry.file} path ${presetLib.pathString declared} does not match file location ${presetLib.pathString entry.path}"
+          else
+            declared
         else if decl ? name then
           # Directory layout is authoritative when name is a leftover leaf.
           entry.path
@@ -134,7 +141,8 @@ let
     else
       decls;
 
-  # Nested preset refs from directory layout (no import — tools args unused).
+  # Nested preset refs from directory layout (no import — thin presets need tools).
+  # loadEntry rejects declared paths that diverge from this filesystem identity.
   refsOf =
     roots:
     presetLib.refsFromPaths (

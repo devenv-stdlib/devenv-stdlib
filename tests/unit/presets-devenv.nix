@@ -124,6 +124,33 @@ in
     };
   };
 
+  # refsOf uses filesystem layout; loadEntry requires decl.path to match.
+  testRefsOfMatchesLoadedDeclPath = {
+    expr =
+      let
+        roots = devenvLoad.defaultRoots presetRoot;
+        tools = devenvLoad.refsOfTools [ ../../tools ];
+        refs = devenvLoad.refsOf roots;
+        ruff = lib.findFirst (d: d.name == "python.lint.ruff") null (devenvLoad.declsOf roots tools);
+      in
+      {
+        ref = refs.python.lint.ruff.path;
+        decl = ruff.path;
+      };
+    expected = {
+      ref = [
+        "python"
+        "lint"
+        "ruff"
+      ];
+      decl = [
+        "python"
+        "lint"
+        "ruff"
+      ];
+    };
+  };
+
   testPythonLintPyrightToolAttrpath = {
     expr =
       let
