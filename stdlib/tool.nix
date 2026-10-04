@@ -109,18 +109,19 @@ let
     };
 
   # Argument for categoryPolicy.toolAssertions from a tool spec/meta.
-  # Explicit `categoryPolicy` (including false = unbound) always wins.
+  # Explicit `categoryPolicy` (including false = unbound) always wins —
+  # Nix `or` only falls through on null/missing, so false is preserved.
   # Otherwise only dotted tool categories (lang.* / services.*) bind — bare
   # organizational categories like "shell" must not collide with language
   # policy ids after the devenv language scaffold.
   policyArgOf =
     checked:
-    if checked ? categoryPolicy then
-      checked.categoryPolicy
-    else if builtins.isString checked.category && lib.hasInfix "." checked.category then
-      checked.category
-    else
-      null;
+    checked.categoryPolicy or (
+      if builtins.isString checked.category && lib.hasInfix "." checked.category then
+        checked.category
+      else
+        null
+    );
 
   # Home Manager / Den leaf (global scope).
   apply =
