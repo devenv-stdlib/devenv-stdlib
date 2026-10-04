@@ -425,6 +425,27 @@ in
     expected = false;
   };
 
+  testStdlibHarnessRejectsOverriddenSecretEnv = {
+    expr =
+      (builtins.tryEval (
+        stdlib.harness.payloads {
+          name = "demo";
+          homeManager.secretEnv = [ "not-an-env" ];
+        }
+      )).success;
+    expected = false;
+  };
+
+  testStdlibHarnessKeepsValidSecretOverride = {
+    expr =
+      (stdlib.harness.payloads {
+        name = "demo";
+        secretEnv = [ "OPENAI_API_KEY" ];
+        homeManager.secretEnv = [ "ANTHROPIC_API_KEY" ];
+      }).homeManager.secretEnv;
+    expected = [ "ANTHROPIC_API_KEY" ];
+  };
+
   testStdlibLoadersEmpty = {
     expr = {
       den = stdlib.den.load [ ./missing-tools ];
