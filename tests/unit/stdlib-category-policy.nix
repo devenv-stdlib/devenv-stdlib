@@ -111,7 +111,6 @@ in
     };
   };
 
-
   testCategoryPolicyGoRegistered = {
     expr = {
       preset =
