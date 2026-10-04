@@ -1,7 +1,7 @@
 % vscode, ide
 
-# Opt in to VS Code (off by default; Cursor is the default IDE)
-echo "vscode.enable = true;" && home-switch
+# Opt in to VS Code — add vscode.enable = true; to home.local.nix (off by default; Cursor is the default IDE), then:
+home-switch
 
 # Launch VS Code
 code .
