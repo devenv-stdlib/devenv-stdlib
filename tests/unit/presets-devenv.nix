@@ -124,6 +124,29 @@ in
     };
   };
 
+  # List-form load [ presets/<lang> … ] infers sibling tools/ for tool refs.
+  testListFormLoadInjectsToolRefs = {
+    expr =
+      let
+        roots = devenvLoad.defaultRoots presetRoot;
+        listForm = builtins.tryEval (devenvLoad.load roots);
+        attrsForm = builtins.tryEval (
+          devenvLoad.load {
+            presets = roots;
+            tools = [ ../../tools ];
+          }
+        );
+      in
+      {
+        listOk = listForm.success;
+        attrsOk = attrsForm.success;
+      };
+    expected = {
+      listOk = true;
+      attrsOk = true;
+    };
+  };
+
   # refsOf uses filesystem layout; loadEntry requires decl.path to match.
   testRefsOfMatchesLoadedDeclPath = {
     expr =
