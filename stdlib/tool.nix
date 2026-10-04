@@ -108,6 +108,20 @@ let
       description = "Enable the ${checked.name} tool (${checked.category}; ${lib.concatStringsSep "+" checked.scopes}).";
     };
 
+  # Argument for categoryPolicy.toolAssertions from a tool spec/meta.
+  # Explicit `categoryPolicy` (including false = unbound) always wins.
+  # Otherwise only dotted tool categories (lang.* / services.*) bind — bare
+  # organizational categories like "shell" must not collide with language
+  # policy ids after the devenv language scaffold.
+  policyArgOf =
+    checked:
+    if checked ? categoryPolicy then
+      checked.categoryPolicy
+    else if builtins.isString checked.category && lib.hasInfix "." checked.category then
+      checked.category
+    else
+      null;
+
   # Home Manager / Den leaf (global scope).
   apply =
     moduleArgs: spec:
@@ -116,9 +130,7 @@ let
       cfgEnable = moduleArgs.config.tools.${checked.name}.enable;
       rendered = (spec.homeManager or (_: { })) moduleArgs;
       deps = checked.dependsOn;
-      policyAssertions = categoryPolicy.toolAssertions moduleArgs.config (
-        checked.categoryPolicy or checked.category
-      );
+      policyAssertions = categoryPolicy.toolAssertions moduleArgs.config (policyArgOf checked);
     in
     assert require checked.isGlobal
       "mkTool ${checked.name}: apply is for global (homeManager) tools; use applyLocal for project payloads";
@@ -157,9 +169,7 @@ let
       raw = spec.project or { };
       rendered = if builtins.isFunction raw then raw moduleArgs else raw;
       deps = checked.dependsOn;
-      policyAssertions = categoryPolicy.toolAssertions moduleArgs.config (
-        checked.categoryPolicy or checked.category
-      );
+      policyAssertions = categoryPolicy.toolAssertions moduleArgs.config (policyArgOf checked);
     in
     assert require checked.isLocal "mkTool ${checked.name}: applyLocal is for local (project) tools";
     {
@@ -254,5 +264,6 @@ in
     scopesOf
     installKinds
     upgradeKinds
+    policyArgOf
     ;
 }
