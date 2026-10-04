@@ -501,12 +501,7 @@ let
     root:
     let
       supported = import ./devenv-supported.nix;
-      existing =
-        path:
-        if builtins.pathExists path then
-          [ path ]
-        else
-          [ ];
+      existing = path: if builtins.pathExists path then [ path ] else [ ];
     in
     lib.concatMap (lang: existing (root + "/${lang}")) supported.languages
     ++ existing (root + "/services")
