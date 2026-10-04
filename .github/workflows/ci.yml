@@ -139,6 +139,10 @@ jobs:
 
       - name: Integration suite
         # --show-output: devenv tasks hide captured stdout unless showOutput / this flag
+        # GITHUB_TOKEN: nested act forwards this (and MISE_GITHUB_TOKEN/GH_TOKEN) so mise
+        # can install github:/ubi: release tools (debtmap). Empty/dummy tokens → 401/403.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: devenv tasks run --show-output devenv:test-devenv-integration
 
       - name: Upload JUnit reports

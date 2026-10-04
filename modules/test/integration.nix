@@ -78,7 +78,15 @@ _: {
         chown -R "$(id -u):$(id -g)" /nix /home/runner/.cache/nix
       # TMPDIR/RUNNER_TEMP: install-nix-action uses set -u and expands RUNNER_TEMP
       # when TMPDIR is unset (cachix/install-nix-action#197).
+      # Explicit GitHub tokens: nested act + mise (debtmap) need a real value;
+      # name-only --env lets act inject an empty/dummy secret → 401 / rate-limit 403.
+      # shellcheck disable=SC1091
+      . "$DEVENV_ROOT/modules/test/act-github-env.sh"
+      act_github_token_prepare
       act_opts="--user runner --env HOME=/home/runner --env TMPDIR=/tmp --env RUNNER_TEMP=/tmp --env RUNNER_TOOL_CACHE=/tmp/toolcache -v devenv-act-nix:/nix -v devenv-act-nix-cache:/home/runner/.cache/nix"
+      if [ -n "$ACT_GITHUB_TOKEN_OPTS" ]; then
+        act_opts="$act_opts $ACT_GITHUB_TOKEN_OPTS"
+      fi
       # act --concurrent-jobs 1 only bounds whole jobs: every matrix cell of a job
       # still starts at once on the shared /nix volume (ENOSPC, `chown -R /nix`
       # racing another cell's install-nix). Enumerate cells from a dry run and
@@ -116,6 +124,7 @@ _: {
           if act workflow_call \
             --pull=false \
             --concurrent-jobs 1 \
+            "''${ACT_GITHUB_TOKEN_ARGS[@]}" \
             --container-options "$act_opts" \
             -j "$job" $filters \
             -W "$workflow" \
