@@ -405,12 +405,31 @@ let
     in
     map (d: d.file) local;
 
+  # List-form load [ presets/<lang> … ] still needs tool refs for thin presets
+  # (`tools = [ tools.rust.lint.clippy ]`). Infer …/tools beside …/presets.
+  inferToolsFromPresetRoots =
+    presetRoots:
+    lib.unique (
+      lib.concatMap (
+        root:
+        let
+          presetsDir = dirOf (toString root);
+          repoDir = dirOf presetsDir;
+          toolsDir = repoDir + "/tools";
+        in
+        if builtins.baseNameOf presetsDir == "presets" && builtins.pathExists toolsDir then
+          [ toolsDir ]
+        else
+          [ ]
+      ) presetRoots
+    );
+
   normalizeLoadArgs =
     rootsOrAttrs:
     if builtins.isList rootsOrAttrs then
       {
         presets = rootsOrAttrs;
-        tools = [ ];
+        tools = inferToolsFromPresetRoots rootsOrAttrs;
       }
     else
       {
