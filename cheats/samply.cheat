@@ -1,0 +1,9 @@
+% samply, profilers, cpu
+
+# Record a CPU profile with samply (profilers.cpu)
+samply record -- <command>
+
+$ command: echo "./your-binary"
+
+# Enable the samply tool leaf
+echo "tools.samply.enable = true;"

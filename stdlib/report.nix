@@ -191,6 +191,9 @@ let
       ++ map (line: "  - ${line}") langLines
       ++ [ "  runners: ${lib.concatStringsSep ", " (matrix.runners or [ ])}" ];
 
+  # Shown after Enabled tools so enterShell / warnings point at per-leaf cheats.
+  toolsNaviHint = "Use navi <tool name> to understand its usage.";
+
   formatReport =
     inv:
     lib.concatStringsSep "\n" (
@@ -198,6 +201,7 @@ let
       ++ formatSection "Applied presets" (inv.presets.applied or [ ])
       ++ formatSection "Inert presets (triggered, not applied)" (inv.presets.inert or [ ])
       ++ formatSection "Enabled tools" (inv.tools.enabled or [ ])
+      ++ [ toolsNaviHint ]
       ++ formatSection "Enabled git-hooks / pre-commit" (inv.gitHooks.enabled or [ ])
       ++ formatSection "Unused available categories" (inv.unusedCategories or [ ])
       ++ formatMatrix (inv.matrix or null)
@@ -238,5 +242,6 @@ in
     flattenPresetLeaves
     flattenToolLeaves
     logInventory
+    toolsNaviHint
     ;
 }

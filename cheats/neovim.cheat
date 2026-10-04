@@ -1,0 +1,7 @@
+% neovim, ide
+
+# Open Neovim (nixvim via tools.neovim)
+nvim
+
+# Enable the neovim tool leaf / thin preset ide.neovim
+echo "tools.neovim.enable = true;"

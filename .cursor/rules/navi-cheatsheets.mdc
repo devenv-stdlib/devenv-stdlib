@@ -16,6 +16,13 @@ Before adding `cheats/<topic>.cheat`, open existing sheets and **extend** the
 matching `%` tag group (or add cheats under the same tags). New files only when
 the topic is clearly separate (e.g. `tests` vs `terminal`).
 
+## Stdlib tool leaves
+
+Every `tools/<…>.nix` leaf (`mkTool` `name`) has `cheats/<name>.cheat`. The
+first `%` tag is that leaf name so `navi <tool name>` matches the status
+report hint. Keep commands template-specific (enable leaf, hooks, home-switch);
+do not copy community [denisidoro/cheats](https://github.com/denisidoro/cheats).
+
 ## Syntax
 
 Follow [navi cheatsheet syntax](https://github.com/denisidoro/navi/blob/master/docs/cheatsheet/syntax/README.md):

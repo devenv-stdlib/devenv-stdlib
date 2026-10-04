@@ -1,0 +1,7 @@
+% gofmt, go, lint
+
+# Format Go with gofmt
+gofmt -w .
+
+# Enable the gofmt tool leaf (or presets.go.lint.gofmt)
+echo "tools.gofmt.enable = true;"

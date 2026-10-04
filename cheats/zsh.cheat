@@ -1,0 +1,7 @@
+% zsh, shell
+
+# Start an interactive zsh after enabling tools.zsh
+zsh
+
+# Enable the zsh tool leaf
+echo "tools.zsh.enable = true;"

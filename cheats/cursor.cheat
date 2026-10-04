@@ -1,0 +1,10 @@
+% cursor, ide
+
+# Launch Cursor from the nixpkgs pin (tools.cursor)
+cursor .
+
+# Skip Cursor install
+echo "cursor.enable = false;"
+
+# Re-apply after IDE / MCP edits
+home-switch

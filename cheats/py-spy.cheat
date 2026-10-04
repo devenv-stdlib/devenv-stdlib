@@ -1,0 +1,9 @@
+% py-spy, profilers, cpu
+
+# Sample a running Python process (profilers.cpu)
+py-spy top --pid <pid>
+
+$ pid: ps -o pid= -C python | head -n 5
+
+# Enable the py-spy tool leaf
+echo "tools.py-spy.enable = true;"

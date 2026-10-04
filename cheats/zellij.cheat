@@ -1,0 +1,13 @@
+% zellij, terminal, mux
+
+# List Zellij sessions
+zellij list-sessions
+
+# Attach to the Quake session (alacritty.zellijSession default)
+zellij attach quake
+
+# Attach to the GUI session (alacritty.zellijGuiSession default)
+zellij attach main
+
+# Enable the zellij tool leaf
+echo "tools.zellij.enable = true;"

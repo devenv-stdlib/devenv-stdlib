@@ -1,0 +1,10 @@
+% blesh, shell, completion
+
+# Confirm ble.sh is loaded in bash (tools.blesh; bash-only)
+type -t ble-attach || echo "ble.sh not loaded in this shell"
+
+# Re-apply after changing shell / blesh options
+home-switch
+
+# Enable the blesh tool leaf
+echo "tools.blesh.enable = true;"

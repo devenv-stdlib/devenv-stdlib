@@ -1,0 +1,7 @@
+% debug-statements, python, hooks
+
+# Fail commits that leave debug leftovers (prek hook)
+prek run debug-statements
+
+# Enable the debug-statements tool leaf
+echo "tools.debug-statements.enable = true;"
