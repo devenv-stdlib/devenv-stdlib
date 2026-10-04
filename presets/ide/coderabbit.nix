@@ -1,4 +1,4 @@
-# Thin one-tool preset for the CodeRabbit Open VSX extension.
+# CodeRabbit preset: Open VSX extension + official CLI.
 { lib, ... }:
 let
   inherit (import ../../stdlib/preset.nix { inherit lib; }) mkPreset;
@@ -13,8 +13,11 @@ in
         "ide"
         "coderabbit"
       ];
-      description = "Enable the CodeRabbit VS Code / Cursor extension (Open VSX).";
-      tools = [ tools.ide.coderabbit ];
+      description = "Enable the CodeRabbit VS Code / Cursor extension (Open VSX) and CLI.";
+      tools = [
+        tools.ide.coderabbit
+        tools.ide.coderabbit-cli
+      ];
     })
   ];
 }
