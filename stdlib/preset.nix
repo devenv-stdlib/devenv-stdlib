@@ -388,6 +388,8 @@ in
       exclude ? [ ],
       aspectAlias ? { },
       extraOptions ? { },
+      # Opt-in presets (e.g. cache.mr-boxington) set false; default stays true.
+      defaultEnable ? true,
     }:
     let
       presetPath =
@@ -414,7 +416,7 @@ in
     let
       globalStrict = config.presets.strict or true;
       enable = getPresetAttr config presetPath "enable";
-      enable' = if enable == null then true else enable;
+      enable' = if enable == null then defaultEnable else enable;
       strict = getPresetAttr config presetPath "strict";
       strict' = if strict == null then true else strict;
       result = realize {
@@ -445,7 +447,7 @@ in
       presetOptions = {
         enable = lib.mkOption {
           type = lib.types.bool;
-          default = true;
+          default = defaultEnable;
           description = if description == "" then "Enable the ${presetId} preset." else description;
         };
         strict = lib.mkOption {
