@@ -237,6 +237,22 @@ in
     };
   };
 
+  testIdeCoderabbitPresetIsOneTool = {
+    expr =
+      let
+        result = (eval (import ../../presets/ide/coderabbit.nix) { }).config.presets.ide.coderabbit.result;
+      in
+      {
+        includeTools = sort result.includeTools;
+        inherit (result) excludeTools applied;
+      };
+    expected = {
+      includeTools = [ "coderabbit" ];
+      excludeTools = [ ];
+      applied = true;
+    };
+  };
+
   testAlacrittyAtuinSingleShellOptionOptional = {
     expr =
       let

@@ -94,6 +94,7 @@ rec {
   vscodeAlwaysRecommend = [
     "datakurre.devenv"
     "jnoortheen.nix-ide"
+    "coderabbit.coderabbit-vscode"
   ];
 
   # Ids used as unwantedRecommendations when a pack is off. Keep in sync with

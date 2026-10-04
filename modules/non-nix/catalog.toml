@@ -105,3 +105,14 @@ scope = "user"
 pin = "0.7.0"
 publisher = "datakurre"
 extension = "devenv"
+
+# CodeRabbit AI review (Open VSX). Docs: https://open-vsx.org/extension/coderabbit/coderabbit-vscode
+[[tool]]
+name = "coderabbit-vscode"
+kind = "vscode-extension"
+scope = "user"
+pin = "0.21.9"
+publisher = "coderabbit"
+extension = "coderabbit-vscode"
+registry = "open-vsx"
+sha256 = "0cfn8l7q8cn3d69spkf78p86d153cl3683lj38glkyi23206kwrw"

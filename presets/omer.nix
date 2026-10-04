@@ -20,6 +20,10 @@ let
     ]
     [ "ide" ]
     [
+      "ide"
+      "coderabbit"
+    ]
+    [
       "host"
       "hm-only-guard"
     ]
@@ -35,6 +39,7 @@ in
         terminal.quake
         terminal.alacritty-atuin
         ide
+        ide.coderabbit
         host.hm-only-guard
       ];
     })

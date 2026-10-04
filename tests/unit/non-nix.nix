@@ -147,4 +147,27 @@ in
     );
     expected = "navi";
   };
+
+  testNonNixCoderabbitIsOpenVsx = {
+    expr =
+      let
+        e = lib.findFirst (x: x.name == "coderabbit-vscode") null nonNix.catalog;
+      in
+      {
+        inherit (e)
+          kind
+          publisher
+          extension
+          registry
+          ;
+        hasSha256 = e.sha256 != null && e.sha256 != "";
+      };
+    expected = {
+      kind = "vscode-extension";
+      publisher = "coderabbit";
+      extension = "coderabbit-vscode";
+      registry = "open-vsx";
+      hasSha256 = true;
+    };
+  };
 }
