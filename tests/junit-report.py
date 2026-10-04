@@ -200,11 +200,13 @@ def failed(cases: list[dict]) -> bool:
     return any(case["status"] in {"failed", "error"} for case in cases)
 
 
-def run_nix_unit(cmd: list[str]) -> tuple[int, str]:
-    """Run nix-unit, keep a transcript for JUnit, and mirror every line to STDOUT.
+def run_nix_unit(cmd: list[str], *, quiet: bool = False) -> tuple[int, str]:
+    """Run nix-unit, keep a transcript for JUnit, and mirror lines to STDOUT.
 
     CI (and devenv tasks) often pipe our stdout, so Python would block-buffer
     without an explicit flush — looking like a hung job with no log output.
+    With quiet=True, skip ✅ pass lines; still mirror failures, errors, and
+    summary lines.
     """
     proc = subprocess.Popen(
         cmd,
@@ -216,9 +218,13 @@ def run_nix_unit(cmd: list[str]) -> tuple[int, str]:
     assert proc.stdout is not None
     chunks: list[str] = []
     for line in proc.stdout:
+        chunks.append(line)
+        if quiet:
+            match = STATUS_RE.match(strip_ansi(line).rstrip())
+            if match and match.group(1).startswith("✅"):
+                continue
         sys.stdout.write(line)
         sys.stdout.flush()
-        chunks.append(line)
     return proc.wait(), "".join(chunks)
 
 
@@ -232,7 +238,10 @@ def cmd_nix_unit(args: argparse.Namespace) -> int:
         rc = 0
     else:
         suite = args.suite if Path(args.suite).is_absolute() else str(root / args.suite)
-        rc, text = run_nix_unit([args.nix_unit, "-I", "nixpkgs=flake:nixpkgs", suite])
+        rc, text = run_nix_unit(
+            [args.nix_unit, "-I", "nixpkgs=flake:nixpkgs", suite],
+            quiet=args.quiet,
+        )
     cases = parse_nix_unit(text, unit_dir, root)
     if not cases:
         cases = [
@@ -250,6 +259,10 @@ def cmd_nix_unit(args: argparse.Namespace) -> int:
         ]
     write_junit(Path(args.output), "nix-unit", cases)
     emit_github_annotations(cases)
+    if args.quiet and cases:
+        passed = sum(1 for case in cases if case["status"] == "passed")
+        bad = sum(1 for case in cases if case["status"] in {"failed", "error"})
+        print(f"==> nix-unit: {passed} passed, {bad} failed/error", flush=True)
     if args.from_text:
         return 1 if failed(cases) else 0
     return rc if rc != 0 else (1 if failed(cases) else 0)
@@ -426,6 +439,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--from-text", help="Parse this nix-unit transcript instead of running nix-unit"
     )
     nix_unit.add_argument("--nix-unit", default="nix-unit")
+    nix_unit.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Hide ✅ pass lines when running nix-unit; still show failures and a summary",
+    )
     nix_unit.set_defaults(func=cmd_nix_unit)
 
     nixos = sub.add_parser("nixos-test", help="Write JUnit XML for a nixosTest run")
