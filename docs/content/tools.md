@@ -153,7 +153,7 @@ git diff             # delta
 
 ### httpie, tldr, navi, fuck, usql
 
-[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. [navi](https://github.com/denisidoro/navi) browses interactive cheatsheets: repo-local sheets in `cheats/` (prepended to `NAVI_PATH` in `devenv shell`) plus [denisidoro/cheats](https://github.com/denisidoro/cheats) from Home Manager. [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
+[HTTPie](https://httpie.io/docs/cli) is `http`. nixpkgs has no explainshell, so Home Manager installs [tealdeer](https://github.com/tealdeer-rs/tealdeer) as `tldr`. [navi](https://github.com/denisidoro/navi) browses interactive cheatsheets: repo-local sheets in `cheats/` (prepended to `NAVI_PATH` in `devenv shell`) plus [denisidoro/cheats](https://github.com/denisidoro/cheats) from Home Manager. Each stdlib tool leaf has `cheats/<leaf>.cheat` (use `navi <tool name>`; the stdlib status report prints that hint). [pay-respects](https://codeberg.org/iff/pay-respects) is aliased to `fuck` (nixpkgs dropped thefuck). [usql](https://github.com/xo/usql) is built with the `all` driver tag.
 
 ```bash
 http https://endoflife.date/api/rust.json
