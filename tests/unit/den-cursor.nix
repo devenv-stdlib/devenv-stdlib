@@ -23,7 +23,10 @@ in
 
   testDenCursorExtensionsIncludesCoderabbit = {
     expr = includesOf "cursor-extensions";
-    expected = [ "coderabbit" ];
+    expected = [
+      "coderabbit"
+      "coderabbit-cli"
+    ];
   };
 
   testDenCursorLlmHasNoNestedIncludes = {

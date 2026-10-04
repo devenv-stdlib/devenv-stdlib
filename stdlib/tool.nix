@@ -21,6 +21,8 @@ let
     "hm-program"
     "vscode-extension"
     "docker-image"
+    # In-repo binary (fetchzip / non-nixpkgs); homeManager installs the package.
+    "binary"
     # Local-only wiring (git-hooks / project config) with no discrete package pin.
     "project"
   ];

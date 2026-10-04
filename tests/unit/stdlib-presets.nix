@@ -237,7 +237,7 @@ in
     };
   };
 
-  testIdeCoderabbitPresetIsOneTool = {
+  testIdeCoderabbitPresetIsExtensionAndCli = {
     expr =
       let
         result = (eval (import ../../presets/ide/coderabbit.nix) { }).config.presets.ide.coderabbit.result;
@@ -247,7 +247,10 @@ in
         inherit (result) excludeTools applied;
       };
     expected = {
-      includeTools = [ "coderabbit" ];
+      includeTools = [
+        "coderabbit"
+        "coderabbit-cli"
+      ];
       excludeTools = [ ];
       applied = true;
     };
