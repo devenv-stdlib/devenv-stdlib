@@ -212,6 +212,62 @@ EOF
   grep -q 'Docs: https://example.test/firecrawl' "$FIXTURE/modules/non-nix/catalog.toml"
 }
 
+@test "non-nix refresher bumps Open VSX pin and sha256 without hitting the live registry" {
+  command -v python3 >/dev/null || skip "python3 not installed"
+  command -v jq >/dev/null || skip "jq not installed"
+  mkdir -p "$FIXTURE/modules/non-nix"
+  cat >"$FIXTURE/modules/non-nix/catalog.toml" <<'EOF'
+# CodeRabbit AI review (Open VSX). Docs: https://example.test/coderabbit
+[[tool]]
+name = "coderabbit-vscode"
+kind = "vscode-extension"
+scope = "user"
+pin = "0.0.0"
+publisher = "coderabbit"
+extension = "coderabbit-vscode"
+registry = "open-vsx"
+sha256 = "oldhash0000000000000000000000000000000000000000000000"
+EOF
+
+  cat >"$BIN/curl" <<'EOF'
+#!/usr/bin/env bash
+# Record argv so empty-field parsing can be asserted (wrong publisher/extension
+# would request a marketplace-shaped URL or the wrong Open VSX path).
+printf '%s\n' "$*" >>"$STUB_LOG"
+for arg in "$@"; do
+  if [[ $arg == https://open-vsx.org/api/coderabbit/coderabbit-vscode/latest ]]; then
+    printf '%s\n' '{"version":"1.2.3"}'
+    exit 0
+  fi
+done
+# Fail loudly if marketplace or wrong publisher/extension is queried.
+exit 1
+EOF
+  chmod +x "$BIN/curl"
+
+  cat >"$BIN/nix-prefetch-url" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$STUB_LOG"
+expected='https://open-vsx.org/api/coderabbit/coderabbit-vscode/1.2.3/file/coderabbit.coderabbit-vscode-1.2.3.vsix'
+for arg in "$@"; do
+  if [[ $arg == "$expected" ]]; then
+    printf '%s\n' 'newhash1111111111111111111111111111111111111111111111'
+    exit 0
+  fi
+done
+exit 1
+EOF
+  chmod +x "$BIN/nix-prefetch-url"
+
+  UPDATE_ROOT=$FIXTURE PATH="$BIN:$PATH" run bash "$REPO_DIR/includes/update/non-nix.sh"
+  [ "$status" -eq 0 ]
+  grep -q 'pin = "1.2.3"' "$FIXTURE/modules/non-nix/catalog.toml"
+  grep -q 'sha256 = "newhash1111111111111111111111111111111111111111111111"' "$FIXTURE/modules/non-nix/catalog.toml"
+  grep -q 'Docs: https://example.test/coderabbit' "$FIXTURE/modules/non-nix/catalog.toml"
+  grep -q 'https://open-vsx.org/api/coderabbit/coderabbit-vscode/latest' "$STUB_LOG"
+  grep -q 'coderabbit.coderabbit-vscode-1.2.3.vsix' "$STUB_LOG"
+}
+
 @test "skills refresher runs the CLI update in the repo root" {
   printf '{"version":1,"skills":{}}\n' >"$FIXTURE/skills-lock.json"
   cat >"$BIN/skills" <<'EOF'

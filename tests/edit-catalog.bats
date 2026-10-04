@@ -171,3 +171,59 @@ EOF
   [[ $output == *--name* ]]
   [[ $output == *--docs* ]]
 }
+
+@test "add-local serializes open-vsx registry and sha256" {
+  command -v python3 >/dev/null || skip "python3 not installed"
+  printf '# shipped\n' >"$FIXTURE/modules/non-nix/catalog.toml"
+  cat >"$FIXTURE/catalog.local.toml.example" <<'EOF'
+# Repo-shared non-Nix tools.
+EOF
+
+  run bash "$EDIT_SH" add-local \
+    --name demo-ext --kind vscode-extension --scope user --pin 1.0.0 \
+    --publisher demo --extension demo-ext \
+    --registry open-vsx \
+    --sha256 0cfn8l7q8cn3d69spkf78p86d153cl3683lj38glkyi23206kwrw \
+    --docs 'Demo. Docs: https://example.com/demo-ext'
+  [ "$status" -eq 0 ]
+  grep -q 'name = "demo-ext"' "$FIXTURE/modules/non-nix/catalog.local.toml"
+  grep -q 'publisher = "demo"' "$FIXTURE/modules/non-nix/catalog.local.toml"
+  grep -q 'extension = "demo-ext"' "$FIXTURE/modules/non-nix/catalog.local.toml"
+  grep -q 'registry = "open-vsx"' "$FIXTURE/modules/non-nix/catalog.local.toml"
+  grep -q 'sha256 = "0cfn8l7q8cn3d69spkf78p86d153cl3683lj38glkyi23206kwrw"' "$FIXTURE/modules/non-nix/catalog.local.toml"
+}
+
+@test "add-local rejects open-vsx without sha256" {
+  command -v python3 >/dev/null || skip "python3 not installed"
+  printf '# shipped\n' >"$FIXTURE/modules/non-nix/catalog.toml"
+  cat >"$FIXTURE/catalog.local.toml.example" <<'EOF'
+# Repo-shared non-Nix tools.
+EOF
+
+  run bash "$EDIT_SH" add-local \
+    --name demo-ext --kind vscode-extension --scope user --pin 1.0.0 \
+    --publisher demo --extension demo-ext \
+    --registry open-vsx \
+    --docs 'Demo. Docs: https://example.com/demo-ext'
+  [ "$status" -eq 1 ]
+  [[ $output == *'--sha256 is required for registry=open-vsx'* ]]
+  [ ! -f "$FIXTURE/modules/non-nix/catalog.local.toml" ]
+}
+
+@test "add-local rejects unknown vscode-extension registry" {
+  command -v python3 >/dev/null || skip "python3 not installed"
+  printf '# shipped\n' >"$FIXTURE/modules/non-nix/catalog.toml"
+  cat >"$FIXTURE/catalog.local.toml.example" <<'EOF'
+# Repo-shared non-Nix tools.
+EOF
+
+  run bash "$EDIT_SH" add-local \
+    --name demo-ext --kind vscode-extension --scope user --pin 1.0.0 \
+    --publisher demo --extension demo-ext \
+    --registry not-a-registry \
+    --sha256 0cfn8l7q8cn3d69spkf78p86d153cl3683lj38glkyi23206kwrw \
+    --docs 'Demo. Docs: https://example.com/demo-ext'
+  [ "$status" -eq 1 ]
+  [[ $output == *'--registry must be marketplace or open-vsx'* ]]
+  [ ! -f "$FIXTURE/modules/non-nix/catalog.local.toml" ]
+}
