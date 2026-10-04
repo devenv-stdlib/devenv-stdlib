@@ -1,5 +1,6 @@
 {
   pkgs,
+  lib,
   ...
 }:
 {
@@ -27,11 +28,35 @@
       # git-hooks.nix still calls `proselint FILE`; 0.16 needs `check`.
       entry = "${pkgs.proselint}/bin/proselint check";
     };
-    lychee = {
-      enable = true;
-      files = "\\.(md|html)$";
-      settings.flags = "--cache --max-cache-age 2d --exclude '^https://devenv4monorepo\\.github\\.io'";
-    };
+    lychee =
+      let
+        # lychee does not retry reqwest connect failures ("Connection failed" on
+        # nixos.org/donate/ in CI). Retry the whole check without excluding hosts.
+        flags = "--cache --max-cache-age 2d --exclude '^https://devenv4monorepo\\.github\\.io'";
+        lycheeRetry = pkgs.writeShellScriptBin "lychee-ci-retry" ''
+          set -eu
+          max=4
+          n=1
+          while true; do
+            if ${lib.getExe pkgs.lychee} ${flags} "$@"; then
+              exit 0
+            fi
+            rc=$?
+            if [ "$n" -ge "$max" ]; then
+              exit "$rc"
+            fi
+            sleep $((n * 8))
+            n=$((n + 1))
+          done
+        '';
+      in
+      {
+        # Off for now. Keep this retry wrapper and lychee.toml.
+        enable = false;
+        files = "\\.(md|html)$";
+        package = pkgs.lychee;
+        entry = lib.getExe lycheeRetry;
+      };
     actionlint.enable = true;
     yamlfmt = {
       enable = true;
