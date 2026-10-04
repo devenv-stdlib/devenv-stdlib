@@ -74,7 +74,7 @@ in
       bad = lib.filter (item: !envName item) secretEnv;
     in
     if bad != [ ] then
-      throw "harness: secretEnv must be env var names (got ${lib.concatStringsSep ", " bad})"
+      throw "harness: secretEnv must be env var names"
     else
       {
         project = {
