@@ -174,16 +174,21 @@ let
 
   # Module assertions for an enabled tool under a category policy.
   # `categoryOrPolicy` may be a tool category path (lang.javascript.linters)
-  # or an explicit policy id (javascript-or-typescript) from the tool spec.
+  # or an explicit policy id (javascript-or-typescript / shell) from the tool
+  # spec's `categoryPolicy`. Pass null/false for unbound tools.
+  # Callers (mkTool) must not pass bare organizational categories like "shell"
+  # here — those collide with language policy ids after the devenv scaffold;
+  # use tool.policyArgOf so only explicit categoryPolicy or dotted lang.*/services.*
+  # categories bind.
   toolAssertions =
     config: categoryOrPolicy:
     let
       # Dotted strings are tool categories (lang.python.linters). Bare names are
-      # explicit policy ids (javascript-or-typescript). Do not treat bare language
-      # ids from devenvSupported as tool categories — "shell" is a language policy
-      # after scaffold but is not a toolAssertions category path.
+      # explicit policy ids (javascript-or-typescript). null/false → unbound.
       policy =
-        if builtins.isString categoryOrPolicy && lib.hasInfix "." categoryOrPolicy then
+        if categoryOrPolicy == null || categoryOrPolicy == false then
+          null
+        else if builtins.isString categoryOrPolicy && lib.hasInfix "." categoryOrPolicy then
           forToolCategory categoryOrPolicy
         else if builtins.isString categoryOrPolicy && policies ? ${categoryOrPolicy} then
           forId categoryOrPolicy
