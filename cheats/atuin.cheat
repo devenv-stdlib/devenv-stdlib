@@ -1,0 +1,10 @@
+% atuin, shell, history
+
+# Atuin history search (Ctrl-R in bash after home-switch)
+atuin search
+
+# Atuin daemon status (systemd socket activation)
+systemctl --user status atuin
+
+# Enable the atuin tool leaf
+echo "tools.atuin.enable = true;"

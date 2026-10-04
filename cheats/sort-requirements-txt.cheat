@@ -1,0 +1,7 @@
+% sort-requirements-txt, python, hooks
+
+# Sort requirements.txt via the git hook
+prek run sort-requirements-txt
+
+# Enable the sort-requirements-txt tool leaf
+echo "tools.sort-requirements-txt.enable = true;"

@@ -291,6 +291,7 @@ in
       "report.matrixInventory"
       "report.mkEnterShellSnippet"
       "report.mkEvalWarning"
+      "report.toolsNaviHint"
       "shell"
       "shell.category"
       "shell.enableIntegrations"

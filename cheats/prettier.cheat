@@ -1,0 +1,7 @@
+% prettier, javascript, lint
+
+# Format with prettier (hook when javascript/typescript languages are on)
+prettier --write .
+
+# Enable the prettier tool leaf
+echo "tools.prettier.enable = true;"

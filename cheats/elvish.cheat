@@ -1,0 +1,7 @@
+% elvish, shell
+
+# Start elvish after enabling tools.elvish
+elvish
+
+# Enable the elvish tool leaf
+echo "tools.elvish.enable = true;"

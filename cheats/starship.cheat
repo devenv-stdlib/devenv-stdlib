@@ -1,0 +1,10 @@
+% starship, shell, prompt
+
+# Print the Starship prompt config path Home Manager owns
+starship print-config | head
+
+# Re-apply after prompt edits
+home-switch
+
+# Enable the starship tool leaf
+echo "tools.starship.enable = true;"

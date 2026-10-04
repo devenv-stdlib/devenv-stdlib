@@ -1,0 +1,7 @@
+% cargo-valgrind, profilers, memory
+
+# Run cargo under valgrind (profilers.memory)
+cargo valgrind run
+
+# Enable the cargo-valgrind tool leaf
+echo "tools.cargo-valgrind.enable = true;"

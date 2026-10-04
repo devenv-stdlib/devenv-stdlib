@@ -166,6 +166,7 @@ in
         hasRuffPath = contains "python.lint.ruff" text;
         hasMatrix = contains "Build matrix" text;
         hasPython = contains "python:" text;
+        hasNaviHint = contains stdlib.report.toolsNaviHint text;
       };
     expected = {
       applied = [ "python.lint.ruff" ];
@@ -179,6 +180,7 @@ in
       hasRuffPath = true;
       hasMatrix = true;
       hasPython = true;
+      hasNaviHint = true;
     };
   };
 
@@ -290,6 +292,44 @@ in
       reportListsRuff = true;
       reportListsPyright = true;
       toolsNotNone = true;
+    };
+  };
+
+  # Status report always tells users how to open a per-tool navi cheat.
+  testReportHintsNaviForToolUsage = {
+    expr =
+      let
+        withTools = stdlib.report.formatReport (
+          stdlib.report.inventory {
+            tools = {
+              ruff = {
+                enable = true;
+              };
+            };
+          }
+        );
+        withoutTools = stdlib.report.formatReport (
+          stdlib.report.inventory {
+            tools = { };
+          }
+        );
+        hint = stdlib.report.toolsNaviHint;
+      in
+      {
+        inherit hint;
+        withToolsHasHint = contains hint withTools;
+        withoutToolsHasHint = contains hint withoutTools;
+        exactWording = hint == "Use navi <tool name> to understand its usage.";
+        afterEnabledTools =
+          (contains "Enabled tools:\n  - ruff\n${hint}" withTools)
+          && (contains "Enabled tools: (none)\n${hint}" withoutTools);
+      };
+    expected = {
+      hint = "Use navi <tool name> to understand its usage.";
+      withToolsHasHint = true;
+      withoutToolsHasHint = true;
+      exactWording = true;
+      afterEnabledTools = true;
     };
   };
 
