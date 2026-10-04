@@ -377,9 +377,11 @@ rec {
             sudo mkdir -p /home/runner/.cache/nix /nix
             # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
             # Nested act matrix cells share one /nix volume; recursive chown races with
-            # concurrent nix creating/removing store paths (ENOENT → non-zero under bash -e).
-            sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache || true
-            sudo chown -R "$(id -u):$(id -g)" /nix || sudo chown "$(id -u):$(id -g)" /nix || true
+            # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
+            sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache
+            if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
+              sudo chown "$(id -u):$(id -g)" /nix
+            fi
         - uses: cachix/install-nix-action@v31
         - name: Restore Nix store
           id: nix-cache
