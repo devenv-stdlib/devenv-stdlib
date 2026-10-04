@@ -1,0 +1,13 @@
+# CodeRabbit — review stacked PRs (bases other than the default branch).
+# Docs: https://docs.coderabbit.ai/configuration/auto-review
+language: en-US
+
+reviews:
+  profile: chill
+  auto_review:
+    enabled: true
+    # Default is only the repo default branch; stacked PRs target mid-stack bases.
+    base_branches:
+      - ".*"
+    # Stack / WIP PRs are often drafts; still want automatic review.
+    drafts: true
