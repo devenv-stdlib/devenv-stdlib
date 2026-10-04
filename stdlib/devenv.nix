@@ -554,7 +554,7 @@ in
       decls = declsOf args.presets;
       tools = localToolModules args.tools;
     in
-if decls == [ ] && tools == [ ] then
+    if decls == [ ] && tools == [ ] then
       [
         categoryPolicy.optionsModule
         categoryWarnings.optionsModule

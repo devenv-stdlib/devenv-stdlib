@@ -26,9 +26,7 @@ let
     in
     builtins.length path >= plen && lib.take plen path == prefix;
 
-  categoryHasPrefix =
-    prefix: category:
-    category == prefix || lib.hasPrefix "${prefix}." category;
+  categoryHasPrefix = prefix: category: category == prefix || lib.hasPrefix "${prefix}." category;
 
   enabledToolsUnder =
     tools: prefix:
@@ -44,26 +42,23 @@ let
 
   checks =
     let
-      langChecks = lib.concatMap (
-        lang:
-        [
-          {
-            path = "lang.${lang}";
-            available = categoryPolicy.languageAvailable lang;
-            toolPrefix = "lang.${lang}";
-            presetPrefix = [ lang ];
-          }
-          {
-            path = "lang.${lang}.linters";
-            available = categoryPolicy.languageAvailable lang;
-            toolPrefix = "lang.${lang}.linters";
-            presetPrefix = [
-              lang
-              "lint"
-            ];
-          }
-        ]
-      ) supported.languages;
+      langChecks = lib.concatMap (lang: [
+        {
+          path = "lang.${lang}";
+          available = categoryPolicy.languageAvailable lang;
+          toolPrefix = "lang.${lang}";
+          presetPrefix = [ lang ];
+        }
+        {
+          path = "lang.${lang}.linters";
+          available = categoryPolicy.languageAvailable lang;
+          toolPrefix = "lang.${lang}.linters";
+          presetPrefix = [
+            lang
+            "lint"
+          ];
+        }
+      ]) supported.languages;
       serviceChecks = map (svc: {
         path = "services.${svc}";
         available = categoryPolicy.serviceAvailable svc;
