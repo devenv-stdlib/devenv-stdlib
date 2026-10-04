@@ -284,6 +284,7 @@ in
       "report"
       "report.enabledHookNames"
       "report.flattenPresetLeaves"
+      "report.flattenToolLeaves"
       "report.formatReport"
       "report.inventory"
       "report.logInventory"
