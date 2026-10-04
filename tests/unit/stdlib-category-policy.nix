@@ -609,16 +609,59 @@ in
         good = categoryPolicy.toolAssertions {
           languages.python.enable = true;
         } "lang.python.linters";
+        # Explicit policy id still binds (lang.shell.* tools / categoryPolicy = "shell").
+        shellPolicy = categoryPolicy.toolAssertions { } "shell";
       in
       {
         badFails = !(builtins.head bad).assertion;
         goodOk = (builtins.head good).assertion;
         unrelated = categoryPolicy.toolAssertions { } "not-a-policy" == [ ];
+        unboundNull = categoryPolicy.toolAssertions { } null == [ ];
+        unboundFalse = categoryPolicy.toolAssertions { } false == [ ];
+        shellExplicitFails = !(builtins.head shellPolicy).assertion;
       };
     expected = {
       badFails = true;
       goodOk = true;
       unrelated = true;
+      unboundNull = true;
+      unboundFalse = true;
+      shellExplicitFails = true;
+    };
+  };
+
+  # Interactive tools under tools/shell use category = "shell" without an
+  # explicit categoryPolicy. That bare category must not bind to the devenv
+  # languages.shell policy (Den enables bash by default).
+  testToolPolicyArgSkipsBareShellCategory = {
+    expr =
+      let
+        bareShell = toolLib.policyArgOf { category = "shell"; };
+        dottedLang = toolLib.policyArgOf { category = "lang.python.linters"; };
+        explicit = toolLib.policyArgOf {
+          category = "lang.javascript.linters";
+          categoryPolicy = "javascript-or-typescript";
+        };
+        unbound = toolLib.policyArgOf {
+          category = "shell";
+          categoryPolicy = false;
+        };
+      in
+      {
+        inherit
+          bareShell
+          dottedLang
+          explicit
+          unbound
+          ;
+        bareShellAssertions = categoryPolicy.toolAssertions { } bareShell == [ ];
+      };
+    expected = {
+      bareShell = null;
+      dottedLang = "lang.python.linters";
+      explicit = "javascript-or-typescript";
+      unbound = false;
+      bareShellAssertions = true;
     };
   };
 }
