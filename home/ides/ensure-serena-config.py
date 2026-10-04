@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Ensure Serena global config excludes search_for_pattern.
 
-Merges into ~/.serena/serena_config.yml (or a path passed as argv[1]) without
-replacing Serena-managed keys such as projects / auth_secret. Idempotent.
+Merges into ~/.serena/serena_config.yml (or a path passed as argv[1]).
+Seeds projects: [] when missing; removes search_for_pattern from fixed_tools
+when excluding it. Idempotent.
 """
 
 from __future__ import annotations
@@ -22,7 +23,8 @@ TOOL = "search_for_pattern"
 def ensure(path: Path) -> bool:
     """Return True if the file was created or updated."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    if path.is_file() and path.stat().st_size > 0:
+    created = not (path.is_file() and path.stat().st_size > 0)
+    if not created:
         data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         if not isinstance(data, dict):
             print(
@@ -32,6 +34,13 @@ def ensure(path: Path) -> bool:
             sys.exit(1)
     else:
         data = {}
+
+    changed = created
+
+    # Serena 1.7+ requires projects once the config file exists.
+    if "projects" not in data:
+        data["projects"] = []
+        changed = True
 
     tools = data.get("excluded_tools")
     if tools is None:
@@ -43,10 +52,20 @@ def ensure(path: Path) -> bool:
         )
         sys.exit(1)
 
-    if TOOL in tools:
+    fixed = data.get("fixed_tools")
+    if isinstance(fixed, list) and TOOL in fixed:
+        data["fixed_tools"] = [t for t in fixed if t != TOOL]
+        changed = True
+
+    if TOOL not in tools:
+        data["excluded_tools"] = list(tools) + [TOOL]
+        changed = True
+    else:
+        data["excluded_tools"] = list(tools)
+
+    if not changed:
         return False
 
-    data["excluded_tools"] = list(tools) + [TOOL]
     path.write_text(
         yaml.safe_dump(
             data,
