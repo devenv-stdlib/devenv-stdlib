@@ -23,6 +23,7 @@ import yaml, sys
 d = yaml.safe_load(open(sys.argv[1]))
 assert d['excluded_tools'] == ['search_for_pattern'], d
 assert d['projects'] == [], d
+assert d['trusted_project_path_patterns'] == [], d
 " "$CONFIG"
   [ "$status" -eq 0 ]
 }
@@ -45,6 +46,7 @@ assert d['language_backend'] == 'LSP', d
 assert d['auth_secret'] == 'keep-me', d
 assert d['projects'] == ['/tmp/some-project'], d
 assert d['excluded_tools'] == ['read_file', 'search_for_pattern'], d
+assert 'trusted_project_path_patterns' not in d, d
 " "$CONFIG"
   [ "$status" -eq 0 ]
 }
@@ -74,11 +76,12 @@ import yaml, sys
 d = yaml.safe_load(open(sys.argv[1]))
 assert d['projects'] == [], d
 assert d['excluded_tools'] == ['search_for_pattern'], d
+assert 'trusted_project_path_patterns' not in d, d
 " "$CONFIG"
   [ "$status" -eq 0 ]
 }
 
-@test "removes search_for_pattern from fixed_tools when excluding" {
+@test "removes search_for_pattern from fixed_tools without excluded_tools" {
   cat >"$CONFIG" <<'EOF'
 projects: []
 fixed_tools:
@@ -92,9 +95,40 @@ EOF
 import yaml, sys
 d = yaml.safe_load(open(sys.argv[1]))
 assert d['fixed_tools'] == ['read_file'], d
-assert d['excluded_tools'] == ['search_for_pattern'], d
+assert d['excluded_tools'] == [], d
 " "$CONFIG"
   [ "$status" -eq 0 ]
+  # Second run must stay in fixed mode (no excluded_tools append).
+  before=$(cat "$CONFIG")
+  run python3 "$ENSURE" "$CONFIG"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$CONFIG")" = "$before" ]
+}
+
+@test "rejects sole fixed_tools entry search_for_pattern" {
+  cat >"$CONFIG" <<'EOF'
+projects: []
+fixed_tools:
+  - search_for_pattern
+EOF
+  before=$(cat "$CONFIG")
+  run python3 "$ENSURE" "$CONFIG"
+  [ "$status" -ne 0 ]
+  [ "$(cat "$CONFIG")" = "$before" ]
+}
+
+@test "rejects duplicate YAML mapping keys without rewriting" {
+  # Duplicate `projects` keys — PyYAML would keep only the last value.
+  printf '%s\n' \
+    'projects:' \
+    '  - /tmp/first' \
+    'projects:' \
+    '  - /tmp/second' \
+    'excluded_tools: []' >"$CONFIG"
+  before=$(cat "$CONFIG")
+  run python3 "$ENSURE" "$CONFIG"
+  [ "$status" -ne 0 ]
+  [ "$(cat "$CONFIG")" = "$before" ]
 }
 
 @test "appends when excluded_tools is empty list" {
