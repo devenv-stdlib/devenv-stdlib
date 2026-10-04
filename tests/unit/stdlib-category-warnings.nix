@@ -15,8 +15,7 @@ let
       presets = { };
     };
 
-  hasWarn =
-    path: warnings: lib.any (w: lib.hasInfix "category ${path}:" w) warnings;
+  hasWarn = path: warnings: lib.any (w: lib.hasInfix "category ${path}:" w) warnings;
 in
 {
   testCategoryWarningsApiExport = {
