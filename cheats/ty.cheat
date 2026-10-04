@@ -1,0 +1,7 @@
+% ty, python, lint
+
+# Type-check with ty (alternative to pyright; presets.python.type.ty)
+ty check
+
+# Enable the ty tool leaf
+echo "tools.ty.enable = true;"

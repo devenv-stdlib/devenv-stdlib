@@ -1,0 +1,9 @@
+% pprof, profilers, cpu
+
+# Inspect a pprof profile (profilers.cpu)
+pprof -http=localhost:8080 <profile>
+
+$ profile: ls *.pb.gz *.prof 2>/dev/null || true
+
+# Enable the pprof tool leaf
+echo "tools.pprof.enable = true;"

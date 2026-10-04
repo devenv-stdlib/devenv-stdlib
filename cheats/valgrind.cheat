@@ -1,0 +1,9 @@
+% valgrind, profilers, memory
+
+# Memory-check a binary with valgrind (profilers.memory)
+valgrind --leak-check=full <command>
+
+$ command: echo "./your-binary"
+
+# Enable the valgrind tool leaf
+echo "tools.valgrind.enable = true;"

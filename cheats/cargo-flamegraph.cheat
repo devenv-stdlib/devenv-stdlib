@@ -1,0 +1,7 @@
+% cargo-flamegraph, profilers, cpu
+
+# CPU flamegraph for a Rust binary (profilers.cpu)
+cargo flamegraph
+
+# Enable the cargo-flamegraph tool leaf
+echo "tools.cargo-flamegraph.enable = true;"

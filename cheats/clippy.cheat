@@ -1,0 +1,7 @@
+% clippy, rust, lint
+
+# Lint Rust with clippy
+cargo clippy --all-targets --all-features
+
+# Enable the clippy tool leaf (or presets.rust.lint.clippy)
+echo "tools.clippy.enable = true;"

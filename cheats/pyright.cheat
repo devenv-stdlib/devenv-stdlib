@@ -1,0 +1,7 @@
+% pyright, python, lint
+
+# Type-check with pyright (editor wiring via tools.pyright / python.type.pyright)
+pyright
+
+# Enable the pyright tool leaf
+echo "tools.pyright.enable = true;"

@@ -1,0 +1,10 @@
+% alacritty, terminal
+
+# Re-apply Alacritty after home.local.nix edits (tools.alacritty)
+home-switch
+
+# Attach to the Quake Zellij session used by Alacritty dropdown
+zellij attach quake
+
+# Disable the alacritty tool leaf
+echo "tools.alacritty.enable = false;"
