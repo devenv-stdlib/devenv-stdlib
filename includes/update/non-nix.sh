@@ -160,7 +160,7 @@ refresh_non_nix() {
     return 1
   fi
 
-  while IFS=$'\t' read -r name kind mise image publisher extension registry; do
+  while IFS=$'\x1f' read -r name kind mise image publisher extension registry; do
     case $kind in
       cli)
         bump_cli "$name" "$mise"

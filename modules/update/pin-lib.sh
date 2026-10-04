@@ -229,8 +229,9 @@ raise SystemExit(f"catalog_set_string_field: {name} not found in {path}")
 PY
 }
 
-# TSV rows: name kind mise image publisher extension registry
-# (empty strings when absent; registry defaults to marketplace for vscode-extension)
+# Rows: name kind mise image publisher extension registry
+# ASCII US (0x1f) delimiter so empty mise/image fields survive bash IFS splits
+# (tab is IFS whitespace and collapses empties — breaks Open VSX rows).
 # Usage: catalog_list_tools [PATH]
 catalog_list_tools() {
   local path=${1:-$(catalog_path)}
@@ -241,6 +242,7 @@ try:
 except ModuleNotFoundError:
     import tomli as tomllib  # type: ignore
 
+sep = "\x1f"
 with open(sys.argv[1], "rb") as f:
     data = tomllib.load(f)
 for tool in data.get("tool", []):
@@ -249,7 +251,7 @@ for tool in data.get("tool", []):
         "marketplace" if kind == "vscode-extension" else ""
     )
     print(
-        "\t".join(
+        sep.join(
             [
                 tool.get("name", ""),
                 kind,

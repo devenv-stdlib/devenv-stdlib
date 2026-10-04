@@ -117,7 +117,7 @@ refresh_local_catalog() {
   fi
 
   echo "local-catalog: refreshing $catalog"
-  while IFS=$'\t' read -r name kind mise image publisher extension registry; do
+  while IFS=$'\x1f' read -r name kind mise image publisher extension registry; do
     case $kind in
       cli)
         bump_cli_at "$catalog" "$name" "$mise"
