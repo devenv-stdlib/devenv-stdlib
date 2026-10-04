@@ -95,6 +95,11 @@ _: {
   # Phase 4 cutover: Den-only HM entry (den.homes → homeConfigurations.developer).
   # Requires flakes + impure env for USER/HOME defaults.
   scripts.home-switch.exec = ''
+    arch=$(uname -m)
+    if [ "$arch" != x86_64 ]; then
+      echo "Unsupported architecture $arch: only x86_64 Linux is supported (Den declares homes.x86_64-linux.developer)" >&2
+      exit 1
+    fi
     # shellcheck disable=SC1091
     . "$DEVENV_ROOT/home/nix-path.sh"
     ensure_nixpkgs_on_nix_path

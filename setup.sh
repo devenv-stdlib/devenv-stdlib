@@ -386,6 +386,7 @@ main() {
   local cachix_bin
 
   [[ $(uname -s) == Linux ]] || fail "This setup script supports Linux only"
+  [[ $(uname -m) == x86_64 ]] || fail "Unsupported architecture $(uname -m): only x86_64 Linux is supported (Den declares homes.x86_64-linux.developer)"
 
   if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
     SUDO=()
