@@ -105,34 +105,40 @@ let
 
   expectedCardinality =
     builtins.listToAttrs (
-      map (path: {
-        name = path;
-        value = "bundle";
-      }) (expectedLangPaths ++ expectedServicePaths ++ [
-        "cache"
-        "containers"
-        "data"
-        "docs"
-        "http"
-        "infra"
-        "infra.cloud"
-        "infra.kubernetes"
-        "lang"
-        "linters"
-        "monitor"
-        "profilers"
-        "profilers.cpu"
-        "profilers.memory"
-        "release"
-        "scanners"
-        "secrets"
-        "services"
-        "shell"
-        "shell.nav"
-        "tasks"
-        "tui"
-        "vcs"
-      ])
+      map
+        (path: {
+          name = path;
+          value = "bundle";
+        })
+        (
+          expectedLangPaths
+          ++ expectedServicePaths
+          ++ [
+            "cache"
+            "containers"
+            "data"
+            "docs"
+            "http"
+            "infra"
+            "infra.cloud"
+            "infra.kubernetes"
+            "lang"
+            "linters"
+            "monitor"
+            "profilers"
+            "profilers.cpu"
+            "profilers.memory"
+            "release"
+            "scanners"
+            "secrets"
+            "services"
+            "shell"
+            "shell.nav"
+            "tasks"
+            "tui"
+            "vcs"
+          ]
+        )
     )
     // {
       "ai-gateways" = "zero-or-one";

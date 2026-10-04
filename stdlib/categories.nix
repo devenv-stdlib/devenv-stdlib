@@ -108,9 +108,11 @@ let
         };
       };
     };
-    lang = n "bundle" "Language toolchains. One child per devenv languages.* id. Linters nest one level down." {
-      children = langChildren;
-    };
+    lang =
+      n "bundle" "Language toolchains. One child per devenv languages.* id. Linters nest one level down."
+        {
+          children = langChildren;
+        };
     services =
       n "bundle" "devenv services.*. Client CLIs stay under data/; servers stay devenv modules."
         {
