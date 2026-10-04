@@ -26,7 +26,7 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `modules/` | Languages, versions, hooks, debtmap, packages, `update` |
 | `modules/languages/catalog.json` | Cycle → latest patch and EOL |
 | `hooks/reference-transaction` | Tag guard, installed on `devenv shell` |
-| `.github/workflows/ci.yml` | `test-devenv`, generated `test.yml`, semantic-release |
+| `.github/workflows/ci.yml` | `test-devenv-unit`, then `test-devenv` (integration), generated `test.yml`, semantic-release |
 | `.github/workflows/hooks.yml` | `prek` on pull requests; failure comment; pre-commit.ci lite autofix |
 | `.github/workflows/update-lock.yml` | Weekly `devenv update git-hooks` pull request |
 | `.github/workflows/test.yml` | Written by devenv on `enterShell`; **commit** this file |
