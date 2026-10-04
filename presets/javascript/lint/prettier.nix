@@ -1,4 +1,4 @@
-# when inherits javascript category policy (languages.javascript.enable or override).
+# Shared JS/TS formatter. Uses javascript-or-typescript category policy.
 _: {
   path = [
     "javascript"
@@ -6,5 +6,6 @@ _: {
     "prettier"
   ];
   description = "Prettier git-hook and JS/TS editor formatter settings.";
+  categoryPolicy = "javascript-or-typescript";
   tools = [ "prettier" ];
 }
