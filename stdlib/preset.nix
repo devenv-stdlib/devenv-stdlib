@@ -473,15 +473,28 @@ in
       } (lib.setAttrByPath ([ "presets" ] ++ presetPath) presetOptions);
 
       config = lib.recursiveUpdate {
-        den.aspects.${presetId} = lib.mkIf result.applied aspectBody;
-        den.policies.${presetId} = lib.mkIf result.applied (
-          ctx:
-          let
-            inherit (den.lib) policy;
-          in
-          map (aspect: policy.include aspect) (aspectRefs den result.includeAspects)
-          ++ map (aspect: policy.exclude aspect) (aspectRefs den (result.excludeAspects ctx))
-        );
+        # Always define the aspect/policy. `mkIf false` still creates a
+        # lazyAttrsOf key with no value; Den walks aspect names and throws
+        # "accessed but has no value" (see cache.mr-boxington defaultEnable=false).
+        den.aspects.${presetId} =
+          if result.applied then
+            aspectBody
+          else
+            {
+              includes = [ ];
+            };
+        den.policies.${presetId} =
+          if result.applied then
+            (
+              ctx:
+              let
+                inherit (den.lib) policy;
+              in
+              map (aspect: policy.include aspect) (aspectRefs den result.includeAspects)
+              ++ map (aspect: policy.exclude aspect) (aspectRefs den (result.excludeAspects ctx))
+            )
+          else
+            (_ctx: [ ]);
       } (lib.setAttrByPath ([ "presets" ] ++ presetPath ++ [ "result" ]) result);
     };
 }
