@@ -117,7 +117,7 @@ refresh_local_catalog() {
   fi
 
   echo "local-catalog: refreshing $catalog"
-  while IFS=$'\t' read -r name kind mise image publisher extension; do
+  while IFS=$'\t' read -r name kind mise image publisher extension registry; do
     case $kind in
       cli)
         bump_cli_at "$catalog" "$name" "$mise"
@@ -130,7 +130,7 @@ refresh_local_catalog() {
         install_docker "$image" "$pin"
         ;;
       vscode-extension)
-        echo "local-catalog: $name vscode pin left for home-switch / Marketplace ($publisher.$extension)"
+        echo "local-catalog: $name vscode pin left for home-switch / ${registry:-marketplace} ($publisher.$extension)"
         ;;
       *)
         echo "local-catalog: unknown kind $kind for $name" >&2

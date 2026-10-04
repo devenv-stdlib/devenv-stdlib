@@ -21,9 +21,9 @@ in
     expected = 2;
   };
 
-  testDenCursorExtensionsHasNoNestedIncludes = {
+  testDenCursorExtensionsIncludesCoderabbit = {
     expr = includesOf "cursor-extensions";
-    expected = [ ];
+    expected = [ "coderabbit" ];
   };
 
   testDenCursorLlmHasNoNestedIncludes = {

@@ -30,6 +30,8 @@ Optional:
   --bin NAME               Binary name override (cli)
   --nix-attr ATTR          Nix attr path segment(s); repeat or comma-separate
   --homepage-contains STR  Homepage identity substring for Nix promotion
+  --registry ID            vscode-extension: marketplace (default) or open-vsx
+  --sha256 HASH            vscode-extension: nix32 hash (required for open-vsx)
   --dry-run                Print the block; do not write
   -h, --help               Show this help
 
@@ -161,6 +163,12 @@ format_tool_block() {
     vscode-extension)
       out+="publisher = $(toml_quote "$PUBLISHER")"$'\n'
       out+="extension = $(toml_quote "$EXTENSION")"$'\n'
+      if [[ -n ${REGISTRY:-} && $REGISTRY != marketplace ]]; then
+        out+="registry = $(toml_quote "$REGISTRY")"$'\n'
+      fi
+      if [[ -n ${SHA256:-} ]]; then
+        out+="sha256 = $(toml_quote "$SHA256")"$'\n'
+      fi
       ;;
   esac
   if [[ -n ${BIN:-} ]]; then
@@ -264,6 +272,7 @@ cmd_add() {
 
   NAME='' KIND='' SCOPE='' PIN='' DOCS=''
   MISE='' IMAGE='' PUBLISHER='' EXTENSION='' BIN='' HOMEPAGE_CONTAINS=''
+  REGISTRY='' SHA256=''
   NIX_ATTRS=()
   DRY_RUN=0
   SHOW_HELP=0
@@ -334,6 +343,16 @@ cmd_add() {
         HOMEPAGE_CONTAINS=$2
         shift 2
         ;;
+      --registry)
+        need_arg "$@"
+        REGISTRY=$2
+        shift 2
+        ;;
+      --sha256)
+        need_arg "$@"
+        SHA256=$2
+        shift 2
+        ;;
       --dry-run)
         DRY_RUN=1
         shift
@@ -391,6 +410,12 @@ Run: ${task} --help"
     vscode-extension)
       [[ -n $PUBLISHER ]] || die "Error: --publisher is required for kind=vscode-extension."
       [[ -n $EXTENSION ]] || die "Error: --extension is required for kind=vscode-extension."
+      if [[ -n $REGISTRY && $REGISTRY != marketplace && $REGISTRY != open-vsx && $REGISTRY != openvsx ]]; then
+        die "Error: --registry must be marketplace or open-vsx (got: $REGISTRY)."
+      fi
+      if [[ $REGISTRY == open-vsx || $REGISTRY == openvsx ]]; then
+        [[ -n $SHA256 ]] || die "Error: --sha256 is required for registry=open-vsx."
+      fi
       ;;
   esac
 

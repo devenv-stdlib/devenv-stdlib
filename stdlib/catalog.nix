@@ -20,6 +20,9 @@ let
       image = entry.image or null;
       publisher = entry.publisher or null;
       extension = entry.extension or null;
+      # marketplace (default) or open-vsx for vscode-extension pins.
+      registry = entry.registry or "marketplace";
+      sha256 = entry.sha256 or null;
       trustPolicyExcludes = entry.trustPolicyExcludes or null;
       allowBuilds = entry.allowBuilds or null;
       allowLowDownloads = entry.allowLowDownloads or null;

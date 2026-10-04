@@ -52,6 +52,7 @@ in
     expected = [
       "datakurre.devenv"
       "jnoortheen.nix-ide"
+      "coderabbit.coderabbit-vscode"
     ];
   };
 
