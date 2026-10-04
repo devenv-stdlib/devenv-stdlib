@@ -130,12 +130,21 @@ let
     };
 
   # Module assertions for an enabled tool under a category policy.
+  # `categoryOrPolicy` may be a tool category path (lang.javascript.linters)
+  # or an explicit policy id (javascript-or-typescript) from the tool spec.
   toolAssertions =
-    config: category:
+    config: categoryOrPolicy:
+    let
+      policy =
+        if builtins.isString categoryOrPolicy && policies ? ${categoryOrPolicy} then
+          forId categoryOrPolicy
+        else
+          forToolCategory categoryOrPolicy;
+    in
     map (req: {
       assertion = if builtins.isFunction req.assertion then req.assertion config else req.assertion;
       inherit (req) message;
-    }) (requiresOf (forToolCategory category));
+    }) (requiresOf policy);
 
   # devenv / HM option: explicit availability override per category id.
   optionsModule =

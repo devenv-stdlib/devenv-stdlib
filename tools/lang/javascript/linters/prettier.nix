@@ -13,6 +13,8 @@ else
     spec = {
       name = "prettier";
       category = "lang.javascript.linters";
+      # Shared with TypeScript — do not require languages.javascript.enable.
+      categoryPolicy = "javascript-or-typescript";
       install = {
         kind = "project";
       };

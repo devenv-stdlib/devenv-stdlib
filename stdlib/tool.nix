@@ -116,7 +116,9 @@ let
       cfgEnable = moduleArgs.config.tools.${checked.name}.enable;
       rendered = (spec.homeManager or (_: { })) moduleArgs;
       deps = checked.dependsOn;
-      policyAssertions = categoryPolicy.toolAssertions moduleArgs.config checked.category;
+      policyAssertions = categoryPolicy.toolAssertions moduleArgs.config (
+        checked.categoryPolicy or checked.category
+      );
     in
     assert require checked.isGlobal
       "mkTool ${checked.name}: apply is for global (homeManager) tools; use applyLocal for project payloads";
@@ -155,7 +157,9 @@ let
       raw = spec.project or { };
       rendered = if builtins.isFunction raw then raw moduleArgs else raw;
       deps = checked.dependsOn;
-      policyAssertions = categoryPolicy.toolAssertions moduleArgs.config checked.category;
+      policyAssertions = categoryPolicy.toolAssertions moduleArgs.config (
+        checked.categoryPolicy or checked.category
+      );
     in
     assert require checked.isLocal "mkTool ${checked.name}: applyLocal is for local (project) tools";
     {
