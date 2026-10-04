@@ -101,6 +101,7 @@ in
     };
     expected = {
       ids = [
+        "go"
         "python"
         "rust"
       ];
@@ -108,6 +109,56 @@ in
       tool = "python";
       annotated = "python";
     };
+  };
+
+
+  testCategoryPolicyGoRegistered = {
+    expr = {
+      preset =
+        (categoryPolicy.forPresetPath [
+          "go"
+          "lint"
+          "gofmt"
+        ]).id;
+      tool = (categoryPolicy.forToolCategory "lang.go.linters").id;
+      annotated = (stdlib.categories.resolve "lang.go").categoryPolicy;
+      available = goPolicy.available { languages.go.enable = true; };
+      unavailable = goPolicy.available { };
+    };
+    expected = {
+      preset = "go";
+      tool = "go";
+      annotated = "go";
+      available = true;
+      unavailable = false;
+    };
+  };
+
+  testGoPresetInheritsWhenInertWithoutGo = {
+    expr =
+      (realizePreset {
+        path = [
+          "go"
+          "lint"
+          "gofmt"
+        ];
+      }).triggered;
+    expected = false;
+  };
+
+  testGoPresetAppliesWhenLanguageEnabled = {
+    expr =
+      (realizePreset {
+        path = [
+          "go"
+          "lint"
+          "gofmt"
+        ];
+        cfg = {
+          languages.go.enable = true;
+        };
+      }).applied;
+    expected = true;
   };
 
   testCategoryPolicyRustRegistered = {
