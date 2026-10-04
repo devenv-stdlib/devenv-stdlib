@@ -22,6 +22,7 @@ teardown() {
 import yaml, sys
 d = yaml.safe_load(open(sys.argv[1]))
 assert d['excluded_tools'] == ['search_for_pattern'], d
+assert d['projects'] == [], d
 " "$CONFIG"
   [ "$status" -eq 0 ]
 }
@@ -52,6 +53,7 @@ assert d['excluded_tools'] == ['read_file', 'search_for_pattern'], d
   cat >"$CONFIG" <<'EOF'
 excluded_tools:
   - search_for_pattern
+projects: []
 auth_secret: unchanged
 EOF
   before=$(cat "$CONFIG")
@@ -60,9 +62,45 @@ EOF
   [ "$(cat "$CONFIG")" = "$before" ]
 }
 
+@test "seeds projects when missing from an existing file" {
+  cat >"$CONFIG" <<'EOF'
+excluded_tools:
+  - search_for_pattern
+EOF
+  run python3 "$ENSURE" "$CONFIG"
+  [ "$status" -eq 0 ]
+  run python3 -c "
+import yaml, sys
+d = yaml.safe_load(open(sys.argv[1]))
+assert d['projects'] == [], d
+assert d['excluded_tools'] == ['search_for_pattern'], d
+" "$CONFIG"
+  [ "$status" -eq 0 ]
+}
+
+@test "removes search_for_pattern from fixed_tools when excluding" {
+  cat >"$CONFIG" <<'EOF'
+projects: []
+fixed_tools:
+  - search_for_pattern
+  - read_file
+excluded_tools: []
+EOF
+  run python3 "$ENSURE" "$CONFIG"
+  [ "$status" -eq 0 ]
+  run python3 -c "
+import yaml, sys
+d = yaml.safe_load(open(sys.argv[1]))
+assert d['fixed_tools'] == ['read_file'], d
+assert d['excluded_tools'] == ['search_for_pattern'], d
+" "$CONFIG"
+  [ "$status" -eq 0 ]
+}
+
 @test "appends when excluded_tools is empty list" {
   cat >"$CONFIG" <<'EOF'
 excluded_tools: []
+projects: []
 web_dashboard: true
 EOF
   run python3 "$ENSURE" "$CONFIG"
