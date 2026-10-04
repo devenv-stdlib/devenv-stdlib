@@ -71,9 +71,15 @@ in
       homeManager ? { },
     }:
     let
-      bad = lib.filter (item: !envName item) secretEnv;
+      home = {
+        inherit name secretEnv;
+        configDir = ".config/${name}";
+      }
+      // homeManager;
+      names = home.secretEnv or [ ];
+      namesOk = builtins.isList names && lib.all envName names;
     in
-    if bad != [ ] then
+    if !namesOk then
       throw "harness: secretEnv must be env var names"
     else
       {
@@ -81,10 +87,6 @@ in
           inherit name;
         }
         // project;
-        homeManager = {
-          inherit name secretEnv;
-          configDir = ".config/${name}";
-        }
-        // homeManager;
+        homeManager = home;
       };
 }
