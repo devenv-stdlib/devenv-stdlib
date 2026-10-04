@@ -255,14 +255,18 @@ in
         cr = spec "coderabbit";
       in
       {
-        inherit (cr) category upgrade defaultEnable;
+        inherit (cr)
+          category
+          upgrade
+          defaultEnable
+          path
+          ;
         inherit (cr.install)
           kind
           publisher
           extension
           registry
           ;
-        path = cr.path;
       };
     expected = {
       category = "ide";
@@ -275,6 +279,32 @@ in
       path = [
         "ide"
         "coderabbit"
+      ];
+    };
+  };
+
+  testStdlibCoderabbitCliIsBinary = {
+    expr =
+      let
+        cr = spec "coderabbit-cli";
+      in
+      {
+        inherit (cr)
+          category
+          upgrade
+          defaultEnable
+          path
+          ;
+        inherit (cr.install) kind;
+      };
+    expected = {
+      category = "ide";
+      upgrade = "self";
+      defaultEnable = true;
+      kind = "binary";
+      path = [
+        "ide"
+        "coderabbit-cli"
       ];
     };
   };

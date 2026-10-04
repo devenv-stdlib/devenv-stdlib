@@ -3,8 +3,8 @@
 # Enable the CodeRabbit Open VSX extension tool
 echo "tools.coderabbit.enable = true;" && home-switch
 
-# Thin preset (same leaf as tools.coderabbit)
+# Preset: extension + CLI (tools.coderabbit + tools.coderabbit-cli)
 echo "presets.ide.coderabbit.enable = true;"
 
-# Disable after opting out
+# Disable the extension after opting out
 echo "tools.coderabbit.enable = false;" && home-switch
