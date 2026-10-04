@@ -145,6 +145,19 @@ let
     assert require (
       kind != "catalog" || (install ? name && builtins.isString install.name && install.name != "")
     ) "mkTool ${name}: install.kind = catalog requires install.name";
+    assert require
+      (
+        kind != "vscode-extension"
+        || (
+          install ? publisher
+          && builtins.isString install.publisher
+          && install.publisher != ""
+          && install ? extension
+          && builtins.isString install.extension
+          && install.extension != ""
+        )
+      )
+      "mkTool ${name}: install.kind = vscode-extension requires install.publisher and install.extension";
     assert require (
       kind != "project" || builtins.elem "local" scopes
     ) "mkTool ${name}: install.kind = project requires a project (local) payload";

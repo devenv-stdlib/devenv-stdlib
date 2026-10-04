@@ -151,7 +151,7 @@ nixpkgs.follows = "devenv-stdlib/nixpkgs";
 
 `presets/omer.nix` is the selection. It calls `mkPreset` from `stdlib/preset.nix`. Its HM `includes` are cohesive bundles via attrpaths:
 
-`terminal.quake`, `terminal.alacritty-atuin`, `ide`, `host.hm-only-guard`.
+`terminal.quake`, `terminal.alacritty-atuin`, `ide`, `ide.coderabbit`, `host.hm-only-guard`.
 
 Language support is **not** a megapreset named Python/Rust/…. Local language leaves are first-class `mkTool` modules under `tools/lang/<lang>/…` (same public API as global tools: `tools.<name>.enable`). Thin framework presets under `presets/<lang>/<category>/` keep attrpath identity (`python.lint.ruff`, `rust.lint.rustfmt`, …) and declare `tools = [ tools.python.lint.ruff ]` (plus an explicit `when` when needed); language gating comes from the category policy, not a copied `when` on every leaf. When applied, thin presets set `tools.<name>.enable = true`. Non-tool presets (serena, debtmap, ide, supported, bundler, ci presets, fixtures, …) stay as presets. Copier still decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
 

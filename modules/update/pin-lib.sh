@@ -118,6 +118,19 @@ vs_marketplace_vsix_url() {
     "https://${publisher}.gallery.vsassets.io/_apis/public/gallery/publisher/${publisher}/extension/${name}/${version}/assetbyname/Microsoft.VisualStudio.Services.VSIXPackage"
 }
 
+openvsx_latest() {
+  local publisher=$1 name=$2
+  curl -fsSL -A "devenv4monorepo-update" \
+    "https://open-vsx.org/api/${publisher}/${name}/latest" \
+    | jq -er '.version'
+}
+
+openvsx_vsix_url() {
+  local publisher=$1 name=$2 version=$3
+  printf '%s\n' \
+    "https://open-vsx.org/api/${publisher}/${name}/${version}/file/${publisher}.${name}-${version}.vsix"
+}
+
 prefetch_url_hash() {
   local url=$1
   local fmt=${2:-nix32}
@@ -179,16 +192,23 @@ PY
 # Usage: catalog_set_pin NAME PIN [PATH]
 catalog_set_pin() {
   local name=$1 pin=$2 path=${3:-$(catalog_path)}
+  catalog_set_string_field "$name" pin "$pin" "$path"
+}
+
+# Usage: catalog_set_string_field NAME KEY VALUE [PATH]
+catalog_set_string_field() {
+  local name=$1 key=$2 value=$3 path=${4:-$(catalog_path)}
   if update_dry_run; then
-    echo "dry-run: $path: $name.pin = \"$pin\""
+    echo "dry-run: $path: $name.$key = \"$value\""
     return 0
   fi
-  python3 - "$path" "$name" "$pin" <<'PY'
+  python3 - "$path" "$name" "$key" "$value" <<'PY'
 import pathlib, re, sys
 
 path = pathlib.Path(sys.argv[1])
 name = sys.argv[2]
-pin = sys.argv[3]
+key = sys.argv[3]
+value = sys.argv[4]
 text = path.read_text()
 blocks = list(re.finditer(r"(?ms)^\[\[tool\]\].*?(?=^\[\[tool\]\]|\Z)", text))
 for match in blocks:
@@ -196,20 +216,21 @@ for match in blocks:
     if not re.search(rf'(?m)^\s*name\s*=\s*"{re.escape(name)}"\s*$', block):
         continue
     new_block, count = re.subn(
-        r'(?m)^(\s*pin\s*=\s*")[^"]*("\s*)$',
-        rf"\g<1>{pin}\2",
+        rf'(?m)^(\s*{re.escape(key)}\s*=\s*")[^"]*("\s*)$',
+        rf"\g<1>{value}\2",
         block,
         count=1,
     )
     if count != 1:
-        raise SystemExit(f"catalog_set_pin: pin line missing for {name}")
+        raise SystemExit(f"catalog_set_string_field: {key} line missing for {name}")
     path.write_text(text[: match.start()] + new_block + text[match.end() :])
     raise SystemExit(0)
-raise SystemExit(f"catalog_set_pin: {name} not found in {path}")
+raise SystemExit(f"catalog_set_string_field: {name} not found in {path}")
 PY
 }
 
-# TSV rows: name kind mise image publisher extension (empty strings when absent)
+# TSV rows: name kind mise image publisher extension registry
+# (empty strings when absent; registry defaults to marketplace for vscode-extension)
 # Usage: catalog_list_tools [PATH]
 catalog_list_tools() {
   local path=${1:-$(catalog_path)}
@@ -223,15 +244,20 @@ except ModuleNotFoundError:
 with open(sys.argv[1], "rb") as f:
     data = tomllib.load(f)
 for tool in data.get("tool", []):
+    kind = tool.get("kind", "")
+    registry = tool.get("registry") or (
+        "marketplace" if kind == "vscode-extension" else ""
+    )
     print(
         "\t".join(
             [
                 tool.get("name", ""),
-                tool.get("kind", ""),
+                kind,
                 tool.get("mise") or "",
                 tool.get("image") or "",
                 tool.get("publisher") or "",
                 tool.get("extension") or "",
+                registry,
             ]
         )
     )

@@ -8,7 +8,8 @@
       "cursor-llm"
     ];
   };
-  cursor-extensions.includes = [ ];
+  # CodeRabbit Open VSX extension (tools/ide/coderabbit.nix via den.load).
+  cursor-extensions.includes = [ "coderabbit" ];
   # cursor-llm is the mcp-stack aspect (MCP upsert, rules, secrets watch).
   cursor-llm.includes = [ ];
 }

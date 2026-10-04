@@ -249,6 +249,36 @@ in
     expected = "self";
   };
 
+  testStdlibCoderabbitIsOpenVsxExtension = {
+    expr =
+      let
+        cr = spec "coderabbit";
+      in
+      {
+        inherit (cr) category upgrade defaultEnable;
+        inherit (cr.install)
+          kind
+          publisher
+          extension
+          registry
+          ;
+        path = cr.path;
+      };
+    expected = {
+      category = "ide";
+      upgrade = "catalog";
+      defaultEnable = true;
+      kind = "vscode-extension";
+      publisher = "coderabbit";
+      extension = "coderabbit-vscode";
+      registry = "open-vsx";
+      path = [
+        "ide"
+        "coderabbit"
+      ];
+    };
+  };
+
   testStdlibMemoryToolsAreNotCpu = {
     expr = lib.any (
       d:

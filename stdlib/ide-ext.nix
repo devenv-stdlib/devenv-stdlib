@@ -8,11 +8,31 @@ let
   inherit (pkgs) lib;
   nonNix = import ./catalog.nix { inherit lib; };
   vsix = nonNix.entryByName "devenv-vscode";
+  coderabbitEntry = nonNix.entryByName "coderabbit-vscode";
   vs = pkgs.vscode-extensions;
   # External fallback. includes/update/non-nix.sh replaces this string.
   defaultDevenvExtensionSha256 = "1bjmjrg13zynala76vz5vpm4ann1dic6awiv03w2l9rkby4agba7";
   vsixHash =
     if devenvExtensionSha256 == null then defaultDevenvExtensionSha256 else devenvExtensionSha256;
+
+  # Open VSX VSIX URL for a catalog vscode-extension entry (registry = open-vsx).
+  openVsxVsixUrl =
+    entry:
+    "https://open-vsx.org/api/${entry.publisher}/${entry.extension}/${entry.pin}/file/${entry.publisher}.${entry.extension}-${entry.pin}.vsix";
+
+  extensionFromOpenVsx =
+    entry:
+    pkgs.vscode-utils.buildVscodeMarketplaceExtension {
+      vsix = pkgs.fetchurl {
+        url = openVsxVsixUrl entry;
+        inherit (entry) sha256;
+      };
+      mktplcRef = {
+        inherit (entry) publisher sha256;
+        name = entry.extension;
+        version = entry.pin;
+      };
+    };
 in
 rec {
   # version from modules/non-nix/catalog.toml; sha256 refreshed with the pin.
@@ -29,6 +49,9 @@ rec {
     version = "1.0.1";
     sha256 = "18bl6kkdbykxfvriiiws68f59dlj8aga0279qgjldrhsgdgnfwf6";
   };
+
+  # Open VSX only (not on VS Marketplace). Installed by tools/ide/coderabbit.nix.
+  coderabbit = extensionFromOpenVsx coderabbitEntry;
 
   common = [
     devenvExtension
