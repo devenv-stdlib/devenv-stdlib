@@ -39,7 +39,7 @@ project-ides ──includes──► vscode-recs
              └───────────► cursor-sync-extensions
 ```
 
-enterShell writers live in `presets/<lang>/<category>/*.nix` (`stdlib.devenv.load`); aspects document composition.
+Language presets under `presets/<lang>/<category>/*.nix` supply project data via `stdlib.devenv.load`; shared `enterShell` hooks such as `cursor-sync-extensions` are wired in `stdlib/devenv.nix`. Aspects document composition.
 
 ## Developer home (Phase 4 cutover)
 
