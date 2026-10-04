@@ -123,7 +123,7 @@ The language/OS `test.yml` matrix strategy is the composable preset `presets/ci/
 
 `stdlib.discover` lists `.nix` files under the directories you pass. It skips names that start with `_`.
 
-`stdlib.den.load` lowers **global** `tools/**/*.nix` (Home Manager payloads) into Den aspect modules. A missing directory still yields an empty list, so callers can concatenate the result. `stdlib.devenv.load` lowers **local** tools (`project` payloads via `applyLocal`) plus thin presets under `presets/` — never imports Den. Prefer `{ presets = [...]; tools = [...]; }`. A bare list of `presets/<lang>` roots still works: the loader infers a sibling `tools/` next to `presets/` so thin presets can resolve `tools.<attrpath>` refs.
+`stdlib.den.load` lowers **global** `tools/**/*.nix` (Home Manager payloads) into Den aspect modules. A missing directory still yields an empty list, so callers can concatenate the result. `stdlib.devenv.load` lowers **local** tools (`project` payloads via `applyLocal`) plus thin presets under `presets/` — never imports Den. Prefer `{ presets = [...]; tools = [...]; }`. A bare list of `presets/<lang>` roots still works. If a sibling `tools/` directory exists, the loader infers it so thin presets can resolve `tools.<attrpath>` refs.
 
 ## No compat shims (pre-release)
 
