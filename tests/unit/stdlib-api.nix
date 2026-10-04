@@ -504,11 +504,13 @@ in
   testStdlibLoadersEmpty = {
     expr = {
       den = stdlib.den.load [ ./missing-tools ];
-      devenv = stdlib.devenv.load [ ];
+      # Empty preset/tool roots still inject always-on category-policy
+      # (and later category-warnings) modules — not a fully empty list.
+      devenvNonEmpty = (builtins.length (stdlib.devenv.load [ ])) >= 1;
     };
     expected = {
       den = [ ];
-      devenv = [ ];
+      devenvNonEmpty = true;
     };
   };
 
