@@ -71,15 +71,16 @@ let
               type = lib.types.attrsOf freeform;
               default = { };
             };
-            tools = lib.mkOption {
-              type = lib.types.attrsOf freeform;
-              default = { };
-            };
           };
           config = extra;
         }
       ]
-      ++ devenvLoad.load (devenvLoad.defaultRoots presetRoot);
+      ++ devenvLoad.load {
+        presets = devenvLoad.defaultRoots presetRoot;
+        # Local mkTool leaves hold project payloads (e.g. ruff hooks); thin
+        # presets only list tool names, so unit eval must load tools roots.
+        tools = [ ../../tools ];
+      };
     }).config;
 
   contains = needle: haystack: lib.hasInfix needle haystack;
