@@ -64,6 +64,10 @@ _: {
       echo "skip act (already inside act)"
     elif [ "$status" -ne 0 ]; then
       echo "skip act (suite already failed)"
+    elif [ -n "''${GITHUB_ACTIONS:-}" ]; then
+      # Hosted CI already runs the language matrix via reusable test.yml.
+      # Nested act only re-validates Docker//nix quirks and races shared volumes.
+      echo "skip nested act on GitHub-hosted CI (nixosTest + actionlint only)"
     else
       command -v docker >/dev/null
       echo "==> act image"
@@ -139,7 +143,7 @@ _: {
           fi
         done <<< "$cells"
       }
-      if [ -z "''${GITHUB_ACTIONS:-}" ] && [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
+      if [ -f "$DEVENV_ROOT/.github/workflows/test.yml" ]; then
         echo "==> act .github/workflows/test.yml"
         run_act_serial "$DEVENV_ROOT/.github/workflows/test.yml" || status=1
       fi
