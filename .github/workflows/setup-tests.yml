@@ -11,13 +11,9 @@ on:
       - tests/tag-hook.bats
       - hooks/**
       - .github/workflows/setup-tests.yml
+  # Always on PRs: branch ruleset requires bats (ubuntu-24.04/26.04). Path
+  # filters on push still skip unrelated branch pushes.
   pull_request:
-    paths:
-      - setup.sh
-      - tests/setup/**
-      - tests/tag-hook.bats
-      - hooks/**
-      - .github/workflows/setup-tests.yml
 
 jobs:
   bats:
