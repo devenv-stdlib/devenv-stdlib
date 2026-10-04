@@ -478,14 +478,21 @@ in_setup() {
 # --- entrypoint --------------------------------------------------------------
 
 @test "main refuses to run on a non-Linux host" {
-  stub uname "echo Darwin"
+  stub uname 'case "${1:-}" in -m) echo x86_64 ;; *) echo Darwin ;; esac'
   run env PATH="$STUB_DIR:$PATH" bash "$SETUP_SH" </dev/null
   [ "$status" -eq 1 ]
   [[ $output == *"supports Linux only"* ]]
 }
 
+@test "main refuses to run on a non-x86_64 architecture" {
+  stub uname 'case "${1:-}" in -m) echo aarch64 ;; *) echo Linux ;; esac'
+  run env PATH="$STUB_DIR:$PATH" bash "$SETUP_SH" </dev/null
+  [ "$status" -eq 1 ]
+  [[ $output == *"Unsupported architecture"* ]]
+}
+
 @test "main requires curl before touching the network" {
-  stub uname "echo Linux"
+  stub uname 'case "${1:-}" in -m) echo x86_64 ;; *) echo Linux ;; esac'
   stub sudo "exit 0"
   link_real bash cat
   run env PATH="$STUB_DIR" bash "$SETUP_SH" </dev/null

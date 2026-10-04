@@ -1,5 +1,6 @@
 # Standalone Home Manager via den.homes (no NixOS/Darwin host required).
 # Phase 4: sole HM composition root for supported Ubuntu hosts (`home-switch`).
+# Supported platforms: x86_64 Linux (Ubuntu) only; aarch64 is not supported yet.
 { inputs, den, ... }:
 {
   imports = [ inputs.den.flakeModule ];
