@@ -353,11 +353,7 @@ jobs:
     name: Integration tests (${{ matrix.os }})
     needs: [lint, changes, unit-tests]
     if: >-
-      always()
-      && !cancelled()
-      && needs.lint.result == 'success'
-      && needs.changes.outputs.integration == 'true'
-      && (needs.changes.outputs.unit != 'true' || needs.unit-tests.result == 'success')
+      always() && !cancelled() && needs.lint.result == 'success' && needs.changes.outputs.integration == 'true' && (needs.changes.outputs.unit != 'true' || needs.unit-tests.result == 'success')
     strategy:
       fail-fast: false
       matrix:
@@ -460,10 +456,7 @@ jobs:
     name: Check language-matrix workflow exists
     needs: [changes, integration-tests]
     if: >-
-      always()
-      && !cancelled()
-      && needs.changes.outputs.language == 'true'
-      && (needs.changes.outputs.integration != 'true' || needs.integration-tests.result == 'success')
+      always() && !cancelled() && needs.changes.outputs.language == 'true' && (needs.changes.outputs.integration != 'true' || needs.integration-tests.result == 'success')
     runs-on: ubuntu-24.04
     outputs:
       exists: ${{ steps.check.outputs.exists }}
@@ -530,9 +523,7 @@ jobs:
     name: Semantic release
     needs: [changes, integration-tests]
     if: >-
-      github.event_name == 'push'
-      && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-      && needs.integration-tests.result == 'success'
+      github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && needs.integration-tests.result == 'success'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
