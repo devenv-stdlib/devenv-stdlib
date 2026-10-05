@@ -10,7 +10,6 @@ if false then
 else
   let
     tool = import ../../../../stdlib/tool.nix { inherit lib; };
-    versions = import ../../../../modules/languages/versions-lib.nix { inherit lib; };
     spec = {
       name = "rustfmt";
       category = "lang.rust.linters";
@@ -24,10 +23,11 @@ else
           edition = config.supported.rust.edition or null;
         in
         {
-          git-hooks.hooks.rustfmt = {
+          # Format via devenv treefmt (not a separate git-hooks.rustfmt entry).
+          treefmt.config.programs.rustfmt = {
             enable = true;
-            args = versions.rustfmtEditionArgs edition;
-          };
+          }
+          // lib.optionalAttrs (edition != null) { inherit edition; };
 
           stdlib.lang.rust.settings = lib.optionalAttrs (edition != null) {
             "rust-analyzer.rustfmt.extraArgs" = [

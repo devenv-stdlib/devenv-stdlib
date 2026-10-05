@@ -20,9 +20,18 @@ else
       };
       upgrade = "none";
       project = {
-        git-hooks.hooks.prettier = {
-          enable = true;
-          files = "\\.(cjs|js|jsx|mjs|ts|tsx)$";
+        # treefmt prettier defaults also cover md/yaml/json; keep the former
+        # git-hooks scope (JS/TS only) so yamlfmt / other formatters stay sole owners.
+        treefmt.config = {
+          programs.prettier.enable = true;
+          settings.formatter.prettier.includes = [
+            "*.cjs"
+            "*.js"
+            "*.jsx"
+            "*.mjs"
+            "*.ts"
+            "*.tsx"
+          ];
         };
 
         # Surface under javascript so merge order stays stable; settings are identical for TS.

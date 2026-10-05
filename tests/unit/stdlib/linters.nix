@@ -1,0 +1,54 @@
+# First-class linters catalog (treefmt vs prek backends).
+{
+  lib,
+  ...
+}:
+let
+  stdlib = import ../../../stdlib { inherit lib; };
+  inherit (stdlib) linters;
+in
+{
+  testLintersCatalogBackends = {
+    expr = {
+      nixfmt = linters.catalog.nixfmt.backend;
+      commitlint = linters.catalog.commitlint.backend;
+      gitleaks = linters.catalog.gitleaks.backend;
+      lycheeDefault = linters.catalog.lychee.defaultEnable;
+    };
+    expected = {
+      nixfmt = "treefmt";
+      commitlint = "prek";
+      gitleaks = "prek";
+      lycheeDefault = false;
+    };
+  };
+
+  testLintersAlwaysOnSplit = {
+    expr = {
+      treefmtHasNixfmt = lib.elem "nixfmt" linters.alwaysOnTreefmt;
+      prekHasCommitlint = lib.elem "commitlint" linters.alwaysOnPrek;
+      lycheeNotAlwaysOn = !(lib.elem "lychee" linters.alwaysOn);
+      gitHooksHasTreefmt = lib.elem "treefmt" linters.alwaysOnGitHooks;
+      gitHooksOmitsNixfmt = !(lib.elem "nixfmt" linters.alwaysOnGitHooks);
+    };
+    expected = {
+      treefmtHasNixfmt = true;
+      prekHasCommitlint = true;
+      lycheeNotAlwaysOn = true;
+      gitHooksHasTreefmt = true;
+      gitHooksOmitsNixfmt = true;
+    };
+  };
+
+  testReportEnabledTreefmtPrograms = {
+    expr = stdlib.report.enabledTreefmtPrograms {
+      nixfmt.enable = true;
+      rustfmt.enable = false;
+      ruff-check.enable = true;
+    };
+    expected = [
+      "nixfmt"
+      "ruff-check"
+    ];
+  };
+}

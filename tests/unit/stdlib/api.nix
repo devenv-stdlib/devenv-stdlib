@@ -28,6 +28,7 @@ let
     ++ names "categoryWarnings" stdlib.categoryWarnings
     ++ names "harness" stdlib.harness
     ++ names "shell" stdlib.shell
+    ++ names "linters" stdlib.linters
     ++ names "log" stdlib.log
     ++ names "report" stdlib.report
     ++ names "den" stdlib.den
@@ -255,6 +256,14 @@ in
       "harness.presetPath"
       "harness.toolPath"
       "ideExt"
+      "linters"
+      "linters.alwaysOn"
+      "linters.alwaysOnGitHooks"
+      "linters.alwaysOnPrek"
+      "linters.alwaysOnTreefmt"
+      "linters.catalog"
+      "linters.prek"
+      "linters.treefmt"
       "log"
       "log.debug"
       "log.debug'"
@@ -268,12 +277,16 @@ in
       "log.warnIf"
       "mkTool"
       "project"
+      "project.alwaysOnGitHookNames"
       "project.alwaysOnHookNames"
+      "project.alwaysOnPrekHooks"
+      "project.alwaysOnTreefmtLinters"
       "project.debtmapFiles"
       "project.debtmapLanguages"
       "project.javascriptOn"
       "project.langOn"
       "project.languageHooks"
+      "project.lintersCatalog"
       "project.serenaAlwaysLanguageServers"
       "project.serenaLanguageServers"
       "project.typescriptBundlerMissing"
@@ -284,6 +297,7 @@ in
       "project.vscodeUnwanted"
       "report"
       "report.enabledHookNames"
+      "report.enabledTreefmtPrograms"
       "report.flattenPresetLeaves"
       "report.flattenToolLeaves"
       "report.formatReport"

@@ -124,14 +124,14 @@ jobs:
           nix profile add "github:cachix/devenv/${rev}"
       - name: Test
         run: |
-          if [ "${{ matrix.runtime }}" = nodejs ]; then
-            devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ${{ matrix.pkg }} test
-          elif [ "${{ matrix.runtime }}" = bun ]; then
-            devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
-          else
-            devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
-          fi
-
+                if [ "${{ matrix.runtime }}" = nodejs ]; then
+                  devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ${{ matrix.pkg }} test
+                elif [ "${{ matrix.runtime }}" = bun ]; then
+                  devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
+                else
+                  devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
+                fi
+  
       - name: Save Nix store
         if: ${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
         uses: nix-community/cache-nix-action/save@v7

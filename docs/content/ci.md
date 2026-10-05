@@ -19,14 +19,14 @@ Each nix-unit suite stays single-process (no `--jobs`).
 
 ## Workflows
 
-| Workflow | Trigger | Runs |
-| --- | --- | --- |
-| `ci.yml` | Push and pull request to `main`/`master` | `test-devenv-unit` on Ubuntu 24.04 and 26.04; then `test-devenv` (integration) on the same OS matrix after every unit cell succeeds; then `test.yml` if it exists; `semantic-release` on push to `master`/`main`. Concurrent runs for the same PR/ref cancel in progress. |
-| `test.yml` | Called from `ci.yml` | Per-language `devenv test` for each supported version, on Ubuntu 24.04 and 26.04 |
-| `setup-tests.yml` | Changes to setup/tag hooks, and every tag push | `bats tests/setup tests/tag-hook.bats` on Ubuntu 24.04 and 26.04 |
-| `pages.yml` | Push to `master`/`main`, pull request, or manual | Build the docs site; deploy to [devenv4monorepo.github.io](https://devenv4monorepo.github.io/) on `master`/`main` |
-| `hooks.yml` | Pull request | `prek run --all-files`; comment with the log on failure; [pre-commit.ci lite](https://pre-commit.ci/lite.html) pushes autofixes (including forks) |
-| `update-lock.yml` | Weekly Monday and `workflow_dispatch` | `devenv update git-hooks` only; PR when that input changes |
+| Workflow          | Trigger                                          | Runs                                                                                                                                                                                                                                                                      |
+| ----------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`          | Push and pull request to `main`/`master`         | `test-devenv-unit` on Ubuntu 24.04 and 26.04; then `test-devenv` (integration) on the same OS matrix after every unit cell succeeds; then `test.yml` if it exists; `semantic-release` on push to `master`/`main`. Concurrent runs for the same PR/ref cancel in progress. |
+| `test.yml`        | Called from `ci.yml`                             | Per-language `devenv test` for each supported version, on Ubuntu 24.04 and 26.04                                                                                                                                                                                          |
+| `setup-tests.yml` | Changes to setup/tag hooks, and every tag push   | `bats tests/setup tests/tag-hook.bats` on Ubuntu 24.04 and 26.04                                                                                                                                                                                                          |
+| `pages.yml`       | Push to `master`/`main`, pull request, or manual | Build the docs site; deploy to [devenv4monorepo.github.io](https://devenv4monorepo.github.io/) on `master`/`main`                                                                                                                                                         |
+| `hooks.yml`       | Pull request                                     | `prek run --all-files` (treefmt + residual prek); comment with the log on failure; [pre-commit.ci lite](https://pre-commit.ci/lite.html) pushes autofixes (including forks)                                                                                               |
+| `update-lock.yml` | Weekly Monday and `workflow_dispatch`            | `devenv update git-hooks` only; PR when that input changes                                                                                                                                                                                                                |
 
 CI and `setup.sh` install the devenv CLI from the **locked** `devenv` input revision in `devenv.lock` (`github:cachix/devenv/<rev>`), not floating `nixpkgs#devenv`. That keeps the CLI aligned with `require_version: true` in `devenv.yaml`. The v2.4.0 modules tag still ships `latest-version=2.3.1`, so `devenv.nix` sets `devenv.latestVersion = "2.4.0"` to match the release CLI.
 

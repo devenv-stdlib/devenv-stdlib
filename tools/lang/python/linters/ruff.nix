@@ -18,8 +18,9 @@ else
       };
       upgrade = "none";
       project = {
-        git-hooks.hooks = {
-          ruff.enable = true;
+        # Ruff lint+format via treefmt-nix (ruff-check / ruff-format programs).
+        treefmt.config.programs = {
+          ruff-check.enable = true;
           ruff-format.enable = true;
         };
 

@@ -61,25 +61,19 @@ rec {
     in
     if langs == [ ] then "" else "\\.(${lib.concatStringsSep "|" (map (name: exts.${name}) langs)})$";
 
-  alwaysOnHookNames = [
-    "nixfmt"
-    "statix"
-    "deadnix"
-    "shellcheck"
-    "commitlint"
-    "typos"
-    "proselint"
-    "lychee"
-    "actionlint"
-    "yamlfmt"
-    "check-json"
-    "trim-trailing-whitespace"
-    "end-of-file-fixer"
-    "check-added-large-files"
-    "check-case-conflicts"
-    "check-merge-conflicts"
-    "gitleaks"
-  ];
+  # Logical always-on linter names (treefmt programs + residual prek hooks).
+  # Source of truth: stdlib/linters.nix (options.linters.*). Lychee stays in the
+  # catalog with defaultEnable = false, so it is omitted here.
+  lintersCatalog = import ../../stdlib/linters.nix { inherit lib; };
+
+  alwaysOnHookNames = lintersCatalog.alwaysOn;
+
+  # git-hooks names when catalog defaults apply: one `treefmt` hook + prek residual.
+  alwaysOnGitHookNames = lintersCatalog.alwaysOnGitHooks;
+
+  alwaysOnTreefmtLinters = lintersCatalog.alwaysOnTreefmt;
+
+  alwaysOnPrekHooks = lintersCatalog.alwaysOnPrek;
 
   typescriptBundlers = [
     "vite"
