@@ -17,6 +17,7 @@
         runner24 = contains "ubuntu-24.04" yaml;
         runner26 = contains "ubuntu-26.04" yaml;
         skip = contains "no-language-matrix:" yaml;
+        skipName = contains "name: No language matrix (" yaml;
         skipQuoted = contains ''run: echo "No languages enabled; skipping per-version devenv test."'' yaml;
         latest = contains "ubuntu-latest" yaml;
         jammy = contains "ubuntu-22.04" yaml;
@@ -28,6 +29,7 @@
       runner24 = true;
       runner26 = true;
       skip = true;
+      skipName = true;
       skipQuoted = true;
       latest = false;
       jammy = false;
@@ -47,6 +49,7 @@
       {
         call = contains "workflow_call:" yaml;
         python = contains "python:" yaml;
+        pythonName = contains "name: Python \${{ matrix.python_version }} (\${{ matrix.os }})" yaml;
         skip = contains "no-language-matrix:" yaml;
         runner24 = contains "ubuntu-24.04" yaml;
         runner26 = contains "ubuntu-26.04" yaml;
@@ -61,6 +64,7 @@
     expected = {
       call = true;
       python = true;
+      pythonName = true;
       skip = false;
       runner24 = true;
       runner26 = true;

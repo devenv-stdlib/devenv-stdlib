@@ -47,7 +47,7 @@ treefmt --fail-on-change --no-cache
 
 Pinned in `modules/linters` via `git-hooks.hooks.treefmt.settings.fail-on-change` / `no-cache` (both `true`). So `prek run --all-files` in CI fails when any treefmt-backed program would rewrite a file; it does not silently pass after formatting.
 
-CI (`hooks.yml`) runs `prek run --all-files` after `devenv shell` materializes the generated hook config. That single prek run includes the `treefmt` hook plus residual checks. If prek fails, the job comments with the log (and uploads `prek.log`). A later green run removes that comment.
+`ci.yml` runs **Lint (prek)** (`prek run --all-files`) before unit/integration/language-matrix jobs so formatting and static checks fail fast. That single prek run includes the `treefmt` hook plus residual checks. On pull requests, a failed run comments with the log (and uploads `prek.log`); a later green run removes that comment. The ruleset check name remains bare `prek` via a shim job.
 
 Autofixes (including PRs from forks) are pushed by [pre-commit.ci lite](https://pre-commit.ci/lite.html), not by `GITHUB_TOKEN`. Install the [pre-commit-ci-lite](https://github.com/apps/pre-commit-ci-lite) GitHub App on the repository. The Action job only has `contents: read`; the App applies the diff from outside the runner, which is how [pre-commit.ci](https://pre-commit.ci/) can write a fork branch. A fork `pull_request` workflow cannot do that itself: GitHub issues a read-only token and withholds repository secrets.
 

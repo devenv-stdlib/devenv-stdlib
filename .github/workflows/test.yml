@@ -5,6 +5,7 @@ on:
   workflow_call:
 jobs:
   python:
+    name: Python ${{ matrix.python_version }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -78,6 +79,7 @@ jobs:
           primary-key: ${{ steps.nix-cache.outputs.primary-key }}
           gc-max-store-size-linux: 5G
   javascript:
+    name: JavaScript ${{ matrix.runtime }} ${{ matrix.version }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
