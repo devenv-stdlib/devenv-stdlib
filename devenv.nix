@@ -9,6 +9,13 @@ _: {
   # CI: cachix-action). devenv's own pull would add it again and Nix warns.
   cachix.enable = false;
 
+  # Codespaces / VS Code Dev Containers: writes .devcontainer/devcontainer.json
+  # (committed). See https://devenv.sh/integrations/codespaces-devcontainer/
+  # Upstream default updateContentCommand is `devenv test`; here that is the
+  # full enterTest suite (bats / act), so create only materializes the shell.
+  devcontainer.enable = true;
+  devcontainer.settings.updateContentCommand = "devenv shell -- true";
+
   enterShell = ''
     echo "devenv4monorepo ready: ''${USER:-unknown}@$(uname -n)"
 

@@ -24,6 +24,10 @@ devenv shell
 
 The shell banner uses the Copier `name` (this template prints `devenv4monorepo ready: <user>@<hostname>`). After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, `nixfmt`, `bats`, `shellcheck`, `home-manager`, `copier`, and `debtmap` are on `PATH`. `setup.sh` and every `devenv shell` entry set this repository's local git config `rerere.enabled` and `rerere.autoupdate` to `true` (remember and auto-stage recorded conflict resolutions).
 
+## Codespaces / Dev Containers
+
+`devcontainer.enable` writes [`.devcontainer/devcontainer.json`](../../.devcontainer/devcontainer.json) (committed) from the [devenv Codespaces integration](https://devenv.sh/integrations/codespaces-devcontainer/). Open this repo in GitHub Codespaces, or in VS Code / Cursor via **Dev Containers: Reopen in Container**. The image is `ghcr.io/cachix/devenv/devcontainer:latest`; after create it runs `devenv shell -- true` (not the full `devenv test` suite). Home Manager desktop pieces (Alacritty, quake terminal) stay host-side — the container is the devenv project toolchain.
+
 ## Re-apply Home Manager
 
 ```bash
