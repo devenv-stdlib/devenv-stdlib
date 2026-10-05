@@ -24,10 +24,20 @@ else
         in
         {
           # Format via devenv treefmt (not a separate git-hooks.rustfmt entry).
-          treefmt.config.programs.rustfmt = {
-            enable = true;
+          # treefmt-nix defaults programs.rustfmt.edition to "2024"; when the
+          # workspace has no supported.rust.edition, clear --edition so rustfmt
+          # follows Cargo.toml / rustfmt.toml (2021 workspaces stay valid).
+          # Nest edition under programs.rustfmt — a sibling `//` would replace
+          # `{ enable = true; }` entirely (same pitfall as yamlfmt settings).
+          treefmt.config = {
+            programs.rustfmt = {
+              enable = true;
+            }
+            // lib.optionalAttrs (edition != null) { inherit edition; };
           }
-          // lib.optionalAttrs (edition != null) { inherit edition; };
+          // lib.optionalAttrs (edition == null) {
+            settings.formatter.rustfmt.options = lib.mkForce [ ];
+          };
 
           stdlib.lang.rust.settings = lib.optionalAttrs (edition != null) {
             "rust-analyzer.rustfmt.extraArgs" = [
