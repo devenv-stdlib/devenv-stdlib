@@ -72,10 +72,21 @@ let
       options,
       pkgs,
       ...
-    }:
+    }@moduleArgs:
     let
       cfg = config.presets.cache.mr-boxington;
       enabled = cfg.enable && cfg.scope == "local";
+      tasksLib = import ../../stdlib/tasks.nix { inherit lib; };
+      # Scope-gate here (mkIf), not via exportTasks = cfg: … in applyPreset.
+      exported =
+        if options ? tasks then
+          tasksLib.export {
+            items = [ toolRefs.cache.mr-boxington ];
+            discovered = [ ];
+            inherit moduleArgs;
+          }
+        else
+          { };
     in
     {
       options.presets.cache.mr-boxington.scope = scopeOption;
@@ -92,16 +103,18 @@ let
               mbx = mbxPackage pkgs;
             in
             {
-              tasks."mr-boxington:setup" = {
-                exec = ''
-                  set -euo pipefail
-                  if ! ${mbxBin mbx} setup --local; then
-                    echo "mr-boxington: mbx setup --local failed (continuing)" >&2
-                  fi
-                '';
-                after = [ "mise:install" ];
+              tasks = lib.recursiveUpdate exported {
+                "mr-boxington:setup" = {
+                  exec = ''
+                    set -euo pipefail
+                    if ! ${mbxBin mbx} setup --local; then
+                      echo "mr-boxington: mbx setup --local failed (continuing)" >&2
+                    fi
+                  '';
+                  after = [ "mise:install" ];
+                };
+                "devenv:enterShell".after = [ "mr-boxington:setup" ];
               };
-              tasks."devenv:enterShell".after = [ "mr-boxington:setup" ];
             }
           ))
         ]
@@ -109,6 +122,7 @@ let
     };
 
   # Thin (devenv): local install via module mkIf; no local mkTool leaf.
+  # Tool-declared doctor/gc/stats export from localModule when scope=local.
   thin = {
     path = [
       "cache"
