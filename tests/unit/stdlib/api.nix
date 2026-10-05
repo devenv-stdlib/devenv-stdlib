@@ -34,6 +34,11 @@ let
     ++ names "generate" stdlib.generate
     ++ names "den" stdlib.den
     ++ names "devenv" stdlib.devenv
+    ++ names "ci" stdlib.ci
+    ++ names "ci.matrix" stdlib.ci.matrix
+    ++ names "ci.backends" stdlib.ci.backends
+    ++ names "ci.backends.github_actions" stdlib.ci.backends.github_actions
+    ++ names "ci.backends.circleci" stdlib.ci.backends.circleci
     ++ names "versions" (stdlib.versions { })
   );
 
@@ -229,6 +234,29 @@ in
       "categoryWarnings.pathHasPrefix"
       "categoryWarnings.unusedPaths"
       "categoryWarnings.unusedWarnings"
+      "ci"
+      "ci.backends"
+      "ci.backends.circleci"
+      "ci.backends.circleci.render"
+      "ci.backends.circleci.renderOrThrow"
+      "ci.backends.github_actions"
+      "ci.backends.github_actions.emptyWorkflow"
+      "ci.backends.github_actions.ghaOs"
+      "ci.backends.github_actions.jobYaml"
+      "ci.backends.github_actions.matrixRow"
+      "ci.backends.github_actions.padJob"
+      "ci.backends.github_actions.render"
+      "ci.backends.github_actions.rowAttrs"
+      "ci.matrix"
+      "ci.matrix.cartesian"
+      "ci.matrix.defaultRunnerProfiles"
+      "ci.matrix.defaultStrategy"
+      "ci.matrix.expand"
+      "ci.matrix.matchesPartial"
+      "ci.matrix.plan"
+      "ci.matrix.profileRunsOn"
+      "ci.matrix.report"
+      "ci.matrix.requireProviderBag"
       "debtmap"
       "debtmap.defaultGodObject"
       "debtmap.godLimitsToml"
@@ -342,8 +370,10 @@ in
       "versions"
       "versions.boundProblems"
       "versions.catalogActive"
+      "versions.cellToReportRow"
       "versions.crossOs"
       "versions.cycleLabel"
+      "versions.defaultRunnerIds"
       "versions.emptyGo"
       "versions.emptyJavascript"
       "versions.emptyPolicy"
@@ -360,6 +390,7 @@ in
       "versions.jobYaml"
       "versions.jsRuntimes"
       "versions.languageJobs"
+      "versions.languageMatrixPlan"
       "versions.matchesCycle"
       "versions.matrixReport"
       "versions.matrixRow"

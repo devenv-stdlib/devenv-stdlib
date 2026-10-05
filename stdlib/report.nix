@@ -121,6 +121,9 @@ let
       empty ? false,
       runners ? [ ],
       languages ? { },
+      # Additive MatrixPlan summary from versions.matrixReport (ignored here).
+      plan ? null,
+      ...
     }:
     {
       inherit empty runners;

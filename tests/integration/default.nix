@@ -16,10 +16,11 @@ let
       };
     }
   );
+  # Copy repo root into the store so versions-lib → stdlib/ci relative imports resolve.
   evalNix = pkgs.writeText "eval.nix" ''
     import ${./eval.nix} {
       lib = (import <nixpkgs> { }).lib;
-      versions = import ${../../modules/languages/versions-lib.nix} {
+      versions = import (${../..} + "/modules/languages/versions-lib.nix") {
         lib = (import <nixpkgs> { }).lib;
       };
       project = import ${../../modules/lib/project.nix} {

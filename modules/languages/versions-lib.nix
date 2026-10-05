@@ -1,5 +1,6 @@
-# Implementation lives here. tests/integration/default.nix copies this path
-# into the Nix store as a single file, and that copy is evaluated on its own.
+# Implementation lives here. Imports stdlib/ci (MatrixPlan IR + GHA backend).
+# Integration tests must import via the repo root (or a directory path that
+# includes both modules/languages and stdlib) so relative imports resolve.
 # stdlib/versions.nix re-exports this file.
 {
   lib,
@@ -12,6 +13,11 @@ let
     versions = [ ];
     unsupported = [ ];
   };
+  # MatrixPlan IR + GHA backend (stdlib.ci). Relative import stays in-tree;
+  # integration tests must import via repo root so this resolves in the store.
+  ci = import ../../stdlib/ci { inherit lib; };
+  inherit (ci) matrix;
+  gha = ci.backends.github_actions;
 in
 rec {
   jsRuntimes = [
@@ -360,78 +366,115 @@ rec {
       ) jsRuntimes)
     ];
 
-  matrixRow =
-    attrs:
-    let
-      names = [ "os" ] ++ lib.filter (n: n != "os") (lib.attrNames attrs);
-      fmt = name: "${name}: \"${toString attrs.${name}}\"";
-    in
-    "        - ${fmt (lib.head names)}"
-    + lib.concatMapStrings (name: "\n          ${fmt name}") (lib.tail names);
-
-  # displayName stays local so stdlib.versions does not grow a public attr.
+  # Compat shims — prefer stdlib.ci.backends.github_actions.*.
+  matrixRow = gha.matrixRow;
+  padJob = gha.padJob;
   jobYaml =
     name: rows: testRun:
     let
-      # Human-readable GitHub Actions job titles. Matrix dims beyond os vary by language.
-      displayName =
-        {
-          python = "Python \${{ matrix.python_version }} (\${{ matrix.os }})";
-          rust = "Rust \${{ matrix.channel }} \${{ matrix.version }} (\${{ matrix.os }})";
-          go = "Go \${{ matrix.version }} (\${{ matrix.os }})";
-          javascript = "JavaScript \${{ matrix.runtime }} \${{ matrix.version }} (\${{ matrix.os }})";
-        }
-        .${name} or "${name} (\${{ matrix.os }})";
+      # Legacy entry: language rows × ubuntu runners as raw `os` cells (no profiles).
+      cells = map (row: row // { optional = false; }) (crossOs rows);
+      plan = {
+        runnerProfiles = { };
+        strict = false;
+        jobs.${name} = {
+          inherit name cells;
+          command = testRun;
+          strategy = {
+            failFast = false;
+          };
+        };
+      };
     in
-    ''
-      ${name}:
-        name: ${displayName}
-        runs-on: ''${{ matrix.os }}
-        strategy:
-          fail-fast: false
-          matrix:
-            include:
-      ${lib.concatMapStringsSep "\n" matrixRow (crossOs rows)}
-        steps:
-          - uses: actions/checkout@v4
-          - name: Own workspace under act
-            if: ''${{ env.ACT }}
-            run: |
-              sudo mkdir -p /home/runner/.cache/nix /nix
-              # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
-              # Nested act matrix cells share one /nix volume; recursive chown races with
-              # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
-              sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache
-              if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
-                sudo chown "$(id -u):$(id -g)" /nix
-              fi
-          - uses: cachix/install-nix-action@v31
-          - name: Restore Nix store
-            id: nix-cache
-            if: ''${{ !env.ACT }}
-            uses: nix-community/cache-nix-action/restore@v7
-            with:
-              primary-key: nix-''${{ matrix.os }}-''${{ github.job }}-''${{ hashFiles('devenv.lock', 'devenv.yaml') }}
-              restore-prefixes-first-match: nix-''${{ matrix.os }}-''${{ github.job }}-
-          - uses: cachix/cachix-action@v16
-            with:
-              name: devenv
-          - name: Install devenv
-            run: |
-              # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
-              rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
-              nix profile add "github:cachix/devenv/''${rev}"
-          - name: Test
-            run: ${testRun}
-          - name: Save Nix store
-            if: ''${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
-            uses: nix-community/cache-nix-action/save@v7
-            with:
-              primary-key: ''${{ steps.nix-cache.outputs.primary-key }}
-              gc-max-store-size-linux: 5G
-    '';
+    gha.jobYaml plan plan.jobs.${name};
 
   nodePackage = version: "nodejs_${lib.versions.major version}";
+
+  # Default runner profile ids (ubuntu LTS previous + current).
+  defaultRunnerIds = [
+    "ubuntu-lts-prev"
+    "ubuntu-lts-curr"
+  ];
+
+  # Build a MatrixPlan from the language-matrix snapshot (supported.* + flags).
+  languageMatrixPlan =
+    {
+      pythonOn ? false,
+      rustOn ? false,
+      goOn ? false,
+      javascriptOn ? false,
+      python ? emptyPython,
+      rust ? emptyRust,
+      go ? emptyGo,
+      javascript ? emptyJavascript,
+      strategy ? { },
+    }:
+    let
+      mkJob = _name: rows: command: {
+        dimensions = {
+          runner = defaultRunnerIds;
+        };
+        seeds = rows;
+        expansion = "cartesian";
+        inherit command;
+        strategy = {
+          failFast = false;
+        }
+        // strategy;
+      };
+    in
+    matrix.plan {
+      runnerProfiles = matrix.defaultRunnerProfiles;
+      jobs =
+        lib.optionalAttrs pythonOn {
+          python =
+            mkJob "python" (pythonRows python)
+              "devenv --option languages.python.enable:bool true --option languages.python.version:string \${{ matrix.python_version }} --option supported.python.min:string \${{ matrix.policy_min }} test";
+        }
+        // lib.optionalAttrs rustOn {
+          rust =
+            mkJob "rust" (rustRows rust)
+              "devenv --option languages.rust.enable:bool true --option languages.rust.channel:string \${{ matrix.channel }} --option languages.rust.version:string \${{ matrix.version }} --option supported.rust.min:string \${{ matrix.policy_min }} test";
+        }
+        // lib.optionalAttrs goOn {
+          go =
+            mkJob "go" (goRows go)
+              "devenv --option languages.go.enable:bool true --option languages.go.version:string \${{ matrix.version }} --option supported.go.min:string \${{ matrix.policy_min }} test";
+        }
+        // lib.optionalAttrs javascriptOn {
+          # Interpolated into gha.jobYaml after that string's indent strip. Body lines
+          # are already 8 spaces — same as `sudo mkdir` after jobYaml's 6-space strip.
+          # Trailing newline omitted: padJob would prefix that empty line with two spaces.
+          javascript = mkJob "javascript" (javascriptRows javascript) (
+            lib.removeSuffix "\n" ''
+              |
+                      if [ "''${{ matrix.runtime }}" = nodejs ]; then
+                        devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ''${{ matrix.pkg }} test
+                      elif [ "''${{ matrix.runtime }}" = bun ]; then
+                        devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
+                      else
+                        devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
+                      fi
+            ''
+          );
+        };
+    };
+
+  # Cell → legacy report row (`os` label instead of runner profile id).
+  cellToReportRow =
+    plan: cell:
+    let
+      os = if cell ? os then cell.os else gha.ghaOs plan cell;
+    in
+    removeAttrs (cell // { inherit os; }) [
+      "runner"
+      "optional"
+      "providers"
+      "secrets"
+      "env"
+      "command"
+      "commandProfile"
+    ];
 
   withPolicyMin = min: map (row: row // { policy_min = min; });
 
@@ -476,122 +519,54 @@ rec {
       )
     ) js.runtimes;
 
-  padJob = text: "  " + lib.replaceStrings [ "\n" ] [ "\n  " ] (lib.removeSuffix "\n" text);
-
+  # Compat: YAML fragment for enabled language jobs (padded under `jobs:`).
   languageJobs =
-    {
-      pythonOn ? false,
-      rustOn ? false,
-      goOn ? false,
-      javascriptOn ? false,
-      python ? emptyPython,
-      rust ? emptyRust,
-      go ? emptyGo,
-      javascript ? emptyJavascript,
-    }:
+    args:
     let
-      # Interpolated into jobYaml after that string's indent strip. Body lines
-      # are already 8 spaces — same as `sudo mkdir` after jobYaml's 6-space strip.
-      # Trailing newline omitted: padJob would prefix that empty line with two spaces.
-      javascriptTestRun = lib.removeSuffix "\n" ''
-        |
-                if [ "''${{ matrix.runtime }}" = nodejs ]; then
-                  devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ''${{ matrix.pkg }} test
-                elif [ "''${{ matrix.runtime }}" = bun ]; then
-                  devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
-                else
-                  devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
-                fi
-      '';
-      rawJobs = lib.concatStrings (
-        lib.optional pythonOn (
-          jobYaml "python" (pythonRows python)
-            "devenv --option languages.python.enable:bool true --option languages.python.version:string \${{ matrix.python_version }} --option supported.python.min:string \${{ matrix.policy_min }} test"
-        )
-        ++ lib.optional rustOn (
-          jobYaml "rust" (rustRows rust)
-            "devenv --option languages.rust.enable:bool true --option languages.rust.channel:string \${{ matrix.channel }} --option languages.rust.version:string \${{ matrix.version }} --option supported.rust.min:string \${{ matrix.policy_min }} test"
-        )
-        ++ lib.optional goOn (
-          jobYaml "go" (goRows go)
-            "devenv --option languages.go.enable:bool true --option languages.go.version:string \${{ matrix.version }} --option supported.go.min:string \${{ matrix.policy_min }} test"
-        )
-        ++ lib.optional javascriptOn (jobYaml "javascript" (javascriptRows javascript) javascriptTestRun)
+      plan = languageMatrixPlan args;
+      jobs = plan.jobs;
+      langOrder = [
+        "python"
+        "rust"
+        "go"
+        "javascript"
+      ];
+      ordered = lib.filter (n: (jobs.${n}.cells or [ ]) != [ ]) (
+        lib.filter (n: jobs ? ${n}) langOrder
+        ++ lib.filter (n: !(lib.elem n langOrder)) (lib.attrNames jobs)
       );
+      rawJobs = lib.concatMapStrings (n: gha.jobYaml plan jobs.${n}) ordered;
     in
     if rawJobs == "" then "" else padJob rawJobs;
 
-  workflowText =
-    args:
-    let
-      jobs = languageJobs args;
-    in
-    if jobs == "" then
-      ''
-        name: Test
-        # TODO: cross-language version matrices (Rust × Python, …) are not supported.
-        on:
-          workflow_call:
-        jobs:
-          no-language-matrix:
-            name: No language matrix (''${{ matrix.os }})
-            strategy:
-              fail-fast: false
-              matrix:
-                os: [${lib.concatStringsSep ", " ubuntuRunners}]
-            runs-on: ''${{ matrix.os }}
-            steps:
-              - run: echo "No languages enabled; skipping per-version devenv test."
-      ''
-    else
-      ''
-        name: Test
-        # TODO: cross-language version matrices (Rust × Python, …) are not supported.
-        # Each language is tested independently for its supported versions.
-        on:
-          workflow_call:
-        # devenv test runs mise install; github: tools hit the GitHub API.
-        env:
-          MISE_GITHUB_TOKEN: ''${{ github.token }}
-        jobs:
-        ${jobs}
-      '';
+  # Thin shim → MatrixPlan + GHA backend render.
+  workflowText = args: gha.render (languageMatrixPlan args);
 
   # Structured view of the same strategy that workflowText emits (for stdlib.report).
   matrixReport =
-    {
-      pythonOn ? false,
-      rustOn ? false,
-      goOn ? false,
-      javascriptOn ? false,
-      python ? emptyPython,
-      rust ? emptyRust,
-      go ? emptyGo,
-      javascript ? emptyJavascript,
-    }@args:
+    args:
     let
-      empty = languageJobs args == "";
+      pythonOn = args.pythonOn or false;
+      rustOn = args.rustOn or false;
+      goOn = args.goOn or false;
+      javascriptOn = args.javascriptOn or false;
+      plan = languageMatrixPlan args;
+      langRows = name: enabled: {
+        inherit enabled;
+        rows =
+          if enabled then map (cell: cellToReportRow plan cell) (plan.jobs.${name}.cells or [ ]) else [ ];
+      };
     in
     {
-      inherit empty;
+      empty = (matrix.report plan).empty;
       runners = ubuntuRunners;
       languages = {
-        python = {
-          enabled = pythonOn;
-          rows = if pythonOn then crossOs (pythonRows python) else [ ];
-        };
-        rust = {
-          enabled = rustOn;
-          rows = if rustOn then crossOs (rustRows rust) else [ ];
-        };
-        go = {
-          enabled = goOn;
-          rows = if goOn then crossOs (goRows go) else [ ];
-        };
-        javascript = {
-          enabled = javascriptOn;
-          rows = if javascriptOn then crossOs (javascriptRows javascript) else [ ];
-        };
+        python = langRows "python" pythonOn;
+        rust = langRows "rust" rustOn;
+        go = langRows "go" goOn;
+        javascript = langRows "javascript" javascriptOn;
       };
+      # Additive: full MatrixPlan report for new consumers.
+      plan = matrix.report plan;
     };
 }

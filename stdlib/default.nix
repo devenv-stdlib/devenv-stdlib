@@ -19,6 +19,8 @@ in
   generate = import ./generate.nix { inherit lib; };
 
   project = import ./project.nix { inherit lib; };
+  # Provider-agnostic CI matrix IR + backends (GHA render; CircleCI stub).
+  ci = import ./ci { inherit lib; };
   versions =
     {
       catalog ? { },
