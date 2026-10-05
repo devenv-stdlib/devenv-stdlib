@@ -24,10 +24,21 @@ else
     # `<pin>/bin/<bin>`; a same-named `<pin>/<bin>` path is often a *directory*
     # (package tree) — require a regular file so `-x` alone cannot pick it.
     # `mise exec` with @pin is the fallback.
+    #
+    # pipx/uv wheels (numpy) dlopen libstdc++.so.6; Nix shells lack a host
+    # libstdc++ on the dynamic linker path. Prefix LD_LIBRARY_PATH with
+    # stdenv.cc.cc.lib (same libgcc/libstdc++ source as build-cleaner /
+    # mr-boxington extraBuildInputs) before exec.
     package =
       pkgs:
+      let
+        libstdcxx = lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ];
+      in
       pkgs.writeShellScriptBin bin ''
         set -euo pipefail
+        ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
+          export LD_LIBRARY_PATH="${libstdcxx}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        ''}
         installs="''${XDG_DATA_HOME:-$HOME/.local/share}/mise/installs"
         for cand in \
           "$installs"/${lib.escapeShellArg installName}/${lib.escapeShellArg pin}/bin/${lib.escapeShellArg bin} \

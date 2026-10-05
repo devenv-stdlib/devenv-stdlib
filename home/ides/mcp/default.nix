@@ -31,12 +31,17 @@ let
   # ~/.cursor/mcp.json has no single project root, so resolve via the path
   # home-switch writes for this monorepo, then DEVENV_ROOT. Never fall back to
   # $PWD — Cursor may start outside the monorepo.
+  # pipx/uv numpy needs libstdc++ from nixpkgs (same as tools.scanners.aletheore).
+  aletheoreLibPath = lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ];
   aletheoreMcp =
     if aletheore == null then
       null
     else
       pkgs.writeShellScript "aletheore-mcp" ''
         set -euo pipefail
+        ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
+          export LD_LIBRARY_PATH="${aletheoreLibPath}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        ''}
         root=""
         root_file="''${XDG_CONFIG_HOME:-$HOME/.config}/devenv4monorepo/devenv-root"
         if [ -f "$root_file" ]; then
