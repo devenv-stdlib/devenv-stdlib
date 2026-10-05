@@ -14,6 +14,6 @@ jobs:
     steps:
       - uses: peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2 # v0.3.0
         with:
-          close-pr: true
-          exempt-draft-prs: true
-          max-failures: 4
+          close-pr: "true"
+          exempt-draft-prs: "true"
+          max-failures: "4"
