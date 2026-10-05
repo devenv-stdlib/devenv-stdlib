@@ -30,6 +30,13 @@ else
         darwin-x64 = "sha256-T+qVrLd76HWzuE4GbZD/XGllYufoP6PsumcfVsVcgXQ=";
         darwin-arm64 = "sha256-F/hH4K7Thz/GRBNtQod1I6g3eOrXRajBVRl5s2UyxBg=";
       };
+      # Nix systems for meta.platforms (not the artifact keys above).
+      platforms = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
       bin = "coderabbit";
       binLinks = [ "cr" ];
       stripRoot = false;
