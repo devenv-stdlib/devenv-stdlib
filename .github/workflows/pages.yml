@@ -79,27 +79,6 @@ jobs:
         with:
           path: docs/dist
 
-  # Ruleset requires bare check context "build".
-  ruleset-build:
-    name: build
-    needs: [changes, build-docs]
-    if: always() && !cancelled()
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    steps:
-      - name: Require docs build success or path-skip
-        run: |
-          if [ "${{ needs.changes.result }}" != "success" ]; then
-            echo "changes job result=${{ needs.changes.result }}"
-            exit 1
-          fi
-          if [ "${{ needs.changes.outputs.docs }}" != "true" ]; then
-            echo "path-skip: docs build not required for this PR"
-            exit 0
-          fi
-          test "${{ needs.build-docs.result }}" = "success"
-
   deploy-pages:
     name: Deploy docs to GitHub Pages
     if: >-
