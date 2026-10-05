@@ -66,6 +66,34 @@ else
     category = "cache";
     defaultEnable = false;
     inherit package;
+    # Declared devenv tasks (presets export when local scope is on).
+    # setup stays on the preset: --local vs --global depends on scope.
+    tasks =
+      { pkgs, ... }:
+      let
+        mbx = package pkgs;
+        bin = if builtins.isAttrs mbx && mbx ? outPath then "${mbx}/bin/mbx" else "mbx";
+      in
+      {
+        doctor = {
+          exec = ''
+            set -euo pipefail
+            ${bin} doctor
+          '';
+        };
+        gc = {
+          exec = ''
+            set -euo pipefail
+            ${bin} gc
+          '';
+        };
+        stats = {
+          exec = ''
+            set -euo pipefail
+            ${bin} stats
+          '';
+        };
+      };
     homeManager =
       { pkgs, lib, ... }:
       let
