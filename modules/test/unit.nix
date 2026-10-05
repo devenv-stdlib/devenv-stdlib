@@ -19,12 +19,19 @@ _: {
     # Main suite (stdlib / aspects / cross-cutting) plus additive per-owner suites
     # under tools/**/tests/unit and presets/**/tests/unit (discover-suites.nix).
     list_owner_unit_suites() {
-      # Same rules as tests/lib/discover-suites.nix (unit-tested); find stays in sync
-      # when that file's walk skips `_` prefixes and only accepts tests/unit/default.nix.
-      find "$DEVENV_ROOT/tools" "$DEVENV_ROOT/presets" \
-        \( -name '_*' -prune \) -o \
-        \( -path '*/tests/unit/default.nix' -print \) \
-        | sort
+      # Same rules as tests/lib/discover-suites.nix: skip `_` prefixes, stop at the
+      # first `tests/` directory, and only accept its unit/default.nix (do not
+      # descend into nested fixture suites under tests/).
+      while IFS= read -r tests_dir; do
+        [ -n "$tests_dir" ] || continue
+        f="$tests_dir/unit/default.nix"
+        [ -f "$f" ] && printf '%s\n' "$f"
+      done < <(
+        find "$DEVENV_ROOT/tools" "$DEVENV_ROOT/presets" \
+          \( -name '_*' -prune \) -o \
+          \( -type d -name tests -prune -print \) \
+          | sort
+      )
     }
 
     suite_slug() {

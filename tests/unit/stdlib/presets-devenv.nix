@@ -108,8 +108,9 @@ in
   testMockListFormLoadInjectsToolRefs = {
     expr =
       let
-        # List form needs a tools/ sibling next to the preset root; mock python
-        # dir has none, so list form throws / fails — attrs form is the API.
+        # Category roots (…/presets/python, …) do not infer sibling tools/ —
+        # inference only runs when the root basename is "presets". Attrs form
+        # with explicit tools is the API; neighboring eval tests assert enable.
         listForm = builtins.tryEval (devenvLoad.load mock.presetRoots);
         attrsForm = builtins.tryEval (devenvLoad.load mock.loadArgs);
       in
@@ -118,9 +119,6 @@ in
         attrsOk = attrsForm.success;
       };
     expected = {
-      # List form still builds modules; tool refs resolve when attrs.tools is set.
-      # (Sibling tools/ inference is covered when a presets/<lang> root sits next
-      # to a tools/ directory — not the case for this fixture layout.)
       listOk = true;
       attrsOk = true;
     };
