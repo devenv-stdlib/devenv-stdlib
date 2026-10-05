@@ -20,7 +20,6 @@ else
       project =
         {
           config,
-          pkgs,
           lib,
           ...
         }:
@@ -29,11 +28,14 @@ else
         in
         {
           # Format via devenv treefmt (not a separate git-hooks.rustfmt entry).
+          # treefmt passes matched paths to the formatter; use rustfmt directly
+          # (cargo fmt is crate-oriented and unsupported for treefmt file lists).
           # treefmt-nix defaults programs.rustfmt.edition to "2024". When
-          # supported.rust.edition is set, pass it. When unset, invoke via
-          # `cargo fmt` so the workspace Cargo.toml edition is honored (bare
-          # rustfmt defaults to 2015 and ignores the manifest). Always keep
-          # skip_children so out-of-line modules are not double-formatted.
+          # supported.rust.edition is set, pass it. When unset, omit --edition
+          # so rustfmt.toml can supply it (bare rustfmt otherwise defaults to
+          # 2015). Always keep skip_children so out-of-line modules are not
+          # double-formatted. Prefer setting supported.rust.edition (Copier
+          # does) for an explicit workspace edition.
           treefmt.config =
             if edition != null then
               {
@@ -45,17 +47,10 @@ else
             else
               {
                 programs.rustfmt.enable = true;
-                settings.formatter.rustfmt = {
-                  # Prefer pkgs.cargo when present (absolute path for treefmt).
-                  # Stub pkgs in unit evals often omit cargo — fall back to PATH.
-                  command = if pkgs ? cargo then "${pkgs.cargo}/bin/cargo" else "cargo";
-                  options = lib.mkForce [
-                    "fmt"
-                    "--"
-                    "--config"
-                    "skip_children=true"
-                  ];
-                };
+                settings.formatter.rustfmt.options = lib.mkForce [
+                  "--config"
+                  "skip_children=true"
+                ];
               };
 
           stdlib.lang.rust.settings = lib.optionalAttrs (edition != null) {
