@@ -45,6 +45,7 @@ in
         ""
         "jobs:"
         "  aletheore:"
+        "    name: Security review (Aletheore)"
         "    runs-on: ubuntu-24.04"
         "    steps:"
         usesLine

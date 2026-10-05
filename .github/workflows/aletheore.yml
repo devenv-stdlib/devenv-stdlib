@@ -10,6 +10,7 @@ on:
 
 jobs:
   aletheore:
+    name: Security review (Aletheore)
     runs-on: ubuntu-24.04
     steps:
       - uses: Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30 # v0.9.22
