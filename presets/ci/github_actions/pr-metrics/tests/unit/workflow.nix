@@ -350,8 +350,9 @@ in
       in
       {
         omitsActionInput = !(contains "code-file-extensions:" yaml);
+        # CODE_EXTS is builtins.toJSON'd — newlines appear as literal \n, not raw.
         gateHasJs = contains ''CODE_EXTS: "js\n'' yaml;
-        gateHasCs = contains "\ncs\n" yaml;
+        gateHasCs = contains ''\ncs\n'' yaml;
         gateNotEmpty = !(contains ''CODE_EXTS: ""'' yaml);
         lacksMonorepoGate = !(contains ''CODE_EXTS: "nix\nyml\nyaml\n"'' yaml);
       };
