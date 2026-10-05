@@ -415,6 +415,8 @@ rec {
       arches ? [ "x86_64" ],
       # Override profile catalog (still filtered by arches); null → built-in catalog.
       runnerProfiles ? null,
+      # Named expansion profile (pr / schedule / push); null = full matrix.
+      expansionProfile ? null,
     }:
     let
       baseProfiles = matrix.profilesForArches (
@@ -446,46 +448,47 @@ rec {
         }
         // strategy;
       };
+      # Force the empty-runners check at plan construction (not only when cells expand).
+      full = builtins.seq checkedRunners (
+        matrix.plan {
+          runnerProfiles = baseProfiles;
+          jobs =
+            lib.optionalAttrs pythonOn {
+              python =
+                mkJob "python" (pythonRows python)
+                  "devenv --option languages.python.enable:bool true --option languages.python.version:string \${{ matrix.python_version }} --option supported.python.min:string \${{ matrix.policy_min }} test";
+            }
+            // lib.optionalAttrs rustOn {
+              rust =
+                mkJob "rust" (rustRows rust)
+                  "devenv --option languages.rust.enable:bool true --option languages.rust.channel:string \${{ matrix.channel }} --option languages.rust.version:string \${{ matrix.version }} --option supported.rust.min:string \${{ matrix.policy_min }} test";
+            }
+            // lib.optionalAttrs goOn {
+              go =
+                mkJob "go" (goRows go)
+                  "devenv --option languages.go.enable:bool true --option languages.go.version:string \${{ matrix.version }} --option supported.go.min:string \${{ matrix.policy_min }} test";
+            }
+            // lib.optionalAttrs javascriptOn {
+              # Interpolated into gha.jobYaml after that string's indent strip. Body lines
+              # are already 8 spaces — same as `sudo mkdir` after jobYaml's 6-space strip.
+              # Trailing newline omitted: padJob would prefix that empty line with two spaces.
+              javascript = mkJob "javascript" (javascriptRows javascript) (
+                lib.removeSuffix "\n" ''
+                  |
+                          if [ "''${{ matrix.runtime }}" = nodejs ]; then
+                            devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ''${{ matrix.pkg }} test
+                          elif [ "''${{ matrix.runtime }}" = bun ]; then
+                            devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
+                          else
+                            devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
+                          fi
+                ''
+              );
+            };
+        }
+      );
     in
-    # Force the empty-runners check at plan construction (not only when cells expand).
-    builtins.seq checkedRunners (
-      matrix.plan {
-        runnerProfiles = baseProfiles;
-        jobs =
-          lib.optionalAttrs pythonOn {
-            python =
-              mkJob "python" (pythonRows python)
-                "devenv --option languages.python.enable:bool true --option languages.python.version:string \${{ matrix.python_version }} --option supported.python.min:string \${{ matrix.policy_min }} test";
-          }
-          // lib.optionalAttrs rustOn {
-            rust =
-              mkJob "rust" (rustRows rust)
-                "devenv --option languages.rust.enable:bool true --option languages.rust.channel:string \${{ matrix.channel }} --option languages.rust.version:string \${{ matrix.version }} --option supported.rust.min:string \${{ matrix.policy_min }} test";
-          }
-          // lib.optionalAttrs goOn {
-            go =
-              mkJob "go" (goRows go)
-                "devenv --option languages.go.enable:bool true --option languages.go.version:string \${{ matrix.version }} --option supported.go.min:string \${{ matrix.policy_min }} test";
-          }
-          // lib.optionalAttrs javascriptOn {
-            # Interpolated into gha.jobYaml after that string's indent strip. Body lines
-            # are already 8 spaces — same as `sudo mkdir` after jobYaml's 6-space strip.
-            # Trailing newline omitted: padJob would prefix that empty line with two spaces.
-            javascript = mkJob "javascript" (javascriptRows javascript) (
-              lib.removeSuffix "\n" ''
-                |
-                        if [ "''${{ matrix.runtime }}" = nodejs ]; then
-                          devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ''${{ matrix.pkg }} test
-                        elif [ "''${{ matrix.runtime }}" = bun ]; then
-                          devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
-                        else
-                          devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
-                        fi
-              ''
-            );
-          };
-      }
-    );
+    if expansionProfile == null then full else matrix.forProfile full expansionProfile;
 
   # Cell → legacy report row (`os` label instead of runner profile id).
   cellToReportRow =

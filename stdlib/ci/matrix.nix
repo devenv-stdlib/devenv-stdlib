@@ -159,6 +159,72 @@ let
     else
       cells;
 
+  # Named expansion profiles: same dimensions, different cell filters (PR vs schedule).
+  # Empty attrset = identity (keep all cells). `match` / `matchAny` / `exclude` use
+  # the same partial-match semantics as job.exclude.
+  defaultExpansionProfiles = {
+    schedule = { };
+    push = { };
+    pr = {
+      # Slim PR smoke: current Ubuntu LTS runners only (x86_64 + aarch64 ids).
+      matchAny = [
+        { runner = "ubuntu-lts-curr"; }
+        { runner = "ubuntu-lts-curr-aarch64"; }
+      ];
+    };
+  };
+
+  # Filter an expanded cell list by an expansion-profile attrset.
+  filterCells =
+    cells: profile:
+    let
+      afterExclude =
+        if (profile.exclude or [ ]) != [ ] then
+          lib.filter (cell: !(lib.any (pat: matchesPartial pat cell) profile.exclude)) cells
+        else
+          cells;
+    in
+    if profile ? match then
+      lib.filter (matchesPartial profile.match) afterExclude
+    else if (profile.matchAny or [ ]) != [ ] then
+      lib.filter (cell: lib.any (pat: matchesPartial pat cell) profile.matchAny) afterExclude
+    else
+      afterExclude;
+
+  # Apply a named or inline expansion profile to a MatrixPlan (post-expand).
+  forProfile =
+    matrixPlan: profileOrName:
+    let
+      catalogs = matrixPlan.expansionProfiles or defaultExpansionProfiles;
+      profileName = if builtins.isString profileOrName then profileOrName else null;
+      baseProfile =
+        if profileName != null then
+          catalogs.${profileName} or (throw "ci.matrix: unknown expansion profile '${profileName}'")
+        else
+          profileOrName;
+      mergeProfile =
+        job:
+        let
+          overlay = if profileName != null then (job.expansionProfiles or { }).${profileName} or { } else { };
+        in
+        # Overlay keys replace base; lists are replaced wholesale (not concatenated).
+        baseProfile // overlay;
+    in
+    matrixPlan
+    // {
+      activeProfile = profileName;
+      jobs = lib.mapAttrs (
+        _: job:
+        let
+          p = mergeProfile job;
+        in
+        job
+        // {
+          cells = filterCells (job.cells or [ ]) p;
+        }
+      ) matrixPlan.jobs;
+    };
+
   # Assemble a MatrixPlan: profiles + expanded jobs.
   plan =
     {
@@ -168,6 +234,7 @@ let
       strict ? true,
       fixtureProfiles ? defaultFixtureProfiles,
       processProfiles ? defaultProcessProfiles,
+      expansionProfiles ? defaultExpansionProfiles,
     }:
     let
       globalStrategy = defaultStrategy // strategy;
@@ -191,6 +258,7 @@ let
         strict
         fixtureProfiles
         processProfiles
+        expansionProfiles
         ;
       strategy = globalStrategy;
       jobs = expandedJobs;
@@ -274,12 +342,15 @@ in
     preferredRunnerOrder
     defaultFixtureProfiles
     defaultProcessProfiles
+    defaultExpansionProfiles
     defaultStrategy
     profilesForArches
     runnerIds
     matchesPartial
     cartesian
     expand
+    filterCells
+    forProfile
     plan
     report
     profileRunsOn
