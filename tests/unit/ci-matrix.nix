@@ -385,6 +385,7 @@ in
         multi = mk "echo one\necho two";
         already = mk "|\n              echo already";
         single = mk "true";
+        colonSpace = mk "echo foo: bar";
         # Match the Test step specifically (workflow also has other run: | steps).
         testStep = "name: Test\n        run: ";
       in
@@ -393,12 +394,16 @@ in
         multiNotInline = !(contains "${testStep}echo one\necho two" multi);
         alreadyKeepsPrefix = contains "${testStep}|\n                echo already" already;
         singlePlain = contains "${testStep}true" single;
+        colonSpaceQuoted = contains ''${testStep}"echo foo: bar"'' colonSpace;
+        colonSpaceNotPlain = !(contains "${testStep}echo foo: bar" colonSpace);
       };
     expected = {
       multiHasBlock = true;
       multiNotInline = true;
       alreadyKeepsPrefix = true;
       singlePlain = true;
+      colonSpaceQuoted = true;
+      colonSpaceNotPlain = true;
     };
   };
 
