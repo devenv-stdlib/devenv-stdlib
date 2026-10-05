@@ -207,7 +207,7 @@ let
             ) ordered
           }"
         else
-          "os: [${lib.concatStringsSep ", " ordered}]";
+          "os: [${lib.concatStringsSep ", " (map builtins.toJSON ordered)}]";
     in
     ''
       name: Test
