@@ -19,23 +19,22 @@ else
     bin = if entry == null then "aletheore" else nonNix.binName entry;
     installName = lib.replaceStrings [ ":" "/" ] [ "-" "-" ] miseKey;
 
-    # Prefer a mise install-dir binary: `mise exec` loads full conf.d and can
-    # abort when unrelated pipx/npm tools fail even if aletheore is installed.
+    # Prefer the catalog-pinned install dir (not `latest` / version globs) so a
+    # newer side install cannot shadow the pin. `mise exec` with @pin is the
+    # fallback — unqualified `mise exec -- bin` can also pick the wrong version.
     package =
       pkgs:
       pkgs.writeShellScriptBin bin ''
         set -euo pipefail
         installs="''${XDG_DATA_HOME:-$HOME/.local/share}/mise/installs"
         for cand in \
-          "$installs"/${lib.escapeShellArg installName}/latest/${lib.escapeShellArg bin} \
-          "$installs"/${lib.escapeShellArg installName}/latest/bin/${lib.escapeShellArg bin} \
-          "$installs"/${lib.escapeShellArg installName}/*/${lib.escapeShellArg bin} \
-          "$installs"/${lib.escapeShellArg installName}/*/bin/${lib.escapeShellArg bin}; do
+          "$installs"/${lib.escapeShellArg installName}/${lib.escapeShellArg pin}/${lib.escapeShellArg bin} \
+          "$installs"/${lib.escapeShellArg installName}/${lib.escapeShellArg pin}/bin/${lib.escapeShellArg bin}; do
           if [ -x "$cand" ]; then
             exec "$cand" "$@"
           fi
         done
-        exec ${lib.getExe pkgs.mise} exec -- ${bin} "$@"
+        exec ${lib.getExe pkgs.mise} exec ${lib.escapeShellArg "${miseKey}@${pin}"} -- ${lib.escapeShellArg bin} "$@"
       '';
 
     spec = {
