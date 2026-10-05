@@ -110,10 +110,7 @@ let
           else
             throw "stdlib.tasks.export: tool must be a tool-ref, mkTool meta, or name";
         tasks =
-          if builtins.isAttrs tool && tool._type or null == "tool-ref" then
-            tool.tasks or null
-          else
-            null;
+          if builtins.isAttrs tool && tool._type or null == "tool-ref" then tool.tasks or null else null;
       in
       {
         inherit name tasks;
@@ -172,6 +169,18 @@ let
     in
     lib.foldl' lib.recursiveUpdate { } parts;
 
+  # Merge task attrsets: concatenate/dedupe before/after edges; last-wins elsewhere.
+  # Used by compose/workflows and when presets merge exported bodies with composed edges.
+  mergeEdges =
+    sets:
+    lib.zipAttrsWith (
+      _: bodies:
+      lib.zipAttrsWith (
+        key: values:
+        if key == "before" || key == "after" then lib.unique (lib.concatLists values) else lib.last values
+      ) bodies
+    ) sets;
+
   # Compose before/after edges around an anchor task.
   # Satellite tasks declare the edge (doctor.before = [ build ], gc.after = [ build ]).
   compose =
@@ -185,7 +194,7 @@ let
       before' = map normalizeTaskId before;
       after' = map normalizeTaskId after;
     in
-    lib.foldl' lib.recursiveUpdate { } (
+    mergeEdges (
       map (b: {
         ${b}.before = [ around' ];
       }) before'
@@ -195,7 +204,7 @@ let
     );
 
   # Lower a list of workflow attrs (same shape as compose).
-  workflows = items: lib.foldl' lib.recursiveUpdate { } (map compose items);
+  workflows = items: mergeEdges (map compose items);
 
   # True when the host module system declares `options.tasks` (devenv).
   hostHasTasks = moduleArgs: (moduleArgs.options or { }) ? tasks;
@@ -213,6 +222,7 @@ in
     normalizeExport
     specByName
     export
+    mergeEdges
     compose
     workflows
     hostHasTasks

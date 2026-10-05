@@ -355,7 +355,6 @@ let
       config,
       lib,
       pkgs ? { },
-      options,
       ...
     }@moduleArgs:
     let
@@ -432,7 +431,11 @@ let
               inherit moduleArgs;
             };
             composed = tasksLib.workflows (decl.workflows or [ ]);
-            merged = lib.recursiveUpdate exported composed;
+            # Concatenate before/after; do not drop exported edges under composed ones.
+            merged = tasksLib.mergeEdges [
+              exported
+              composed
+            ];
           in
           lib.optionalAttrs (merged != { }) { tasks = merged; };
     in
