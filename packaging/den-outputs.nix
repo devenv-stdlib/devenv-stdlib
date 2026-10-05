@@ -21,11 +21,12 @@ let
   frameworkTools = frameworkRoot + "/tools";
   consumerTools = root + "/tools";
   # Publisher dogfood: root == package tree → load tools once.
-  toolDirs =
-    [ frameworkTools ]
-    ++ lib.optional (
-      builtins.pathExists consumerTools && toString consumerTools != toString frameworkTools
-    ) consumerTools;
+  toolDirs = [
+    frameworkTools
+  ]
+  ++ lib.optional (
+    builtins.pathExists consumerTools && toString consumerTools != toString frameworkTools
+  ) consumerTools;
 
   # HM-side status summary (tools in this fixpoint). Matrix / git-hooks are
   # devenv-side; listed as unavailable here. Nested preset attrpaths land when
