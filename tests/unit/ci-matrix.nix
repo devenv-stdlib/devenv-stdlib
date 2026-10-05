@@ -742,6 +742,65 @@ in
     };
   };
 
+  # Named profile with match (no selectCurrentLts) must still throw when empty.
+  testExpansionProfileNamedMatchEmptyThrows = {
+    expr = builtins.tryEval (
+      matrix.forProfile (matrix.plan {
+        runnerProfiles = matrix.defaultRunnerProfiles;
+        expansionProfiles.pr = {
+          match = {
+            runner = "does-not-exist";
+          };
+        };
+        jobs.python = {
+          command = "true";
+          dimensions.runner = [
+            "ubuntu-lts-prev"
+            "ubuntu-lts-curr"
+          ];
+          seeds = [ { version = "3.12"; } ];
+        };
+      }) "pr"
+    );
+    expected = {
+      success = false;
+      value = false;
+    };
+  };
+
+  # Job overlay can set selectCurrentLts; resolve after merge (not ignore the key).
+  testExpansionProfileOverlaySelectCurrentLts = {
+    expr =
+      let
+        full = matrix.plan {
+          runnerProfiles = matrix.defaultRunnerProfiles;
+          expansionProfiles.schedule = { };
+          jobs.python = {
+            command = "true";
+            dimensions.runner = [
+              "ubuntu-lts-prev"
+              "ubuntu-lts-curr"
+            ];
+            seeds = [ { version = "3.12"; } ];
+            expansionProfiles.schedule = {
+              selectCurrentLts = true;
+            };
+          };
+        };
+        narrowed = matrix.forProfile full "schedule";
+      in
+      {
+        fullCount = lib.length full.jobs.python.cells;
+        count = lib.length narrowed.jobs.python.cells;
+        inherit ((lib.head narrowed.jobs.python.cells)) runner;
+      };
+    expected = {
+      fullCount = 2;
+      count = 1;
+      runner = "ubuntu-lts-curr";
+    };
+  };
+
   # Custom runner ids: pr selects by release metadata, not fixed ubuntu-lts-curr.
   testExpansionProfilePrUsesRunnerMetadata = {
     expr =
