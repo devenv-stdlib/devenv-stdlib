@@ -95,16 +95,20 @@ in
   };
 
   # Empty AttachmentPlan must not change GHA language-matrix YAML.
+  # Fixture pins MatrixPlan phase-1 jobYaml so base-template drift fails the suite
+  # (emptyEqPlain alone compares two live renders and would miss shared drift).
   testGhaEmptyAttachmentPlanIsByteStable = {
     expr =
       let
         plain = gha.render basePlan;
         withEmpty = gha.render (basePlan // { attachments = attachments.emptyPlan; });
         withMissing = gha.render (removeAttrs basePlan [ "attachments" ]);
+        fixture = builtins.readFile ../fixtures/ci/matrixplan-phase1-empty-attachments.yml;
       in
       {
         emptyEqPlain = withEmpty == plain;
         missingEqPlain = withMissing == plain;
+        matchesFixture = withEmpty == fixture;
         # Also matches the versions.workflowText shim path.
         shimEq =
           plain == versions.workflowText {
@@ -117,6 +121,7 @@ in
     expected = {
       emptyEqPlain = true;
       missingEqPlain = true;
+      matchesFixture = true;
       shimEq = false; # shim expands two LTS runners; basePlan is one cell
     };
   };
