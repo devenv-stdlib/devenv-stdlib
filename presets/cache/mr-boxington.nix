@@ -3,6 +3,9 @@
 #   - stdlib.devenv.load passes `tools` → thin preset declaration
 #   - Den / evalModules import without `tools` → mkPreset module
 #
+# Global via home.local.nix is NOT this mkPreset path: Den evaluates before HM
+# imports home.local.nix. HM options live in home/cache-presets.nix (home-cli).
+#
 # Local wiring is a `module` config (mkIf), not a `project` function that
 # reads config while applyPreset builds config (infinite recursion).
 # Note: `mbx setup --local` scopes the mise Cargo wrapper to the project, but

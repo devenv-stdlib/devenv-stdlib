@@ -13,6 +13,7 @@
   # cursor.enable = false;
 
   # mr-boxington (mbx) Cargo build cache for this user (home-switch).
+  # HM options come from home/cache-presets.nix (not Den mkPreset).
   # For repository-only install, enable the preset in devenv.local.nix with
   # scope = "local" (the default) instead.
   # presets.cache.mr-boxington.enable = true;
@@ -21,6 +22,7 @@
   # tools.mr-boxington.enable = true;
 
   # build-cleaner for this user (home-switch).
+  # HM options come from home/cache-presets.nix (not Den mkPreset).
   # For repository-only install, enable the preset in devenv.local.nix with
   # scope = "local" (the default) instead.
   # presets.cache.build-cleaner.enable = true;

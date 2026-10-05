@@ -8,21 +8,20 @@
 }:
 {
   den.aspects.home-cli = {
-    # Cache tools are opt-in. Include both:
-    #   - tool-leaf aspects → direct `tools.*.enable`
-    #   - preset aspects (`cache.*`) → `presets.cache.*.scope = "global"` configure
-    # Preset IDs are dotted path strings from mkPreset (not nested attrpaths).
+    # Cache tools are opt-in via tools.*.enable (tool-leaf aspects).
+    # presets.cache.* for home.local.nix is an HM module (home/cache-presets.nix):
+    # Den mkPreset aspects cannot see home.local.nix (imported later inside HM).
     includes = [
       den.aspects.mr-boxington
       den.aspects.build-cleaner
-      den.aspects."cache.mr-boxington"
-      den.aspects."cache.build-cleaner"
     ];
 
     homeManager = {
       imports = [
         # Shared preferred-shell option for shell tools (atuin, blesh, starship).
         (import ../../stdlib/shell.nix { inherit lib; }).hmModule
+        # Opt-in cache presets from home.local.nix → tools.*.enable.
+        ../../home/cache-presets.nix
         ../../home/bash.nix
         # IDEs not on the cursor cascade (cursor*/mise stay in cursor aspects).
         ../../home/ides/vscode.nix
