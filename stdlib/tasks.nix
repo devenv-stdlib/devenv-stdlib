@@ -86,42 +86,50 @@ let
     qualify name (select only (resolve moduleArgs tasks));
 
   # Normalize exportTasks items:
-  #   - tool-ref → export all leaves from that tool's meta
+  #   - tool-ref → export all leaves (from ref.tasks if present, else discovered)
   #   - { tool = <ref|name>; only = [ "gc" ]; } → subset
   #   - string tool name (legacy tests) → export all
   normalizeExport =
     item:
     if builtins.isAttrs item && item._type or null == "tool-ref" then
       {
-        name = lib.last item.path;
+        name = item.name or (lib.last item.path);
         only = null;
+        tasks = item.tasks or null;
       }
     else if builtins.isAttrs item && item ? tool then
       let
         inherit (item) tool;
         name =
           if builtins.isAttrs tool && tool._type or null == "tool-ref" then
-            lib.last tool.path
+            tool.name or (lib.last tool.path)
           else if builtins.isAttrs tool && tool ? name then
             tool.name
           else if builtins.isString tool then
             tool
           else
             throw "stdlib.tasks.export: tool must be a tool-ref, mkTool meta, or name";
+        tasks =
+          if builtins.isAttrs tool && tool._type or null == "tool-ref" then
+            tool.tasks or null
+          else
+            null;
       in
       {
-        inherit name;
+        inherit name tasks;
         only = item.only or null;
       }
     else if builtins.isAttrs item && item ? name then
       {
         inherit (item) name;
         only = item.only or null;
+        tasks = item.tasks or null;
       }
     else if builtins.isString item then
       {
         name = item;
         only = null;
+        tasks = null;
       }
     else
       throw "stdlib.tasks.export: expected a tool-ref or { tool, only? }";
@@ -134,7 +142,8 @@ let
     in
     if hit == null then null else hit.spec;
 
-  # Lower exportTasks against discovered tool specs.
+  # Lower exportTasks against discovered tool specs, or against tasks embedded
+  # on tool-refs from refsFromSpecs (so load may omit tool roots).
   export =
     {
       items ? [ ],
@@ -147,15 +156,18 @@ let
         let
           item = normalizeExport raw;
           spec = specByName discovered item.name;
+          tasks =
+            if item.tasks != null then
+              item.tasks
+            else if spec != null then
+              spec.tasks or { }
+            else
+              throw "stdlib.tasks.export: unknown tool ${item.name}";
         in
-        if spec == null then
-          throw "stdlib.tasks.export: unknown tool ${item.name}"
-        else
-          lower {
-            inherit (item) name only;
-            inherit moduleArgs;
-            tasks = spec.tasks or { };
-          }
+        lower {
+          inherit (item) name only;
+          inherit moduleArgs tasks;
+        }
       ) items;
     in
     lib.foldl' lib.recursiveUpdate { } parts;

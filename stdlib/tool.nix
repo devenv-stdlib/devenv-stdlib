@@ -105,6 +105,9 @@ let
       tree: path: lib.recursiveUpdate tree (lib.setAttrByPath (normalizePath path) (mkRef path))
     ) { } paths;
 
+  # Like refsFromPaths, but attach `name` + `tasks` from each spec so preset
+  # `exportTasks` can lower leaves even when devenv.load omitted tool roots
+  # (discoveredTools empty). Inclusion still keys only on `_type` + `path`.
   refsFromSpecs =
     discovered:
     let
@@ -115,7 +118,18 @@ let
     if dupes != [ ] then
       throw "mkTool: duplicate tool attrpaths: ${builtins.toString dupes}"
     else
-      refsFromPaths paths;
+      lib.foldl' (
+        tree: d:
+        lib.recursiveUpdate tree (
+          lib.setAttrByPath (normalizePath d.spec.path) (
+            (mkRef d.spec.path)
+            // {
+              name = d.spec.name;
+              tasks = d.spec.tasks or { };
+            }
+          )
+        )
+      ) { } discovered;
 
   meta =
     spec:
