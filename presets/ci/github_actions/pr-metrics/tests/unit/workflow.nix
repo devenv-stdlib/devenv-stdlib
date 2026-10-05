@@ -201,9 +201,9 @@ in
         hasFailClosedBase = contains "refusing to determine PR size" yaml;
         hasNoTitleFallback = !(contains "falling back to title prefix" yaml);
         hasCodeExts = contains "code-file-extensions:" yaml;
-        hasNixExt = contains "nix" yaml;
-        hasCodeExtsEnv = contains "CODE_EXTS:" yaml;
-        hasExtFilter = contains "CODE_EXTS" yaml;
+        hasNixExt = contains ''code-file-extensions: "nix\nyml\nyaml\n"'' yaml;
+        hasCodeExtsEnv = contains ''CODE_EXTS: "nix\nyml\nyaml\n"'' yaml;
+        hasExtFilter = contains "not in exts" yaml;
         hasDraftSkip = contains "!github.event.pull_request.draft" yaml;
         hasToken = contains "PR_METRICS_ACCESS_TOKEN" yaml;
         hasRunner = contains "runs-on: ubuntu-24.04" yaml;
@@ -308,6 +308,31 @@ in
     expected = {
       hasQuotedGlob = true;
       hasEscapedNewline = true;
+    };
+  };
+
+  # extraWith override of code-file-extensions must drive both Action + gate.
+  testCiPrMetricsExtraWithExtensionsAlignGate = {
+    expr =
+      let
+        yaml = workflowText (
+          defaultCfg
+          // {
+            extraWith = {
+              "code-file-extensions" = "rs\npy\n";
+            };
+          }
+        );
+      in
+      {
+        hasActionExts = contains ''code-file-extensions: "rs\npy\n"'' yaml;
+        hasGateExts = contains ''CODE_EXTS: "rs\npy\n"'' yaml;
+        lacksDefaultGate = !(contains ''CODE_EXTS: "nix\nyml\nyaml\n"'' yaml);
+      };
+    expected = {
+      hasActionExts = true;
+      hasGateExts = true;
+      lacksDefaultGate = true;
     };
   };
 }
