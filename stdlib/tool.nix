@@ -344,7 +344,7 @@ let
         homeManager =
           moduleArgs:
           let
-            pkgs = moduleArgs.pkgs;
+            inherit (moduleArgs) pkgs;
             extras = (spec.homeManager or (_: { })) moduleArgs;
           in
           lib.mkMerge [

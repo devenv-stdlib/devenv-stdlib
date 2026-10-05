@@ -13,10 +13,13 @@ let
       archives,
       # Installed binary name inside the archive (and $out/bin).
       bin ? pname,
-      # Extra Linux libs for autoPatchelf (e.g. libgcc). pkgs → list of packages.
+      # Extra Linux libs for autoPatchelf / manual postFixup (e.g. libgcc).
+      # pkgs → list of packages. Included on Linux even when autoPatchelf is false.
       extraBuildInputs ? (_pkgs: [ ]),
-      # When false, skip autoPatchelf (caller may patch manually via postFixup).
+      # When false, skip autoPatchelfHook (caller may patch via postFixup).
       autoPatchelf ? true,
+      # pkgs → shell fragment run in postFixup (same shape as fromZipRelease).
+      postFixup ? (_pkgs: ""),
       meta ? { },
     }:
     pkgs:
@@ -44,7 +47,8 @@ let
       nativeBuildInputs = lib.optionals (autoPatchelf && stdenv.hostPlatform.isLinux) [
         pkgs.autoPatchelfHook
       ];
-      buildInputs = lib.optionals (autoPatchelf && stdenv.hostPlatform.isLinux) (
+      # Keep caller libs on Linux even when autoPatchelf is off (manual postFixup).
+      buildInputs = lib.optionals stdenv.hostPlatform.isLinux (
         [
           stdenv.cc.libc
         ]
@@ -61,6 +65,8 @@ let
         install -m755 ${lib.escapeShellArg bin} $out/bin/${lib.escapeShellArg bin}
         runHook postInstall
       '';
+
+      postFixup = postFixup pkgs;
 
       meta = defaultMeta // meta;
     };
