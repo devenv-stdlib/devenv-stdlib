@@ -11,8 +11,9 @@
 #
 # Defaults (when enabled):
 #   - baseSize = 200, growthRate = "2.0" → medium ends at 800 product-code lines
-#   - rejectAboveMedium = true → L / XL / N XL fail the job; also fail-closed when
-#     the size prefix is missing or unrecognized (title not annotated)
+#   - rejectAboveMedium = true → fail when product lines >= medium ceiling
+#     (git diff primary; L/XL title prefix also rejects; fail-closed if size
+#     cannot be determined — missing/unrecognized prefix with no git base)
 #   - exemptDraftPrs = true → drafts skipped (ready_for_review re-runs)
 #   - continueOnError = true on the annotate step (upstream recommendation)
 #

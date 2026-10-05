@@ -71,9 +71,18 @@ in
         };
         checkoutAction = lib.mkOption {
           type = lib.types.str;
-          # actions/checkout@v4 → 11d5960… (verified tag peel).
+          # actions/checkout@v4 tip peel (CodeRabbit-verified); human label in
+          # checkoutComment.
           default = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262";
           description = "Checkout Action pin (full commit SHA) used before microsoft/PR-Metrics.";
+        };
+        checkoutComment = lib.mkOption {
+          type = lib.types.str;
+          default = "v4";
+          description = ''
+            Trailing YAML comment on the checkout `uses:` line. Empty string
+            omits the comment.
+          '';
         };
         fetchDepth = lib.mkOption {
           type = lib.types.nullOr lib.types.ints.unsigned;
@@ -203,6 +212,7 @@ in
           action
           actionComment
           checkoutAction
+          checkoutComment
           fetchDepth
           baseSize
           growthRate
