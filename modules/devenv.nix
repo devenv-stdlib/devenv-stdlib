@@ -28,6 +28,9 @@ in
     # presets/ci/github_actions/anti-slop.nix
     # (attrpath ci.github_actions.anti-slop → pr-quality.yml; dogfood enable in
     # root devenv.nix). presets/examples/ is documentation only.
+    # Evidence-grounded PR review diffs are
+    # presets/ci/github_actions/aletheore.nix
+    # (attrpath ci.github_actions.aletheore → aletheore.yml).
     ./debtmap/hooks.nix
     ./languages
     ./debtmap

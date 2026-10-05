@@ -38,6 +38,7 @@ Paths in **this package repository** (publisher / dogfood checkout). Consumer tr
 | `hooks/reference-transaction` | Tag guard, installed on `devenv shell` |
 | `.github/workflows/ci.yml` | Lint (prek) first (treefmt + residual), then unit tests, integration tests, generated `test.yml`, semantic-release |
 | `.github/workflows/pr-quality.yml` | peakoss/anti-slop on `pull_request`; refresh with `ci:update-anti-slop` when the preset is enabled |
+| `.github/workflows/aletheore.yml` | Aletheore evidence-grounded PR diffs on `pull_request`; refresh with `ci:update-aletheore` |
 | `.github/workflows/update-lock.yml` | Weekly `devenv update git-hooks` pull request |
 | `.github/workflows/test.yml` | Language matrix; refresh with `ci:update-language-matrix`; **commit** this file |
 
