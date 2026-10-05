@@ -10,20 +10,24 @@ on:
       - tests/setup/**
       - tests/tag-hook.bats
       - hooks/**
+      - includes/cursor-agent-sandbox/**
       - .github/workflows/setup-tests.yml
   # Always on PRs so ruleset checks `bats (ubuntu-…)` exist; path-filter skips
   # the suite when setup paths are untouched (shim stays green).
   pull_request:
 
+# Read-only by default; only setup-bats needs actions: write for cache saves.
 permissions:
   contents: read
-  actions: write
   pull-requests: read
 
 jobs:
   changes:
     name: Detect setup path changes
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       setup: ${{ steps.flags.outputs.setup }}
     steps:
@@ -39,6 +43,7 @@ jobs:
               - 'tests/setup/**'
               - 'tests/tag-hook.bats'
               - 'hooks/**'
+              - 'includes/cursor-agent-sandbox/**'
               - '.github/workflows/setup-tests.yml'
 
       - id: flags
@@ -61,6 +66,9 @@ jobs:
       matrix:
         os: [ubuntu-24.04, ubuntu-26.04]
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      actions: write
     steps:
       - uses: actions/checkout@v4
 
@@ -70,7 +78,7 @@ jobs:
         id: nix-cache
         uses: nix-community/cache-nix-action/restore@v7
         with:
-          primary-key: nix-${{ matrix.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'setup.sh', 'tests/setup/**', 'hooks/**') }}
+          primary-key: nix-${{ matrix.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'setup.sh', 'tests/setup/**', 'hooks/**', 'includes/cursor-agent-sandbox/**') }}
           restore-prefixes-first-match: nix-${{ matrix.os }}-${{ github.job }}-
 
       - name: Run the setup.sh test suite
@@ -93,9 +101,15 @@ jobs:
       matrix:
         os: [ubuntu-24.04, ubuntu-26.04]
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: Require setup.sh BATS matrix success or path-skip
         run: |
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "changes job result=${{ needs.changes.result }}"
+            exit 1
+          fi
           if [ "${{ needs.changes.outputs.setup }}" != "true" ]; then
             echo "path-skip: setup.sh BATS not required for this PR"
             exit 0
