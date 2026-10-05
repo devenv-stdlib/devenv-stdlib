@@ -44,11 +44,14 @@ let
         ''}
         root=""
         root_file="''${XDG_CONFIG_HOME:-$HOME/.config}/devenv4monorepo/devenv-root"
+        is_monorepo_root() {
+          [ -d "$1" ] && [ -f "$1/devenv.nix" ]
+        }
         if [ -f "$root_file" ]; then
           root=$(cat "$root_file")
         fi
-        if [ -z "$root" ] || [ ! -d "$root" ]; then
-          if [ -n "''${DEVENV_ROOT:-}" ] && [ -d "$DEVENV_ROOT" ]; then
+        if ! is_monorepo_root "$root"; then
+          if is_monorepo_root "''${DEVENV_ROOT:-}"; then
             root="$DEVENV_ROOT"
           else
             echo "aletheore-mcp: no known monorepo root (run home-switch to write ~/.config/devenv4monorepo/devenv-root, or set DEVENV_ROOT)" >&2
