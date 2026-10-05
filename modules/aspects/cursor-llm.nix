@@ -14,11 +14,15 @@ in
         # cursor-llm activation runs after miseInstallNonNix.
         ../../home/mise.nix
       ];
-      cursor.enable = true;
-      cursor.llmContext.enable = true;
       # Dogfood Aletheore MCP (opt-in catalog entry). Paid plans:
       # https://www.aletheore.com
-      cursor.llmContext.aletheore.enable = true;
+      cursor = {
+        enable = true;
+        llmContext = {
+          enable = true;
+          aletheore.enable = true;
+        };
+      };
     };
   };
 }
