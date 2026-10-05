@@ -346,7 +346,7 @@ Formatters and file linters are first-class under `linters.*` (see [Hooks](hooks
 
 ```bash
 treefmt                 # format / lint treefmt-backed programs
-treefmt --fail-on-change
+treefmt --ci --verbose  # check mode (fail on change; verbose logs)
 prek run --all-files    # treefmt + residual prek
 ```
 

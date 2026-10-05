@@ -32,8 +32,8 @@ Language-gated formatters are still thin tool presets (`presets/<lang>/lint/…`
 # Format / lint every treefmt-backed program (writes fixes)
 treefmt
 
-# Check mode (fail if files would change)
-treefmt --fail-on-change
+# Check mode (fail if files would change; verbose formatter logs)
+treefmt --ci --verbose
 
 # Full hook set: treefmt + residual prek (commit-msg hooks need a commit)
 prek run --all-files
@@ -42,10 +42,10 @@ prek run --all-files
 The generated `treefmt` git-hooks / prek entry is check mode, not format-only:
 
 ```text
-treefmt --fail-on-change --no-cache
+treefmt --ci --verbose
 ```
 
-Pinned in `modules/linters` via `git-hooks.hooks.treefmt.settings.fail-on-change` / `no-cache` (both `true`). So `prek run --all-files` in CI fails when any treefmt-backed program would rewrite a file; it does not silently pass after formatting.
+Pinned in `modules/linters` via `git-hooks.hooks.treefmt.args = [ "--ci" "--verbose" ]` (`settings.fail-on-change` / `no-cache` left false so those flags are not duplicated — `--ci` already enables both). So `prek run --all-files` in CI fails when any treefmt-backed program would rewrite a file, and logs show which formatter failed and why.
 
 `ci.yml` runs **Lint (prek)** (`prek run --all-files`) before unit/integration/language-matrix jobs so formatting and static checks fail fast. That single prek run includes the `treefmt` hook plus residual checks. On pull requests, a failed run comments with the log (and uploads `prek.log`); a later green run removes that comment. The ruleset required check is the real job name **Lint (prek)**.
 
