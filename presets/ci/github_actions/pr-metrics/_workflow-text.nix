@@ -29,7 +29,7 @@ let
 
   # microsoft/PR-Metrics documented top-10-language defaults (pinned Action).
   # Used by the size gate when codeFileExtensions = "" omits the Action input.
-  actionDefaultCodeFileExtensions = builtins.readFile ./action-default-code-file-extensions.txt;
+  actionDefaultCodeFileExtensions = builtins.readFile ./action-default-code-file-extensions.list;
 in
 {
   # cfg: {
@@ -65,10 +65,7 @@ in
         let
           resolved = withAttrs."code-file-extensions" or effectiveExtensions;
         in
-        if resolved == null || resolved == "" then
-          actionDefaultCodeFileExtensions
-        else
-          resolved;
+        if resolved == null || resolved == "" then actionDefaultCodeFileExtensions else resolved;
       actionUses = usesWithComment cfg.action (cfg.actionComment or "");
       checkoutUses = usesWithComment cfg.checkoutAction (cfg.checkoutComment or "");
       jobIf = if cfg.exemptDraftPrs then [ "    if: \${{ !github.event.pull_request.draft }}" ] else [ ];
