@@ -84,7 +84,8 @@ let
   contains = needle: haystack: lib.hasInfix needle haystack;
 
   defaultCfg = {
-    action = "Aletheore/Aletheore@v0.9.22";
+    action = "Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30";
+    actionComment = "v0.9.22";
     failOnNewSecrets = true;
     failOnNewVulnerabilities = false;
     failOnNewLayerViolations = false;
@@ -105,6 +106,7 @@ in
         applied = cfg.presets.ci.github_actions.aletheore.result.applied or false;
         hasMarker = cfg.stdlib.markers ? aletheore;
         action = marker.action or "";
+        actionComment = marker.actionComment or "";
         workflow = marker.workflow or "";
         failOnNewSecrets = marker.failOnNewSecrets or false;
         failOnNewVulnerabilities = marker.failOnNewVulnerabilities or true;
@@ -116,7 +118,8 @@ in
     expected = {
       applied = true;
       hasMarker = true;
-      action = "Aletheore/Aletheore@v0.9.22";
+      action = "Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30";
+      actionComment = "v0.9.22";
       workflow = "aletheore.yml";
       failOnNewSecrets = true;
       failOnNewVulnerabilities = false;
@@ -141,6 +144,7 @@ in
         disabledHasMarker = disabled.stdlib.markers ? aletheore;
         disabledHasSync = disabled.scripts ? sync-aletheore-workflow;
         actionOption = cfg.presets.ci.github_actions.aletheore.action;
+        actionCommentOption = cfg.presets.ci.github_actions.aletheore.actionComment;
         failOnNewSecretsOption = cfg.presets.ci.github_actions.aletheore.failOnNewSecrets;
       };
     expected = {
@@ -148,7 +152,8 @@ in
       disabledApplied = false;
       disabledHasMarker = false;
       disabledHasSync = false;
-      actionOption = "Aletheore/Aletheore@v0.9.22";
+      actionOption = "Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30";
+      actionCommentOption = "v0.9.22";
       failOnNewSecretsOption = true;
     };
   };
@@ -162,7 +167,8 @@ in
         hasName = contains "name: Aletheore" yaml;
         hasPullRequest = contains "pull_request:" yaml;
         lacksTarget = contains "pull_request_target" yaml;
-        hasAction = contains "Aletheore/Aletheore@v0.9.22" yaml;
+        hasAction = contains "Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30" yaml;
+        hasActionComment = contains "# v0.9.22" yaml;
         hasFailSecrets = contains "fail-on-new-secrets: true" yaml;
         hasFailVulns = contains "fail-on-new-vulnerabilities: false" yaml;
         hasFailLayers = contains "fail-on-new-layer-violations: false" yaml;
@@ -178,6 +184,7 @@ in
       hasPullRequest = true;
       lacksTarget = false;
       hasAction = true;
+      hasActionComment = true;
       hasFailSecrets = true;
       hasFailVulns = true;
       hasFailLayers = true;

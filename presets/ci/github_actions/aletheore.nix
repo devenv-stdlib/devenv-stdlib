@@ -37,12 +37,21 @@ in
       options.presets.ci.github_actions.aletheore = {
         action = lib.mkOption {
           type = lib.types.str;
-          # Immutable release tag (not the floating major line). Marketplace
-          # README still shows an older v0.7.x example; pin the current release.
-          default = "Aletheore/Aletheore@v0.9.22";
+          # Immutable commit for v0.9.22 — issues/pull-requests: write must not
+          # follow a movable tag. Keep the human version in actionComment.
+          # Peeled from refs/tags/v0.9.22 → 24f816e9297f87853b09fe514081863dc6604d30.
+          default = "Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30";
           description = ''
-            Marketplace Action pin (`owner/repo@tag`). Prefer an immutable
-            release tag over a moving major line.
+            Marketplace Action pin (`owner/repo@sha`). Prefer a full commit SHA
+            over a mutable tag; put the release tag in `actionComment`.
+          '';
+        };
+        actionComment = lib.mkOption {
+          type = lib.types.str;
+          default = "v0.9.22";
+          description = ''
+            Trailing YAML comment on the generated `uses:` line (release tag for
+            readability). Empty string omits the comment.
           '';
         };
         failOnNewSecrets = lib.mkOption {
@@ -106,6 +115,7 @@ in
         enable = true;
         inherit (cfg)
           action
+          actionComment
           failOnNewSecrets
           failOnNewVulnerabilities
           failOnNewLayerViolations

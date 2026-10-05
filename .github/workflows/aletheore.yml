@@ -12,7 +12,7 @@ jobs:
   aletheore:
     runs-on: ubuntu-24.04
     steps:
-      - uses: Aletheore/Aletheore@v0.9.22
+      - uses: Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30 # v0.9.22
         with:
           fail-on-new-layer-violations: false
           fail-on-new-secrets: true

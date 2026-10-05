@@ -13,7 +13,7 @@ let
 in
 {
   # cfg: {
-  #   action, failOnNewSecrets, failOnNewVulnerabilities,
+  #   action, actionComment?, failOnNewSecrets, failOnNewVulnerabilities,
   #   failOnNewLayerViolations, full, postPrComment, extraWith
   # }
   workflowText =
@@ -27,6 +27,9 @@ in
         post-pr-comment = boolYaml cfg.postPrComment;
       };
       withAttrs = named // cfg.extraWith;
+      comment = cfg.actionComment or "";
+      usesLine =
+        if comment == "" then "      - uses: ${cfg.action}" else "      - uses: ${cfg.action} # ${comment}";
     in
     lib.concatStringsSep "\n" (
       [
@@ -44,7 +47,7 @@ in
         "  aletheore:"
         "    runs-on: ubuntu-24.04"
         "    steps:"
-        "      - uses: ${cfg.action}"
+        usesLine
         "        with:"
       ]
       ++ withLines withAttrs
