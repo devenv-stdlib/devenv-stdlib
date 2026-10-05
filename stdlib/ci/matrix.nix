@@ -270,16 +270,19 @@ let
           cells = filterCells (job.cells or [ ]) p;
         }
       ) matrixPlan.jobs;
-      # Reject a silently empty filtered plan when the full plan had cells
-      # (misconfigured runner catalog, or a match/matchAny/exclude that matches
-      # nothing). Empty plans render as green empty workflows. Guard whenever the
-      # effective (post-overlay) profile filters — not only base selectCurrentLts.
-      hadCells = lib.any (j: (j.cells or [ ]) != [ ]) (lib.attrValues matrixPlan.jobs);
-      keepsCells = lib.any (j: (j.cells or [ ]) != [ ]) (lib.attrValues filteredJobs);
+      # Reject when a profile empties any previously nonempty job — even if
+      # sibling jobs retain cells. github_actions.render omits empty jobs, so a
+      # silent per-job wipe would skip that job's command. Also covers the
+      # all-jobs-empty case (misconfigured catalog / match that matches nothing).
+      emptiedJob = lib.any (
+        name:
+        (matrixPlan.jobs.${name}.cells or [ ]) != [ ]
+        && (filteredJobs.${name}.cells or [ ]) == [ ]
+      ) (lib.attrNames matrixPlan.jobs);
       anyJobFilters = lib.any (job: profileUsesFilters (mergeRaw job)) (lib.attrValues matrixPlan.jobs);
     in
-    if anyJobFilters && hadCells && !keepsCells then
-      throw "ci.matrix: expansion profile removed all cells (no cells matched the profile)"
+    if anyJobFilters && emptiedJob then
+      throw "ci.matrix: expansion profile emptied one or more jobs (no cells matched the profile for a previously nonempty job)"
     else
       matrixPlan
       // {

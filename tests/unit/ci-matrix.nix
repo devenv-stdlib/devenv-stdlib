@@ -868,6 +868,35 @@ in
     };
   };
 
+  # CodeRabbit: reject when a profile empties one job while siblings keep cells
+  # (render would omit the empty job and silently skip its command).
+  testExpansionProfileRejectsEmptiedJobWhileSiblingKeepsCells = {
+    expr = builtins.tryEval (
+      matrix.forProfile (matrix.plan {
+        jobs = {
+          python = {
+            command = "true";
+            # Only previous LTS — pr (selectCurrentLts) empties this job.
+            dimensions.runner = [ "ubuntu-lts-prev" ];
+            seeds = [ { version = "3.12"; } ];
+          };
+          rust = {
+            command = "true";
+            dimensions.runner = [
+              "ubuntu-lts-prev"
+              "ubuntu-lts-curr"
+            ];
+            seeds = [ { version = "stable"; } ];
+          };
+        };
+      }) "pr"
+    );
+    expected = {
+      success = false;
+      value = false;
+    };
+  };
+
   testLanguagePlanArchesFilterRunnerProfilesOverride = {
     expr =
       let
