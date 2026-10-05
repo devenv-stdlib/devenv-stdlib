@@ -63,14 +63,21 @@ in
 
       # One git-hooks entry runs the whole treefmt suite (same wrapper as `treefmt`).
       # CI (`prek run --all-files`) must fail when formatting would rewrite files —
-      # not silently format-and-pass. git-hooks.nix defaults these to true; pin
-      # them so a future upstream default flip cannot regress CI.
+      # not silently format-and-pass. git-hooks.nix only maps settings.fail-on-change
+      # / no-cache onto the entry; prefer `treefmt --ci --verbose` instead:
+      # `--ci` implies `--fail-on-change` and `--no-cache`, and `--verbose` surfaces
+      # which formatter failed and why in prek/CI logs.
       git-hooks.hooks.treefmt = lib.mkIf config.treefmt.enable {
         enable = true;
         settings = {
-          fail-on-change = true; # → `treefmt --fail-on-change`
-          no-cache = true; # → `treefmt --no-cache`
+          # Leave false so git-hooks.nix does not also append redundant flags.
+          fail-on-change = false;
+          no-cache = false;
         };
+        args = [
+          "--ci"
+          "--verbose"
+        ];
       };
 
       # Vendored upstream skills — not ours to reflow (matches former git-hooks.excludes).
