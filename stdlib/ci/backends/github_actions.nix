@@ -85,17 +85,15 @@ let
   padJob = text: "  " + lib.replaceStrings [ "\n" ] [ "\n  " ] (lib.removeSuffix "\n" text);
 
   # Emit run: as a block scalar when command is multiline (unless already `|…`).
-  # JSON-quote single-line commands that contain `: ` (plain YAML mapping syntax).
+  # Always JSON-quote other single-line commands so YAML `#` / `: ` cannot corrupt them.
   runYaml =
     command:
     if lib.hasPrefix "|" command then
       "run: ${command}"
     else if lib.hasInfix "\n" command then
       "run: |\n              ${lib.replaceStrings [ "\n" ] [ "\n              " ] command}"
-    else if lib.hasInfix ": " command then
-      "run: ${builtins.toJSON command}"
     else
-      "run: ${command}";
+      "run: ${builtins.toJSON command}";
 
   jobYaml =
     plan: job:
