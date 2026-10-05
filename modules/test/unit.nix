@@ -16,13 +16,44 @@ _: {
     mkdir -p "$junit_dir"
     status=0
 
-    echo "==> nix-unit"
+    # Main suite (stdlib / aspects / cross-cutting) plus additive per-owner suites
+    # under tools/**/tests/unit and presets/**/tests/unit (discover-suites.nix).
+    list_owner_unit_suites() {
+      # Same rules as tests/lib/discover-suites.nix (unit-tested); find stays in sync
+      # when that file's walk skips `_` prefixes and only accepts tests/unit/default.nix.
+      find "$DEVENV_ROOT/tools" "$DEVENV_ROOT/presets" \
+        \( -name '_*' -prune \) -o \
+        \( -path '*/tests/unit/default.nix' -print \) \
+        | sort
+    }
+
+    suite_slug() {
+      local rel="$1"
+      rel="''${rel#/}"
+      rel="''${rel%/tests/unit/default.nix}"
+      printf '%s' "$rel" | tr '/' '-'
+    }
+
+    echo "==> nix-unit (main)"
     python3 "$report" nix-unit \
       --quiet \
       --suite "$DEVENV_ROOT/tests/unit/default.nix" \
       --unit-dir "$DEVENV_ROOT/tests/unit" \
       --root "$DEVENV_ROOT" \
       --output "$junit_dir/nix-unit.xml" || status=1
+
+    while IFS= read -r suite; do
+      [ -n "$suite" ] || continue
+      rel="''${suite#"$DEVENV_ROOT"/}"
+      slug="$(suite_slug "$rel")"
+      echo "==> nix-unit ($rel)"
+      python3 "$report" nix-unit \
+        --quiet \
+        --suite "$suite" \
+        --unit-dir "$(dirname "$suite")" \
+        --root "$DEVENV_ROOT" \
+        --output "$junit_dir/nix-unit-$slug.xml" || status=1
+    done < <(list_owner_unit_suites)
 
     echo "==> bats"
     # GNU parallel prompts once for a citation; silence that in CI/noninteractive.

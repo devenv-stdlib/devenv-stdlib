@@ -24,7 +24,8 @@ rec {
           if lib.hasPrefix "_" name then
             [ ]
           else if typ == "directory" then
-            discoverOne path
+            # Colocated unit/integration suites live under tests/; never tools.
+            if name == "tests" then [ ] else discoverOne path
           else if typ == "regular" && lib.hasSuffix ".nix" name then
             [ path ]
           else
@@ -32,7 +33,8 @@ rec {
         ) (builtins.attrNames listing.value);
 
   # Sorted store paths of *.nix files under each root. Skips names that
-  # start with `_` (same idea as import-tree's `/_` filter).
+  # start with `_` (same idea as import-tree's `/_` filter) and any
+  # `tests/` directory (per-tool / per-preset suites).
   discover = roots: lib.sort (a: b: toString a < toString b) (lib.concatMap discoverOne roots);
 
   # Den modules for flake.nix. Global tools only (homeManager payload).

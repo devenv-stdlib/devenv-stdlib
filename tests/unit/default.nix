@@ -1,33 +1,9 @@
-# nix-unit suite. Import with: nix-unit tests/unit/default.nix
+# Main nix-unit suite: stdlib, Den aspects, and other cross-cutting topics.
+# Per-tool / per-preset suites live under tools/**/tests/unit and presets/**/tests/unit
+# and are discovered by test-devenv-unit (see tests/lib/discover-suites.nix).
+# Import with: nix-unit -I devenv4monorepo=$PWD tests/unit/default.nix
 let
   lib = import <nixpkgs/lib>;
-  harness = import ./harness.nix { inherit lib; };
+  suite = import ../lib/suite.nix { inherit lib; };
 in
-(import ./versions.nix harness)
-// (import ./problems.nix harness)
-// (import ./matrices.nix harness)
-// (import ./workflow.nix harness)
-// (import ./hooks.nix harness)
-// (import ./debtmap.nix harness)
-// (import ./vscode.nix harness)
-// (import ./serena.nix harness)
-// (import ./terminal.nix harness)
-// (import ./non-nix.nix harness)
-// (import ./den-cursor.nix harness)
-// (import ./den-terminal.nix harness)
-// (import ./den-python.nix harness)
-// (import ./den-languages.nix harness)
-// (import ./den-ide.nix harness)
-// (import ./den-hm-golden.nix harness)
-// (import ./den-project-golden.nix harness)
-// (import ./den-project-class.nix harness)
-// (import ./den-cutover-guards.nix harness)
-// (import ./den-os-classes.nix harness)
-// (import ./stdlib-api.nix harness)
-// (import ./stdlib-tools.nix harness)
-// (import ./stdlib-presets.nix harness)
-// (import ./stdlib-category-policy.nix harness)
-// (import ./stdlib-category-warnings.nix harness)
-// (import ./presets-devenv.nix harness)
-// (import ./stdlib-packaging.nix harness)
-// (import ./stdlib-report.nix harness)
+(suite.load ./.) // (suite.load ./stdlib) // (suite.load ./aspects)

@@ -75,7 +75,10 @@ let
       files = lib.filter (
         name: entries.${name} == "regular" && lib.hasSuffix ".nix" name && !(lib.hasPrefix "_" name)
       ) names;
-      dirs = lib.filter (name: entries.${name} == "directory" && !(lib.hasPrefix "_" name)) names;
+      # Skip colocated tests/ suites (tools|presets/**/tests/{unit,integration}).
+      dirs = lib.filter (
+        name: entries.${name} == "directory" && !(lib.hasPrefix "_" name) && name != "tests"
+      ) names;
     in
     map (name: {
       file = root + "/${name}";
