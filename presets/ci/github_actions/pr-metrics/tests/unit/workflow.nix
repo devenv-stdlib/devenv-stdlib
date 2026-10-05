@@ -11,6 +11,12 @@ let
     })
     workflowText
     ;
+  inherit
+    (import <devenv4monorepo/presets/ci/github_actions/pr-metrics/_code-file-extensions.nix> {
+      inherit lib;
+    })
+    codeFileExtensions
+    ;
 
   freeform = lib.types.submodule {
     freeformType = lib.types.lazyAttrsOf lib.types.anything;
@@ -93,6 +99,9 @@ let
   prMetricsSha = "microsoft/PR-Metrics@ac92804a3a0c8b711ca02dd9956ac6a7f2a1d2ca";
   checkoutSha = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262";
 
+  # Dogfood-shaped: languages off, docs tooling on → base + html/ts/tsx.
+  derivedDogfood = codeFileExtensions { docsTooling = true; };
+
   defaultCfg = {
     action = prMetricsSha;
     actionComment = "v1.7.18";
@@ -104,7 +113,7 @@ let
     testFactor = "1.0";
     fileMatchingPatterns = null;
     testMatchingPatterns = null;
-    codeFileExtensions = null;
+    codeFileExtensions = derivedDogfood;
     continueOnError = true;
     rejectAboveMedium = true;
     exemptDraftPrs = true;
@@ -189,6 +198,7 @@ in
         hasBase = contains ''base-size: "200"'' yaml;
         hasGrowth = contains ''growth-rate: "2.0"'' yaml;
         hasTestFactor = contains ''test-factor: "1.0"'' yaml;
+        hasDerivedExts = contains (builtins.toJSON derivedDogfood) yaml;
         hasContinue = contains "continue-on-error: true" yaml;
         hasReject = contains "Reject oversized PRs" yaml;
         hasGitGate = contains "\"git\", \"diff\"" yaml;
@@ -223,6 +233,7 @@ in
       hasBase = true;
       hasGrowth = true;
       hasTestFactor = true;
+      hasDerivedExts = true;
       hasContinue = true;
       hasReject = true;
       hasGitGate = true;
@@ -362,6 +373,40 @@ in
       gateHasCs = true;
       gateNotEmpty = true;
       lacksMonorepoGate = true;
+    };
+  };
+
+  testCiPrMetricsDerivesFromLanguagesAndDocs = {
+    expr =
+      let
+        cfgDocs = eval {
+          presets.ci.github_actions.pr-metrics.enable = true;
+          scripts.docs-dev.exec = "true";
+          languages.python.enable = true;
+        };
+        cfgOverride = eval {
+          presets.ci.github_actions.pr-metrics = {
+            enable = true;
+            codeFileExtensions = "nix\ncustom";
+          };
+        };
+        markerDocs = cfgDocs.stdlib.markers.prMetrics;
+        markerOverride = cfgOverride.stdlib.markers.prMetrics;
+        split = s: lib.filter (x: x != "") (lib.splitString "\n" s);
+      in
+      {
+        inherit (markerDocs) docsTooling;
+        hasPy = builtins.elem "py" (split markerDocs.codeFileExtensions);
+        hasHtml = builtins.elem "html" (split markerDocs.codeFileExtensions);
+        hasNix = builtins.elem "nix" (split markerDocs.codeFileExtensions);
+        override = markerOverride.codeFileExtensions;
+      };
+    expected = {
+      docsTooling = true;
+      hasPy = true;
+      hasHtml = true;
+      hasNix = true;
+      override = "nix\ncustom";
     };
   };
 }

@@ -30,7 +30,7 @@ jobs:
         continue-on-error: true
         with:
           base-size: "200"
-          code-file-extensions: "nix\nyml\nyaml\n"
+          code-file-extensions: "html\nnix\nts\ntsx\nyaml\nyml"
           growth-rate: "2.0"
           test-factor: "1.0"
       - name: Reject oversized PRs
@@ -41,7 +41,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BASE_SIZE: 200
           GROWTH_RATE: 2.0
-          CODE_EXTS: "nix\nyml\nyaml\n"
+          CODE_EXTS: "html\nnix\nts\ntsx\nyaml\nyml"
         run: |
           set -euo pipefail
           medium_max=$(awk -v b="${BASE_SIZE}" -v g="${GROWTH_RATE}" 'BEGIN { printf "%.0f", b * g * g }')

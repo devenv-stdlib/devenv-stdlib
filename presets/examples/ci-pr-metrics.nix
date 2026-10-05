@@ -16,12 +16,19 @@
 #     (git diff only; missing base commit fails closed — no title-prefix trust)
 #   - exemptDraftPrs = true → drafts skipped (ready_for_review re-runs)
 #   - continueOnError = true on the annotate step (upstream recommendation)
+#   - codeFileExtensions = null → derive from languages.* + always nix/yml/yaml;
+#     html/ts/tsx when docs-dev/docs-build or javascript/typescript/deno is on
 #
 # Opt-out / override:
 #
 #   presets.ci.github_actions.pr-metrics.enable = false;           # remove gate
 #   presets.ci.github_actions.pr-metrics.rejectAboveMedium = false; # annotate only
 #   presets.ci.github_actions.pr-metrics.baseSize = 400;           # widen XS/M
+#   presets.ci.github_actions.pr-metrics.codeFileExtensions = ''   # override list
+#     nix
+#     py
+#   '';
+#   # "" omits the input (Action top-10 defaults; replaces nothing — omit entirely)
 #
 # Optional knobs:
 #
