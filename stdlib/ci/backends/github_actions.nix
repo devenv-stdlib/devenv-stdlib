@@ -117,9 +117,19 @@ let
           "\n  continue-on-error: \${{ matrix.optional }}"
         else
           "";
+      # Human-readable job titles (from #124); stay local to this renderer.
+      displayName =
+        {
+          python = "Python \${{ matrix.python_version }} (\${{ matrix.os }})";
+          rust = "Rust \${{ matrix.channel }} \${{ matrix.version }} (\${{ matrix.os }})";
+          go = "Go \${{ matrix.version }} (\${{ matrix.os }})";
+          javascript = "JavaScript \${{ matrix.runtime }} \${{ matrix.version }} (\${{ matrix.os }})";
+        }
+        .${job.name} or "${job.name} (\${{ matrix.os }})";
     in
     ''
       ${job.name}:
+        name: ${displayName}
         runs-on: ''${{ matrix.os }}${continueYaml}
         strategy:
           fail-fast: ${if failFast then "true" else "false"}${maxParallelYaml}
