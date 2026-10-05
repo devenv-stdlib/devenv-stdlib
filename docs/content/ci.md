@@ -37,6 +37,16 @@ Host jobs restore `/nix` from the GitHub Actions cache (`cache-nix-action/restor
 
 `devenv shell` writes `.github/workflows/test.yml` as a reusable workflow (`workflow_call`) that runs `devenv test` per language per version. That writer is the composable preset `ci.github_actions.language-matrix` (`presets/ci/github_actions/language-matrix.nix`). Cross-language matrices (Rust × Python) are not supported yet. The stdlib status report (eval warnings + `enterShell`) lists the resulting matrix alongside enabled git-hooks.
 
+`devenv shell` also writes `.github/workflows/pr-quality.yml` when you enable the composable preset `ci.github_actions.anti-slop` (`presets/ci/github_actions/anti-slop.nix`). That workflow runs [peakoss/anti-slop](https://github.com/peakoss/anti-slop) on `pull_request_target` (opened/reopened) — a forge-side PR quality gate that complements Lint (prek) in `ci.yml`. It is not a treefmt or prek hook and cannot run locally.
+
+**Consumers (opt-in):** marketplace Actions are off by default. Enable the same preset this template dogfoods:
+
+```nix
+presets.ci.github_actions.anti-slop.enable = true;
+```
+
+Then commit the synced `.github/workflows/pr-quality.yml`. Tune `action` (default `peakoss/anti-slop@v0.3.0`), `maxFailures`, `closePr`, `exemptDraftPrs` (drafts exempt by default), or pass further Action inputs via `extraWith`. Disable with `enable = false` and remove the workflow file. See `presets/examples/ci-anti-slop.nix`.
+
 ## JUnit
 
 Unit and integration jobs write JUnit reports under `junit/` (gitignored). Logs stay summary-first: `junit-report.py --quiet` for nix-unit, BATS/act/nixosTest full transcripts on disk and on failure only in the job log. Tasks set `showOutput = true` (CI also passes `--show-output`) so those summaries are not swallowed. CI uploads the XML files and runs [publish-unit-test-result-action](https://github.com/EnricoMi/publish-unit-test-result-action).

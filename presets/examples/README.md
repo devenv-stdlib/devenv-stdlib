@@ -12,3 +12,15 @@ includes = with presets; [
 ```
 
 See `python.nix` for a worked example.
+
+## CI: anti-slop (PR quality)
+
+Marketplace Actions stay **opt-in**. Enable the framework preset (same surface this
+repo dogfoods in root `devenv.nix`):
+
+```nix
+presets.ci.github_actions.anti-slop.enable = true;
+```
+
+`enterShell` writes `.github/workflows/pr-quality.yml` — commit it. See
+`ci-anti-slop.nix` and [CI docs](../../docs/content/ci.md).
