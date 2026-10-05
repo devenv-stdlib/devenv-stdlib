@@ -151,6 +151,29 @@ _: {
       run_act_serial "$junit_dir/workflows/python.yml" || status=1
     fi
 
+    # Additive per-tool / per-preset integration suites (nix-build each default.nix).
+    # Main cross-cutting nixosTest above stays in tests/integration/.
+    echo "==> owner integration suites"
+    while IFS= read -r suite; do
+      [ -n "$suite" ] || continue
+      rel="''${suite#"$DEVENV_ROOT"/}"
+      slug="$(printf '%s' "''${rel%/tests/integration/default.nix}" | tr '/' '-')"
+      echo "==> nix-build ($rel)"
+      owner_log="$junit_dir/integration-$slug.log"
+      if nix-build -j "$nix_jobs" --no-out-link "$suite" >"$owner_log" 2>&1; then
+        echo "==> owner integration ($rel): ok"
+      else
+        status=1
+        echo "==> owner integration ($rel): FAILED"
+        cat "$owner_log"
+      fi
+    done < <(
+      find "$DEVENV_ROOT/tools" "$DEVENV_ROOT/presets" \
+        \( -name '_*' -prune \) -o \
+        \( -path '*/tests/integration/default.nix' -print \) \
+        | sort
+    )
+
     echo "==> integration junit reports in $junit_dir"
     exit "$status"
   '';

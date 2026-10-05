@@ -39,9 +39,13 @@ def classname_for(file_path: str | None, fallback: str) -> str:
 def locate_nix_unit(
     name: str, unit_dir: Path, root: Path
 ) -> tuple[str | None, int | None]:
-    for path in sorted(unit_dir.glob("*.nix")):
-        if path.name in SKIP_UNIT:
-            continue
+    # Main suite nests topics under stdlib/ and aspects/; owner suites are flat.
+    paths = sorted(
+        path
+        for path in unit_dir.rglob("*.nix")
+        if path.is_file() and path.name not in SKIP_UNIT
+    )
+    for path in paths:
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             stripped = line.lstrip()
             if stripped.startswith((f"{name} =", f"{name}=")):
@@ -238,8 +242,16 @@ def cmd_nix_unit(args: argparse.Namespace) -> int:
         rc = 0
     else:
         suite = args.suite if Path(args.suite).is_absolute() else str(root / args.suite)
+        # devenv4monorepo/ on NIX_PATH lets owner suites import shared test libs.
         rc, text = run_nix_unit(
-            [args.nix_unit, "-I", "nixpkgs=flake:nixpkgs", suite],
+            [
+                args.nix_unit,
+                "-I",
+                "nixpkgs=flake:nixpkgs",
+                "-I",
+                f"devenv4monorepo={root}",
+                suite,
+            ],
             quiet=args.quiet,
         )
     cases = parse_nix_unit(text, unit_dir, root)

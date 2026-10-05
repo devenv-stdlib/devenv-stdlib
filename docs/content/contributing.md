@@ -108,7 +108,16 @@ build-act-image              # devenv-act:24.04 for local act
 
 | Suite | Role |
 | --- | --- |
-| `tests/unit/` | nix-unit (versions, hooks, debtmap, vscode helpers, Serena, terminal, stdlib API snapshot, …) |
+| `tests/unit/` | Main nix-unit suite: `stdlib/`, `aspects/`, and cross-cutting topics (versions, hooks, matrices, non-nix, …) |
+| `tools/**/tests/{unit,integration}/` | Per-tool suites (discovered; not imported into the main suite) |
+| `presets/**/tests/{unit,integration}/` | Per-preset suites (discovered) |
+
+### Test layout
+
+- **Main / cross-cutting:** `tests/unit/default.nix` loads topic files from `tests/unit/*.nix`, `tests/unit/stdlib/`, and `tests/unit/aspects/` via `tests/lib/suite.nix` (no hard-coded topic list).
+- **Per tool / preset:** keep the leaf as `tools/…/<name>.nix` or `presets/…/<name>.nix`. Add a sibling directory `<name>/tests/unit/` (and optionally `integration/`) with `default.nix` plus topic files. `stdlib.discover` and the devenv preset collector skip `tests/` so suites are never treated as tools or presets.
+- **Shared helpers:** `tests/lib/harness.nix`, `tests/lib/suite.nix`, `tests/lib/preset-eval.nix`, `tests/lib/discover-suites.nix`.
+- **Run one owner suite:** `nix-unit -I nixpkgs=flake:nixpkgs -I devenv4monorepo=$PWD tools/ide/vscode/tests/unit/default.nix`
 | `tests/setup/setup.bats` | `setup.sh` (sources the script; `main` guard) |
 | `tests/copier.bats` | `copier copy` / `update`; answers omit secret keys; not copied into monorepos |
 | `tests/update.bats` | `update` template vs consumer; pin helpers; skills refresher (stubbed `npx`); no live registry |
