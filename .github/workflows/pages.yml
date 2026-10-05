@@ -10,6 +10,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  pull-requests: read
 
 # Per-ref groups so stacked PR Docs builds do not cancel each other.
 # A shared `pages` group made required `build` fail with:
@@ -19,8 +20,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect docs path changes
+    runs-on: ubuntu-24.04
+    outputs:
+      docs: ${{ steps.flags.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          filters: |
+            docs:
+              - 'docs/**'
+              - '.github/workflows/pages.yml'
+
+      - id: flags
+        name: Resolve docs flag
+        run: |
+          set -euo pipefail
+          # Always build on trunk push / manual dispatch (deploy needs the artifact).
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs=${{ steps.filter.outputs.docs }}" >> "$GITHUB_OUTPUT"
+          fi
+
   build-docs:
     name: Build docs site
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -45,17 +76,26 @@ jobs:
   # Ruleset requires bare check context "build".
   ruleset-build:
     name: build
-    needs: build-docs
+    needs: [changes, build-docs]
     if: always() && !cancelled()
     runs-on: ubuntu-24.04
     steps:
-      - name: Require docs build success
-        run: test "${{ needs.build-docs.result }}" = "success"
+      - name: Require docs build success or path-skip
+        run: |
+          if [ "${{ needs.changes.outputs.docs }}" != "true" ]; then
+            echo "path-skip: docs build not required for this PR"
+            exit 0
+          fi
+          test "${{ needs.build-docs.result }}" = "success"
 
   deploy-pages:
     name: Deploy docs to GitHub Pages
-    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-    needs: build-docs
+    if: >-
+      github.event_name != 'pull_request'
+      && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+      && needs.changes.outputs.docs == 'true'
+      && needs.build-docs.result == 'success'
+    needs: [changes, build-docs]
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
