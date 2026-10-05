@@ -9,6 +9,9 @@
 # ci.github_actions.anti-slop (PR quality gate); this is a review / evidence
 # attachment, not an AttachmentPlan cache/coverage step.
 #
+# Parallel sibling of Lint (prek): own workflow (no needs: lint). Failures fail
+# the `aletheore` check; require that context on the branch ruleset to stop merge.
+#
 # Opt out with presets.ci.github_actions.aletheore.enable = false and remove
 # .github/workflows/aletheore.yml (also drops tools.aletheore). Aletheore
 # Community is PolyForm Noncommercial — org/commercial use needs a separate
@@ -27,8 +30,10 @@ in
   description = ''
     Generate .github/workflows/aletheore.yml for Aletheore/Aletheore (GHA-only
     evidence-grounded PR review diffs) and enable the local Aletheore CLI
-    (tools.scanners.aletheore; catalog pipx:aletheore). Complements anti-slop /
-    CodeRabbit; not a local hook. Product site / paid plans:
+    (tools.scanners.aletheore; catalog pipx:aletheore). Runs in parallel with
+    Lint (prek); check context `aletheore` fails on configured fail-on-* gates
+    — add it to the branch ruleset after merge to block merge. Complements
+    anti-slop / CodeRabbit; not a local hook. Product site / paid plans:
     https://www.aletheore.com
   '';
   # Always available; presets.ci.github_actions.aletheore.enable turns it off.
