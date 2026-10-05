@@ -42,8 +42,16 @@ in
         # PR that introduces pr-quality.yml would never run the check on
         # itself. Same-repo dogfood matches aletheore.yml; still no checkout
         # of the PR head (action uses the GitHub API only).
+        # Include ready_for_review: anti-slop honors exempt-draft-prs from the
+        # event payload only; re-runs keep a frozen draft-era payload, so
+        # draft→ready must fire a new run (not a re-run of synchronize).
         "on:"
         "  pull_request:"
+        "    types:"
+        "      - opened"
+        "      - synchronize"
+        "      - reopened"
+        "      - ready_for_review"
         ""
         "jobs:"
         "  anti-slop:"

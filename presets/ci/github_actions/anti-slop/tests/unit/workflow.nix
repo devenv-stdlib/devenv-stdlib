@@ -160,6 +160,11 @@ in
         # pull_request (not _target): workflow on the PR head can run / dogfood.
         hasPullRequest = contains "pull_request:" yaml;
         lacksTarget = !(contains "pull_request_target" yaml);
+        # ready_for_review: fresh payload after draft→ready (re-runs freeze draft).
+        hasReadyForReview = contains "ready_for_review" yaml;
+        hasOpened = contains "- opened" yaml;
+        hasSynchronize = contains "- synchronize" yaml;
+        hasReopened = contains "- reopened" yaml;
         hasAction = contains "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2" yaml;
         hasActionComment = contains "# v0.3.0" yaml;
         hasMax = contains ''max-failures: "4"'' yaml;
@@ -173,6 +178,10 @@ in
       hasName = true;
       hasPullRequest = true;
       lacksTarget = true;
+      hasReadyForReview = true;
+      hasOpened = true;
+      hasSynchronize = true;
+      hasReopened = true;
       hasAction = true;
       hasActionComment = true;
       hasMax = true;
