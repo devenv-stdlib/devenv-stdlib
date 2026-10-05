@@ -4,7 +4,7 @@
   inherit lib;
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
   stdlib = import ../../stdlib { inherit lib; };
-  ci = (import ../../stdlib { inherit lib; }).ci;
+  inherit (stdlib) ci;
   project = import ../../modules/lib/project.nix { inherit lib; };
   debtmap = import ../../modules/debtmap/lib.nix { inherit lib; };
   term = import ../../home/terminal-lib.nix { inherit lib; };
