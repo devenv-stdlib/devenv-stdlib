@@ -1,18 +1,22 @@
+# Residual git-hooks / prek checks — secret scanning, commit-msg, hygiene,
+# and other tools that are a poor fit for treefmt. Formatters and file
+# linters that treefmt-nix supports live under options.linters.* and lower
+# into devenv's treefmt integration (modules/linters + git-hooks.hooks.treefmt).
 {
   pkgs,
   lib,
+  config,
   ...
 }:
+let
+  cfg = config.linters;
+in
 {
   # Vendored upstream skills (Vercel skills CLI); not ours to lint or reflow.
   git-hooks.excludes = [ "^\\.agents/skills/" ];
 
   git-hooks.hooks = {
-    nixfmt.enable = true;
-    statix.enable = true;
-    deadnix.enable = true;
-    shellcheck.enable = true;
-    commitlint = {
+    commitlint = lib.mkIf cfg.commitlint.enable {
       enable = true;
       name = "commitlint";
       description = "Lint commit messages as Conventional Commits";
@@ -21,13 +25,13 @@
       stages = [ "commit-msg" ];
     };
 
-    typos.enable = true;
-    proselint = {
+    proselint = lib.mkIf cfg.proselint.enable {
       enable = true;
       files = "\\.(md|rst|txt)$";
       # git-hooks.nix still calls `proselint FILE`; 0.16 needs `check`.
       entry = "${pkgs.proselint}/bin/proselint check";
     };
+
     lychee =
       let
         # lychee does not retry reqwest connect failures ("Connection failed" on
@@ -50,26 +54,23 @@
           done
         '';
       in
-      {
-        # Off for now. Keep this retry wrapper and lychee.toml.
-        enable = false;
+      lib.mkIf cfg.lychee.enable {
+        # Off by default (linters.lychee.enable). Keep this retry wrapper and lychee.toml.
+        enable = true;
         files = "\\.(md|html)$";
         package = pkgs.lychee;
         entry = lib.getExe lycheeRetry;
       };
-    actionlint.enable = true;
-    yamlfmt = {
+
+    check-json = lib.mkIf cfg.check-json.enable {
       enable = true;
-      excludes = [ "^\\.pre-commit-config\\.yaml$" ];
-      settings = {
-        lint-only = false;
-        configPath = ".yamlfmt";
-      };
     };
-    check-json.enable = true;
-    check-toml.enable = true;
-    taplo.enable = true;
-    taplo-lint = {
+
+    check-toml = lib.mkIf cfg.check-toml.enable {
+      enable = true;
+    };
+
+    taplo-lint = lib.mkIf cfg."taplo-lint".enable {
       enable = true;
       name = "taplo-lint";
       description = "Lint TOML files with taplo";
@@ -77,15 +78,29 @@
       entry = "${pkgs.taplo}/bin/taplo lint";
       types = [ "toml" ];
     };
-    trim-trailing-whitespace.enable = true;
-    end-of-file-fixer.enable = true;
-    check-added-large-files.enable = true;
-    check-case-conflicts.enable = true;
-    check-merge-conflicts = {
+
+    trim-trailing-whitespace = lib.mkIf cfg.trim-trailing-whitespace.enable {
+      enable = true;
+    };
+
+    end-of-file-fixer = lib.mkIf cfg.end-of-file-fixer.enable {
+      enable = true;
+    };
+
+    check-added-large-files = lib.mkIf cfg.check-added-large-files.enable {
+      enable = true;
+    };
+
+    check-case-conflicts = lib.mkIf cfg.check-case-conflicts.enable {
+      enable = true;
+    };
+
+    check-merge-conflicts = lib.mkIf cfg.check-merge-conflicts.enable {
       enable = true;
       args = [ "--assume-in-merge" ];
     };
-    gitleaks = {
+
+    gitleaks = lib.mkIf cfg.gitleaks.enable {
       enable = true;
       name = "gitleaks";
       description = "Detect hardcoded secrets";

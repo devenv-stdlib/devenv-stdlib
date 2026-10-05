@@ -17,7 +17,8 @@ else
         kind = "project";
       };
       upgrade = "none";
-      project.git-hooks.hooks.gofmt.enable = true;
+      # Format via devenv treefmt (git-hooks.hooks.treefmt runs the suite).
+      project.treefmt.config.programs.gofmt.enable = true;
     };
   in
   if args.__stdlibMeta or false then tool.meta spec else tool.applyLocal args spec

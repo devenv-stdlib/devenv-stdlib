@@ -549,6 +549,7 @@ let
               presets = config.presets or { };
               tools = toolsCfg;
               gitHooks = (config.git-hooks or { }).hooks or { };
+              treefmtPrograms = ((config.treefmt or { }).config or { }).programs or { };
               matrix = config.stdlib.markers.ciMatrix or null;
               inherit unusedCategories;
             }

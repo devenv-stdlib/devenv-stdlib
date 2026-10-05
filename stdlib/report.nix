@@ -50,6 +50,14 @@ let
     in
     sort (lib.filter (name: (hooks'.${name} or { }).enable or false) (builtins.attrNames hooks'));
 
+  # treefmt-nix programs.<name>.enable → sorted enabled formatter/linter ids.
+  enabledTreefmtPrograms =
+    programs:
+    let
+      programs' = asAttrs programs;
+    in
+    sort (lib.filter (name: (programs'.${name} or { }).enable or false) (builtins.attrNames programs'));
+
   presetInventory =
     presets:
     let
@@ -140,6 +148,8 @@ let
       presets ? { },
       tools ? { },
       gitHooks ? { },
+      # treefmt.config.programs attrset (first-class linters via devenv treefmt).
+      treefmtPrograms ? { },
       matrix ? null,
       # Dotted category paths available but unused (stdlib.categoryWarnings).
       unusedCategories ? [ ],
@@ -149,6 +159,9 @@ let
       tools = toolInventory tools;
       gitHooks = {
         enabled = enabledHookNames gitHooks;
+      };
+      treefmt = {
+        enabled = enabledTreefmtPrograms treefmtPrograms;
       };
       matrix = if matrix == null then null else matrixInventory matrix;
       unusedCategories = sort unusedCategories;
@@ -202,6 +215,7 @@ let
       ++ formatSection "Inert presets (triggered, not applied)" (inv.presets.inert or [ ])
       ++ formatSection "Enabled tools" (inv.tools.enabled or [ ])
       ++ [ toolsNaviHint ]
+      ++ formatSection "Enabled linters (treefmt)" (inv.treefmt.enabled or [ ])
       ++ formatSection "Enabled git-hooks / pre-commit" (inv.gitHooks.enabled or [ ])
       ++ formatSection "Unused available categories" (inv.unusedCategories or [ ])
       ++ formatMatrix (inv.matrix or null)
@@ -238,6 +252,7 @@ in
     mkEvalWarning
     mkEnterShellSnippet
     enabledHookNames
+    enabledTreefmtPrograms
     matrixInventory
     flattenPresetLeaves
     flattenToolLeaves

@@ -1,34 +1,57 @@
-# Hooks and commits
+# Hooks, linters, and commits
 
-Always-on hooks: Nix format/lint (`nixfmt`, `statix`, `deadnix`), `shellcheck`, `typos`, `proselint`, `lychee`, `actionlint`, `yamlfmt`, `check-json`, `check-toml`, `taplo` / `taplo-lint`, `trim-trailing-whitespace`, `end-of-file-fixer`, `check-added-large-files`, `check-case-conflicts`, `check-merge-conflicts` (Copier/git conflict markers), `gitleaks`, and `commitlint` on `commit-msg`.
+Linting is first-class under `linters.*` (parallel to `languages.*`). Most formatters and file linters run through [devenv’s treefmt integration](https://devenv.sh/integrations/treefmt/) (`treefmt-nix`). Residual checks that are a poor fit for treefmt stay on [prek](https://prek.j178.dev/) / git-hooks.
 
-## Language hooks
+## Split: treefmt vs prek
 
-| `languages.*` | Hooks |
-| --- | --- |
-| `rust` | `rustfmt`, `clippy` |
-| `go` | `gofmt`, `golangci-lint` |
-| `python` | `ruff`, `ruff-format`, `check-python`, `python-debug-statements`, `sort-requirements-txt`, plus `pyright` or `ty` |
-| `javascript` or `typescript` | `prettier` (JS/TS files only) |
-| any of those | `debtmap` (reads generated `.debtmap.toml`) |
+| Backend | Always-on (defaults) | Role |
+| --- | --- | --- |
+| **treefmt** | `nixfmt`, `statix`, `deadnix`, `shellcheck`, `yamlfmt`, `typos`, `actionlint`, `taplo` | Format / lint files via one `treefmt` config and one git-hooks entry (`treefmt`) |
+| **prek** | `commitlint`, `gitleaks`, `proselint`, `check-json`, `check-toml`, `taplo-lint`, `trim-trailing-whitespace`, `end-of-file-fixer`, `check-added-large-files`, `check-case-conflicts`, `check-merge-conflicts` | Commit-msg, secrets, prose, JSON/TOML syntax, hygiene |
+| **prek (off)** | `lychee` | Link checker — keep `lychee.toml` / retry wrapper; set `linters.lychee.enable = true` to turn on |
+
+Toggle any of them with `linters.<name>.enable` in `devenv.local.nix` (or `devenv.nix`). Catalog and backends live in `stdlib/linters.nix`; wiring is `modules/linters` (treefmt) + `modules/hooks/common.nix` (prek residual).
+
+## Language formatters
+
+Language-gated formatters are still thin tool presets (`presets/<lang>/lint/…` → `tools/lang/…/linters/`). When applied they enable **treefmt programs** (not separate git-hooks entries):
+
+| `languages.*` | Treefmt programs | Still on prek |
+| --- | --- | --- |
+| `rust` | `rustfmt` | `clippy` |
+| `go` | `gofmt` | `golangci-lint` |
+| `python` | `ruff-check`, `ruff-format` | `check-python`, `python-debug-statements`, `sort-requirements-txt`, `pyright` / `ty` |
+| `javascript` or `typescript` | `prettier` (JS/TS globs only) | — |
+| any of those | — | `debtmap` (reads generated `.debtmap.toml`) |
 
 `devenv shell` writes `.debtmap.toml` (gitignored) from `languages.*` and `debtmap.*`. Override thresholds in `devenv.local.nix`; do not edit the generated file.
+
+## Local and CI commands
+
+```bash
+# Format / lint every treefmt-backed program
+treefmt
+
+# Check mode (CI-friendly; fail if files would change)
+treefmt --fail-on-change
+
+# Full hook set: treefmt + residual prek (commit-msg hooks need a commit)
+prek run --all-files
+```
+
+CI (`hooks.yml`) runs `prek run --all-files` after `devenv shell` materializes the generated hook config. That single prek run includes the `treefmt` hook plus residual checks. If prek fails, the job comments with the log (and uploads `prek.log`). A later green run removes that comment.
+
+Autofixes (including PRs from forks) are pushed by [pre-commit.ci lite](https://pre-commit.ci/lite.html), not by `GITHUB_TOKEN`. Install the [pre-commit-ci-lite](https://github.com/apps/pre-commit-ci-lite) GitHub App on the repository. The Action job only has `contents: read`; the App applies the diff from outside the runner, which is how [pre-commit.ci](https://pre-commit.ci/) can write a fork branch. A fork `pull_request` workflow cannot do that itself: GitHub issues a read-only token and withholds repository secrets.
 
 ## Conventional Commits
 
 Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `ci:`, `test:`, `chore:`). The `commitlint` hook rejects other subjects. On push to `master` or `main`, CI runs [semantic-release](https://semantic-release.gitbook.io/semantic-release/) to version, tag, and publish a GitHub Release. Those tags are what `copier copy` and `copier update` use by default.
 
-## CI
-
-`hooks.yml` runs `prek run --all-files` on every pull request (after `devenv shell` writes the generated hook config). If prek fails, the job comments with the log (and uploads `prek.log`). A later green run removes that comment.
-
-Autofixes (including PRs from forks) are pushed by [pre-commit.ci lite](https://pre-commit.ci/lite.html), not by `GITHUB_TOKEN`. Install the [pre-commit-ci-lite](https://github.com/apps/pre-commit-ci-lite) GitHub App on the repository. The Action job only has `contents: read`; the App applies the diff from outside the runner, which is how [pre-commit.ci](https://pre-commit.ci/) can write a fork branch. A fork `pull_request` workflow cannot do that itself: GitHub issues a read-only token and withholds repository secrets.
-
 ## Hook versions
 
-Hooks do not use `pre-commit` `rev:` pins. `.pre-commit-config.yaml` is generated and gitignored; tool versions come from `devenv.lock` (`nixpkgs` and `git-hooks`). `pre-commit autoupdate` / full pre-commit.ci weekly updates do not apply.
+Hooks do not use `pre-commit` `rev:` pins. `.pre-commit-config.yaml` is generated and gitignored; tool versions come from `devenv.lock` (`nixpkgs`, `git-hooks`, `treefmt-nix`). `pre-commit autoupdate` / full pre-commit.ci weekly updates do not apply.
 
-Refresh the hook framework locally with `devenv update git-hooks`. `update-lock.yml` runs that weekly (and on `workflow_dispatch`) and opens `chore: refresh the git-hooks lock`. It does **not** run a full `devenv update`, so the `nixpkgs` and `devenv` pins stay put.
+Refresh the hook framework locally with `devenv update git-hooks`. `update-lock.yml` runs that weekly (and on `workflow_dispatch`) and opens `chore: refresh the git-hooks lock`. It does **not** run a full `devenv update`, so the `nixpkgs` and `devenv` pins stay put. Bump formatters with `devenv update treefmt-nix` or an intentional `devenv update nixpkgs`.
 
 Hook binaries that come from this project's nixpkgs (`nixfmt`, `lychee`, `ruff`, …) move only when you intentionally `devenv update nixpkgs`. `debtmap` is a separate non-Nix catalog pin (mise or Nix promotion).
 

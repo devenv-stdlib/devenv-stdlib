@@ -13,6 +13,8 @@ in
 {
   imports = [
     ./packages
+    # First-class linters.* (treefmt + residual prek). Parallel to languages.*.
+    ./linters
     ./hooks/common.nix
     # Local mkTool leaves under tools/lang/... plus thin presets under
     # presets/<lang>/<category>/ (attrpaths like python.lint.ruff). Applied

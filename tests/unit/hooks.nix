@@ -145,8 +145,20 @@
   };
 
   testAlwaysOnHookCount = {
-    expr = lib.length project.alwaysOnHookNames;
-    expected = 17;
+    expr = {
+      logical = lib.length project.alwaysOnHookNames;
+      treefmt = lib.length project.alwaysOnTreefmtLinters;
+      prek = lib.length project.alwaysOnPrekHooks;
+      gitHooks = lib.length project.alwaysOnGitHookNames;
+    };
+    expected = {
+      # 8 treefmt + 11 residual prek (lychee stays catalogued but off by default).
+      logical = 19;
+      treefmt = 8;
+      prek = 11;
+      # git-hooks exposes one `treefmt` entry plus the 11 residual hooks.
+      gitHooks = 12;
+    };
   };
 
   testTypescriptBundlers = {
