@@ -476,4 +476,133 @@ in
       value = false;
     };
   };
+
+  # M3: arch-filtered profiles + fixture/process dimensions (opt-in).
+  testMatrixProfilesForArches = {
+    expr =
+      let
+        x86 = matrix.profilesForArches matrix.allRunnerProfiles [ "x86_64" ];
+        arm = matrix.profilesForArches matrix.allRunnerProfiles [ "aarch64" ];
+        both = matrix.profilesForArches matrix.allRunnerProfiles [
+          "x86_64"
+          "aarch64"
+        ];
+      in
+      {
+        x86Ids = matrix.runnerIds x86;
+        armIds = matrix.runnerIds arm;
+        bothCount = lib.length (lib.attrNames both);
+        armRunsOn = arm.ubuntu-lts-prev-aarch64.providers.github_actions.runs-on;
+      };
+    expected = {
+      x86Ids = [
+        "ubuntu-lts-prev"
+        "ubuntu-lts-curr"
+      ];
+      armIds = [
+        "ubuntu-lts-prev-aarch64"
+        "ubuntu-lts-curr-aarch64"
+      ];
+      bothCount = 4;
+      armRunsOn = [ "ubuntu-24.04-arm" ];
+    };
+  };
+
+  testMatrixFixtureProcessCartesian = {
+    expr = matrix.expand {
+      dimensions = {
+        runner = [ "ubuntu-lts-curr" ];
+        fixture = [
+          "none"
+          "postgres"
+        ];
+        process = [ "default" ];
+      };
+      seeds = [ { version = "3.12"; } ];
+    };
+    expected = [
+      {
+        version = "3.12";
+        fixture = "none";
+        process = "default";
+        runner = "ubuntu-lts-curr";
+        optional = false;
+      }
+      {
+        version = "3.12";
+        fixture = "postgres";
+        process = "default";
+        runner = "ubuntu-lts-curr";
+        optional = false;
+      }
+    ];
+  };
+
+  testLanguagePlanFixtureArchOptIn = {
+    expr =
+      let
+        baseArgs = {
+          pythonOn = true;
+          python = versions.emptyPython // {
+            min = "3.12";
+          };
+        };
+        defaultPlan = versions.languageMatrixPlan baseArgs;
+        richPlan = versions.languageMatrixPlan (
+          baseArgs
+          // {
+            fixtures = [
+              "none"
+              "postgres"
+            ];
+            processes = [ "default" ];
+            arches = [
+              "x86_64"
+              "aarch64"
+            ];
+          }
+        );
+        yaml = gha.render richPlan;
+        rep = matrix.report richPlan;
+      in
+      {
+        defaultCells = lib.length defaultPlan.jobs.python.cells;
+        # 1 python × 4 runners × 2 fixtures × 1 process
+        richCells = lib.length richPlan.jobs.python.cells;
+        hasFixture = contains "fixture: \"postgres\"" yaml;
+        hasArmOs = contains "ubuntu-24.04-arm" yaml;
+        reportArches = rep.arches;
+        reportFixtures = rep.fixtures;
+      };
+    expected = {
+      defaultCells = 2;
+      richCells = 8;
+      hasFixture = true;
+      hasArmOs = true;
+      reportArches = [
+        "aarch64"
+        "x86_64"
+      ];
+      reportFixtures = [
+        "none"
+        "postgres"
+      ];
+    };
+  };
+
+  testDefaultFixtureProcessCatalogs = {
+    expr = {
+      fixtures = lib.attrNames matrix.defaultFixtureProfiles;
+      processes = lib.attrNames matrix.defaultProcessProfiles;
+      postgresSvc = matrix.defaultFixtureProfiles.postgres.services.postgres.enable;
+    };
+    expected = {
+      fixtures = [
+        "none"
+        "postgres"
+      ];
+      processes = [ "default" ];
+      postgresSvc = true;
+    };
+  };
 }

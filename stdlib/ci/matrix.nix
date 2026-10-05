@@ -1,5 +1,6 @@
 # Provider-agnostic CI matrix IR (MatrixPlan).
 # Dimensions → cartesian / explicit allow → exclude → include → cells.
+# M3 adds arch-filtered runner catalogs plus fixture/process dimension metadata.
 { lib }:
 let
   ubuntuProfile = release: {
@@ -15,9 +16,66 @@ let
   };
 
   # Default host profiles: current Ubuntu LTS + previous. versions-lib.ubuntuLts reads these releases.
+  # x86_64-only so empty / default language matrices stay byte-stable.
   defaultRunnerProfiles = {
     ubuntu-lts-prev = ubuntuProfile "24.04";
     ubuntu-lts-curr = ubuntuProfile "26.04";
+  };
+
+  # Opt-in aarch64 LTS pair (GitHub-hosted ARM labels). Merge when arches includes aarch64.
+  aarch64RunnerProfiles = {
+    ubuntu-lts-prev-aarch64 = {
+      os = "linux";
+      distro = "ubuntu";
+      release = "24.04";
+      arch = "aarch64";
+      providers = {
+        github_actions = {
+          runs-on = [ "ubuntu-24.04-arm" ];
+        };
+      };
+    };
+    ubuntu-lts-curr-aarch64 = {
+      os = "linux";
+      distro = "ubuntu";
+      release = "26.04";
+      arch = "aarch64";
+      providers = {
+        github_actions = {
+          runs-on = [ "ubuntu-26.04-arm" ];
+        };
+      };
+    };
+  };
+
+  allRunnerProfiles = defaultRunnerProfiles // aarch64RunnerProfiles;
+
+  # Preferred runner id order for stable matrix.include / empty-workflow output.
+  preferredRunnerOrder = [
+    "ubuntu-lts-prev"
+    "ubuntu-lts-curr"
+    "ubuntu-lts-prev-aarch64"
+    "ubuntu-lts-curr-aarch64"
+  ];
+
+  # Named fixture catalogs (metadata). Dimension values are the attr names.
+  defaultFixtureProfiles = {
+    none = {
+      description = "No CI fixture services";
+      services = { };
+    };
+    postgres = {
+      description = "Enable services.postgres (see presets.fixtures.postgres)";
+      services.postgres.enable = true;
+    };
+  };
+
+  # Named process/service-set catalogs (metadata). Dimension values are the attr names.
+  defaultProcessProfiles = {
+    default = {
+      description = "No extra devenv processes";
+      processes = { };
+    };
   };
 
   defaultStrategy = {
@@ -25,6 +83,20 @@ let
     maxParallel = null;
     maxCells = null;
   };
+
+  # Keep profiles whose arch is in arches (missing arch treated as x86_64).
+  profilesForArches =
+    profiles: arches: lib.filterAttrs (_: p: lib.elem (p.arch or "x86_64") arches) profiles;
+
+  # Stable runner id list for the given profile set.
+  runnerIds =
+    profiles:
+    let
+      ids = lib.attrNames profiles;
+      preferred = lib.filter (id: lib.elem id ids) preferredRunnerOrder;
+      rest = lib.filter (id: !(lib.elem id preferredRunnerOrder)) ids;
+    in
+    preferred ++ lib.sort (a: b: a < b) rest;
 
   # Partial match: every key in pattern equals the same key on cell.
   matchesPartial =
@@ -94,6 +166,8 @@ let
       jobs ? { },
       strategy ? { },
       strict ? true,
+      fixtureProfiles ? defaultFixtureProfiles,
+      processProfiles ? defaultProcessProfiles,
     }:
     let
       globalStrategy = defaultStrategy // strategy;
@@ -112,7 +186,12 @@ let
       ) jobs;
     in
     {
-      inherit runnerProfiles strict;
+      inherit
+        runnerProfiles
+        strict
+        fixtureProfiles
+        processProfiles
+        ;
       strategy = globalStrategy;
       jobs = expandedJobs;
     };
@@ -161,10 +240,24 @@ let
           if builtins.isList runs then runs else [ runs ]
         ) (lib.attrNames matrixPlan.runnerProfiles)
       );
+      arches = lib.sort (a: b: a < b) (
+        lib.unique (
+          map (id: (matrixPlan.runnerProfiles.${id} or { }).arch or "x86_64") (
+            lib.attrNames matrixPlan.runnerProfiles
+          )
+        )
+      );
+      dimValues =
+        name:
+        lib.sort (a: b: a < b) (
+          lib.unique (lib.filter (v: v != null) (map (cell: cell.${name} or null) allCells))
+        );
     in
     {
       empty = allCells == [ ];
-      inherit runners;
+      inherit runners arches;
+      fixtures = dimValues "fixture";
+      processes = dimValues "process";
       jobs = lib.mapAttrs (_: j: {
         cells = j.cells or [ ];
         optional = j.optional or false;
@@ -176,7 +269,14 @@ in
 {
   inherit
     defaultRunnerProfiles
+    aarch64RunnerProfiles
+    allRunnerProfiles
+    preferredRunnerOrder
+    defaultFixtureProfiles
+    defaultProcessProfiles
     defaultStrategy
+    profilesForArches
+    runnerIds
     matchesPartial
     cartesian
     expand
