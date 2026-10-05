@@ -18,6 +18,15 @@ else
       };
       upgrade = "flake";
       defaultEnable = false;
+      # Global tool: tasks are available for preset export/compose (not applyLocal).
+      tasks = {
+        sample = {
+          exec = "echo mock-cpu-sample";
+        };
+        report = {
+          exec = "echo mock-cpu-report";
+        };
+      };
     };
   in
   if args.__stdlibMeta or false then

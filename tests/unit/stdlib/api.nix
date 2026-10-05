@@ -32,6 +32,7 @@ let
     ++ names "log" stdlib.log
     ++ names "report" stdlib.report
     ++ names "generate" stdlib.generate
+    ++ names "tasks" stdlib.tasks
     ++ names "den" stdlib.den
     ++ names "devenv" stdlib.devenv
     ++ names "ci" stdlib.ci
@@ -383,6 +384,21 @@ in
       "shell.shouldInstallBlesh"
       "shell.soleEnabled"
       "shell.toolPath"
+      "tasks"
+      "tasks.compose"
+      "tasks.export"
+      "tasks.hostHasTasks"
+      "tasks.lower"
+      "tasks.mkTaskRef"
+      "tasks.normalizeExport"
+      "tasks.normalizeTaskId"
+      "tasks.qualify"
+      "tasks.refsFromSpecs"
+      "tasks.resolve"
+      "tasks.select"
+      "tasks.specByName"
+      "tasks.taskId"
+      "tasks.workflows"
       "terminal"
       "terminal.desktopIds"
       "terminal.mkDesktopEntry"

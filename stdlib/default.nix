@@ -52,6 +52,8 @@ in
   mkTool = import ./tool.nix { inherit lib; };
   # Non-nixpkgs release fetch helpers for install.kind = binary.
   binary = import ./binary.nix { inherit lib; };
+  # Tool-declared devenv tasks + preset export/compose helpers.
+  tasks = import ./tasks.nix { inherit lib; };
 
   inherit (load) discover;
   den.load = load.den;
