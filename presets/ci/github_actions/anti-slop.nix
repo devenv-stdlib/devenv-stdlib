@@ -13,7 +13,8 @@
 # when disabling.
 #
 # Parallel sibling of Lint (prek): own workflow (no needs: lint). Failures fail
-# the `anti-slop` check; require that context on the branch ruleset to stop merge.
+# the `PR quality (anti-slop)` check; require that context on the branch ruleset
+# to stop merge (not the bare job id).
 { lib, ... }:
 let
   # Underscore prefix so devenv.load does not treat this as a preset leaf.
@@ -28,8 +29,8 @@ in
   description = ''
     Opt-in: write .github/workflows/pr-quality.yml for peakoss/anti-slop
     (GHA-only PR quality / AI-slop checks). Runs in parallel with Lint (prek);
-    check context `anti-slop` fails the job on gate failure — add it to the
-    branch ruleset after merge to block merge. Enable with
+    check context `PR quality (anti-slop)` fails the job on gate failure — add
+    it to the branch ruleset after merge to block merge. Enable with
     presets.ci.github_actions.anti-slop.enable = true. Complements prek; not a
     local hook.
   '';

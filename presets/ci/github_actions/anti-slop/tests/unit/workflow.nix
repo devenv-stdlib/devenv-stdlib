@@ -166,6 +166,7 @@ in
       in
       {
         hasName = contains "name: PR Quality" yaml;
+        hasJobName = contains "name: PR quality (anti-slop)" yaml;
         # pull_request (not _target): workflow on the PR head can run / dogfood.
         hasPullRequest = contains "pull_request:" yaml;
         lacksTarget = !(contains "pull_request_target" yaml);
@@ -190,6 +191,7 @@ in
       };
     expected = {
       hasName = true;
+      hasJobName = true;
       hasPullRequest = true;
       lacksTarget = true;
       hasReadyForReview = true;
