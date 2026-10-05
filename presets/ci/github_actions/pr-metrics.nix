@@ -23,6 +23,9 @@
 # the Action docs do not define draft behavior; WIP/agent drafts should not
 # fail the size gate while iterating. ready_for_review re-runs the check.
 #
+# Parallel sibling of Lint (prek): own workflow (no needs: lint). Failures fail
+# the `pr-metrics` check; require that context on the branch ruleset to stop merge.
+#
 # Marketplace: https://github.com/marketplace/actions/pr-metrics
 # Upstream: https://github.com/microsoft/PR-Metrics
 { lib, ... }:
@@ -38,7 +41,9 @@ in
   ];
   description = ''
     Opt-in: write .github/workflows/pr-metrics.yml for microsoft/PR-Metrics
-    (GHA-only PR size / test-coverage indicators). Rejects PRs larger than
+    (GHA-only PR size / test-coverage indicators). Runs in parallel with Lint
+    (prek); check context `pr-metrics` fails on reject-above-medium — add it to
+    the branch ruleset after merge to block merge. Rejects PRs larger than
     medium by default. Enable with
     presets.ci.github_actions.pr-metrics.enable = true. Complements anti-slop /
     Aletheore; not a local hook.
