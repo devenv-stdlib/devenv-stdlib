@@ -5,7 +5,7 @@
 # It is GHA-only — not treefmt, not prek, and not a local hook.
 # Uses pull_request (not pull_request_target) so the workflow file on the PR
 # head is eligible to run — required for dogfood on the introducing PR and
-# for any branch tip that has not yet landed on the base.
+# for any tip that has not yet landed on the repository default branch.
 #
 # Opt-in (dogfood parity): enable defaults to false. Projects that want the
 # check set presets.ci.github_actions.anti-slop.enable = true; this template
