@@ -339,6 +339,9 @@ jobs:
         run: devenv tasks run --show-output nix-unit:test
 
       - name: BATS suite
+        # Still run after nix-unit:test failure (same as former combined
+        # test-devenv-unit script). Job stays failed if either suite failed.
+        if: ${{ success() || failure() }}
         # --show-output: devenv tasks hide captured stdout unless showOutput / this flag
         run: devenv tasks run --show-output devenv:test-devenv-bats
 
