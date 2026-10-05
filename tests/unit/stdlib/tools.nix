@@ -357,4 +357,39 @@ in
       ];
     };
   };
+
+  testStdlibBinaryApiExposesReleaseBuilders = {
+    expr = {
+      fromGithub = builtins.isFunction stdlib.binary.fromGithubRelease;
+      fromZip = builtins.isFunction stdlib.binary.fromZipRelease;
+      platform = builtins.isFunction stdlib.binary.githubStylePlatform;
+      leaf = builtins.isFunction stdlib.mkTool.binaryLeaf;
+    };
+    expected = {
+      fromGithub = true;
+      fromZip = true;
+      platform = true;
+      leaf = true;
+    };
+  };
+
+  testStdlibBinaryKindRequiresPackage = {
+    expr =
+      let
+        # Missing install.package must throw at meta time.
+        result = builtins.tryEval (
+          stdlib.mkTool.meta {
+            name = "example-bin";
+            category = "ide";
+            install = {
+              kind = "binary";
+            };
+            upgrade = "self";
+            homeManager = _: { };
+          }
+        );
+      in
+      result.success;
+    expected = false;
+  };
 }
