@@ -162,9 +162,9 @@ in
         lacksTarget = !(contains "pull_request_target" yaml);
         hasAction = contains "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2" yaml;
         hasActionComment = contains "# v0.3.0" yaml;
-        hasMax = contains "max-failures: 4" yaml;
-        hasClose = contains "close-pr: true" yaml;
-        hasExemptDraft = contains "exempt-draft-prs: true" yaml;
+        hasMax = contains ''max-failures: "4"'' yaml;
+        hasClose = contains ''close-pr: "true"'' yaml;
+        hasExemptDraft = contains ''exempt-draft-prs: "true"'' yaml;
         hasRunner = contains "runs-on: ubuntu-24.04" yaml;
         # No checkout — action uses the GitHub API only (no untrusted PR tree).
         hasCheckout = contains "actions/checkout" yaml;
@@ -194,6 +194,7 @@ in
             extraWith = {
               "min-account-age" = "0";
               max-failures = "9";
+              "blocked-paths" = "README.md\nSECURITY.md";
             };
           }
         );
@@ -205,6 +206,7 @@ in
             extraWith = {
               "min-account-age" = "0";
               max-failures = "9";
+              "blocked-paths" = "README.md\nSECURITY.md";
             };
           };
         };
@@ -212,10 +214,16 @@ in
       in
       {
         inherit (marker) maxFailures closePr;
-        yamlHasAge = contains "min-account-age: 0" yaml;
+        yamlHasAge = contains ''min-account-age: "0"'' yaml;
         # extraWith overrides the named max-failures scalar in YAML.
-        yamlHasMax9 = contains "max-failures: 9" yaml;
-        yamlLacksMax2 = contains "max-failures: 2" yaml;
+        yamlHasMax9 = contains ''max-failures: "9"'' yaml;
+        yamlLacksMax2 = contains ''max-failures: "2"'' yaml;
+        # Newline-separated inputs stay one YAML scalar (JSON-quoted).
+        yamlHasBlocked = contains ''blocked-paths: "README.md\nSECURITY.md"'' yaml;
+        yamlLacksBareBlockedLine =
+          !(contains "\nSECURITY.md" (
+            builtins.replaceStrings [ ''blocked-paths: "README.md\nSECURITY.md"'' ] [ "" ] yaml
+          ));
         hasSync = cfg.scripts ? sync-anti-slop-workflow;
       };
     expected = {
@@ -224,6 +232,8 @@ in
       yamlHasAge = true;
       yamlHasMax9 = true;
       yamlLacksMax2 = false;
+      yamlHasBlocked = true;
+      yamlLacksBareBlockedLine = true;
       hasSync = true;
     };
   };

@@ -73,13 +73,15 @@ in
           type = lib.types.attrsOf lib.types.str;
           default = { };
           description = ''
-            Extra `with:` inputs passed through to peakoss/anti-slop as raw YAML
-            scalars (e.g. `{ "min-account-age" = "0"; }`). Same keys override
-            the named options above.
+            Extra `with:` inputs for peakoss/anti-slop. Values are emitted as
+            YAML double-quoted scalars via `builtins.toJSON` so newline-separated
+            inputs (e.g. `blocked-paths`) stay one line. Same keys override the
+            named options above.
           '';
           example = {
             require-description = "true";
             "min-account-age" = "0";
+            "blocked-paths" = "README.md\nSECURITY.md";
           };
         };
       };

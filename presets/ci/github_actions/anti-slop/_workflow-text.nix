@@ -4,12 +4,14 @@
 let
   boolYaml = b: if b then "true" else "false";
 
+  # Quote every with: value (JSON string → YAML double-quoted) so embedded
+  # newlines (e.g. blocked-paths) stay a single scalar, not broken YAML lines.
   withLines =
     attrs:
     let
       names = lib.sort (a: b: a < b) (builtins.attrNames attrs);
     in
-    map (name: "          ${name}: ${attrs.${name}}") names;
+    map (name: "          ${name}: ${builtins.toJSON attrs.${name}}") names;
 in
 {
   # cfg: { action, actionComment?, maxFailures, closePr, exemptDraftPrs, extraWith }
