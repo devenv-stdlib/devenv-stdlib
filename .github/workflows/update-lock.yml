@@ -11,7 +11,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  devenv-update:
+  refresh-git-hooks-lock:
+    name: Refresh git-hooks lock
     if: ${{ !github.event.repository.fork }}
     runs-on: ubuntu-24.04
     env:

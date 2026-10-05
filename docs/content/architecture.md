@@ -50,6 +50,6 @@ Language packs are the exception: they are **not** user-global. Language tool pr
 
 ## Release loop
 
-Conventional Commits (`commitlint`) on every commit. Pull requests run `hooks.yml` (`prek run --all-files`, which includes the `treefmt` hook; [pre-commit.ci lite](https://pre-commit.ci/lite.html) pushes autofixes, including forks). Push to `master` or `main` runs `ci.yml`: `test-devenv`, then the generated `test.yml` matrix, then [semantic-release](https://semantic-release.gitbook.io/semantic-release/) which versions and tags. Those tags are what `copier copy` and `copier update` use by default.
+Conventional Commits (`commitlint`) on every commit. `ci.yml` on pull requests and on push to `master`/`main` runs **Lint (prek)** first (`prek run --all-files`, including the `treefmt` hook; [pre-commit.ci lite](https://pre-commit.ci/lite.html) pushes autofixes on PRs, including forks), then unit and integration suites, then the generated `test.yml` matrix; push to `master`/`main` also runs [semantic-release](https://semantic-release.gitbook.io/semantic-release/) which versions and tags. Those tags are what `copier copy` and `copier update` use by default.
 
 The tag guard blocks a local `git tag` if tests fail. Semantic-release in GitHub Actions sets `CI` / `GITHUB_ACTIONS`, so the hook is a no-op there.
