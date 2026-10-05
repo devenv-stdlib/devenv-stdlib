@@ -51,6 +51,13 @@ let
               type = lib.types.attrsOf lib.types.anything;
               default = { };
             };
+            # Real language formatters (rustfmt/gofmt/prettier/ruff) set
+            # treefmt.config; stub the option so owner-suite evals that load
+            # tools/ without devenv's treefmt module still type-check.
+            treefmt = lib.mkOption {
+              type = freeform;
+              default = { };
+            };
             files = lib.mkOption {
               type = lib.types.attrsOf freeform;
               default = { };
@@ -91,7 +98,10 @@ in
         reportWarning = lib.any (w: lib.hasInfix "stdlib status:" w) cfg.warnings;
         enterHasReport = contains "stdlib status:" cfg.enterShell;
         reportListsHooks = lib.any (w: lib.hasInfix "ruff" w) cfg.warnings;
-        hooksIncludeRuff = (cfg.git-hooks.hooks.ruff or { }).enable or false;
+        # Ruff lives on treefmt (ruff-check / ruff-format), not git-hooks.ruff.
+        treefmtIncludesRuff =
+          ((cfg.treefmt.config.programs.ruff-check or { }).enable or false)
+          && ((cfg.treefmt.config.programs.ruff-format or { }).enable or false);
       };
     expected = {
       applied = true;
@@ -102,7 +112,7 @@ in
       reportWarning = true;
       enterHasReport = true;
       reportListsHooks = true;
-      hooksIncludeRuff = true;
+      treefmtIncludesRuff = true;
     };
   };
 
