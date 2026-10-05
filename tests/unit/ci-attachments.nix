@@ -210,7 +210,7 @@ in
         secretBinding = contains "CODECOV_TOKEN: \${{ secrets.CODECOV_TOKEN }}" yaml;
         # No raw secret values — only the secrets.* expression.
         noRawToken = !(contains "CODECOV_TOKEN: tok_" yaml);
-        alwaysIf = contains "name: \"fake-report\"\n        if: \${{ always() }}" yaml;
+        alwaysIf = contains "name: \"fake-report\"\n        if: \"\${{ always() }}\"" yaml;
         orderOk = cacheAt < testAt && testAt < covAt && covAt < saveAt && saveAt < reportAt;
       };
     expected = {
@@ -221,6 +221,60 @@ in
       noRawToken = true;
       alwaysIf = true;
       orderOk = true;
+    };
+  };
+
+  # CodeRabbit: custom always-slot if must keep always(); !… if must be YAML-quoted.
+  testGhaAttachmentIfClauseAlwaysAndYamlSafe = {
+    expr =
+      let
+        plan =
+          matrix.plan {
+            runnerProfiles = matrix.defaultRunnerProfiles;
+            jobs.rust = {
+              command = "true";
+              dimensions.runner = [ "ubuntu-lts-prev" ];
+              seeds = [ { version = "stable"; } ];
+            };
+          }
+          // {
+            attachments = attachments.plan {
+              reporting = [
+                {
+                  id = "report-pr";
+                  providers.github_actions = {
+                    uses = "example/junit@v1";
+                    slot = "always";
+                    "if" = "github.event_name == 'pull_request'";
+                  };
+                }
+              ];
+              coverage = [
+                {
+                  id = "cov-uncancelled";
+                  providers.github_actions = {
+                    uses = "example/codecov@v1";
+                    slot = "post-command";
+                    "if" = "!cancelled()";
+                  };
+                }
+              ];
+            };
+          };
+        yaml = gha.render plan;
+      in
+      {
+        alwaysCombined = contains ''if: "always() && (github.event_name == 'pull_request')"'' yaml;
+        # Bare custom if must not drop always() (implicit success() would skip on failure).
+        alwaysDropped = contains ''if: "github.event_name == 'pull_request'"'' yaml;
+        bangQuoted = contains ''if: "!cancelled()"'' yaml;
+        bangBare = contains "if: !cancelled()" yaml;
+      };
+    expected = {
+      alwaysCombined = true;
+      alwaysDropped = false;
+      bangQuoted = true;
+      bangBare = false;
     };
   };
 

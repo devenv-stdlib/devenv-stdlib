@@ -144,12 +144,23 @@ let
             value = "secret:${s}";
           }) secrets
         );
-      ifClause = bag."if" or (if slot == "always" then "\${{ always() }}" else null);
+      # bag."if" is a bare GHA expression (no ${{ }}). Custom always-slot
+      # conditions must keep always() — bare if gets an implicit success().
+      ifClause =
+        let
+          custom = bag."if" or null;
+        in
+        if custom != null then
+          if slot == "always" then "always() && (${custom})" else custom
+        else if slot == "always" then
+          "\${{ always() }}"
+        else
+          null;
       uses = bag.uses or null;
       run = bag.run or null;
       header =
         "    - name: ${yamlScalar stepName}"
-        + (if ifClause == null then "" else "\n      if: ${ifClause}")
+        + (if ifClause == null then "" else "\n      if: ${yamlScalar ifClause}")
         + (
           if uses != null then
             "\n      uses: ${yamlScalar uses}"
