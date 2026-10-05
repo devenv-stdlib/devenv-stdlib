@@ -42,6 +42,9 @@ let
       junit_dir="${junitDir}"
       report="${privateReporter}"
       mkdir -p "$junit_dir"
+      # Drop only this task's prior XML so removed suites cannot leave stale
+      # reports for publish-unit-test-result (leave bats.xml / other junit/*).
+      rm -f "$junit_dir"/nix-unit.xml "$junit_dir"/nix-unit-*.xml
       status=0
       root_name="${nixPathRootName}"
 
@@ -62,11 +65,13 @@ let
         )
       }
 
+      # Encode path separators as `--` so tools/a-b and tools/a/b cannot
+      # collapse to the same report basename (plain `-` for `/` would collide).
       suite_slug() {
         local rel="$1"
         rel="''${rel#/}"
         rel="''${rel%/tests/unit/default.nix}"
-        printf '%s' "$rel" | tr '/' '-'
+        printf '%s' "$rel" | sed 's|/|--|g'
       }
 
       run_suite() {
