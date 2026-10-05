@@ -8,10 +8,15 @@
 }:
 {
   den.aspects.home-cli = {
-    # Cache tools are opt-in (tools.*.enable / presets.cache.*).
+    # Cache tools are opt-in. Include both:
+    #   - tool-leaf aspects → direct `tools.*.enable`
+    #   - preset aspects (`cache.*`) → `presets.cache.*.scope = "global"` configure
+    # Preset IDs are dotted path strings from mkPreset (not nested attrpaths).
     includes = [
       den.aspects.mr-boxington
       den.aspects.build-cleaner
+      den.aspects."cache.mr-boxington"
+      den.aspects."cache.build-cleaner"
     ];
 
     homeManager = {
