@@ -467,7 +467,7 @@ in
 
   testStdlibHarnessFoundations = {
     expr = {
-      cardinality = stdlib.harness.cardinality;
+      inherit (stdlib.harness) cardinality;
       multi = stdlib.harness.multiCardinality;
       tools = stdlib.harness.knownTools;
       install = stdlib.harness.installKinds;
@@ -482,11 +482,14 @@ in
         })
         project
         ;
-      secretEnv =
-        (stdlib.harness.payloads {
+      inherit
+        ((stdlib.harness.payloads {
           name = "demo";
           secretEnv = [ "OPENAI_API_KEY" ];
-        }).homeManager.secretEnv;
+        }).homeManager
+        )
+        secretEnv
+        ;
     };
     expected = {
       cardinality = "exactly-one";

@@ -1,1 +1,6 @@
-{ testFixtureToolUnit = { expr = true; expected = true; }; }
+{
+  testFixtureToolUnit = {
+    expr = true;
+    expected = true;
+  };
+}

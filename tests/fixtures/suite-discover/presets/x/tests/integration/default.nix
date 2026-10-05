@@ -1,1 +1,6 @@
-{ testFixturePresetIntegration = { expr = true; expected = true; }; }
+{
+  testFixturePresetIntegration = {
+    expr = true;
+    expected = true;
+  };
+}
