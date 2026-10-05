@@ -226,6 +226,7 @@ in
       in
       {
         hasName = contains "name: Aletheore" yaml;
+        hasJobName = contains "name: Security review (Aletheore)" yaml;
         hasPullRequest = contains "pull_request:" yaml;
         lacksTarget = contains "pull_request_target" yaml;
         hasAction = contains "Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30" yaml;
@@ -242,6 +243,7 @@ in
       };
     expected = {
       hasName = true;
+      hasJobName = true;
       hasPullRequest = true;
       lacksTarget = false;
       hasAction = true;
