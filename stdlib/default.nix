@@ -54,6 +54,9 @@ in
   binary = import ./binary.nix { inherit lib; };
   # Tool-declared devenv tasks + preset export/compose helpers.
   tasks = import ./tasks.nix { inherit lib; };
+  # Public nix-unit:test task id + module. JUnit reporter is private
+  # (stdlib/private/nix-unit-junit.py) — run the task, not the script.
+  nixUnit = import ./nix-unit.nix { inherit lib; };
 
   inherit (load) discover;
   den.load = load.den;

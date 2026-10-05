@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Write JUnit XML for nix-unit, nixosTest, and BATS so CI can annotate PRs."""
+"""Repo harness JUnit helpers for nixosTest and BATS.
+
+nix-unit reporting lives in stdlib/private/nix-unit-junit.py (private). The
+`nix-unit` subcommand here is a thin shim for existing bats tests — prefer
+`devenv tasks run nix-unit:test` in real workflows.
+"""
 
 from __future__ import annotations
 
@@ -12,10 +17,10 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*[mK]")
-# nix-unit prints ✅ / ❌ / ☢️ (the last is U+2622 plus an optional VS16).
-STATUS_RE = re.compile(r"^([✅❌☢]\ufe0f?)\s+(.+)$")
-SUMMARY_RE = re.compile(r"^[🎉😢]")
-SKIP_UNIT = {"default.nix", "harness.nix"}
+
+PRIVATE_NIX_UNIT = (
+    Path(__file__).resolve().parent.parent / "stdlib" / "private" / "nix-unit-junit.py"
+)
 
 
 def strip_ansi(text: str) -> str:
@@ -28,29 +33,6 @@ def repo_relative(path: Path, root: Path) -> str:
         return str(resolved.resolve().relative_to(root.resolve())).replace("\\", "/")
     except ValueError:
         return str(path).replace("\\", "/")
-
-
-def classname_for(file_path: str | None, fallback: str) -> str:
-    if not file_path:
-        return fallback
-    return file_path.replace("/", ".").removesuffix(".nix").removesuffix(".bats")
-
-
-def locate_nix_unit(
-    name: str, unit_dir: Path, root: Path
-) -> tuple[str | None, int | None]:
-    # Main suite nests topics under stdlib/ and aspects/; owner suites are flat.
-    paths = sorted(
-        path
-        for path in unit_dir.rglob("*.nix")
-        if path.is_file() and path.name not in SKIP_UNIT
-    )
-    for path in paths:
-        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            stripped = line.lstrip()
-            if stripped.startswith((f"{name} =", f"{name}=")):
-                return repo_relative(path, root), lineno
-    return None, None
 
 
 def locate_run_nixos_test(root: Path, rel: str) -> int | None:
@@ -87,48 +69,6 @@ def locate_bats_test(path: Path, name: str) -> int | None:
         if f'"{name}"' in line or f"'{name}'" in line:
             return lineno
     return None
-
-
-def parse_nix_unit(text: str, unit_dir: Path, root: Path) -> list[dict]:
-    cases: list[dict] = []
-    current: dict | None = None
-    details: list[str] = []
-
-    def flush() -> None:
-        nonlocal current, details
-        if current is None:
-            return
-        current["details"] = "\n".join(details).strip()
-        if current["status"] != "passed" and not current.get("message"):
-            current["message"] = details[0] if details else f"{current['name']} failed"
-        cases.append(current)
-        current = None
-        details = []
-
-    for raw in strip_ansi(text).splitlines():
-        line = raw.rstrip()
-        if SUMMARY_RE.match(line) or line.startswith("error: Tests failed"):
-            flush()
-            continue
-        match = STATUS_RE.match(line)
-        if match:
-            flush()
-            mark, name = match.group(1), match.group(2).strip()
-            file_path, lineno = locate_nix_unit(name, unit_dir, root)
-            status = {"✅": "passed", "❌": "failed", "☢": "error"}[mark]
-            current = {
-                "name": name,
-                "file": file_path,
-                "line": lineno,
-                "classname": classname_for(file_path, "tests.unit"),
-                "status": status,
-                "message": "" if status == "passed" else f"{name} failed",
-            }
-            continue
-        if current is not None:
-            details.append(line)
-    flush()
-    return cases
 
 
 def write_junit(
@@ -204,82 +144,6 @@ def failed(cases: list[dict]) -> bool:
     return any(case["status"] in {"failed", "error"} for case in cases)
 
 
-def run_nix_unit(cmd: list[str], *, quiet: bool = False) -> tuple[int, str]:
-    """Run nix-unit, keep a transcript for JUnit, and mirror lines to STDOUT.
-
-    CI (and devenv tasks) often pipe our stdout, so Python would block-buffer
-    without an explicit flush — looking like a hung job with no log output.
-    With quiet=True, skip ✅ pass lines; still mirror failures, errors, and
-    summary lines.
-    """
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        bufsize=1,
-    )
-    assert proc.stdout is not None
-    chunks: list[str] = []
-    for line in proc.stdout:
-        chunks.append(line)
-        if quiet:
-            match = STATUS_RE.match(strip_ansi(line).rstrip())
-            if match and match.group(1).startswith("✅"):
-                continue
-        sys.stdout.write(line)
-        sys.stdout.flush()
-    return proc.wait(), "".join(chunks)
-
-
-def cmd_nix_unit(args: argparse.Namespace) -> int:
-    root = Path(args.root).resolve()
-    unit_dir = Path(args.unit_dir)
-    if not unit_dir.is_absolute():
-        unit_dir = root / unit_dir
-    if args.from_text:
-        text = Path(args.from_text).read_text(encoding="utf-8", errors="replace")
-        rc = 0
-    else:
-        suite = args.suite if Path(args.suite).is_absolute() else str(root / args.suite)
-        # devenv4monorepo/ on NIX_PATH lets owner suites import shared test libs.
-        rc, text = run_nix_unit(
-            [
-                args.nix_unit,
-                "-I",
-                "nixpkgs=flake:nixpkgs",
-                "-I",
-                f"devenv4monorepo={root}",
-                suite,
-            ],
-            quiet=args.quiet,
-        )
-    cases = parse_nix_unit(text, unit_dir, root)
-    if not cases:
-        cases = [
-            {
-                "name": "nix-unit",
-                "classname": "tests.unit",
-                "file": repo_relative(Path(args.suite), root)
-                if not args.from_text
-                else "tests/unit/default.nix",
-                "line": 1,
-                "status": "error" if rc else "passed",
-                "message": "nix-unit produced no test results",
-                "details": strip_ansi(text)[-4000:],
-            }
-        ]
-    write_junit(Path(args.output), "nix-unit", cases)
-    emit_github_annotations(cases)
-    if args.quiet and cases:
-        passed = sum(1 for case in cases if case["status"] == "passed")
-        bad = sum(1 for case in cases if case["status"] in {"failed", "error"})
-        print(f"==> nix-unit: {passed} passed, {bad} failed/error", flush=True)
-    if args.from_text:
-        return 1 if failed(cases) else 0
-    return rc if rc != 0 else (1 if failed(cases) else 0)
-
-
 def tail_text(path: Path | None, lines: int = 200) -> str:
     if path is None or not path.is_file():
         return ""
@@ -341,6 +205,24 @@ def cases_from_junit(path: Path) -> list[dict]:
             }
         )
     return cases
+
+
+def cmd_nix_unit(args: list[str]) -> int:
+    """Shim to the private stdlib reporter (keeps bats paths stable)."""
+    if not PRIVATE_NIX_UNIT.is_file():
+        print(f"error: private reporter missing: {PRIVATE_NIX_UNIT}", file=sys.stderr)
+        return 2
+    # Legacy harness passed `--suite` etc. after the `nix-unit` verb; also
+    # inject devenv4monorepo include when callers omit -I (repo bats fixtures).
+    forwarded = list(args)
+    if not any(a == "-I" or a.startswith("--include") for a in forwarded):
+        root = Path(".")
+        for i, a in enumerate(forwarded):
+            if a == "--root" and i + 1 < len(forwarded):
+                root = Path(forwarded[i + 1])
+                break
+        forwarded = ["-I", f"devenv4monorepo={root.resolve()}", *forwarded]
+    return subprocess.call([sys.executable, str(PRIVATE_NIX_UNIT), *forwarded])
 
 
 def cmd_nixos_test(args: argparse.Namespace) -> int:
@@ -441,22 +323,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     nix_unit = sub.add_parser(
-        "nix-unit", help="Run or parse nix-unit and write JUnit XML"
+        "nix-unit",
+        help="Shim to stdlib/private/nix-unit-junit.py (prefer nix-unit:test task)",
     )
-    nix_unit.add_argument("--suite", default="tests/unit/default.nix")
-    nix_unit.add_argument("--unit-dir", default="tests/unit")
-    nix_unit.add_argument("--output", required=True)
-    nix_unit.add_argument("--root", default=".")
-    nix_unit.add_argument(
-        "--from-text", help="Parse this nix-unit transcript instead of running nix-unit"
-    )
-    nix_unit.add_argument("--nix-unit", default="nix-unit")
-    nix_unit.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Hide ✅ pass lines when running nix-unit; still show failures and a summary",
-    )
-    nix_unit.set_defaults(func=cmd_nix_unit)
+    nix_unit.set_defaults(func=None, shim="nix-unit")
 
     nixos = sub.add_parser("nixos-test", help="Write JUnit XML for a nixosTest run")
     nixos.add_argument("--output", required=True)
@@ -483,6 +353,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "nix-unit":
+        return cmd_nix_unit(argv[1:])
     args = build_parser().parse_args(argv)
     return args.func(args)
 
