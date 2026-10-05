@@ -20,6 +20,14 @@
   # # Or flip the tool leaf directly (always global setup):
   # tools.mr-boxington.enable = true;
 
+  # build-cleaner for this user (home-switch).
+  # For repository-only install, enable the preset in devenv.local.nix with
+  # scope = "local" (the default) instead.
+  # presets.cache.build-cleaner.enable = true;
+  # presets.cache.build-cleaner.scope = "global";
+  # # Or flip the tool leaf directly:
+  # tools.build-cleaner.enable = true;
+
   # Serena / Headroom / MCP catalog for Cursor (default: cursor.enable).
   # cursor.llmContext.enable = false;
 

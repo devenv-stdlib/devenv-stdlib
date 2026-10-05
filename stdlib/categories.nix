@@ -78,8 +78,11 @@ let
         "litellm"
       ];
     };
-    cache = n "bundle" "Compile caches." {
-      tools = [ "mr-boxington" ];
+    cache = n "bundle" "Compile caches and build-artifact cleaners." {
+      tools = [
+        "build-cleaner"
+        "mr-boxington"
+      ];
     };
     containers = n "bundle" "Container engine and image CLIs." { };
     data = n "bundle" "Data clients. Servers stay devenv services." { };

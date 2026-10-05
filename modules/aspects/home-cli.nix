@@ -8,8 +8,11 @@
 }:
 {
   den.aspects.home-cli = {
-    # mr-boxington is opt-in (tools.mr-boxington.enable / presets.cache.mr-boxington).
-    includes = [ den.aspects.mr-boxington ];
+    # Cache tools are opt-in (tools.*.enable / presets.cache.*).
+    includes = [
+      den.aspects.mr-boxington
+      den.aspects.build-cleaner
+    ];
 
     homeManager = {
       imports = [
