@@ -58,6 +58,12 @@ let
               type = lib.types.attrsOf lib.types.anything;
               default = { };
             };
+            # Real language formatters set treefmt.config; stub so owner-suite
+            # evals that load tools/ without devenv's treefmt module type-check.
+            treefmt = lib.mkOption {
+              type = freeform;
+              default = { };
+            };
             files = lib.mkOption {
               type = lib.types.attrsOf freeform;
               default = { };
