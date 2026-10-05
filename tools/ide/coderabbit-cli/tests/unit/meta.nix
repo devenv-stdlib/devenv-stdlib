@@ -16,12 +16,14 @@ in
         path
         ;
       inherit (cr.install) kind;
+      packageIsFn = builtins.isFunction cr.install.package;
     };
     expected = {
       category = "ide";
       upgrade = "self";
       defaultEnable = true;
       kind = "binary";
+      packageIsFn = true;
       path = [
         "ide"
         "coderabbit-cli"

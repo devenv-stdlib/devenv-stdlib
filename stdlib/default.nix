@@ -43,6 +43,8 @@ in
 
   # Public tool constructor (stdlib/tool.nix).
   mkTool = import ./tool.nix { inherit lib; };
+  # Non-nixpkgs release fetch helpers for install.kind = binary.
+  binary = import ./binary.nix { inherit lib; };
 
   inherit (load) discover;
   den.load = load.den;

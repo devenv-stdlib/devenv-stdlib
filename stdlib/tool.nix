@@ -160,6 +160,11 @@ let
         )
       )
       "mkTool ${name}: install.kind = vscode-extension requires install.publisher and install.extension";
+    # Non-nixpkgs binary: tool owns the recipe via install.package (pkgs → drv).
+    # Prefer binaryLeaf + stdlib/binary.nix builders over ad-hoc stdlib package modules.
+    assert require (
+      kind != "binary" || (install ? package && builtins.isFunction install.package)
+    ) "mkTool ${name}: install.kind = binary requires install.package (a pkgs → derivation function)";
     assert require (
       kind != "project" || builtins.elem "local" scopes
     ) "mkTool ${name}: install.kind = project requires a project (local) payload";
@@ -312,6 +317,49 @@ let
     else
       applyLocal args base;
 
+  # Non-nixpkgs binary leaf: install.kind = binary, install.package = pkgs → drv.
+  # Builders live in stdlib/binary.nix; the tool file supplies pins/hashes.
+  # Always puts the package on home.packages; merges optional homeManager extras.
+  binaryLeaf =
+    args: spec:
+    let
+      package = spec.package or (throw "binaryLeaf ${spec.name or "<unnamed>"}: package is required");
+      base = {
+        inherit (spec) name category;
+        install = {
+          kind = "binary";
+          inherit package;
+        };
+        upgrade = spec.upgrade or "self";
+        defaultEnable = spec.defaultEnable or false;
+        dependsOn = spec.dependsOn or [ ];
+      }
+      // lib.optionalAttrs (spec ? path) { inherit (spec) path; }
+      // lib.optionalAttrs (spec ? categoryPolicy) { inherit (spec) categoryPolicy; }
+      // lib.optionalAttrs (spec ? project) { inherit (spec) project; }
+      // lib.optionalAttrs (spec ? imports) { inherit (spec) imports; }
+      // lib.optionalAttrs (!(spec ? project && !(spec ? homeManager))) {
+        # Default global install unless the caller only passed project.
+        # Always add install.package; merge caller homeManager extras.
+        homeManager =
+          moduleArgs:
+          let
+            pkgs = moduleArgs.pkgs;
+            extras = (spec.homeManager or (_: { })) moduleArgs;
+          in
+          lib.mkMerge [
+            { home.packages = [ (package pkgs) ]; }
+            extras
+          ];
+      };
+    in
+    if args.__stdlibMeta or false then
+      meta base
+    else if (meta base).isGlobal then
+      apply args base
+    else
+      applyLocal args base;
+
   # Read tool declarations without evaluating Home Manager / devenv bodies.
   specs =
     files:
@@ -341,6 +389,7 @@ in
     apply
     applyLocal
     nixLeaf
+    binaryLeaf
     specs
     scopesOf
     installKinds
