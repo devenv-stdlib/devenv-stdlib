@@ -11,21 +11,56 @@ on:
       - tests/tag-hook.bats
       - hooks/**
       - .github/workflows/setup-tests.yml
-  # Always on PRs: branch ruleset requires bats (ubuntu-24.04/26.04). Path
-  # filters on push still skip unrelated branch pushes.
+  # Always on PRs so ruleset checks `bats (ubuntu-…)` exist; path-filter skips
+  # the suite when setup paths are untouched (shim stays green).
   pull_request:
 
+permissions:
+  contents: read
+  actions: write
+  pull-requests: read
+
 jobs:
+  changes:
+    name: Detect setup path changes
+    runs-on: ubuntu-24.04
+    outputs:
+      setup: ${{ steps.flags.outputs.setup }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          filters: |
+            setup:
+              - 'setup.sh'
+              - 'tests/setup/**'
+              - 'tests/tag-hook.bats'
+              - 'hooks/**'
+              - '.github/workflows/setup-tests.yml'
+
+      - id: flags
+        name: Resolve setup flag
+        run: |
+          set -euo pipefail
+          # Push/tag already path-filtered at the workflow level; always run then.
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "setup=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "setup=${{ steps.filter.outputs.setup }}" >> "$GITHUB_OUTPUT"
+          fi
+
   setup-bats:
     name: setup.sh BATS (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.setup == 'true'
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, ubuntu-26.04]
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
-      actions: write
     steps:
       - uses: actions/checkout@v4
 
@@ -51,7 +86,7 @@ jobs:
   # Ruleset requires "bats (ubuntu-…)".
   ruleset-bats:
     name: bats (${{ matrix.os }})
-    needs: setup-bats
+    needs: [changes, setup-bats]
     if: always() && !cancelled()
     strategy:
       fail-fast: false
@@ -59,5 +94,10 @@ jobs:
         os: [ubuntu-24.04, ubuntu-26.04]
     runs-on: ubuntu-24.04
     steps:
-      - name: Require setup.sh BATS matrix success
-        run: test "${{ needs.setup-bats.result }}" = "success"
+      - name: Require setup.sh BATS matrix success or path-skip
+        run: |
+          if [ "${{ needs.changes.outputs.setup }}" != "true" ]; then
+            echo "path-skip: setup.sh BATS not required for this PR"
+            exit 0
+          fi
+          test "${{ needs.setup-bats.result }}" = "success"
