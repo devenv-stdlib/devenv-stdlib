@@ -15,7 +15,8 @@ let
 in
 {
   # cfg: { action, actionComment?, maxFailures, closePr, exemptDraftPrs,
-  #         exemptAuthorAssociation, extraWith }
+  #         exemptAuthorAssociation, requireCommitAuthorMatch,
+  #         requireMaintainerCanModify, extraWith }
   workflowText =
     cfg:
     let
@@ -25,6 +26,8 @@ in
         exempt-draft-prs = boolYaml cfg.exemptDraftPrs;
         # Marketplace default is OWNER,MEMBER,COLLABORATOR; empty = scan everyone.
         exempt-author-association = cfg.exemptAuthorAssociation;
+        require-commit-author-match = boolYaml cfg.requireCommitAuthorMatch;
+        require-maintainer-can-modify = boolYaml cfg.requireMaintainerCanModify;
       };
       withAttrs = named // cfg.extraWith;
       comment = cfg.actionComment or "";

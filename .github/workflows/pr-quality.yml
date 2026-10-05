@@ -23,3 +23,5 @@ jobs:
           exempt-author-association: ""
           exempt-draft-prs: "true"
           max-failures: "4"
+          require-commit-author-match: "false"
+          require-maintainer-can-modify: "false"

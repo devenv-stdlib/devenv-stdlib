@@ -19,6 +19,10 @@
 #     # Empty = no author-association exemptions (owners scanned too).
 #     # Marketplace default is "OWNER,MEMBER,COLLABORATOR".
 #     exemptAuthorAssociation = "";
+#     # false: agent tips / co-authors OK. true: ban non-PR-author commits.
+#     requireCommitAuthorMatch = false;
+#     # false: same-repo PRs always have maintainer_can_modify=false in the API.
+#     requireMaintainerCanModify = false;
 #     extraWith = {
 #       # "min-account-age" = "0";
 #     };
