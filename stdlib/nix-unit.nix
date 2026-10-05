@@ -144,17 +144,28 @@ let
         };
       };
 
-      config = lib.mkIf (enabled && hasTasks) {
-        packages = [
-          pkgs.nix-unit
-          pkgs.python3
-        ];
-        scripts.nix-unit-test.exec = runScript;
-        tasks.${taskId} = {
-          exec = "nix-unit-test";
-          showOutput = true;
-        };
-      };
+      # mkIf alone still registers `tasks` / `scripts` definitions when the
+      # condition is false — fixtures that omit options.tasks (e.g.
+      # language-matrix) then fail with "The option `tasks' does not exist".
+      # Only merge the config attrs when the host declares those options.
+      # Stub pkgs in unit evals often omit nix-unit/python3; skip missing attrs.
+      config = lib.mkMerge (
+        lib.optionals hasTasks [
+          (lib.mkIf enabled (
+            {
+              packages =
+                lib.optional (pkgs ? nix-unit) pkgs.nix-unit ++ lib.optional (pkgs ? python3) pkgs.python3;
+              tasks.${taskId} = {
+                exec = if options ? scripts then "nix-unit-test" else runScript;
+                showOutput = true;
+              };
+            }
+            // lib.optionalAttrs (options ? scripts) {
+              scripts.nix-unit-test.exec = runScript;
+            }
+          ))
+        ]
+      );
     };
 in
 {
