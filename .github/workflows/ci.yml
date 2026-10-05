@@ -32,6 +32,7 @@ jobs:
           filters: |
             unit:
               - '**/*.nix'
+              - '**/*.jinja'
               - 'devenv.lock'
               - 'devenv.yaml'
               - 'devenv.nix'
@@ -44,6 +45,9 @@ jobs:
               - 'packaging/**'
               - 'tools/**'
               - 'home/**'
+              - 'includes/**'
+              - '.agents/skills/**'
+              - 'skills-lock.json'
               - 'tests/**'
               - '!tests/setup/**'
               - '.github/workflows/ci.yml'
@@ -342,6 +346,10 @@ jobs:
     steps:
       - name: Require unit matrix success or path-skip
         run: |
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "changes job result=${{ needs.changes.result }}"
+            exit 1
+          fi
           if [ "${{ needs.changes.outputs.unit }}" != "true" ]; then
             echo "path-skip: unit suite not required for this PR"
             exit 0
@@ -446,6 +454,10 @@ jobs:
     steps:
       - name: Require integration matrix success or path-skip
         run: |
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "changes job result=${{ needs.changes.result }}"
+            exit 1
+          fi
           if [ "${{ needs.changes.outputs.integration }}" != "true" ]; then
             echo "path-skip: integration suite not required for this PR"
             exit 0
@@ -488,6 +500,10 @@ jobs:
     steps:
       - name: Require integration matrix success or path-skip
         run: |
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "changes job result=${{ needs.changes.result }}"
+            exit 1
+          fi
           if [ "${{ needs.changes.outputs.integration }}" != "true" ]; then
             echo "path-skip: integration suite not required for this PR"
             exit 0
@@ -502,6 +518,10 @@ jobs:
     steps:
       - name: Require language-matrix workflow success, skip, or path-skip
         run: |
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "changes job result=${{ needs.changes.result }}"
+            exit 1
+          fi
           if [ "${{ needs.changes.outputs.language }}" != "true" ]; then
             echo "path-skip: language matrix not required for this PR"
             exit 0
