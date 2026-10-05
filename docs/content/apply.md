@@ -21,9 +21,12 @@ inputs.devenv-stdlib.url = "github:thedrow/devenv4monorepo/<tag-or-sha>";
 | --- | --- |
 | Framework API | `inputs.devenv-stdlib.stdlib` |
 | Packaging / Den flake body | `${inputs.devenv-stdlib}/packaging/den-outputs.nix` |
-| Framework presets | `${inputs.devenv-stdlib}/presets` |
-| Your composition | Local `presets/` (e.g. attrpath includes like `presets/omer.nix`) |
+| Framework modules / home / tools / cache presets | Resolved from the pin inside `den-outputs.nix` (`frameworkRoot`) — do not copy them |
+| Framework presets (composition) | `${inputs.devenv-stdlib}/presets` via `stdlib.*.load` |
+| Your composition | Local `presets/` (e.g. attrpath includes like `presets/omer.nix`) and optional local `tools/` |
 | Language / host options | Local `devenv.local.nix` / `home.local.nix` (start from the `.example` files in this repo) |
+
+`root = ./.` is only the consumer overlay. Evaluating `homeConfigurations.developer` does **not** require a copied `modules/` or `presets/cache/` tree.
 
 Enable languages and version bounds in **your** `devenv.local.nix` — there is no questionnaire. Copy patterns from `devenv.local.nix.example` and `home.local.nix.example`.
 

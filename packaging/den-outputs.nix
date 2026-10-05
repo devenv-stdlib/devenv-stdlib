@@ -1,12 +1,15 @@
 # Den flake body shared by this publisher checkout and by consumer flakes.
-# `root` is the consumer tree (local modules, presets, tools).
+# `frameworkRoot` is the published package tree (parent of packaging/).
+# `root` is the consumer tree (local presets/tools overlays, home.local.nix via PWD).
 # `stdlib` is the published devenv-stdlib attrset. The default reads ./stdlib
-# from `root` (this repo). Consumers pass `stdlib = inputs.devenv-stdlib.stdlib`.
+# from `frameworkRoot` (this repo). Consumers pass `stdlib = inputs.devenv-stdlib.stdlib`.
 {
   inputs,
   root,
   lib ? inputs.nixpkgs.lib,
-  stdlib ? import (root + "/stdlib") {
+  # Default: this file lives in packaging/, so ../. is the package checkout.
+  frameworkRoot ? ../.,
+  stdlib ? import (frameworkRoot + "/stdlib") {
     inherit lib;
     # Private flake input — stdlib.log wraps it; callers never see nix-log.
     nix-log = inputs.nix-log or null;
@@ -14,6 +17,13 @@
 }:
 let
   inherit (stdlib) report;
+
+  frameworkTools = frameworkRoot + "/tools";
+  consumerTools = root + "/tools";
+  # Publisher dogfood: root == package tree → load tools once.
+  toolDirs =
+    [ frameworkTools ]
+    ++ lib.optional (toString consumerTools != toString frameworkTools) consumerTools;
 
   # HM-side status summary (tools in this fixpoint). Matrix / git-hooks are
   # devenv-side; listed as unavailable here. Nested preset attrpaths land when
@@ -36,15 +46,16 @@ let
       warnings = lib.mkAfter [ (report.mkEvalWarning inv) ];
     };
 
-  # Recommended Den pattern (minimal consumer): import-tree discovers .nix modules.
+  # Recommended Den pattern (minimal consumer): import-tree discovers .nix modules
+  # from the *pinned* package tree. `root` stays for consumer overlays (tools/).
   # Scoped to Den subtrees so devenv modules under modules/ are not double-imported.
   # modules/den/_cascades/ is skipped by import-tree's default `/_` filter (pure data).
   # stdlib.den.load registers tools/** as leaf aspects (P1). Profilers stay opt-in.
   # The loader returns a list so an empty tools dir stays concatenable.
   denModules = [
     (inputs.import-tree [
-      (root + "/modules/aspects")
-      (root + "/modules/den")
+      (frameworkRoot + "/modules/aspects")
+      (frameworkRoot + "/modules/den")
     ])
     (
       { den, lib, ... }:
@@ -57,11 +68,11 @@ let
       }
     )
     # Opt-in cache.mr-boxington (scope = local|global); enable defaults false.
-    (root + "/presets/cache/mr-boxington.nix")
+    (frameworkRoot + "/presets/cache/mr-boxington.nix")
     # Opt-in cache.build-cleaner (scope = local|global); enable defaults false.
-    (root + "/presets/cache/build-cleaner.nix")
+    (frameworkRoot + "/presets/cache/build-cleaner.nix")
   ]
-  ++ (stdlib.den.load [ (root + "/tools") ]);
+  ++ (stdlib.den.load toolDirs);
 
   denConfig = lib.evalModules {
     modules = denModules;
@@ -100,7 +111,7 @@ let
         {
           den.aspects.terminal.includes = lib.mkForce [ den.aspects.warp-quake ];
           den.aspects.terminal.homeManager = lib.mkForce {
-            imports = [ (root + "/home/terminal.nix") ];
+            imports = [ (frameworkRoot + "/home/terminal.nix") ];
             terminal.provider = "warp";
           };
         }
@@ -177,8 +188,8 @@ let
     && builtins.any (n: lib.hasPrefix "ripgrep" n || n == "ripgrep") denFp.packages;
 
   # --- Phase 4: Den/project goldens (aspect includes + pure helpers) ---
-  cascade = import (root + "/modules/den/_cascades/language-cascade.nix");
-  project = import (root + "/modules/lib/project.nix") { inherit lib; };
+  cascade = import (frameworkRoot + "/modules/den/_cascades/language-cascade.nix");
+  project = import (frameworkRoot + "/modules/lib/project.nix") { inherit lib; };
   pythonOnFixture = {
     languages.python.enable = true;
   };
@@ -305,10 +316,10 @@ in
 denConfig.config.flake
 // {
   # Cascade metadata + light eval helpers for tests (not HM activation).
-  denCursorCascade = import (root + "/modules/den/_cascades/cursor-cascade.nix");
-  denTerminalCascade = import (root + "/modules/den/_cascades/terminal-cascade.nix");
-  denLanguageCascade = import (root + "/modules/den/_cascades/language-cascade.nix");
-  denIdeCascade = import (root + "/modules/den/_cascades/ide-cascade.nix");
+  denCursorCascade = import (frameworkRoot + "/modules/den/_cascades/cursor-cascade.nix");
+  denTerminalCascade = import (frameworkRoot + "/modules/den/_cascades/terminal-cascade.nix");
+  denLanguageCascade = import (frameworkRoot + "/modules/den/_cascades/language-cascade.nix");
+  denIdeCascade = import (frameworkRoot + "/modules/den/_cascades/ide-cascade.nix");
   denAspectIncludes = {
     cursor = aspectIncludeNames "cursor";
     cursor-extensions = aspectIncludeNames "cursor-extensions";
