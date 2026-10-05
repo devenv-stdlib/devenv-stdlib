@@ -190,7 +190,10 @@ in
         hasTestFactor = contains ''test-factor: "1.0"'' yaml;
         hasContinue = contains "continue-on-error: true" yaml;
         hasReject = contains "Reject oversized PRs" yaml;
-        hasGitGate = contains "git diff --numstat" yaml;
+        hasGitGate = contains "\"git\", \"diff\"" yaml;
+        hasNumstatZ = contains "\"--numstat\", \"-z\"" yaml;
+        hasPythonGate = contains "python3 -c" yaml;
+        hasNoTabAwkRename = !(contains "sub(/^.* => /" yaml);
         # Tight test-path filter (not bare /test/ substring).
         hasTightTestDirs = contains "(tests?|__tests__|spec)" yaml;
         hasLooseTestSubstr = contains "/[Tt]est|[Tt]EST|" yaml;
@@ -218,6 +221,9 @@ in
       hasContinue = true;
       hasReject = true;
       hasGitGate = true;
+      hasNumstatZ = true;
+      hasPythonGate = true;
+      hasNoTabAwkRename = true;
       hasTightTestDirs = true;
       hasLooseTestSubstr = false;
       hasFailClosed = true;
