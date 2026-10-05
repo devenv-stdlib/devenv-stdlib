@@ -11,7 +11,8 @@
 #
 # Defaults (when enabled):
 #   - baseSize = 200, growthRate = "2.0" → medium ends at 800 product-code lines
-#   - rejectAboveMedium = true → L / XL / N XL fail the job
+#   - rejectAboveMedium = true → L / XL / N XL fail the job; also fail-closed when
+#     the size prefix is missing or unrecognized (title not annotated)
 #   - exemptDraftPrs = true → drafts skipped (ready_for_review re-runs)
 #   - continueOnError = true on the annotate step (upstream recommendation)
 #
@@ -25,7 +26,9 @@
 #
 #   presets.ci.github_actions.pr-metrics = {
 #     enable = true;
-#     action = "microsoft/PR-Metrics@v1.7.18";
+#     action = "microsoft/PR-Metrics@ac92804a3a0c8b711ca02dd9956ac6a7f2a1d2ca"; # v1.7.18
+#     actionComment = "v1.7.18";
+#     checkoutAction = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"; # v4
 #     baseSize = 200;
 #     growthRate = "2.0";
 #     testFactor = "1.0";
