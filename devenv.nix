@@ -52,6 +52,7 @@ _: {
     command -v fd
     command -v direnv
     command -v nixfmt
+    command -v treefmt
     command -v bats
     command -v parallel
     command -v shellcheck

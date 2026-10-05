@@ -41,6 +41,10 @@ in
   harness = import ./harness.nix { inherit lib categories; };
   shell = import ./shell.nix { inherit lib; };
 
+  # First-class linter catalog (treefmt vs prek backends). Options live at
+  # linters.* via modules/linters — parallel to languages.*.
+  linters = import ./linters.nix { inherit lib; };
+
   # Public tool constructor (stdlib/tool.nix).
   mkTool = import ./tool.nix { inherit lib; };
   # Non-nixpkgs release fetch helpers for install.kind = binary.

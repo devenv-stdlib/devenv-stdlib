@@ -340,15 +340,18 @@ nvim --version
 
 ## Quality and release
 
-### prek
+### treefmt and prek
 
-[prek](https://prek.j178.dev/) runs the hooks in `modules/hooks/` (`pre-commit` and `commit-msg`). devenv generates the config; do not commit a hand-edited `.pre-commit-config.yaml`. `reference-transaction` is installed separately so `git tag` is gated.
+Formatters and file linters are first-class under `linters.*` (see [Hooks](hooks.md)) and run through [devenv’s treefmt integration](https://devenv.sh/integrations/treefmt/). [prek](https://prek.j178.dev/) runs the residual git-hooks (`commit-msg`, secrets, hygiene) plus one `treefmt` hook. devenv generates the config; do not commit a hand-edited `.pre-commit-config.yaml`. `reference-transaction` is installed separately so `git tag` is gated.
 
 ```bash
-# hooks run on git commit; devenv shell installs them
+treefmt                 # format / lint treefmt-backed programs
+treefmt --fail-on-change
+prek run --all-files    # treefmt + residual prek
 ```
 
-- Docs: [prek.j178.dev](https://prek.j178.dev/)
+- treefmt: [devenv.sh/integrations/treefmt](https://devenv.sh/integrations/treefmt/)
+- prek: [prek.j178.dev](https://prek.j178.dev/)
 
 ### commitlint and semantic-release
 
@@ -360,7 +363,7 @@ Subjects must be [Conventional Commits](https://www.conventionalcommits.org/) (`
 
 ### Formatters, linters, and secrets
 
-Always-on in the devenv hook set: [nixfmt](https://github.com/NixOS/nixfmt), [statix](https://github.com/oppiliappan/statix), [deadnix](https://github.com/astro/deadnix), [ShellCheck](https://www.shellcheck.net/), [typos](https://github.com/crate-ci/typos), [proselint](https://github.com/amperser/proselint), [lychee](https://lychee.cli.rs/), [actionlint](https://github.com/rhysd/actionlint), [yamlfmt](https://github.com/google/yamlfmt), [Taplo](https://taplo.tamasfe.dev/) (`check-toml`, `taplo` fmt, `taplo-lint`), [Gitleaks](https://gitleaks.io/). Language hooks (rustfmt, ruff, prettier, …) follow `languages.*`. Taplo is also user-global via Home Manager (`home/taplo.nix`).
+Always-on via `linters.*` → treefmt: [nixfmt](https://github.com/NixOS/nixfmt), [statix](https://github.com/oppiliappan/statix), [deadnix](https://github.com/astro/deadnix), [ShellCheck](https://www.shellcheck.net/), [typos](https://github.com/crate-ci/typos), [actionlint](https://github.com/rhysd/actionlint), [yamlfmt](https://github.com/google/yamlfmt), [Taplo](https://taplo.tamasfe.dev/) format. Residual prek: [proselint](https://github.com/amperser/proselint), [lychee](https://lychee.cli.rs/) (off by default), `check-json` / `check-toml` / `taplo-lint`, hygiene fixers, [Gitleaks](https://gitleaks.io/), commitlint. Language formatters (rustfmt, ruff, prettier, gofmt) follow `languages.*` and also land on treefmt; clippy / golangci-lint / typecheckers stay on prek. Taplo is also user-global via Home Manager (`home/taplo.nix`).
 
 - nixfmt: [NixOS/nixfmt](https://github.com/NixOS/nixfmt)
 - ShellCheck: [shellcheck.net](https://www.shellcheck.net/)

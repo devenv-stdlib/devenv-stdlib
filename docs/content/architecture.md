@@ -38,7 +38,7 @@ The terminal is user-global because you already have a terminal open to run `dev
 
 `devenv.yaml` pins inputs and imports `modules/devenv.nix` (Den lives beside it under `modules/{aspects,den}/`, loaded by flake `import-tree`). Evaluation reads `languages.*` and `supported.*` from `devenv.local.nix` (when the file exists):
 
-- Language packs, IDE `.vscode/extensions.json`, Serena `.serena/project.yml` `language_servers`, and language git hooks follow `languages.*` via `presets/<lang>/<category>/*.nix` (`stdlib.devenv.load`).
+- Language packs, IDE `.vscode/extensions.json`, Serena `.serena/project.yml` `language_servers`, and language linters follow `languages.*` via `presets/<lang>/<category>/*.nix` (`stdlib.devenv.load`). Cross-cutting linters are first-class under `linters.*` (parallel to `languages.*`) and mostly run through [treefmt](https://devenv.sh/integrations/treefmt/); residual checks stay on prek — see [Hooks](hooks.md).
 - CI versions follow `supported.<lang>.min` / `max` / `unsupported` / `versions`. When min/max omit a patch (`3.12`, `22`), `modules/languages/catalog.json` supplies the latest **non-EOL** patch of each cycle in range. `refresh-toolchain-latest` rebuilds that catalog from [endoflife.date](https://endoflife.date).
 - `enterShell` writes `.github/workflows/test.yml` (**committed**), `.devcontainer/devcontainer.json` (**committed** when `devcontainer.enable`), `.debtmap.toml`, `mise.toml`, `.vscode/extensions.json`, and `.serena/project.yml` (gitignored), installs `hooks/reference-transaction`, and runs `cursor-sync-extensions`. [prek](https://prek.j178.dev/) manages `pre-commit` and `commit-msg` only (generated `.pre-commit-config.yaml` is gitignored).
 
@@ -50,6 +50,6 @@ Language packs are the exception: they are **not** user-global. Language tool pr
 
 ## Release loop
 
-Conventional Commits (`commitlint`) on every commit. Pull requests run `hooks.yml` (`prek`; [pre-commit.ci lite](https://pre-commit.ci/lite.html) pushes autofixes, including forks). Push to `master` or `main` runs `ci.yml`: `test-devenv`, then the generated `test.yml` matrix, then [semantic-release](https://semantic-release.gitbook.io/semantic-release/) which versions and tags. Those tags are what `copier copy` and `copier update` use by default.
+Conventional Commits (`commitlint`) on every commit. Pull requests run `hooks.yml` (`prek run --all-files`, which includes the `treefmt` hook; [pre-commit.ci lite](https://pre-commit.ci/lite.html) pushes autofixes, including forks). Push to `master` or `main` runs `ci.yml`: `test-devenv`, then the generated `test.yml` matrix, then [semantic-release](https://semantic-release.gitbook.io/semantic-release/) which versions and tags. Those tags are what `copier copy` and `copier update` use by default.
 
 The tag guard blocks a local `git tag` if tests fail. Semantic-release in GitHub Actions sets `CI` / `GITHUB_ACTIONS`, so the hook is a no-op there.

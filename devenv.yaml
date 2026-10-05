@@ -8,6 +8,12 @@ inputs:
     url: github:cachix/devenv-nixpkgs/rolling
   git-hooks:
     url: github:cachix/git-hooks.nix
+  # devenv treefmt integration — https://devenv.sh/integrations/treefmt/
+  treefmt-nix:
+    url: github:numtide/treefmt-nix
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
   # Required by generated test.yml when languages.python.version is set (act + CI).
   nixpkgs-python:
     url: github:cachix/nixpkgs-python
