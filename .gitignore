@@ -58,6 +58,7 @@ mise.toml
 # Nix fetcher cache (local) / stray relative store (bad XDG_CACHE_HOME)
 nix/fetcher-cache*.sqlite*
 /nix/
+.aletheore/
 
 __pycache__/
 *.py[cod]
