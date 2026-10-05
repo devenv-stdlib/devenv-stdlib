@@ -349,6 +349,117 @@ in
     };
   };
 
+  # CodeRabbit: scalars must use toJSON so embedded quotes stay YAML-safe.
+  testGhaMatrixScalarsUseToJson = {
+    expr =
+      let
+        plan = matrix.plan {
+          runnerProfiles = matrix.defaultRunnerProfiles;
+          jobs.quoted = {
+            command = "true";
+            dimensions.runner = [ "ubuntu-lts-prev" ];
+            seeds = [ { version = ''3.12"beta''; } ];
+          };
+        };
+        yaml = gha.render plan;
+        row = gha.matrixRow {
+          os = "ubuntu-24.04";
+          version = ''3.12"beta'';
+          optional = true;
+        };
+      in
+      {
+        # JSON/YAML escape: 3.12\"beta, not the broken "3.12"beta" form.
+        escapedInRender = contains ''version: "3.12\"beta"'' yaml;
+        brokenForm = contains ''version: "3.12"beta"'' yaml;
+        rowEscaped = contains ''version: "3.12\"beta"'' row;
+        boolUnquoted = contains "optional: true" row;
+      };
+    expected = {
+      escapedInRender = true;
+      brokenForm = false;
+      rowEscaped = true;
+      boolUnquoted = true;
+    };
+  };
+
+  # CodeRabbit: multiline job.command → block scalar; keep | prefix; single-line plain.
+  testGhaMultilineCommandIsBlockScalar = {
+    expr =
+      let
+        mk =
+          command:
+          gha.render (
+            matrix.plan {
+              runnerProfiles = matrix.defaultRunnerProfiles;
+              jobs.cmd = {
+                inherit command;
+                dimensions.runner = [ "ubuntu-lts-prev" ];
+                seeds = [ { version = "1"; } ];
+              };
+            }
+          );
+        multi = mk "echo one\necho two";
+        already = mk "|\n              echo already";
+        single = mk "true";
+        # Match the Test step specifically (workflow also has other run: | steps).
+        testStep = "name: Test\n        run: ";
+      in
+      {
+        multiHasBlock = contains "${testStep}|\n                echo one\n                echo two" multi;
+        multiNotInline = !(contains "${testStep}echo one\necho two" multi);
+        alreadyKeepsPrefix = contains "${testStep}|\n                echo already" already;
+        singlePlain = contains "${testStep}true" single;
+      };
+    expected = {
+      multiHasBlock = true;
+      multiNotInline = true;
+      alreadyKeepsPrefix = true;
+      singlePlain = true;
+    };
+  };
+
+  # CodeRabbit (outside diff): emptyWorkflow must not flatten multi-label runs-on.
+  testGhaEmptyWorkflowKeepsMultiLabelProfiles = {
+    expr =
+      let
+        multiPlan = matrix.plan {
+          runnerProfiles = {
+            gpu = {
+              os = "linux";
+              arch = "x86_64";
+              providers.github_actions.runs-on = [
+                "self-hosted"
+                "linux"
+                "gpu"
+              ];
+            };
+            inherit (matrix.defaultRunnerProfiles) ubuntu-lts-prev;
+          };
+          jobs = { };
+        };
+        yaml = gha.emptyWorkflow multiPlan;
+        defaultEmpty = versions.workflowText { };
+      in
+      {
+        # Full label list is one matrix.os value (include form).
+        includeForm = contains "include:" yaml;
+        fullList = contains ''os: ["self-hosted", "linux", "gpu"]'' yaml;
+        # Must not flatten into separate single-label os entries.
+        flatSelfHosted = contains ''os: "self-hosted"'' yaml;
+        flatGpuOnly = contains "os: [self-hosted, linux, gpu]" yaml;
+        # Default empty matrix stays the compact preferred LTS form.
+        defaultCompact = contains "os: [ubuntu-24.04, ubuntu-26.04]" defaultEmpty;
+      };
+    expected = {
+      includeForm = true;
+      fullList = true;
+      flatSelfHosted = false;
+      flatGpuOnly = false;
+      defaultCompact = true;
+    };
+  };
+
   testMatrixMaxCellsThrows = {
     expr = builtins.tryEval (
       matrix.expand {
