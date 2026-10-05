@@ -91,10 +91,7 @@ jobs:
   deploy-pages:
     name: Deploy docs to GitHub Pages
     if: >-
-      github.event_name != 'pull_request'
-      && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-      && needs.changes.outputs.docs == 'true'
-      && needs.build-docs.result == 'success'
+      github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && needs.changes.outputs.docs == 'true' && needs.build-docs.result == 'success'
     needs: [changes, build-docs]
     runs-on: ubuntu-24.04
     environment:
