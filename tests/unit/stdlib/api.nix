@@ -38,7 +38,6 @@ let
     ++ names "ci.matrix" stdlib.ci.matrix
     ++ names "ci.backends" stdlib.ci.backends
     ++ names "ci.backends.github_actions" stdlib.ci.backends.github_actions
-    ++ names "ci.backends.circleci" stdlib.ci.backends.circleci
     ++ names "versions" (stdlib.versions { })
   );
 
@@ -236,9 +235,6 @@ in
       "categoryWarnings.unusedWarnings"
       "ci"
       "ci.backends"
-      "ci.backends.circleci"
-      "ci.backends.circleci.render"
-      "ci.backends.circleci.renderOrThrow"
       "ci.backends.github_actions"
       "ci.backends.github_actions.emptyWorkflow"
       "ci.backends.github_actions.ghaOs"

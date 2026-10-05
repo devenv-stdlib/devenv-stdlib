@@ -19,7 +19,7 @@ in
   generate = import ./generate.nix { inherit lib; };
 
   project = import ./project.nix { inherit lib; };
-  # Provider-agnostic CI matrix IR + backends (GHA render; CircleCI stub).
+  # Provider-agnostic CI matrix IR + GHA backend (other providers out of scope for phase 1).
   ci = import ./ci { inherit lib; };
   versions =
     {
