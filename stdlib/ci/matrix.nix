@@ -194,8 +194,9 @@ let
   # Named expansion profiles: same dimensions, different cell filters (PR vs schedule).
   # Empty attrset = identity (keep all cells). `match` / `matchAny` / `exclude` use
   # the same partial-match semantics as job.exclude.
-  # `selectCurrentLts` (pr default) is resolved in forProfile against the plan's
-  # runnerProfiles — not fixed ids — so caller-supplied catalogs keep cells.
+  # `selectCurrentLts` (pr default, or a job overlay) is resolved in forProfile
+  # after overlay merge against the plan's runnerProfiles — not fixed ids — so
+  # caller-supplied catalogs keep cells.
   defaultExpansionProfiles = {
     schedule = { };
     push = { };
@@ -232,41 +233,56 @@ let
           catalogs.${profileName} or (throw "ci.matrix: unknown expansion profile '${profileName}'")
         else
           profileOrName;
-      # Resolve selectCurrentLts against this plan's runner catalog before overlays.
-      baseProfile =
-        if rawBase.selectCurrentLts or false then
-          (builtins.removeAttrs rawBase [ "selectCurrentLts" ])
+      # Job overlay keys replace base; lists are replaced wholesale (not concatenated).
+      mergeRaw =
+        job:
+        let
+          overlay =
+            if profileName != null then (job.expansionProfiles or { }).${profileName} or { } else { };
+        in
+        rawBase // overlay;
+      # Resolve selectCurrentLts after overlay merge so a job can opt in, and strip
+      # the control key before filterCells (which only understands match/matchAny/exclude).
+      resolveProfile =
+        raw:
+        let
+          withoutControl = builtins.removeAttrs raw [ "selectCurrentLts" ];
+        in
+        if raw.selectCurrentLts or false then
+          withoutControl
           // {
             matchAny = currentLtsMatchAny (matrixPlan.runnerProfiles or { });
           }
         else
-          rawBase;
-      mergeProfile =
-        job:
-        let
-          overlay = if profileName != null then (job.expansionProfiles or { }).${profileName} or { } else { };
-        in
-        # Overlay keys replace base; lists are replaced wholesale (not concatenated).
-        baseProfile // overlay;
+          withoutControl;
+      profileUsesFilters =
+        raw:
+        (raw.selectCurrentLts or false)
+        || (raw ? match)
+        || ((raw.matchAny or [ ]) != [ ])
+        || ((raw.exclude or [ ]) != [ ]);
       filteredJobs = lib.mapAttrs (
         _: job:
         let
-          p = mergeProfile job;
+          p = resolveProfile (mergeRaw job);
         in
         job
         // {
           cells = filterCells (job.cells or [ ]) p;
         }
       ) matrixPlan.jobs;
-      # Reject a silently empty PR plan when the full plan had cells (misconfigured
-      # runner catalog, or a match/matchAny overlay that matches nothing). Overlays
-      # must not disable this guard — empty plans render as green empty workflows.
+      # Reject a silently empty filtered plan when the full plan had cells
+      # (misconfigured runner catalog, or a match/matchAny/exclude that matches
+      # nothing). Empty plans render as green empty workflows. Guard whenever the
+      # effective (post-overlay) profile filters — not only base selectCurrentLts.
       hadCells = lib.any (j: (j.cells or [ ]) != [ ]) (lib.attrValues matrixPlan.jobs);
       keepsCells = lib.any (j: (j.cells or [ ]) != [ ]) (lib.attrValues filteredJobs);
-      selectingCurrentLts = rawBase.selectCurrentLts or false;
+      anyJobFilters = lib.any (job: profileUsesFilters (mergeRaw job)) (
+        lib.attrValues matrixPlan.jobs
+      );
     in
-    if selectingCurrentLts && hadCells && !keepsCells then
-      throw "ci.matrix: pr expansion profile removed all cells (no cells matched the profile)"
+    if anyJobFilters && hadCells && !keepsCells then
+      throw "ci.matrix: expansion profile removed all cells (no cells matched the profile)"
     else
       matrixPlan
       // {
