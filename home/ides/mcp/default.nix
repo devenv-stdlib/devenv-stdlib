@@ -48,9 +48,6 @@ let
         }
         root=""
         root_file="''${XDG_CONFIG_HOME:-$HOME/.config}/devenv4monorepo/devenv-root"
-        is_monorepo_root() {
-          [ -d "$1" ] && [ -f "$1/devenv.nix" ]
-        }
         if [ -f "$root_file" ]; then
           root=$(cat "$root_file")
         fi
