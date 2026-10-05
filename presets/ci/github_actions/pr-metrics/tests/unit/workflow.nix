@@ -335,4 +335,32 @@ in
       lacksDefaultGate = true;
     };
   };
+
+  # CodeRabbit: codeFileExtensions = "" omits Action input but gate must use
+  # pinned Action documented defaults (not count every eligible file).
+  testCiPrMetricsBlankExtensionsUsesActionDefaultsForGate = {
+    expr =
+      let
+        yaml = workflowText (
+          defaultCfg
+          // {
+            codeFileExtensions = "";
+          }
+        );
+      in
+      {
+        omitsActionInput = !(contains "code-file-extensions:" yaml);
+        gateHasJs = contains ''CODE_EXTS: "js\n'' yaml;
+        gateHasCs = contains "\ncs\n" yaml;
+        gateNotEmpty = !(contains ''CODE_EXTS: ""'' yaml);
+        lacksMonorepoGate = !(contains ''CODE_EXTS: "nix\nyml\nyaml\n"'' yaml);
+      };
+    expected = {
+      omitsActionInput = true;
+      gateHasJs = true;
+      gateHasCs = true;
+      gateNotEmpty = true;
+      lacksMonorepoGate = true;
+    };
+  };
 }

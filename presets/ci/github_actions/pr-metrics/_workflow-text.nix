@@ -26,6 +26,10 @@ let
     yml
     yaml
   '';
+
+  # microsoft/PR-Metrics documented top-10-language defaults (pinned Action).
+  # Used by the size gate when codeFileExtensions = "" omits the Action input.
+  actionDefaultCodeFileExtensions = builtins.readFile ./action-default-code-file-extensions.txt;
 in
 {
   # cfg: {
@@ -34,7 +38,7 @@ in
   #   fileMatchingPatterns?, testMatchingPatterns?, codeFileExtensions?,
   #   continueOnError, rejectAboveMedium, exemptDraftPrs, extraWith
   # }
-  inherit defaultCodeFileExtensions;
+  inherit defaultCodeFileExtensions actionDefaultCodeFileExtensions;
 
   workflowText =
     cfg:
@@ -54,8 +58,17 @@ in
       // optionalStr "test-matching-patterns" (cfg.testMatchingPatterns or null)
       // optionalStr "code-file-extensions" effectiveExtensions;
       withAttrs = named // cfg.extraWith;
-      # Gate must use the same final Action input (extraWith can override).
-      gateExtensions = withAttrs."code-file-extensions" or effectiveExtensions;
+      # Gate must match what the Action measures. When the Action input is omitted
+      # (blank ""), use the pinned Action's documented defaults — do not count
+      # every eligible file.
+      gateExtensions =
+        let
+          resolved = withAttrs."code-file-extensions" or effectiveExtensions;
+        in
+        if resolved == null || resolved == "" then
+          actionDefaultCodeFileExtensions
+        else
+          resolved;
       actionUses = usesWithComment cfg.action (cfg.actionComment or "");
       checkoutUses = usesWithComment cfg.checkoutAction (cfg.checkoutComment or "");
       jobIf = if cfg.exemptDraftPrs then [ "    if: \${{ !github.event.pull_request.draft }}" ] else [ ];
