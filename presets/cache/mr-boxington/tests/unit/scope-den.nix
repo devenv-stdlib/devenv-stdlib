@@ -107,13 +107,17 @@ let
 in
 {
   testCacheMrBoxingtonPresetScopeGlobal = {
-    expr = toolEnableFromPresetAspect <devenv4monorepo/presets/cache/mr-boxington.nix> [
-      "cache"
-      "mr-boxington"
-    ] "mr-boxington" {
-      presets.cache.mr-boxington.enable = true;
-      presets.cache.mr-boxington.scope = "global";
-    };
+    expr =
+      toolEnableFromPresetAspect <devenv4monorepo/presets/cache/mr-boxington.nix>
+        [
+          "cache"
+          "mr-boxington"
+        ]
+        "mr-boxington"
+        {
+          presets.cache.mr-boxington.enable = true;
+          presets.cache.mr-boxington.scope = "global";
+        };
     expected = {
       enable = true;
       scope = "global";
