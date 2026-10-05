@@ -248,6 +248,8 @@ in
       "ci.matrix.aarch64RunnerProfiles"
       "ci.matrix.allRunnerProfiles"
       "ci.matrix.cartesian"
+      "ci.matrix.currentLtsMatchAny"
+      "ci.matrix.currentLtsRunnerIds"
       "ci.matrix.defaultExpansionProfiles"
       "ci.matrix.defaultFixtureProfiles"
       "ci.matrix.defaultProcessProfiles"

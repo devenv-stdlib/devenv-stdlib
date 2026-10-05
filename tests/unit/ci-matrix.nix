@@ -675,12 +675,12 @@ in
       {
         fullCells = lib.length full.jobs.python.cells;
         prCells = lib.length pr.jobs.python.cells;
-        prRunner = (lib.head pr.jobs.python.cells).runner;
+        inherit ((lib.head pr.jobs.python.cells)) runner;
       };
     expected = {
       fullCells = 2;
       prCells = 1;
-      prRunner = "ubuntu-lts-curr";
+      runner = "ubuntu-lts-curr";
     };
   };
 
@@ -707,12 +707,79 @@ in
       in
       {
         # Job overlay replaces default pr matchAny with match on prev.
-        runner = (lib.head pr.jobs.python.cells).runner;
+        inherit ((lib.head pr.jobs.python.cells)) runner;
         count = lib.length pr.jobs.python.cells;
       };
     expected = {
       runner = "ubuntu-lts-prev";
       count = 1;
+    };
+  };
+
+  # Custom runner ids: pr selects by release metadata, not fixed ubuntu-lts-curr.
+  testExpansionProfilePrUsesRunnerMetadata = {
+    expr =
+      let
+        full = matrix.plan {
+          runnerProfiles = {
+            corp-prev = {
+              os = "linux";
+              distro = "ubuntu";
+              release = "24.04";
+              arch = "x86_64";
+              providers.github_actions.runs-on = [ "ubuntu-24.04" ];
+            };
+            corp-curr = {
+              os = "linux";
+              distro = "ubuntu";
+              release = "26.04";
+              arch = "x86_64";
+              providers.github_actions.runs-on = [ "ubuntu-26.04" ];
+            };
+          };
+          jobs.python = {
+            command = "true";
+            dimensions.runner = [
+              "corp-prev"
+              "corp-curr"
+            ];
+            seeds = [ { version = "3.12"; } ];
+          };
+        };
+        pr = matrix.forProfile full "pr";
+      in
+      {
+        prCount = lib.length pr.jobs.python.cells;
+        inherit ((lib.head pr.jobs.python.cells)) runner;
+        resolved = matrix.currentLtsRunnerIds full.runnerProfiles;
+      };
+    expected = {
+      prCount = 1;
+      runner = "corp-curr";
+      resolved = [ "corp-curr" ];
+    };
+  };
+
+  testExpansionProfilePrEmptyWithoutLtsMetaThrows = {
+    expr = builtins.tryEval (
+      matrix.forProfile (matrix.plan {
+        runnerProfiles = {
+          bare = {
+            os = "linux";
+            arch = "x86_64";
+            providers.github_actions.runs-on = [ "ubuntu-26.04" ];
+          };
+        };
+        jobs.python = {
+          command = "true";
+          dimensions.runner = [ "bare" ];
+          seeds = [ { version = "3.12"; } ];
+        };
+      }) "pr"
+    );
+    expected = {
+      success = false;
+      value = false;
     };
   };
 
