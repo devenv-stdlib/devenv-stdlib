@@ -364,65 +364,67 @@ rec {
     "        - ${fmt (lib.head names)}"
     + lib.concatMapStrings (name: "\n          ${fmt name}") (lib.tail names);
 
-  # Human-readable GitHub Actions job titles. Matrix dims beyond os vary by language.
-  # ''${{ … }} → literal ${{ … }} in the generated workflow YAML.
-  jobDisplayName =
-    name:
-    {
-      python = "Python \${{ matrix.python_version }} (\${{ matrix.os }})";
-      rust = "Rust \${{ matrix.channel }} \${{ matrix.version }} (\${{ matrix.os }})";
-      go = "Go \${{ matrix.version }} (\${{ matrix.os }})";
-      javascript = "JavaScript \${{ matrix.runtime }} \${{ matrix.version }} (\${{ matrix.os }})";
-    }
-    .${name} or "${name} (\${{ matrix.os }})";
-
-  jobYaml = name: rows: testRun: ''
-    ${name}:
-      name: ${jobDisplayName name}
-      runs-on: ''${{ matrix.os }}
-      strategy:
-        fail-fast: false
-        matrix:
-          include:
-    ${lib.concatMapStringsSep "\n" matrixRow (crossOs rows)}
-      steps:
-        - uses: actions/checkout@v4
-        - name: Own workspace under act
-          if: ''${{ env.ACT }}
-          run: |
-            sudo mkdir -p /home/runner/.cache/nix /nix
-            # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
-            # Nested act matrix cells share one /nix volume; recursive chown races with
-            # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
-            sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache
-            if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
-              sudo chown "$(id -u):$(id -g)" /nix
-            fi
-        - uses: cachix/install-nix-action@v31
-        - name: Restore Nix store
-          id: nix-cache
-          if: ''${{ !env.ACT }}
-          uses: nix-community/cache-nix-action/restore@v7
-          with:
-            primary-key: nix-''${{ matrix.os }}-''${{ github.job }}-''${{ hashFiles('devenv.lock', 'devenv.yaml') }}
-            restore-prefixes-first-match: nix-''${{ matrix.os }}-''${{ github.job }}-
-        - uses: cachix/cachix-action@v16
-          with:
-            name: devenv
-        - name: Install devenv
-          run: |
-            # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
-            rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
-            nix profile add "github:cachix/devenv/''${rev}"
-        - name: Test
-          run: ${testRun}
-        - name: Save Nix store
-          if: ''${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
-          uses: nix-community/cache-nix-action/save@v7
-          with:
-            primary-key: ''${{ steps.nix-cache.outputs.primary-key }}
-            gc-max-store-size-linux: 5G
-  '';
+  # displayName stays local so stdlib.versions does not grow a public attr.
+  jobYaml =
+    name: rows: testRun:
+    let
+      # Human-readable GitHub Actions job titles. Matrix dims beyond os vary by language.
+      displayName =
+        {
+          python = "Python \${{ matrix.python_version }} (\${{ matrix.os }})";
+          rust = "Rust \${{ matrix.channel }} \${{ matrix.version }} (\${{ matrix.os }})";
+          go = "Go \${{ matrix.version }} (\${{ matrix.os }})";
+          javascript = "JavaScript \${{ matrix.runtime }} \${{ matrix.version }} (\${{ matrix.os }})";
+        }
+        .${name} or "${name} (\${{ matrix.os }})";
+    in
+    ''
+      ${name}:
+        name: ${displayName}
+        runs-on: ''${{ matrix.os }}
+        strategy:
+          fail-fast: false
+          matrix:
+            include:
+      ${lib.concatMapStringsSep "\n" matrixRow (crossOs rows)}
+        steps:
+          - uses: actions/checkout@v4
+          - name: Own workspace under act
+            if: ''${{ env.ACT }}
+            run: |
+              sudo mkdir -p /home/runner/.cache/nix /nix
+              # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
+              # Nested act matrix cells share one /nix volume; recursive chown races with
+              # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
+              sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache
+              if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
+                sudo chown "$(id -u):$(id -g)" /nix
+              fi
+          - uses: cachix/install-nix-action@v31
+          - name: Restore Nix store
+            id: nix-cache
+            if: ''${{ !env.ACT }}
+            uses: nix-community/cache-nix-action/restore@v7
+            with:
+              primary-key: nix-''${{ matrix.os }}-''${{ github.job }}-''${{ hashFiles('devenv.lock', 'devenv.yaml') }}
+              restore-prefixes-first-match: nix-''${{ matrix.os }}-''${{ github.job }}-
+          - uses: cachix/cachix-action@v16
+            with:
+              name: devenv
+          - name: Install devenv
+            run: |
+              # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
+              rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
+              nix profile add "github:cachix/devenv/''${rev}"
+          - name: Test
+            run: ${testRun}
+          - name: Save Nix store
+            if: ''${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+            uses: nix-community/cache-nix-action/save@v7
+            with:
+              primary-key: ''${{ steps.nix-cache.outputs.primary-key }}
+              gc-max-store-size-linux: 5G
+    '';
 
   nodePackage = version: "nodejs_${lib.versions.major version}";
 
