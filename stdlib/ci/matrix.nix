@@ -237,8 +237,7 @@ let
       mergeRaw =
         job:
         let
-          overlay =
-            if profileName != null then (job.expansionProfiles or { }).${profileName} or { } else { };
+          overlay = if profileName != null then (job.expansionProfiles or { }).${profileName} or { } else { };
         in
         rawBase // overlay;
       # Resolve selectCurrentLts after overlay merge so a job can opt in, and strip
@@ -277,9 +276,7 @@ let
       # effective (post-overlay) profile filters — not only base selectCurrentLts.
       hadCells = lib.any (j: (j.cells or [ ]) != [ ]) (lib.attrValues matrixPlan.jobs);
       keepsCells = lib.any (j: (j.cells or [ ]) != [ ]) (lib.attrValues filteredJobs);
-      anyJobFilters = lib.any (job: profileUsesFilters (mergeRaw job)) (
-        lib.attrValues matrixPlan.jobs
-      );
+      anyJobFilters = lib.any (job: profileUsesFilters (mergeRaw job)) (lib.attrValues matrixPlan.jobs);
     in
     if anyJobFilters && hadCells && !keepsCells then
       throw "ci.matrix: expansion profile removed all cells (no cells matched the profile)"
