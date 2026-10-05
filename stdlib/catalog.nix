@@ -38,7 +38,7 @@ let
   shipped = readTools catalogFile;
   local = readTools localCatalogFile;
 
-  # Local may add tools only; colliding names fight the shipped catalog / copier.
+  # Local may add tools only; colliding names fight the shipped catalog.
   assertNamesUnique =
     entries:
     let

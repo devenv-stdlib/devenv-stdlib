@@ -18,7 +18,7 @@ inputs.devenv-stdlib.url = "github:thedrow/devenv4monorepo/<commit>";
 
 `mkPreset` stays in `stdlib/preset.nix`. It is not an attribute of this attrset.
 
-Generated monorepos pin that GitHub input. Copier does not copy `stdlib/` or `packaging/`.
+Consumers pin that GitHub input and import `stdlib` / `packaging` from the pin (they do not vendor those trees by copying this repo).
 
 ## Version and stability
 
@@ -134,26 +134,24 @@ There is no released public API yet, so empty re-export shims for old
 for shared IDE helpers). Do not reintroduce dead shim files for paths that
 never shipped.
 
-## What Copier writes
+## What consumers pin
 
-`copier copy --trust` renders `consumer-flake.nix.jinja`, then a task moves that file to `flake.nix`. The publisher `flake.nix`, `flake.lock`, `stdlib/`, and `packaging/` stay here (`copier.yml` `_exclude`). `--trust` is required because that move is a Copier task.
-
-The generated input is pinned to the template commit Copier recorded:
+See `consumer-flake.nix.example`. A consumer flake typically looks like:
 
 ```nix
-devenv-stdlib.url = "github:thedrow/devenv4monorepo/{{ _commit }}";
+devenv-stdlib.url = "github:thedrow/devenv4monorepo/<tag-or-sha>";
 nixpkgs.follows = "devenv-stdlib/nixpkgs";
 ```
 
-`copier update --trust` moves `_commit` and that pin together. Den outputs still build from the generated tree (`root = ./.`), so copied `modules/` and `home/` stay local. `mkTool` and `mkPreset` come from the pin.
+Bump the input (and `flake.lock`) when you want a newer framework revision. Den outputs still build from the consumer tree (`root = ./.`). `mkTool` and `mkPreset` come from the pin.
 
-## Presets this template enables
+## Presets this dogfood checkout enables
 
 `presets/omer.nix` is the selection. It calls `mkPreset` from `stdlib/preset.nix`. Its HM `includes` are cohesive bundles via attrpaths:
 
 `terminal.quake`, `terminal.alacritty-atuin`, `ide`, `ide.coderabbit`, `host.hm-only-guard`.
 
-Language support is **not** a megapreset named Python/Rust/…. Local language leaves are first-class `mkTool` modules under `tools/lang/<lang>/…` (same public API as global tools: `tools.<name>.enable`). Thin framework presets under `presets/<lang>/<category>/` keep attrpath identity (`python.lint.ruff`, `rust.lint.rustfmt`, …) and declare `tools = [ tools.python.lint.ruff ]` (plus an explicit `when` when needed); language gating comes from the category policy, not a copied `when` on every leaf. When applied, thin presets set `tools.<name>.enable = true`. Non-tool presets (serena, debtmap, ide, supported, bundler, ci presets, fixtures, …) stay as presets. Copier still decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
+Language support is **not** a megapreset named Python/Rust/…. Local language leaves are first-class `mkTool` modules under `tools/lang/<lang>/…` (same public API as global tools: `tools.<name>.enable`). Thin framework presets under `presets/<lang>/<category>/` keep attrpath identity (`python.lint.ruff`, `rust.lint.rustfmt`, …) and declare `tools = [ tools.python.lint.ruff ]` (plus an explicit `when` when needed); language gating comes from the category policy, not a copied `when` on every leaf. When applied, thin presets set `tools.<name>.enable = true`. Non-tool presets (serena, debtmap, ide, supported, bundler, ci presets, fixtures, …) stay as presets. `languages.*.enable` in the consumer `devenv.local.nix` decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
 
 ## Community tools and presets
 

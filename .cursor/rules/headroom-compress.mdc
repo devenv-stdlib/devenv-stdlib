@@ -9,7 +9,7 @@ alwaysApply: true
 
 Call `headroom_compress` only when a tool result or pasted blob is large enough to waste context (roughly thousands of tokens): long logs, fat search/crawl dumps, huge file reads, big JSON.
 
-Do **not** call Headroom for ordinary edits — code or not (docs, Nix, Copier, commit messages, short files).
+Do **not** call Headroom for ordinary edits — code or not (docs, Nix, commit messages, short files).
 
 ```
 # ❌ BAD — compress a 20-line docs tweak or a one-hunk Nix change

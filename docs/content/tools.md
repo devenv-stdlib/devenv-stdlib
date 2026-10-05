@@ -1,6 +1,6 @@
 # Tools and CLI
 
-A first-session tour of the programs this template installs, with a command you can run here and a link to that project's own docs. When the project is open source and publishes a donations page, that link is included so you can support it.
+A first-session tour of the programs this package installs, with a command you can run here and a link to that project's own docs. When the project is open source and publishes a donations page, that link is included so you can support it.
 
 Commercial products (Cursor, Warp, Cachix's paid caches, GitHub) have no donation link. Projects without a published donations page are docs-only.
 
@@ -21,7 +21,7 @@ nix --version
 
 ### devenv
 
-[devenv](https://devenv.sh/) is the project environment: packages, `languages.*`, processes, git hooks, and tasks. Enter it in a monorepo (or this template) with `devenv shell`. The banner is `devenv4monorepo ready: <user>@<hostname>` in this checkout, or the Copier `name` in a generated monorepo.
+[devenv](https://devenv.sh/) is the project environment: packages, `languages.*`, processes, git hooks, and tasks. Enter it in a monorepo (or this dogfood checkout) with `devenv shell`. The banner is `devenv4monorepo ready: <user>@<hostname>` here, or the `name` from `devenv.local.nix` in a consumer.
 
 ```bash
 devenv shell
@@ -47,15 +47,11 @@ Replaced files get a `.backup` suffix. On flakes-only hosts, `home-switch` and `
 
 ### Copier
 
-[Copier](https://copier.readthedocs.io/en/stable) copies this template into a monorepo and later merges tagged updates. It is on PATH after `home-switch` and inside `devenv shell`.
+[Copier](https://copier.readthedocs.io/en/stable) stays on PATH after `home-switch` and inside `devenv shell` as a general scaffolding CLI (reserved for a future projects feature). **devenv-stdlib is consumed via a Nix flake pin**, not `copier copy`. See [Consume the package](#apply).
 
 ```bash
-copier copy --trust --vcs-ref HEAD /path/to/devenv4monorepo path/to/monorepo
-copier update --trust
-copier check-update
+copier --version
 ```
-
-`copier update --trust` is how generated monorepos receive newer Serena/Headroom/MCP/debtmap pins. `update` / `devenv update` do not rewrite those files. See [Apply](#apply) and [Contribution guide](#contributing).
 
 - Docs: [Copier](https://copier.readthedocs.io/en/stable)
 
@@ -126,7 +122,7 @@ gh pr status
 JSON, search, and find. `rg` respects `.gitignore`. `fd` is the `find` replacement.
 
 ```bash
-jq . copier.yml
+nix flake metadata
 rg 'supported.rust.min'
 fd devenv.local.nix
 ```
@@ -236,7 +232,7 @@ devenv tasks run non-nix:add-local -- --name example-cli --kind cli --scope proj
   --docs 'Example CLI. Docs: https://example.com'
 devenv tasks run non-nix:remove-local -- --name example-cli
 
-# Template authors only (catalog.toml; refuses without includes/update/)
+# Package authors only (catalog.toml; refuses without includes/update/)
 devenv tasks run non-nix:add -- --name example-cli --kind cli --scope project \
   --pin 1.0.0 --mise ubi:owner/example-cli \
   --docs 'Example CLI. Docs: https://example.com'
@@ -250,7 +246,7 @@ Pass `--dry-run` to preview. Each command’s `--help` includes copy-pasteable E
 | Project (`debtmap`, `skills`, plus `catalog.local.toml` project-scope) | generated `mise.toml` (gitignored)           | `mise:install` after `devenv:files` |
 | User (Serena, Headroom, MCP CLIs, navi, …)                             | `~/.config/mise/conf.d/devenv4monorepo.toml` | `home-switch` activation            |
 
-Docker images (when present in the catalogs) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools and sets `pipx.uvx = true` so catalog `pipx:` CLIs use `uv tool install` (Home Manager and devenv `mise:install` put `uv` on PATH; no host `pipx` required). Template authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a monorepo, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get shipped pin moves via `copier update`.
+Docker images (when present in the catalogs) and the devenv VS Code extension share the same catalogs but are not mise `[tools]` — activation/`docker pull` and Marketplace fetch handle those. Languages stay on devenv; the generated TOML disables mise’s `python`/`node`/`rust`/`go` tools and sets `pipx.uvx = true` so catalog `pipx:` CLIs use `uv tool install` (Home Manager and devenv `mise:install` put `uv` on PATH; no host `pipx` required). Package authors bump shipped pins with `update` → `includes/update/non-nix.sh`. In a consumer tree, `update` runs `devenv update` then refreshes `catalog.local.toml` (Nix when promotable, else `mise install`); consumers get framework pin moves by bumping `devenv-stdlib`.
 
 ### Agent skills
 
@@ -262,7 +258,7 @@ skills remove <name>
 skills list
 ```
 
-In this template, `update` runs `includes/update/skills.sh` (`skills update -y -p` after project `mise install`); review the diff before committing, since skills run with the agent's permissions. Generated monorepos receive skill changes through `copier update`. Git hooks skip `.agents/skills/` (vendored text). Excluded on purpose: duplicate TDD/debugging skills, Claude-Code-only bootstrap and subagent skills, hook-driven plugins (`ralph-loop`, `advisor`, `continual-learning`), Anthropic document/Claude-API skills, vendor-product skills, smart-contract and fuzzing suites, and rule bundles such as awesome-cursorrules (always-apply, stale).
+In this publisher checkout, `update` runs `includes/update/skills.sh` (`skills update -y -p` after project `mise install`); review the diff before committing, since skills run with the agent's permissions. Consumers receive skill/pin changes by bumping `devenv-stdlib`. Git hooks skip `.agents/skills/` (vendored text). Excluded on purpose: duplicate TDD/debugging skills, Claude-Code-only bootstrap and subagent skills, hook-driven plugins (`ralph-loop`, `advisor`, `continual-learning`), Anthropic document/Claude-API skills, vendor-product skills, smart-contract and fuzzing suites, and rule bundles such as awesome-cursorrules (always-apply, stale).
 
 - Docs: [Cursor skills](https://cursor.com/docs/skills), [agentskills.io](https://agentskills.io), [skills.sh](https://skills.sh/)
 
@@ -310,13 +306,13 @@ grep -A2 excluded_tools ~/.serena/serena_config.yml
 
 ### Brave Search
 
-Optional. Copier asks for a [Brave Search API](https://brave.com/search/api/) key. Empty skips the MCP. The key lives in gitignored `.env` / SecretSpec, not `.copier-answers.yml`. Home Manager upserts the official `@brave/brave-search-mcp-server` pin from the non-Nix catalog (mise `npm`, STDIO) when `BRAVE_API_KEY` is set. `mcp-secrets-watch` re-upserts when the key changes.
+Optional. Set a [Brave Search API](https://brave.com/search/api/) key in SecretSpec / gitignored `.env`. Empty skips the MCP. Home Manager upserts the official `@brave/brave-search-mcp-server` pin from the non-Nix catalog (mise `npm`, STDIO) when `BRAVE_API_KEY` is set. `mcp-secrets-watch` re-upserts when the key changes.
 
 - Docs: [Brave Search API](https://brave.com/search/api/) · [brave-search-mcp-server](https://github.com/brave/brave-search-mcp-server)
 
 ### Firecrawl
 
-Optional. Copier asks for a [Firecrawl](https://www.firecrawl.dev/) API key (free tier). Empty skips the MCP unless you set `FIRECRAWL_MCP_PROFILE=slim` in `.env` / SecretSpec for keyless-only. Same SecretSpec / `.env` path as Brave.
+Optional. Set a [Firecrawl](https://www.firecrawl.dev/) API key (free tier) in SecretSpec / gitignored `.env`. Empty skips the MCP unless you set `FIRECRAWL_MCP_PROFILE=slim` for keyless-only. Same path as Brave.
 
 **Default when enabled (slim):** Home Manager upserts the hosted keyless MCP URL `https://mcp.firecrawl.dev/v2/mcp` — three tools (`firecrawl_scrape`, `firecrawl_search`, `firecrawl_parse`), low schema tax. The API key is **not** written into `~/.cursor/mcp.json` (Bearer auth on that URL unlocks the full tool surface).
 
@@ -355,7 +351,7 @@ prek run --all-files    # treefmt + residual prek
 
 ### commitlint and semantic-release
 
-Subjects must be [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `ci:`, `test:`, `chore:`). [commitlint](https://commitlint.js.org/) is the `commit-msg` hook (`commitlint.config.mjs`). On push to `master`/`main`, [semantic-release](https://semantic-release.gitbook.io/semantic-release/) (user-global CLI, CI uses `.releaserc.json`) versions and publishes a GitHub Release. Those tags drive `copier copy` / `copier update`.
+Subjects must be [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `ci:`, `test:`, `chore:`). [commitlint](https://commitlint.js.org/) is the `commit-msg` hook (`commitlint.config.mjs`). On push to `master`/`main`, [semantic-release](https://semantic-release.gitbook.io/semantic-release/) (user-global CLI, CI uses `.releaserc.json`) versions and publishes a GitHub Release. Those tags are what consumers pin as `devenv-stdlib` once releases exist.
 
 - Conventional Commits: [conventionalcommits.org](https://www.conventionalcommits.org/)
 - commitlint: [commitlint.js.org](https://commitlint.js.org/)
@@ -404,7 +400,7 @@ refresh-toolchain-latest
 
 ## This documentation site
 
-Live site: [devenv4monorepo.github.io](https://devenv4monorepo.github.io/). Vite + React, [Spectrum](https://spectrum.adobe.com/) web components via [`@lit/react`](https://lit.dev/docs/frameworks/react/), and `react-markdown` + `remark-gfm`. Content is `docs/content/*.md` imported with `?raw`. Template-only (not copied into monorepos). How to edit it: [Contribution guide](#contributing).
+Live site: [devenv4monorepo.github.io](https://devenv4monorepo.github.io/). Vite + React, [Spectrum](https://spectrum.adobe.com/) web components via [`@lit/react`](https://lit.dev/docs/frameworks/react/), and `react-markdown` + `remark-gfm`. Content is `docs/content/*.md` imported with `?raw`. How to edit it: [Contribution guide](#contributing).
 
 ```bash
 docs-dev             # http://localhost:5173

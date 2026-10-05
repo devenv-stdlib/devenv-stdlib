@@ -5,7 +5,7 @@ copies installed with the [Vercel skills CLI](https://github.com/vercel-labs/ski
 `skills-lock.json` at the repo root records source and content hash.
 
 Template checkouts refresh them with `update` (runs `npx skills update -y -p`).
-Generated monorepos receive changes through `copier update`. To add or drop one:
+Consumers receive skill/pin changes by bumping the devenv-stdlib flake pin. To add or drop one here:
 
 ```bash
 npx skills add owner/repo --skill <name> -a cursor -y

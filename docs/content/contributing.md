@@ -1,8 +1,8 @@
 # Contribution guide
 
-This page is for people changing **this template**. To apply it to a monorepo, see [Apply](#apply) and [Bootstrap](#bootstrap).
+This page is for people changing **this package**. To consume it from a monorepo, see [Consume the package](#apply) and [Bootstrap](#bootstrap).
 
-Clone this repository only to develop the template. Generated monorepos get a copy via Copier; they do not need this git history.
+Clone this repository to develop or dogfood devenv-stdlib. Consumers pin the flake; they do not need this full git history.
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@ Clone this repository only to develop the template. Generated monorepos get a co
 - `curl` and a user that can create `/nix`
 - Host [prek](https://prek.j178.dev/), nixfmt, statix, and deadnix (Homebrew on the host). Commit on the host, not inside Docker — VMware user namespaces make `bwrap` flaky.
 
-Languages stay **off** in this repo. Do not enable `languages.javascript` or `languages.typescript` to work on `docs/`; Node comes from `pkgs.nodejs` in `modules/packages/`. `devenv.local.nix` is gitignored here so a local experiment cannot leak into the template.
+Languages stay **off** in this repo. Do not enable `languages.javascript` or `languages.typescript` to work on `docs/`; Node comes from `pkgs.nodejs` in `modules/packages/`. `devenv.local.nix` is gitignored here so a local experiment cannot leak into the published package.
 
 ## First-time setup
 
@@ -27,7 +27,7 @@ devenv shell
 
 ```bash
 devenv shell                 # or direnv allow once
-# edit modules/, home/, copier.yml, docs/content/, …
+# edit modules/, home/, docs/content/, …
 devenv test                  # enterTest + BATS
 test-devenv                  # unit then integration (nix-unit, BATS, nixosTest, actionlint, act)
 test-devenv-unit             # nix-unit + BATS
@@ -39,11 +39,11 @@ devenv update git-hooks      # refresh only the git-hooks lock input
 
 Do not edit `.devenv/` or other generated files. User-facing Nix is `devenv.nix`, `devenv.yaml`, `flake.nix`, `modules/`, and `home/`.
 
-`modules/` is topical: devenv (`hooks/`, `languages/`, `ides/`, `debtmap/`, `packages/`, `update/`, `test/`, `lib/`) plus Den (`aspects/`, `den/`, discovered by flake `import-tree`). `home/ides/` holds editors and the MCP catalog. `modules/devenv.nix` is the devenv barrel (`devenv.yaml` imports it explicitly). Prefer small focused files over growing grab-bags; the Cursor rule `.cursor/rules/nix-module-split.mdc` (copied) requires a split when a module mixes concerns, grows past ~100 lines, or duplicates patterns in the same directory. Obvious cuts land in the same change; large ambiguous moves need a proposed tree first.
+`modules/` is topical: devenv (`hooks/`, `languages/`, `ides/`, `debtmap/`, `packages/`, `update/`, `test/`, `lib/`) plus Den (`aspects/`, `den/`, discovered by flake `import-tree`). `home/ides/` holds editors and the MCP catalog. `modules/devenv.nix` is the devenv barrel (`devenv.yaml` imports it explicitly). Prefer small focused files over growing grab-bags; the Cursor rule `.cursor/rules/nix-module-split.mdc` requires a split when a module mixes concerns, grows past ~100 lines, or duplicates patterns in the same directory. Obvious cuts land in the same change; large ambiguous moves need a proposed tree first.
 
 ## Maintainer workflow
 
-Clone this repo only to change the template. Bumping a shipped pin here is how the **next tag** (semantic-release) gives users a newer tool via `copier update`.
+Clone this repo to change the package. Bumping a shipped pin here is how the **next tag** (semantic-release) gives consumers a newer tool when they bump the flake pin.
 
 ```bash
 devenv shell
@@ -56,7 +56,7 @@ refresh-toolchain-latest  # endoflife catalog; separate from update
 
 `update` in this checkout does **not** run a full `devenv update`. Lock policy stays: `git-hooks` weekly; nixpkgs only when intended. Bump the `devenv` input (and matching `require_version` / CLI install pin) only when intentionally moving to a new devenv release.
 
-When adding a non-Nix tool to the **template**: run `devenv tasks run non-nix:add -- …` (or edit `modules/non-nix/catalog.toml` by hand) so each `[[tool]]` has a one-line `#` comment (what it does + docs URL), keep install via mise or the existing Docker/Marketplace path, and let `includes/update/non-nix.sh` bump the pin. Document it. Remove with `non-nix:remove`. Monorepo teams use `non-nix:add-local` / `non-nix:remove-local` against `modules/non-nix/catalog.local.toml` instead (committed; `update` refreshes them). The author Cursor rule enforces the comment shape. Consumers still get shipped pin moves only after a release + `copier update`. Vendored agent skills: `skills add … -a cursor -y` from the repo root (project mise PATH), then list the source in `.agents/skills/README.md`; `update` refreshes them via `includes/update/skills.sh`.
+When adding a non-Nix tool to the **package**: run `devenv tasks run non-nix:add -- …` (or edit `modules/non-nix/catalog.toml` by hand) so each `[[tool]]` has a one-line `#` comment (what it does + docs URL), keep install via mise or the existing Docker/Marketplace path, and let `includes/update/non-nix.sh` bump the pin. Document it. Remove with `non-nix:remove`. Monorepo teams use `non-nix:add-local` / `non-nix:remove-local` against `modules/non-nix/catalog.local.toml` instead (committed; `update` refreshes them). The author Cursor rule enforces the comment shape. Consumers still get shipped pin moves only after a release + bumping `devenv-stdlib`. Vendored agent skills: `skills add … -a cursor -y` from the repo root (project mise PATH), then list the source in `.agents/skills/README.md`; `update` refreshes them via `includes/update/skills.sh`.
 
 ## Generated files
 
@@ -75,12 +75,13 @@ Tracked generated files are **not** written on `enterShell`. Dry-run on shell en
 | `.debtmap.toml` | `modules/debtmap/` | gitignored | `devenv:files` |
 | `mise.toml` | `modules/mise/` from `modules/non-nix/catalog.toml` (+ `catalog.local.toml`) | gitignored | `devenv:files` |
 | `.pre-commit-config.yaml` | git-hooks.nix / prek | gitignored | git-hooks |
-| `.env` | Copier from `.env.jinja` when keys were pasted | gitignored | Copier |
+| `.env` | SecretSpec dotenv (Brave / Firecrawl keys) | gitignored | SecretSpec |
 | `devenv.lock` | devenv CLI | committed | `devenv update` |
+
 
 ## Documentation site
 
-Published at [devenv4monorepo.github.io](https://devenv4monorepo.github.io/). The app lives in `docs/` (Vite, React, Spectrum web components, markdown via `?raw`, fenced `bash`/`nix` blocks highlighted with [Shiki](https://shiki.style/)). Copier does **not** copy `docs/` or `.github/workflows/pages.yml`.
+Published at [devenv4monorepo.github.io](https://devenv4monorepo.github.io/). The app lives in `docs/` (Vite, React, Spectrum web components, markdown via `?raw`, fenced `bash`/`nix` blocks highlighted with [Shiki](https://shiki.style/)).
 
 ```bash
 docs-dev                     # http://localhost:5173
@@ -97,7 +98,7 @@ The README is marketing. Do not mirror these pages into `README.md`.
 refresh-toolchain-latest
 ```
 
-Fetches [endoflife.date](https://endoflife.date) into `modules/languages/catalog.json` and Copier max defaults (`includes/toolchain-latest.yml`). `includes/` is template-only (`_exclude`). The catalog JSON **does** ship with generated monorepos.
+Fetches [endoflife.date](https://endoflife.date) into `modules/languages/catalog.json` and `includes/toolchain-latest.yml`. `includes/` holds publisher pin-refresh scripts; the catalog JSON ships with the package tree consumers can copy patterns from.
 
 ## Tests
 
@@ -105,7 +106,6 @@ Fetches [endoflife.date](https://endoflife.date) into `modules/languages/catalog
 bats -r --jobs "$(nproc)" tests
 bats tests/setup
 bats tests/home
-bats tests/copier.bats
 test-devenv                  # unit then integration; writes junit/*.xml
 test-devenv-unit             # nix-unit + BATS
 test-devenv-integration      # nixosTest, actionlint, act
@@ -118,8 +118,7 @@ build-act-image              # devenv-act:24.04 for local act
 | `tools/**/tests/{unit,integration}/` | Per-tool suites (discovered; not imported into the main suite) |
 | `presets/**/tests/{unit,integration}/` | Per-preset suites (discovered) |
 | `tests/setup/setup.bats` | `setup.sh` (sources the script; `main` guard) |
-| `tests/copier.bats` | `copier copy` / `update`; answers omit secret keys; not copied into monorepos |
-| `tests/update.bats` | `update` template vs consumer; pin helpers; skills refresher (stubbed `npx`); no live registry |
+| `tests/update.bats` | `update` publisher vs consumer; pin helpers; skills refresher (stubbed `npx`); no live registry |
 | `tests/skills.bats` | `.agents/skills/` ↔ `skills-lock.json` consistency; every source attributed in `.agents/skills/README.md` |
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
 | `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
@@ -153,52 +152,44 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 
 `prek` runs `pre-commit` and `commit-msg`. `hooks/reference-transaction` (installed on `enterShell`) runs the suite when a tag is created or force-moved. `DEVENV_SKIP_TAG_TESTS=1 git tag …` bypasses it. The hook is a no-op when `CI` or `GITHUB_ACTIONS` is set.
 
-## Copier exclusions
-
-`copier.yml` `_exclude` replaces Copier’s defaults. Keep generated noise **and** template-only paths: `includes`, `docs`, `tests/copier.bats`, `.github/workflows/pages.yml`, `.cursor/rules/non-nix-update.mdc`, `/flake.nix`, `/flake.lock`, `/stdlib`, `/packaging`. Copier applies those patterns to the destination path, so the consumer flake is rendered as `consumer-flake.nix` and `_tasks` moves it to `flake.nix`. If you add another template-only path, exclude it and assert that in `tests/copier.bats`.
-
-`_skip_if_exists` leaves a destination `README.md` alone. Questionnaire output is `devenv.local.nix`, not a Jinja `devenv.nix`.
 
 ## Repository layout
 
 | Path | Role |
 | --- | --- |
 | `setup.sh` | Host bootstrap (Nix, devenv, Cachix, Home Manager) |
-| `copier.yml` | Questions and `_exclude` (not copied) |
-| `devenv.local.nix.jinja` | Renders consumer `devenv.local.nix` |
-| `includes/` | Catalog refresh, Copier max YAML, and pin refreshers (`includes/update/non-nix.sh`, `skills.sh`; not copied) |
+| `includes/` | Catalog refresh YAML and pin refreshers (`includes/update/non-nix.sh`, `skills.sh`) |
 | `modules/non-nix/` | Shipped `catalog.toml`, `edit-catalog.sh`, optional `catalog.local.toml` (monorepo), resolve/TOML helpers |
 | `modules/mise/` | Project `mise.toml` + `mise:install` |
 | `home/mise.nix` | User mise conf.d + activation install/pull |
-| `.cursor/rules/worktrees-and-stacked-prs.mdc` | One worktree+branch per feature; stack related PRs with `gh stack` (copied) |
-| `.cursor/rules/update.mdc` | Consumer rule: `update` vs `copier update` (copied) |
-| `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules; topical `modules/` layout (copied) |
+| `.cursor/rules/worktrees-and-stacked-prs.mdc` | One worktree+branch per feature; stack related PRs with `gh stack` |
+| `.cursor/rules/update.mdc` | Consumer rule: `update` vs devenv-stdlib pin |
+| `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules; topical `modules/` layout |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large blobs (copied; `~/.cursor/rules/` after `home-switch`) |
-| `.cursor/rules/navi-cheatsheets.mdc` | Prefer extending `cheats/*.cheat`; navi syntax (copied) |
-| `.cursor/rules/non-nix-update.mdc` | Author pin/refresher rule (not copied) |
+| `.cursor/rules/navi-cheatsheets.mdc` | Prefer extending `cheats/*.cheat`; navi syntax |
+| `.cursor/rules/non-nix-update.mdc` | Author pin/refresher rule |
 | `.agents/skills/` / `skills-lock.json` | Vendored Cursor skills (Vercel skills CLI; `includes/update/skills.sh` refreshes; copied) |
 | `cheats/` | Repo-local navi sheets (`NAVI_PATH` via `devenv shell`; copied) |
-| `modules/languages/catalog.json` | Cycle → latest patch and EOL (copied) |
-| `modules/update/` | `update` script (template pins vs consumer lock; copied) |
-| `docs/` | Pages site (not copied) |
+| `modules/languages/catalog.json` | Cycle → latest patch and EOL |
+| `modules/update/` | `update` script (publisher pins vs consumer lock) |
+| `docs/` | Pages site |
 | `devenv.nix` / `devenv.yaml` / `devenv.lock` | Shell, inputs, lock |
-| `flake.nix` | Publisher flake (template repo only). Outputs `stdlib` and `lib` are the devenv-stdlib attrset |
-| `consumer-flake.nix.jinja` | Consumer flake template. `_tasks` moves the render onto `flake.nix` |
-| `stdlib/` | `mkTool`, `mkPreset`, `den.load`, `devenv.load`, `version.nix` (not copied) |
+| `flake.nix` | Publisher flake. Outputs `stdlib` and `lib` are the devenv-stdlib attrset |
+| `consumer-flake.nix.example` | Example consumer flake that pins devenv-stdlib |
+| `stdlib/` | `mkTool`, `mkPreset`, `den.load`, `devenv.load`, `version.nix` |
 | `packaging/den-outputs.nix` | Den flake body. Publisher passes `root = ./.`; consumers import it from the pin |
-| `presets/omer.nix` | Preset names this template enables (copied) |
+| `presets/omer.nix` | Preset names this dogfood checkout enables |
 | `modules/{aspects,den}/` | Den Home Manager composition (import-tree) |
 | `home/` | Home Manager modules |
 | `home/navi.nix` | `NAVI_PATH` → pinned denisidoro/cheats |
 | `home/ides/` | Editors (Cursor, opt-in VS Code, neovim via nixvim, nano), MCP catalog, Cursor LLM context |
 | `tools/ide/neovim.nix` | Global `neovim` tool → `programs.nixvim` (flake input `nixvim`) |
 | `presets/ide/neovim.nix` | Thin preset attrpath `ide.neovim` (one-tool; hub `ide` still bundles) |
-| `secretspec.toml` | Optional `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` / `FIRECRAWL_MCP_PROFILE` (copied) |
+| `secretspec.toml` | Optional `BRAVE_API_KEY` / `FIRECRAWL_API_KEY` / `FIRECRAWL_MCP_PROFILE` |
 | `home/load-secrets.sh` | `secretspec export` then `.env`; used by `home-switch` |
 | `home/watch-mcp-secrets.sh` | Re-upsert Brave/Firecrawl MCP when SecretSpec keys change |
 | `home/nix-path.sh` | `nixpkgs=flake:nixpkgs` fallback, drops missing `NIX_PATH` dirs; used by `setup.sh`, `home-switch`, `test-devenv` |
 | `home/docker-rootless.sh` | Default `DOCKER_HOST` to `$XDG_RUNTIME_DIR/docker.sock` |
-| `.env.jinja` | Renders gitignored `.env` when Copier was given those keys |
 | `stdlib/` | Framework API (`default.nix`, `version.nix`, categories, harness foundations). Import path is `stdlib`, not `lib/` |
 | `modules/` | Barrel `devenv.nix` plus topical packages, languages, ides, hooks, debtmap, mise, non-nix, update, test, lib |
 | `hooks/reference-transaction` | Tag guard |
@@ -210,4 +201,4 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 
 In **this** repo, `devenv.local.nix` and `home.local.nix` stay gitignored. Put host-only Home Manager lines in `home.local.nix`. Do not commit language enables here.
 
-In a **generated** monorepo, commit `devenv.local.nix`, and add extras below the Copier block (`devenv.local.nix.example`).
+In a **consumer** monorepo, commit `devenv.local.nix`, and add extras from `devenv.local.nix.example`.

@@ -34,7 +34,7 @@ else
           # supported.rust.edition is set, pass it. When unset, omit --edition
           # so rustfmt.toml can supply it (bare rustfmt otherwise defaults to
           # 2015). Always keep skip_children so out-of-line modules are not
-          # double-formatted. Prefer setting supported.rust.edition (Copier
+          # double-formatted. Prefer setting supported.rust.edition (
           # does) for an explicit workspace edition.
           treefmt.config =
             if edition != null then

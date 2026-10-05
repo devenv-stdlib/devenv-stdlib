@@ -1,5 +1,5 @@
 # Non-Nix tool pins. Do not hand-edit pins to "upgrade" — run `update`
-# (includes/update/non-nix.sh) or wait for copier update.
+# (includes/update/non-nix.sh) or bump the devenv-stdlib flake pin.
 # Each [[tool]] needs a one-line comment: what it does + where to read more.
 
 # Fast Python package installer; mise pipx: tools use `uv tool install`. Docs: https://docs.astral.sh/uv/

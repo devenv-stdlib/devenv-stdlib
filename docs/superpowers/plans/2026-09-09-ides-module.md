@@ -38,7 +38,7 @@
 **Files:**
 - Create: `modules/ides/{default.nix,lib.nix,vscode/{extensions.nix,settings.nix,sync.nix},cursor/default.nix}`
 - Delete: `modules/languages/cursor.nix`
-- Modify: `modules/devenv.nix`, `.gitignore`, `.gitignore.jinja`
+- Modify: `modules/devenv.nix`, `.gitignore`
 
 - [ ] Extract settings/selected packs into `modules/ides/lib.nix`
 - [ ] VS Code modules write `.vscode/extensions.json` and parameterized sync

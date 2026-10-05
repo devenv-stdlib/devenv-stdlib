@@ -10,7 +10,7 @@ Also own **MCP registration** in the IDE/harness layer: one shared catalog of MC
 
 - Installing the VS Code application by default.
 - Changing Serena’s **project** config (`.serena/project.yml` `language_servers`); that stays language-gated via `presets/<lang>/<category>/*.nix`. Only the **MCP server entry** (how Serena is registered with an IDE/harness) moves into the shared MCP catalog.
-- Changing which language packs exist or how Copier enables `languages.*`.
+- Changing which language packs exist or how `languages.*` enable flags are set.
 - Adopting `programs.vscode` / `programs.cursor` (they overwrite user settings JSON).
 - Implementing Claude Code / Codex / Cortex harnesses in this change (layout and catalog must make them additive).
 
@@ -82,7 +82,7 @@ Serena project `language_servers` come from `presets/<lang>/<category>/*.nix` (n
 
 ### MCP catalog (`home/ides/mcp/`)
 
-Shared definitions for MCP servers the template ships:
+Shared definitions for MCP servers the package ships:
 
 | Server | Notes |
 | --- | --- |
@@ -157,7 +157,7 @@ Update in the same session as the code (separate `docs:` commit when committing)
 | `docs/content/contributing.md` | Topical `modules/` / `home/` lists; generated-file table paths |
 | `docs/content/architecture.md` | IDEs follow `modules/ides/`; MCP catalog under `home/ides/mcp/`; language packs still from `languages.*` |
 | `docs/content/tools.md` / `terminal.md` | Cursor paths; VS Code opt-in; MCP owned by harness layer |
-| `.gitignore` / `.gitignore.jinja` | Comment paths for generated `.vscode/extensions.json` |
+| `.gitignore` | Comment paths for generated `.vscode/extensions.json` |
 
 ## Tests
 

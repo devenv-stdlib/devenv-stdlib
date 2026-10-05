@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Template: refresh shipped non-Nix pins in includes/update/.
+# Publisher checkout: refresh shipped non-Nix pins in includes/update/.
 # Consumer: devenv update, then catalog.local.toml tools, then update.local.sh.
 set -euo pipefail
 
@@ -12,7 +12,7 @@ fi
 refresh_dir=$root/includes/update
 
 if [[ -d $refresh_dir ]]; then
-  echo "update: template mode ($refresh_dir); not running devenv update"
+  echo "update: publisher mode ($refresh_dir); not running devenv update"
   shopt -s nullglob
   scripts=("$refresh_dir"/*.sh)
   if [[ ${#scripts[@]} -gt 0 ]]; then
@@ -50,7 +50,8 @@ elif [[ -e $local_hook ]]; then
 fi
 
 cat <<'EOF'
-Template-shipped tools (Serena, Headroom, MCP pins, debtmap, …)
-move only via copier update. Team tools live in modules/non-nix/catalog.local.toml
-and are refreshed by this `update` (Nix when promotable, else mise).
+Framework-shipped tools (Serena, Headroom, MCP pins, debtmap, …)
+move when you bump the devenv-stdlib flake input. Team tools live in
+modules/non-nix/catalog.local.toml and are refreshed by this `update`
+(Nix when promotable, else mise).
 EOF

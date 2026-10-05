@@ -38,7 +38,7 @@ nixpkgs:
 require_version: true
 
 # Optional secrets (Brave, Firecrawl). Never in Nix or
-# .copier-answers.yml. required = false so eval / tests work when unset.
+# required = false so eval / tests work when unset.
 # Default provider is dotenv (CI-safe). Override with SECRETSPEC_PROVIDER
 # or devenv.local.yaml (keyring, env, onepassword, …). home-switch runs
 # `secretspec export` then falls back to sourcing .env.

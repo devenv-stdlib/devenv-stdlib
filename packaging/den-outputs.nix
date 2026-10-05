@@ -1,7 +1,7 @@
-# Den flake body shared by this repo and by Copier-generated projects.
+# Den flake body shared by this publisher checkout and by consumer flakes.
 # `root` is the consumer tree (local modules, presets, tools).
 # `stdlib` is the published devenv-stdlib attrset. The default reads ./stdlib
-# from `root`, which exists in this repo and is excluded from Copier copies.
+# from `root` (this repo). Consumers pass `stdlib = inputs.devenv-stdlib.stdlib`.
 {
   inputs,
   root,
@@ -36,7 +36,7 @@ let
       warnings = lib.mkAfter [ (report.mkEvalWarning inv) ];
     };
 
-  # Recommended Den pattern (minimal template): import-tree discovers .nix modules.
+  # Recommended Den pattern (minimal consumer): import-tree discovers .nix modules.
   # Scoped to Den subtrees so devenv modules under modules/ are not double-imported.
   # modules/den/_cascades/ is skipped by import-tree's default `/_` filter (pure data).
   # stdlib.den.load registers tools/** as leaf aspects (P1). Profilers stay opt-in.

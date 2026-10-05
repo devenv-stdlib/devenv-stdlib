@@ -1,6 +1,6 @@
 { pkgs, ... }:
 {
-  # User-global CLI so monorepos can `copier copy` / `copier update`
-  # this template without entering devenv shell.
+  # User-global Copier CLI (kept for a future projects feature).
+  # Package consumption is via the devenv-stdlib flake pin, not Copier.
   home.packages = [ pkgs.copier ];
 }

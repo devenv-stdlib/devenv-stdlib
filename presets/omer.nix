@@ -33,7 +33,7 @@ in
   imports = [
     (mkPreset {
       path = [ "omer" ];
-      description = "Presets this template enables by attrpath from devenv-stdlib";
+      description = "Presets this dogfood checkout enables by attrpath from devenv-stdlib";
       when = _: true;
       includes = with presets; [
         terminal.quake
