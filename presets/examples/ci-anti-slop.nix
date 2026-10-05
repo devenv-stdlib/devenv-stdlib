@@ -16,6 +16,9 @@
 #     maxFailures = 4;
 #     closePr = true;
 #     exemptDraftPrs = true;
+#     # Empty = no author-association exemptions (owners scanned too).
+#     # Marketplace default is "OWNER,MEMBER,COLLABORATOR".
+#     exemptAuthorAssociation = "";
 #     extraWith = {
 #       # "min-account-age" = "0";
 #     };

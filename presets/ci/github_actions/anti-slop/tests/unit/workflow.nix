@@ -94,6 +94,7 @@ let
     maxFailures = 4;
     closePr = true;
     exemptDraftPrs = true;
+    exemptAuthorAssociation = "";
     extraWith = { };
   };
 in
@@ -132,6 +133,7 @@ in
         maxFailures = marker.maxFailures or 0;
         closePr = marker.closePr or false;
         exemptDraftPrs = marker.exemptDraftPrs or false;
+        exemptAuthorAssociation = marker.exemptAuthorAssociation or "unset";
         hasSync = cfg.scripts ? sync-anti-slop-workflow;
         syncCopiesPrQuality = contains "pr-quality.yml" sync;
         enterHasSync = contains "sync-anti-slop-workflow" cfg.enterShell;
@@ -144,6 +146,7 @@ in
       maxFailures = 4;
       closePr = true;
       exemptDraftPrs = true;
+      exemptAuthorAssociation = "";
       hasSync = true;
       syncCopiesPrQuality = true;
       enterHasSync = true;
@@ -170,6 +173,9 @@ in
         hasMax = contains ''max-failures: "4"'' yaml;
         hasClose = contains ''close-pr: "true"'' yaml;
         hasExemptDraft = contains ''exempt-draft-prs: "true"'' yaml;
+        # Empty association list: owners/members/collaborators are scanned too.
+        hasExemptAuthorEmpty = contains ''exempt-author-association: ""'' yaml;
+        lacksOwnerExempt = !(contains "OWNER" yaml);
         hasRunner = contains "runs-on: ubuntu-24.04" yaml;
         # No checkout — action uses the GitHub API only (no untrusted PR tree).
         hasCheckout = contains "actions/checkout" yaml;
@@ -187,6 +193,8 @@ in
       hasMax = true;
       hasClose = true;
       hasExemptDraft = true;
+      hasExemptAuthorEmpty = true;
+      lacksOwnerExempt = true;
       hasRunner = true;
       hasCheckout = false;
     };

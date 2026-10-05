@@ -69,6 +69,19 @@ in
           default = true;
           description = "anti-slop `exempt-draft-prs` — skip all checks on draft PRs.";
         };
+        exemptAuthorAssociation = lib.mkOption {
+          type = lib.types.str;
+          # Marketplace default is OWNER,MEMBER,COLLABORATOR. Empty string
+          # disables all author-association exemptions so owners are scanned.
+          default = "";
+          description = ''
+            anti-slop `exempt-author-association` — comma-separated GitHub
+            author associations exempt from all checks. Empty (default) means
+            no association is exempt (owners included). Marketplace default is
+            `OWNER,MEMBER,COLLABORATOR`.
+          '';
+          example = "MEMBER,COLLABORATOR";
+        };
         extraWith = lib.mkOption {
           type = lib.types.attrsOf lib.types.str;
           default = { };
@@ -114,6 +127,7 @@ in
           maxFailures
           closePr
           exemptDraftPrs
+          exemptAuthorAssociation
           ;
         workflow = "pr-quality.yml";
       };
