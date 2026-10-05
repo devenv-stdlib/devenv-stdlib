@@ -55,6 +55,14 @@ let
 
   # Shared JS/TS presets live under javascript.* but apply when either
   # language is available. Leaves set categoryPolicy = "javascript-or-typescript".
+  # Groups feed unused-category warnings so sibling lint usage counts for both.
+  anyOfLanguageGroups = [
+    [
+      "javascript"
+      "typescript"
+    ]
+  ];
+
   mkAnyLanguagePolicy =
     langs:
     let
@@ -91,10 +99,7 @@ let
     languagePolicies
     // servicePolicies
     // {
-      javascript-or-typescript = mkAnyLanguagePolicy [
-        "javascript"
-        "typescript"
-      ];
+      javascript-or-typescript = mkAnyLanguagePolicy (builtins.head anyOfLanguageGroups);
     };
 
   policyIds = lib.sort (a: b: a < b) (builtins.attrNames policies);
@@ -233,6 +238,7 @@ in
   inherit
     policies
     policyIds
+    anyOfLanguageGroups
     languageAvailable
     serviceAvailable
     mkLanguagePolicy

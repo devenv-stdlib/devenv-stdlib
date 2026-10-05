@@ -148,6 +148,95 @@ in
     };
   };
 
+  # Docs site (and other TS-only consumers) enable languages.typescript and get
+  # Prettier via javascript.lint.prettier (javascript-or-typescript). That must
+  # clear lang.typescript.linters — not only lang.javascript.linters.
+  testCategoryWarningsSharedJsTsLintClearsTypescriptLinters = {
+    expr =
+      let
+        ws = warnFor {
+          config = {
+            languages.typescript.enable = true;
+          };
+          leaves = [
+            {
+              path = [
+                "javascript"
+                "lint"
+                "prettier"
+              ];
+              result = {
+                applied = true;
+                triggered = true;
+                inert = false;
+              };
+            }
+            {
+              path = [
+                "typescript"
+                "bundler"
+              ];
+              result = {
+                applied = true;
+                triggered = true;
+                inert = false;
+              };
+            }
+          ];
+        };
+      in
+      {
+        noTypescript = !(hasWarn "lang.typescript" ws);
+        noTypescriptLinters = !(hasWarn "lang.typescript.linters" ws);
+        # javascript itself is not available → no javascript warnings either.
+        noJavascript = !(hasWarn "lang.javascript" ws);
+        noJavascriptLinters = !(hasWarn "lang.javascript.linters" ws);
+      };
+    expected = {
+      noTypescript = true;
+      noTypescriptLinters = true;
+      noJavascript = true;
+      noJavascriptLinters = true;
+    };
+  };
+
+  testCategoryWarningsSharedJsTsToolClearsTypescriptLinters = {
+    expr =
+      let
+        ws = warnFor {
+          config = {
+            languages.typescript.enable = true;
+          };
+          tools = [
+            {
+              name = "prettier";
+              category = "lang.javascript.linters";
+              enable = true;
+            }
+          ];
+          leaves = [
+            {
+              path = [
+                "typescript"
+                "debtmap"
+              ];
+              result = {
+                applied = true;
+                triggered = true;
+                inert = false;
+              };
+            }
+          ];
+        };
+      in
+      {
+        noTypescriptLinters = !(hasWarn "lang.typescript.linters" ws);
+      };
+    expected = {
+      noTypescriptLinters = true;
+    };
+  };
+
   testCategoryWarningsServiceUnused = {
     expr =
       let
