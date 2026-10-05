@@ -463,7 +463,13 @@ rec {
   cellToReportRow =
     plan: cell:
     let
-      os = cell.os or (gha.ghaOs plan cell);
+      rawOs = cell.os or (gha.ghaOs plan cell);
+      # Legacy report rows use string os (crossOs shape); flatten label lists.
+      os =
+        if builtins.isList rawOs then
+          if lib.length rawOs == 1 then lib.head rawOs else lib.concatStringsSep "," rawOs
+        else
+          rawOs;
     in
     removeAttrs (cell // { inherit os; }) [
       "runner"

@@ -308,6 +308,47 @@ in
     };
   };
 
+  testGhaPreservesMultiLabelRunsOn = {
+    expr =
+      let
+        plan = matrix.plan {
+          runnerProfiles.gpu = {
+            os = "linux";
+            arch = "x86_64";
+            providers.github_actions.runs-on = [
+              "self-hosted"
+              "linux"
+              "x64"
+              "gpu"
+            ];
+          };
+          jobs.gpu = {
+            command = "true";
+            dimensions.runner = [ "gpu" ];
+            seeds = [ { version = "1"; } ];
+          };
+        };
+        yaml = gha.render plan;
+        pythonYaml = versions.workflowText {
+          pythonOn = true;
+          python = versions.emptyPython // {
+            min = "3.12";
+          };
+        };
+      in
+      {
+        multiLabel = contains ''os: ["self-hosted", "linux", "x64", "gpu"]'' yaml;
+        # Single-label default profiles still render (as a one-element YAML list).
+        singleLabelList = contains ''os: ["ubuntu-24.04"]'' pythonYaml;
+        notHeadOnly = !(contains ''os: "self-hosted"'' yaml);
+      };
+    expected = {
+      multiLabel = true;
+      singleLabelList = true;
+      notHeadOnly = true;
+    };
+  };
+
   testMatrixMaxCellsThrows = {
     expr = builtins.tryEval (
       matrix.expand {

@@ -20,9 +20,8 @@ let
     in
     if runs == null then
       cell.os or (throw "ci.backends.github_actions: cell missing runner profile and os")
-    else if builtins.isList runs then
-      lib.head runs
     else
+      # Preserve multi-label runs-on lists; scalars stay scalars.
       runs;
 
   # Fields that must not appear in strategy.matrix.include rows.
@@ -61,7 +60,7 @@ let
     attrs:
     let
       names = [ "os" ] ++ lib.filter (n: n != "os") (lib.attrNames attrs);
-      # Booleans must be unquoted so ${{ matrix.optional }} is a real bool.
+      # Booleans unquoted for ${{ matrix.optional }}; lists as YAML arrays.
       fmt =
         name:
         let
@@ -69,6 +68,8 @@ let
         in
         if builtins.isBool v then
           "${name}: ${if v then "true" else "false"}"
+        else if builtins.isList v then
+          "${name}: [${lib.concatStringsSep ", " (map builtins.toJSON v)}]"
         else
           "${name}: \"${toString v}\"";
     in
