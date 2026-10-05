@@ -54,19 +54,20 @@ let
   evalCache =
     presetModule: extra:
     lib.evalModules {
-      specialArgs.den = pe.denStub or {
-        lib.policy = {
-          include = value: {
-            __policyEffect = "include";
-            inherit value;
+      specialArgs.den =
+        pe.denStub or {
+          lib.policy = {
+            include = value: {
+              __policyEffect = "include";
+              inherit value;
+            };
+            exclude = value: {
+              __policyEffect = "exclude";
+              inherit value;
+            };
           };
-          exclude = value: {
-            __policyEffect = "exclude";
-            inherit value;
-          };
+          aspects = { };
         };
-        aspects = { };
-      };
       modules = [
         denOptions
         presetModule
@@ -107,13 +108,17 @@ let
 in
 {
   testCacheBuildCleanerPresetScopeGlobal = {
-    expr = toolEnableFromPresetAspect <devenv4monorepo/presets/cache/build-cleaner.nix> [
-      "cache"
-      "build-cleaner"
-    ] "build-cleaner" {
-      presets.cache.build-cleaner.enable = true;
-      presets.cache.build-cleaner.scope = "global";
-    };
+    expr =
+      toolEnableFromPresetAspect <devenv4monorepo/presets/cache/build-cleaner.nix>
+        [
+          "cache"
+          "build-cleaner"
+        ]
+        "build-cleaner"
+        {
+          presets.cache.build-cleaner.enable = true;
+          presets.cache.build-cleaner.scope = "global";
+        };
     expected = {
       enable = true;
       scope = "global";
@@ -124,13 +129,17 @@ in
   };
 
   testCacheBuildCleanerPresetLocalConfigureLeavesToolOff = {
-    expr = toolEnableFromPresetAspect <devenv4monorepo/presets/cache/build-cleaner.nix> [
-      "cache"
-      "build-cleaner"
-    ] "build-cleaner" {
-      presets.cache.build-cleaner.enable = true;
-      presets.cache.build-cleaner.scope = "local";
-    };
+    expr =
+      toolEnableFromPresetAspect <devenv4monorepo/presets/cache/build-cleaner.nix>
+        [
+          "cache"
+          "build-cleaner"
+        ]
+        "build-cleaner"
+        {
+          presets.cache.build-cleaner.enable = true;
+          presets.cache.build-cleaner.scope = "local";
+        };
     expected = {
       enable = true;
       scope = "local";
