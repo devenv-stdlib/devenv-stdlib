@@ -23,7 +23,9 @@ in
     # break. presets/examples/ is documentation only.
     # CI language/OS matrix strategy is
     # presets/ci/github_actions/language-matrix.nix
-    # (attrpath ci.github_actions.language-matrix).
+    # (attrpath ci.github_actions.language-matrix). Forge-side PR gates
+    # (pr-metrics, anti-slop, aletheore) are sibling github_actions writers.
+
     ./debtmap/hooks.nix
     ./languages
     ./debtmap
