@@ -367,8 +367,7 @@ rec {
     ];
 
   # Compat shims — prefer stdlib.ci.backends.github_actions.*.
-  matrixRow = gha.matrixRow;
-  padJob = gha.padJob;
+  inherit (gha) matrixRow padJob;
   jobYaml =
     name: rows: testRun:
     let
@@ -464,7 +463,7 @@ rec {
   cellToReportRow =
     plan: cell:
     let
-      os = if cell ? os then cell.os else gha.ghaOs plan cell;
+      os = cell.os or (gha.ghaOs plan cell);
     in
     removeAttrs (cell // { inherit os; }) [
       "runner"
@@ -524,7 +523,7 @@ rec {
     args:
     let
       plan = languageMatrixPlan args;
-      jobs = plan.jobs;
+      inherit (plan) jobs;
       langOrder = [
         "python"
         "rust"
@@ -558,7 +557,7 @@ rec {
       };
     in
     {
-      empty = (matrix.report plan).empty;
+      inherit ((matrix.report plan)) empty;
       runners = ubuntuRunners;
       languages = {
         python = langRows "python" pythonOn;
