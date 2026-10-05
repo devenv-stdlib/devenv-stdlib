@@ -29,7 +29,8 @@ let
 
   # Aletheore MCP is repo-scoped (`aletheore mcp <abs-path>`). User-global
   # ~/.cursor/mcp.json has no single project root, so resolve via the path
-  # home-switch writes for this monorepo, then DEVENV_ROOT, then PWD.
+  # home-switch writes for this monorepo, then DEVENV_ROOT. Never fall back to
+  # $PWD — Cursor may start outside the monorepo.
   aletheoreMcp =
     if aletheore == null then
       null
@@ -42,7 +43,12 @@ let
           root=$(cat "$root_file")
         fi
         if [ -z "$root" ] || [ ! -d "$root" ]; then
-          root="''${DEVENV_ROOT:-$PWD}"
+          if [ -n "''${DEVENV_ROOT:-}" ] && [ -d "$DEVENV_ROOT" ]; then
+            root="$DEVENV_ROOT"
+          else
+            echo "aletheore-mcp: no known monorepo root (run home-switch to write ~/.config/devenv4monorepo/devenv-root, or set DEVENV_ROOT)" >&2
+            exit 1
+          fi
         fi
         # Default effects keep evidence on-machine (no `external` upload).
         # Paid / hosted features: https://www.aletheore.com
