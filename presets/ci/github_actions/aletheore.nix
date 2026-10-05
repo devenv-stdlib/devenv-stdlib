@@ -90,8 +90,12 @@ in
           type = lib.types.bool;
           default = true;
           description = ''
-            Aletheore `post-pr-comment` — post/update a PR comment (needs
-            `pull-requests: write` and `issues: write` on the job).
+            Aletheore `post-pr-comment`. When true, the generated workflow uses
+            a same-repo gate
+            (`github.event.pull_request.head.repo.full_name == github.repository`)
+            so fork PRs (read-only `GITHUB_TOKEN`) skip commenting; scan /
+            annotations / Step Summary still run. Needs `pull-requests: write`
+            and `issues: write` on same-repo PRs.
           '';
         };
         extraWith = lib.mkOption {
@@ -141,8 +145,10 @@ in
         set -euo pipefail
         dest="$DEVENV_ROOT/.github/workflows/aletheore.yml"
         mkdir -p "$(dirname "$dest")"
-        tmp="$(mktemp)"
+        # Same filesystem as dest so mv is an atomic rename (not cross-fs copy).
+        tmp="$(mktemp "$(dirname "$dest")/.aletheore.yml.XXXXXX")"
         cp ${lib.escapeShellArg workflowFile} "$tmp"
+        chmod 0644 "$tmp"
         if ! cmp -s "$tmp" "$dest" 2>/dev/null; then
           mv "$tmp" "$dest"
           echo "wrote .github/workflows/aletheore.yml"

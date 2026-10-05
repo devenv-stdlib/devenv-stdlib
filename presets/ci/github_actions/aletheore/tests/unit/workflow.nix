@@ -150,6 +150,8 @@ in
         postPrComment = marker.postPrComment or false;
         hasSync = cfg.scripts ? sync-aletheore-workflow;
         syncCopiesAletheore = contains "aletheore.yml" sync;
+        # Temp file stays on dest's filesystem for atomic mv rename.
+        syncMktempInDest = contains ".aletheore.yml.XXXXXX" sync;
         enterHasSync = contains "sync-aletheore-workflow" cfg.enterShell;
         # Preset enables the local Aletheore CLI catalog leaf.
         inherit includeTools;
@@ -176,6 +178,7 @@ in
       postPrComment = true;
       hasSync = true;
       syncCopiesAletheore = true;
+      syncMktempInDest = true;
       enterHasSync = true;
       includeTools = [ "aletheore" ];
       toolEnable = true;
@@ -234,7 +237,9 @@ in
         hasFailSecrets = contains "fail-on-new-secrets: true" yaml;
         hasFailVulns = contains "fail-on-new-vulnerabilities: false" yaml;
         hasFailLayers = contains "fail-on-new-layer-violations: false" yaml;
-        hasPost = contains "post-pr-comment: true" yaml;
+        # Same-repo gate (fork PRs have a read-only GITHUB_TOKEN).
+        hasPostGate = contains "post-pr-comment: \${{ github.event.pull_request.head.repo.full_name == github.repository }}" yaml;
+        lacksLiteralPostTrue = contains "post-pr-comment: true" yaml;
         hasIssuesWrite = contains "issues: write" yaml;
         hasPrWrite = contains "pull-requests: write" yaml;
         hasRunner = contains "runs-on: ubuntu-24.04" yaml;
@@ -251,7 +256,8 @@ in
       hasFailSecrets = true;
       hasFailVulns = true;
       hasFailLayers = true;
-      hasPost = true;
+      hasPostGate = true;
+      lacksLiteralPostTrue = false;
       hasIssuesWrite = true;
       hasPrWrite = true;
       hasRunner = true;

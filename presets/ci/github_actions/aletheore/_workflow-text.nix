@@ -19,12 +19,20 @@ in
   workflowText =
     cfg:
     let
+      # Fork PRs get a read-only GITHUB_TOKEN on pull_request — posting a PR
+      # comment would be a no-op (action suppresses the error). Gate comments to
+      # same-repo PRs; keep pull_request (not pull_request_target).
+      postPrCommentYaml =
+        if cfg.postPrComment then
+          "\${{ github.event.pull_request.head.repo.full_name == github.repository }}"
+        else
+          "false";
       named = {
         fail-on-new-secrets = boolYaml cfg.failOnNewSecrets;
         fail-on-new-vulnerabilities = boolYaml cfg.failOnNewVulnerabilities;
         fail-on-new-layer-violations = boolYaml cfg.failOnNewLayerViolations;
         full = boolYaml cfg.full;
-        post-pr-comment = boolYaml cfg.postPrComment;
+        post-pr-comment = postPrCommentYaml;
       };
       withAttrs = named // cfg.extraWith;
       comment = cfg.actionComment or "";
