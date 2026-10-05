@@ -175,6 +175,7 @@ in
     expr = apiPaths;
     expected = [
       "apiVersion"
+      "binary"
       "catalog"
       "catalog.binName"
       "catalog.catalog"

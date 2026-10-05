@@ -157,6 +157,8 @@ Language support is **not** a megapreset named Python/Rust/…. Local language l
 
 ## Community tools and presets
 
-Tool files under `tools/` are Home Manager modules. They call `stdlib/tool.nix` with `install.kind` (`nix`, `catalog`, `hm-program`, `vscode-extension`, `docker-image`, or `binary`) and `upgrade` (`flake`, `catalog`, or `self`). `stdlib.den.load` reads that tree.
+Tool files under `tools/` are Home Manager modules. They call `stdlib/tool.nix` with `install.kind` (`nix`, `catalog`, `hm-program`, `vscode-extension`, `docker-image`, or `binary`) and `upgrade` (`flake`, `catalog`, `self`, or `none`). `stdlib.den.load` reads that tree.
+
+For binaries not in nixpkgs, use `install.kind = binary` with `install.package` as a `pkgs → derivation` function (prefer `mkTool.binaryLeaf`). Shared fetch helpers live in `stdlib/binary.nix` (`fromGithubRelease`, `fromZipRelease`); the tool file owns version pins and hashes — do not add one-off package modules under `stdlib/`.
 
 Preset files under `presets/` call `mkPreset` from `stdlib/preset.nix` (`path`, `when`, `requires`, `tools`, `includes`). Default is one preset per tool; bundle only when tools must ship together. `includes` takes attrpath refs (`with presets; [ python.lint.ruff ]`); `tools` takes tool attrpath refs (`tools = [ tools.python.lint.pyright ]`), not string literals. Prefer explicit `tools.<attrpath>` over `with tools;` when a `python` (or other) binding would shadow the registry. `mkPreset` is not on the flake `stdlib` attrset.
