@@ -2,7 +2,7 @@
 # stdlib/private/nix-unit-junit.py is a private implementation detail —
 # callers run `nix-unit:test`, never the script. When nix-unit gains native
 # JUnit support, swap the module exec and delete the private reporter.
-{ lib }:
+_:
 let
   taskId = "nix-unit:test";
 
