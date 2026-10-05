@@ -14,7 +14,7 @@
 #     enable = true;
 #     action = "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2"; # v0.3.0
 #     maxFailures = 4;
-#     closePr = true;
+#     closePr = false; # true only if you want close-on-fail
 #     exemptDraftPrs = true;
 #     # Empty = no author-association exemptions (owners scanned too).
 #     # Marketplace default is "OWNER,MEMBER,COLLABORATOR".

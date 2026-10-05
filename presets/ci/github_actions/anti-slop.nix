@@ -60,7 +60,10 @@ in
         };
         closePr = lib.mkOption {
           type = lib.types.bool;
-          default = true;
+          # false: dogfood / agent PRs often trip marketplace defaults (commit
+          # author match, description length, …). Scan and report without
+          # auto-closing; consumers can set true when they want close-on-fail.
+          default = false;
           description = "anti-slop `close-pr` — close the PR when max-failures is reached.";
         };
         exemptDraftPrs = lib.mkOption {

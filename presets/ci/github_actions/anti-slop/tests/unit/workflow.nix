@@ -92,7 +92,7 @@ let
     action = "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2";
     actionComment = "v0.3.0";
     maxFailures = 4;
-    closePr = true;
+    closePr = false;
     exemptDraftPrs = true;
     exemptAuthorAssociation = "";
     extraWith = { };
@@ -144,7 +144,7 @@ in
       action = "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2";
       workflow = "pr-quality.yml";
       maxFailures = 4;
-      closePr = true;
+      closePr = false;
       exemptDraftPrs = true;
       exemptAuthorAssociation = "";
       hasSync = true;
@@ -171,7 +171,7 @@ in
         hasAction = contains "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2" yaml;
         hasActionComment = contains "# v0.3.0" yaml;
         hasMax = contains ''max-failures: "4"'' yaml;
-        hasClose = contains ''close-pr: "true"'' yaml;
+        hasClose = contains ''close-pr: "false"'' yaml;
         hasExemptDraft = contains ''exempt-draft-prs: "true"'' yaml;
         # Empty association list: owners/members/collaborators are scanned too.
         hasExemptAuthorEmpty = contains ''exempt-author-association: ""'' yaml;
