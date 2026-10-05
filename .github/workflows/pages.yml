@@ -6,10 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Default read-only; elevated Pages perms stay on build/deploy jobs only.
 permissions:
   contents: read
-  pages: write
-  id-token: write
   pull-requests: read
 
 # Per-ref groups so stacked PR Docs builds do not cancel each other.
@@ -23,6 +22,9 @@ jobs:
   changes:
     name: Detect docs path changes
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       docs: ${{ steps.flags.outputs.docs }}
     steps:
@@ -53,6 +55,10 @@ jobs:
     needs: changes
     if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     defaults:
       run:
         working-directory: docs
@@ -79,9 +85,15 @@ jobs:
     needs: [changes, build-docs]
     if: always() && !cancelled()
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: Require docs build success or path-skip
         run: |
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "changes job result=${{ needs.changes.result }}"
+            exit 1
+          fi
           if [ "${{ needs.changes.outputs.docs }}" != "true" ]; then
             echo "path-skip: docs build not required for this PR"
             exit 0
@@ -94,6 +106,9 @@ jobs:
       github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && needs.changes.outputs.docs == 'true' && needs.build-docs.result == 'success'
     needs: [changes, build-docs]
     runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
