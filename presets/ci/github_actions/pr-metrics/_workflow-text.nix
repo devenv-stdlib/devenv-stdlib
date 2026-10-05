@@ -54,6 +54,8 @@ in
       // optionalStr "test-matching-patterns" (cfg.testMatchingPatterns or null)
       // optionalStr "code-file-extensions" effectiveExtensions;
       withAttrs = named // cfg.extraWith;
+      # Gate must use the same final Action input (extraWith can override).
+      gateExtensions = withAttrs."code-file-extensions" or effectiveExtensions;
       actionUses = usesWithComment cfg.action (cfg.actionComment or "");
       checkoutUses = usesWithComment cfg.checkoutAction (cfg.checkoutComment or "");
       jobIf = if cfg.exemptDraftPrs then [ "    if: \${{ !github.event.pull_request.draft }}" ] else [ ];
@@ -70,7 +72,7 @@ in
       # be able to prefix the title; compute product-code adds from git instead.
       # Fail closed when the base commit is missing — never trust a title prefix
       # alone (fork authors can set XS/S/M while the token cannot rewrite it).
-      # Extension filter matches `code-file-extensions` so gate and Action agree.
+      # Extension filter matches the final `code-file-extensions` Action input.
       rejectSteps =
         if !cfg.rejectAboveMedium then
           [ ]
@@ -84,7 +86,7 @@ in
             "          BASE_SHA: \${{ github.event.pull_request.base.sha }}"
             "          BASE_SIZE: ${toString cfg.baseSize}"
             "          GROWTH_RATE: ${toString cfg.growthRate}"
-            "          CODE_EXTS: ${builtins.toJSON effectiveExtensions}"
+            "          CODE_EXTS: ${builtins.toJSON gateExtensions}"
             "        run: |"
             "          set -euo pipefail"
             "          medium_max=$(awk -v b=\"\${BASE_SIZE}\" -v g=\"\${GROWTH_RATE}\" 'BEGIN { printf \"%.0f\", b * g * g }')"
