@@ -67,9 +67,10 @@ Tracked generated files are **not** written on `enterShell`. Dry-run on shell en
 | `.github/workflows/test.yml` | `ci.github_actions.language-matrix` | committed | `devenv tasks run ci:update-language-matrix` |
 | `.github/workflows/pr-quality.yml` | `ci.github_actions.anti-slop` | committed | `devenv tasks run ci:update-anti-slop` |
 | `.github/workflows/pr-metrics.yml` | `ci.github_actions.pr-metrics` | committed | `devenv tasks run ci:update-pr-metrics` |
+| `.github/workflows/aletheore.yml` | `ci.github_actions.aletheore` | committed | `devenv tasks run ci:update-aletheore` |
 | `.vscode/extensions.json` | `stdlib.devenv.load` | gitignored | `devenv tasks run ides:update-extensions-json` |
 | `.vscode/settings.json` | `stdlib.devenv.load` | committed when it changes | `devenv tasks run ides:update-settings-json` |
-| language-matrix + anti-slop + pr-metrics + IDE JSON above | `stdlib:update-generated` | — | `devenv tasks run stdlib:update-generated` |
+| language-matrix + anti-slop + pr-metrics + aletheore + IDE JSON above | `stdlib:update-generated` | — | `devenv tasks run stdlib:update-generated` |
 | `.devcontainer/devcontainer.json` | devenv `devcontainer.enable` | committed | devenv built-in |
 | `.serena/project.yml` | `stdlib.devenv.load` (`files`) | gitignored | `devenv:files` |
 | `.debtmap.toml` | `modules/debtmap/` | gitignored | `devenv:files` |

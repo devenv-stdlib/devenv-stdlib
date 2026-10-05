@@ -1,0 +1,21 @@
+name: Aletheore
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+on:
+  pull_request:
+
+jobs:
+  aletheore:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: Aletheore/Aletheore@v0.9.22
+        with:
+          fail-on-new-layer-violations: false
+          fail-on-new-secrets: true
+          fail-on-new-vulnerabilities: false
+          full: false
+          post-pr-comment: true
