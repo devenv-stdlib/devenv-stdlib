@@ -1,4 +1,4 @@
-# Additive: stdlib.log API, report inventory, ci.github_actions.language-matrix preset.
+# stdlib.log / report inventory / mock CI matrix preset (mock-framework only).
 {
   lib,
   versions,
@@ -7,7 +7,7 @@
 let
   stdlib = import ../../../stdlib { inherit lib; };
   devenvLoad = import ../../../stdlib/devenv.nix { inherit lib; };
-  presetRoot = ../../../presets;
+  mock = import ../../lib/mock-framework.nix { inherit lib; };
 
   freeform = lib.types.submodule {
     freeformType = lib.types.lazyAttrsOf lib.types.anything;
@@ -35,13 +35,9 @@ let
               type = freeform;
               default = { };
             };
-            pythonTypeChecker = lib.mkOption {
-              type = lib.types.str;
-              default = "pyright";
-            };
-            typescript.bundler = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
+            demo = lib.mkOption {
+              type = freeform;
+              default = { };
             };
             packages = lib.mkOption {
               type = lib.types.listOf lib.types.anything;
@@ -75,11 +71,7 @@ let
           config = extra;
         }
       ]
-      ++ devenvLoad.load {
-        presets = devenvLoad.defaultRoots presetRoot;
-        # Tool roots required so thin presets can resolve tools.<attrpath> refs.
-        tools = [ ../../../tools ];
-      };
+      ++ devenvLoad.load mock.loadArgs;
     }).config;
 
   contains = needle: haystack: lib.hasInfix needle haystack;
@@ -93,7 +85,6 @@ in
       hasDebugPrime = builtins.isFunction stdlib.log.debug';
     };
     expected = {
-      # Unit import has no flake input; private fallback is fine.
       usingNixLog = false;
       hasDebug = true;
       hasWarnIf = true;
@@ -184,8 +175,6 @@ in
     };
   };
 
-  # Nested tools.<category>….<leaf>.enable trees must list dotted attrpaths.
-  # Top-level-only inventory would report Enabled tools: (none) for these.
   testReportInventoryWalksNamespacedToolTrees = {
     expr =
       let
@@ -234,12 +223,11 @@ in
     };
   };
 
-  testCiLanguageMatrixPresetOwnsWorkflow = {
+  testMockCiLanguageMatrixPresetOwnsWorkflow = {
     expr =
       let
         cfg = eval {
           languages.python.enable = true;
-          # Same requirement as real devenv.local.nix / versions.problems.
           supported.python.min = "3.12";
         };
       in
@@ -253,8 +241,8 @@ in
         hasSync = cfg.scripts ? sync-language-versions-workflow;
         reportWarning = lib.any (w: lib.hasInfix "stdlib status:" w) cfg.warnings;
         enterHasReport = contains "stdlib status:" cfg.enterShell;
-        reportListsHooks = lib.any (w: lib.hasInfix "ruff" w) cfg.warnings;
-        hooksIncludeRuff = (cfg.git-hooks.hooks.ruff or { }).enable or false;
+        hooksIncludeRuff = (cfg.git-hooks.hooks.mock-ruff or { }).enable or false;
+        reportListsHooks = lib.any (w: lib.hasInfix "mock-ruff" w) cfg.warnings;
       };
     expected = {
       applied = true;
@@ -264,12 +252,11 @@ in
       hasSync = true;
       reportWarning = true;
       enterHasReport = true;
-      reportListsHooks = true;
       hooksIncludeRuff = true;
+      reportListsHooks = true;
     };
   };
 
-  # Thin presets set tools.<leaf>.enable; the status report must list those leaves.
   testReportListsToolsEnabledByThinPresets = {
     expr =
       let
@@ -280,10 +267,10 @@ in
         report = lib.findFirst (w: lib.hasInfix "stdlib status:" w) "" cfg.warnings;
       in
       {
-        ruffEnable = cfg.tools.ruff.enable;
-        pyrightEnable = cfg.tools.pyright.enable;
-        reportListsRuff = contains "  - ruff" report;
-        reportListsPyright = contains "  - pyright" report;
+        ruffEnable = cfg.tools.mock-ruff.enable;
+        pyrightEnable = cfg.tools.mock-pyright.enable;
+        reportListsRuff = contains "  - mock-ruff" report;
+        reportListsPyright = contains "  - mock-pyright" report;
         toolsNotNone = !(contains "Enabled tools: (none)" report);
       };
     expected = {
@@ -295,7 +282,6 @@ in
     };
   };
 
-  # Status report always tells users how to open a per-tool navi cheat.
   testReportHintsNaviForToolUsage = {
     expr =
       let

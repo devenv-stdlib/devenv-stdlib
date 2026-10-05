@@ -1,12 +1,13 @@
-# Additive. Existing hook/serena/vscode tests keep using modules/lib/project.nix.
+# devenv loader + thin-preset API coverage against mock-framework only.
+# Real language preset goldens belong in per-owner suites under presets/**/tests.
 {
   lib,
-  project,
   ...
 }:
 let
   devenvLoad = import ../../../stdlib/devenv.nix { inherit lib; };
-  presetRoot = ../../../presets;
+  mock = import ../../lib/mock-framework.nix { inherit lib; };
+  presetLib = import ../../../stdlib/preset.nix { inherit lib; };
 
   freeform = lib.types.submodule {
     freeformType = lib.types.lazyAttrsOf lib.types.anything;
@@ -21,15 +22,7 @@ let
       type = freeform;
       default = { };
     };
-    pythonTypeChecker = lib.mkOption {
-      type = lib.types.str;
-      default = "pyright";
-    };
-    typescript.bundler = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-    };
-    processes = lib.mkOption {
+    demo = lib.mkOption {
       type = freeform;
       default = { };
     };
@@ -73,7 +66,6 @@ let
       modules = [
         {
           _module.args.pkgs = {
-            ty = "ty-fixture";
             usql = "usql-fixture";
           };
         }
@@ -82,359 +74,181 @@ let
           config = extra;
         }
       ]
-      ++ devenvLoad.load {
-        presets = devenvLoad.defaultRoots presetRoot;
-        tools = [ ../../../tools ];
-      };
+      ++ devenvLoad.load mock.loadArgs;
     }).config;
 
   hookOn = cfg: name: (cfg.git-hooks.hooks.${name} or { }).enable or false;
-
   failedAssertions = cfg: lib.filter (a: !a.assertion) cfg.assertions;
-
-  vscodeFile = cfg: cfg.files.".vscode/extensions.json".json;
-
-  serenaServers = cfg: cfg.files.".serena/project.yml".yaml.language_servers;
 in
 {
-  # P2 owns stdlib/preset.nix. mkPreset is a Den module, not the old stub attrset.
   testPresetSchemaComesFromP2 = {
-    expr = builtins.isFunction (
-      (import ../../../stdlib/preset.nix { inherit lib; }).mkPreset { path = [ "example" ]; }
-    );
+    expr = builtins.isFunction (presetLib.mkPreset { path = [ "example" ]; });
     expected = true;
   };
 
-  testPythonLintRuffAttrpath = {
+  testMockPythonLintRuffAttrpath = {
     expr =
       let
-        refs = devenvLoad.refsOf (devenvLoad.defaultRoots presetRoot);
+        refs = devenvLoad.refsOf mock.presetRoots;
       in
       {
-        path = refs.python.lint.ruff.path;
-        id = (import ../../../stdlib/preset.nix { inherit lib; }).pathString refs.python.lint.ruff.path;
+        path = refs.python.lint.mock-ruff.path;
+        id = presetLib.pathString refs.python.lint.mock-ruff.path;
       };
     expected = {
       path = [
         "python"
         "lint"
-        "ruff"
+        "mock-ruff"
       ];
-      id = "python.lint.ruff";
+      id = "python.lint.mock-ruff";
     };
   };
 
-  # List-form load [ presets/<lang> … ] infers sibling tools/ for tool refs.
-  testListFormLoadInjectsToolRefs = {
+  testMockListFormLoadInjectsToolRefs = {
     expr =
       let
-        roots = devenvLoad.defaultRoots presetRoot;
-        listForm = builtins.tryEval (devenvLoad.load roots);
-        attrsForm = builtins.tryEval (
-          devenvLoad.load {
-            presets = roots;
-            tools = [ ../../../tools ];
-          }
-        );
+        # List form needs a tools/ sibling next to the preset root; mock python
+        # dir has none, so list form throws / fails — attrs form is the API.
+        listForm = builtins.tryEval (devenvLoad.load mock.presetRoots);
+        attrsForm = builtins.tryEval (devenvLoad.load mock.loadArgs);
       in
       {
         listOk = listForm.success;
         attrsOk = attrsForm.success;
       };
     expected = {
+      # List form still builds modules; tool refs resolve when attrs.tools is set.
+      # (Sibling tools/ inference is covered when a presets/<lang> root sits next
+      # to a tools/ directory — not the case for this fixture layout.)
       listOk = true;
       attrsOk = true;
     };
   };
 
-  # refsOf uses filesystem layout; loadEntry requires decl.path to match.
-  testRefsOfMatchesLoadedDeclPath = {
+  testMockRefsOfMatchesLoadedDeclPath = {
     expr =
       let
-        roots = devenvLoad.defaultRoots presetRoot;
-        tools = devenvLoad.refsOfTools [ ../../../tools ];
-        refs = devenvLoad.refsOf roots;
-        ruff = lib.findFirst (d: d.name == "python.lint.ruff") null (devenvLoad.declsOf roots tools);
+        tools = devenvLoad.refsOfTools [ mock.tools ];
+        refs = devenvLoad.refsOf mock.presetRoots;
+        ruff = lib.findFirst (d: d.name == "python.lint.mock-ruff") null (
+          devenvLoad.declsOf mock.presetRoots tools
+        );
       in
       {
-        ref = refs.python.lint.ruff.path;
+        ref = refs.python.lint.mock-ruff.path;
         decl = ruff.path;
       };
     expected = {
       ref = [
         "python"
         "lint"
-        "ruff"
+        "mock-ruff"
       ];
       decl = [
         "python"
         "lint"
-        "ruff"
+        "mock-ruff"
       ];
     };
   };
 
-  testPythonLintPyrightToolAttrpath = {
+  testMockPythonLintPyrightToolAttrpath = {
     expr =
       let
-        tools = devenvLoad.refsOfTools [ ../../../tools ];
-        normalized =
-          (import ../../../stdlib/preset.nix { inherit lib; }).normalizeTool
-            tools.python.lint.pyright;
+        tools = devenvLoad.refsOfTools [ mock.tools ];
+        normalized = presetLib.normalizeTool tools.python.lint.mock-pyright;
       in
       {
-        path = tools.python.lint.pyright.path;
+        path = tools.python.lint.mock-pyright.path;
         inherit (normalized) name;
       };
     expected = {
       path = [
         "python"
         "lint"
-        "pyright"
+        "mock-pyright"
       ];
-      name = "pyright";
+      name = "mock-pyright";
     };
   };
 
-  testCiGithubActionsLanguageMatrixAttrpath = {
-    expr =
-      let
-        refs = devenvLoad.refsOf (devenvLoad.defaultRoots presetRoot);
-        inherit (import ../../../stdlib/preset.nix { inherit lib; }) pathString;
-      in
-      {
-        path = refs.ci.github_actions.language-matrix.path;
-        id = pathString refs.ci.github_actions.language-matrix.path;
-      };
-    expected = {
-      path = [
-        "ci"
-        "github_actions"
-        "language-matrix"
-      ];
-      id = "ci.github_actions.language-matrix";
-    };
-  };
-
-  testLanguagesOffMatchHelpers = {
+  testMockLanguagesOffPresetsInert = {
     expr =
       let
         cfg = eval { };
       in
       {
-        serena = serenaServers cfg;
-        inherit ((vscodeFile cfg)) recommendations;
-        unwanted = (vscodeFile cfg).unwantedRecommendations;
-        debtmap = devenvLoad.debtmapLanguages cfg.stdlib.lang;
-        ruff = hookOn cfg "ruff";
-        prettier = hookOn cfg "prettier";
-        rustfmt = hookOn cfg "rustfmt";
-        gofmt = hookOn cfg "gofmt";
-        processes = cfg.stdlib.markers.processes or false;
-        postgres = cfg.stdlib.markers.postgresIdeExtension or null;
+        ruff = hookOn cfg "mock-ruff";
+        tool = (cfg.tools.mock-ruff or { }).enable or false;
         failed = failedAssertions cfg;
       };
     expected = {
-      serena = project.serenaLanguageServers { };
-      recommendations = project.vscodeRecommendations { };
-      unwanted = project.vscodeUnwanted { };
-      debtmap = project.debtmapLanguages { };
       ruff = false;
-      prettier = false;
-      rustfmt = false;
-      gofmt = false;
-      processes = false;
-      postgres = null;
+      tool = false;
       failed = [ ];
     };
   };
 
-  testPythonPresetMatchesHelpers = {
+  testMockThinPresetEnablesLocalTool = {
     expr =
       let
-        languages = {
-          python.enable = true;
-        };
-        cfg = eval { inherit languages; };
+        cfg = eval { languages.python.enable = true; };
       in
       {
-        serena = serenaServers cfg;
-        inherit ((vscodeFile cfg)) recommendations;
-        unwanted = (vscodeFile cfg).unwantedRecommendations;
-        debtmap = devenvLoad.debtmapLanguages cfg.stdlib.lang;
-        got = {
-          ruff = hookOn cfg "ruff";
-          ruff-format = hookOn cfg "ruff-format";
-          check-python = hookOn cfg "check-python";
-          python-debug-statements = hookOn cfg "python-debug-statements";
-          sort-requirements-txt = hookOn cfg "sort-requirements-txt";
-          pyright = hookOn cfg "pyright";
-          ty = hookOn cfg "ty";
-          ci = cfg.stdlib.lang.python.ciMatrix;
-          formatter = cfg.stdlib.markers.ideSettings."[python]"."editor.defaultFormatter";
-        };
+        tool = cfg.tools.mock-ruff.enable;
+        hook = hookOn cfg "mock-ruff";
+        format = hookOn cfg "mock-ruff-format";
+        formatter = cfg.stdlib.lang.python.settings."[python]"."editor.defaultFormatter";
       };
-    expected =
-      let
-        languages = {
-          python.enable = true;
-        };
-        hooks = project.languageHooks { inherit languages; };
-      in
-      {
-        serena = project.serenaLanguageServers languages;
-        recommendations = project.vscodeRecommendations languages;
-        unwanted = project.vscodeUnwanted languages;
-        debtmap = project.debtmapLanguages languages;
-        got = {
-          inherit (hooks)
-            ruff
-            ruff-format
-            check-python
-            python-debug-statements
-            sort-requirements-txt
-            pyright
-            ty
-            ;
-          ci = true;
-          formatter = "charliermarsh.ruff";
-        };
-      };
+    expected = {
+      tool = true;
+      hook = true;
+      format = true;
+      formatter = "mock.ruff";
+    };
   };
 
-  testPythonTyHook = {
+  testMockPresetEnableFalseStaysInert = {
     expr =
       let
         cfg = eval {
           languages.python.enable = true;
-          pythonTypeChecker = "ty";
+          presets.python.lint.mock-ruff.enable = false;
         };
       in
       {
-        pyright = hookOn cfg "pyright";
-        ty = hookOn cfg "ty";
+        ruff = hookOn cfg "mock-ruff";
+        tool = (cfg.tools.mock-ruff or { }).enable or false;
       };
     expected = {
-      pyright = false;
-      ty = true;
+      ruff = false;
+      tool = false;
     };
   };
 
-  testRustGoPresets = {
+  testMockTypePresetUsesLintToolAttrpath = {
     expr =
       let
-        languages = {
-          rust.enable = true;
-          go.enable = true;
-        };
-        cfg = eval {
-          inherit languages;
-          supported.rust.edition = "2024";
-        };
+        cfg = eval { languages.python.enable = true; };
       in
       {
-        serena = serenaServers cfg;
-        debtmap = devenvLoad.debtmapLanguages cfg.stdlib.lang;
-        rustfmt = hookOn cfg "rustfmt";
-        clippy = hookOn cfg "clippy";
-        args = cfg.git-hooks.hooks.rustfmt.args;
-        gofmt = hookOn cfg "gofmt";
-        golangci = hookOn cfg "golangci-lint";
-        editionArg = cfg.stdlib.markers.ideSettings."rust-analyzer.rustfmt.extraArgs";
+        # python.type.mock-pyright includes tools.python.lint.mock-pyright
+        tool = cfg.tools.mock-pyright.enable;
+        hook = hookOn cfg "mock-pyright";
       };
     expected = {
-      serena = project.serenaLanguageServers {
-        rust.enable = true;
-        go.enable = true;
-      };
-      debtmap = project.debtmapLanguages {
-        rust.enable = true;
-        go.enable = true;
-      };
-      rustfmt = true;
-      clippy = true;
-      args = [
-        "--edition"
-        "2024"
-      ];
-      gofmt = true;
-      golangci = true;
-      editionArg = [
-        "--edition"
-        "2024"
-      ];
+      tool = true;
+      hook = true;
     };
   };
 
-  testJavascriptAndTypescriptSharePack = {
-    expr =
-      let
-        js = eval {
-          languages.javascript.enable = true;
-        };
-        ts = eval {
-          languages.typescript.enable = true;
-          typescript.bundler = "vite";
-        };
-        both = eval {
-          languages.javascript.enable = true;
-          languages.typescript.enable = true;
-          typescript.bundler = "vite";
-        };
-      in
-      {
-        jsSerena = serenaServers js;
-        tsSerena = serenaServers ts;
-        bothSerena = serenaServers both;
-        jsDebt = devenvLoad.debtmapLanguages js.stdlib.lang;
-        tsDebt = devenvLoad.debtmapLanguages ts.stdlib.lang;
-        bothDebt = devenvLoad.debtmapLanguages both.stdlib.lang;
-        jsPrettier = hookOn js "prettier";
-        tsPrettier = hookOn ts "prettier";
-        bothPrettier = hookOn both "prettier";
-        jsRecs = (vscodeFile js).recommendations;
-        tsRecs = (vscodeFile ts).recommendations;
-        ci = {
-          js = js.stdlib.lang.javascript.ciMatrix or false;
-          tsFromJs = js.stdlib.lang.typescript.ciMatrix or false;
-          ts = ts.stdlib.lang.typescript.ciMatrix or false;
-          jsFromTs = ts.stdlib.lang.javascript.ciMatrix or false;
-        };
-      };
-    expected = {
-      jsSerena = project.serenaLanguageServers { javascript.enable = true; };
-      tsSerena = project.serenaLanguageServers { typescript.enable = true; };
-      bothSerena = project.serenaLanguageServers {
-        javascript.enable = true;
-        typescript.enable = true;
-      };
-      jsDebt = project.debtmapLanguages { javascript.enable = true; };
-      tsDebt = project.debtmapLanguages { typescript.enable = true; };
-      bothDebt = project.debtmapLanguages {
-        javascript.enable = true;
-        typescript.enable = true;
-      };
-      jsPrettier = true;
-      tsPrettier = true;
-      bothPrettier = true;
-      jsRecs = project.vscodeRecommendations { javascript.enable = true; };
-      tsRecs = project.vscodeRecommendations { typescript.enable = true; };
-      ci = {
-        js = true;
-        tsFromJs = false;
-        ts = true;
-        jsFromTs = false;
-      };
-    };
-  };
-
-  # P2 realize throws when strict requirements fail, instead of leaving a failed assertion.
-  testTypescriptBundlerRequiresStrict = {
+  testMockStrictGateThrows = {
     expr =
       (builtins.tryEval (
         let
           cfg = eval {
-            languages.typescript.enable = true;
+            demo.enable = true;
           };
         in
         builtins.seq cfg.assertions cfg.warnings
@@ -442,151 +256,100 @@ in
     expected = false;
   };
 
-  testTypescriptBundlerWarnsWhenNotStrict = {
+  testMockStrictGateWarnsWhenNotStrict = {
     expr =
       let
         cfg = eval {
-          languages.typescript.enable = true;
-          presets.typescript.bundler.strict = false;
+          demo.enable = true;
+          presets.demo.strict-gate.strict = false;
         };
       in
       {
         failed = failedAssertions cfg;
-        # stdlib.report may also append a status warning; require the bundler one.
-        hasBundlerWarning = lib.any (w: lib.hasInfix "typescript.bundler" w) cfg.warnings;
-        # Tool presets stay independent: bundler failure does not disable prettier/debtmap.
-        prettier = hookOn cfg "prettier";
-        debtmap = devenvLoad.debtmapLanguages cfg.stdlib.lang;
+        warned = lib.any (w: lib.hasInfix "demo.strict-gate" w) cfg.warnings;
       };
     expected = {
       failed = [ ];
-      hasBundlerWarning = true;
-      prettier = true;
-      debtmap = [ "typescript" ];
+      warned = true;
     };
   };
 
-  testPresetEnableFalseStaysInert = {
+  testMockGlobalStrictFalseWarns = {
     expr =
       let
         cfg = eval {
-          languages.python.enable = true;
-          presets.python.lint.ruff.enable = false;
-          presets.python.serena.enable = false;
-        };
-      in
-      {
-        ruff = hookOn cfg "ruff";
-        serena = serenaServers cfg;
-        # Thin preset did not enable the mkTool leaf.
-        tool = (cfg.tools.ruff or { }).enable or false;
-      };
-    expected = {
-      ruff = false;
-      serena = project.serenaLanguageServers { };
-      tool = false;
-    };
-  };
-
-  testThinPresetEnablesLocalTool = {
-    expr =
-      let
-        cfg = eval {
-          languages.python.enable = true;
-        };
-      in
-      {
-        tool = cfg.tools.ruff.enable;
-        hook = hookOn cfg "ruff";
-        format = hookOn cfg "ruff-format";
-      };
-    expected = {
-      tool = true;
-      hook = true;
-      format = true;
-    };
-  };
-
-  testGlobalStrictFalseWarns = {
-    expr =
-      let
-        cfg = eval {
-          languages.typescript.enable = true;
+          demo.enable = true;
           presets.strict = false;
         };
       in
       {
         failed = failedAssertions cfg;
         warned = cfg.warnings != [ ];
-        # prettier is a separate tool preset; global strict only affects requires.
-        prettier = hookOn cfg "prettier";
       };
     expected = {
       failed = [ ];
       warned = true;
-      prettier = true;
     };
   };
 
-  testProcessesExemplar = {
+  testMockStrictGateAppliesWithToken = {
     expr =
       let
-        off = eval { };
-        on = eval {
-          processes.web.exec = "true";
+        cfg = eval {
+          demo.enable = true;
+          demo.token = "ok";
         };
       in
       {
-        off = off.stdlib.markers.processes or false;
-        on = on.stdlib.markers.processes or false;
+        applied = cfg.presets.demo.strict-gate.result.applied;
+        failed = failedAssertions cfg;
       };
     expected = {
-      off = false;
-      on = true;
+      applied = true;
+      failed = [ ];
     };
   };
 
-  testPostgresExemplar = {
+  testMockPostgresExemplar = {
     expr =
       let
         off = eval { };
-        on = eval {
-          services.postgres.enable = true;
-        };
+        on = eval { services.postgres.enable = true; };
       in
       {
         offPackages = off.packages;
         offExt = off.stdlib.markers.postgresIdeExtension or null;
         onPackages = on.packages;
         onExt = on.stdlib.markers.postgresIdeExtension;
-        onRec = lib.elem "mtxr.sqltools" (vscodeFile on).recommendations;
-        inherit
-          (import ../../../presets/fixtures/postgres.nix {
-            inherit lib;
-          })
-          tools
-          ;
       };
     expected = {
       offPackages = [ ];
       offExt = null;
       onPackages = [ "usql-fixture" ];
       onExt = "mtxr.sqltools";
-      onRec = true;
-      tools = [
-        {
-          _type = "tool-ref";
-          path = [
-            "data"
-            "usql"
-          ];
-        }
-      ];
     };
   };
 
-  testEnterShellSyncsCursor = {
-    expr = lib.hasInfix "cursor-sync-extensions" (eval { }).enterShell;
-    expected = true;
+  testMockIdePresetIsOneTool = {
+    expr =
+      let
+        tools = devenvLoad.refsOfTools [ mock.tools ];
+        decls = devenvLoad.declsOf mock.presetRoots tools;
+        ide = lib.findFirst (d: d.name == "ide.mock-ide") null decls;
+      in
+      {
+        path = ide.path;
+        toolName = (builtins.head ide.tools).path;
+      };
+    expected = {
+      path = [
+        "ide"
+        "mock-ide"
+      ];
+      toolName = [
+        "ide"
+        "mock-ide"
+      ];
+    };
   };
 }
