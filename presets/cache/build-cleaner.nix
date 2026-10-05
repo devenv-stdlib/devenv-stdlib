@@ -51,9 +51,13 @@ let
     }@moduleArgs:
     let
       cfg = config.presets.cache.build-cleaner;
+      enabled = cfg.enable && cfg.scope == "local";
       tasksLib = import ../../stdlib/tasks.nix { inherit lib; };
       # Scope-gate here (mkIf), not via exportTasks = cfg: … in applyPreset —
       # reading config while building applyPreset's taskConfig cycles.
+      # Only emit `tasks` when the host declares that option — mkIf does not
+      # suppress "option does not exist" for fixtures that omit it (e.g.
+      # language-matrix unit eval via defaultRoots + cache/).
       exported =
         if options ? tasks then
           tasksLib.export {
@@ -67,14 +71,18 @@ let
     in
     {
       options.presets.cache.build-cleaner.scope = scopeOption;
-      config = lib.mkMerge [
-        (lib.mkIf (cfg.enable && cfg.scope == "local") {
-          packages = [ (bcPackage pkgs) ];
-        })
-        (lib.mkIf (cfg.enable && cfg.scope == "local" && exported != { }) {
-          tasks = exported;
-        })
-      ];
+      config = lib.mkMerge (
+        [
+          (lib.mkIf enabled {
+            packages = [ (bcPackage pkgs) ];
+          })
+        ]
+        ++ lib.optionals (options ? tasks) [
+          (lib.mkIf (enabled && exported != { }) {
+            tasks = exported;
+          })
+        ]
+      );
     };
 
   # Thin (devenv): local install via module mkIf; no local mkTool leaf.
