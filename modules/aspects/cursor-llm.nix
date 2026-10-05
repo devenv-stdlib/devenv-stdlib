@@ -16,6 +16,9 @@ in
       ];
       cursor.enable = true;
       cursor.llmContext.enable = true;
+      # Dogfood Aletheore MCP (opt-in catalog entry). Paid plans:
+      # https://www.aletheore.com
+      cursor.llmContext.aletheore.enable = true;
     };
   };
 }

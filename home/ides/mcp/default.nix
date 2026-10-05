@@ -9,8 +9,14 @@
   firecrawlMcpBin,
   gitConflictMcp,
   gitRebaseMcp,
+  # Optional: Aletheore CLI path. When null, aletheore is omitted from the upsert
+  # (and removed on activation if previously present).
+  # Product / paid plans: https://www.aletheore.com
+  aletheore ? null,
 }:
 let
+  inherit (pkgs) lib;
+
   braveMcp = pkgs.writeShellScript "brave-search-mcp" ''
     exec ${braveMcpBin}
   '';
@@ -20,6 +26,29 @@ let
   firecrawlMcp = pkgs.writeShellScript "firecrawl-mcp" ''
     exec ${firecrawlMcpBin}
   '';
+
+  # Aletheore MCP is repo-scoped (`aletheore mcp <abs-path>`). User-global
+  # ~/.cursor/mcp.json has no single project root, so resolve via the path
+  # home-switch writes for this monorepo, then DEVENV_ROOT, then PWD.
+  aletheoreMcp =
+    if aletheore == null then
+      null
+    else
+      pkgs.writeShellScript "aletheore-mcp" ''
+        set -euo pipefail
+        root=""
+        root_file="''${XDG_CONFIG_HOME:-$HOME/.config}/devenv4monorepo/devenv-root"
+        if [ -f "$root_file" ]; then
+          root=$(cat "$root_file")
+        fi
+        if [ -z "$root" ] || [ ! -d "$root" ]; then
+          root="''${DEVENV_ROOT:-$PWD}"
+        fi
+        # Default effects keep evidence on-machine (no `external` upload).
+        # Paid / hosted features: https://www.aletheore.com
+        export ALETHEORE_MCP_ALLOW="''${ALETHEORE_MCP_ALLOW:-write,network}"
+        exec ${aletheore} mcp "$root" "$@"
+      '';
 
   # Core servers shared across harnesses. User-added mcpServers keys are
   # preserved by merge_mcp.
@@ -50,23 +79,33 @@ let
         "serve"
       ];
     };
+  }
+  // lib.optionalAttrs (aletheoreMcp != null) {
+    aletheore = {
+      command = toString aletheoreMcp;
+    };
   };
 
   mkUpsertJson = pkgs.writeText "mcp-upsert.json" (builtins.toJSON mkCoreServers);
 
   # Retire previously shipped catalog keys on activation (merge never deletes
-  # unknown user keys — only this explicit list).
+  # unknown user keys — only this explicit list). When Aletheore is disabled,
+  # remove a previously upserted entry so opt-out sticks after home-switch.
   mkRemoveJson = pkgs.writeText "mcp-remove.json" (
-    builtins.toJSON [
-      "github"
-      "docker"
-    ]
+    builtins.toJSON (
+      [
+        "github"
+        "docker"
+      ]
+      ++ lib.optionals (aletheoreMcp == null) [ "aletheore" ]
+    )
   );
 in
 {
   inherit
     braveMcp
     firecrawlMcp
+    aletheoreMcp
     mkCoreServers
     mkUpsertJson
     mkRemoveJson

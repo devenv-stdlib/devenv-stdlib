@@ -50,6 +50,8 @@ let
     firecrawlMcpBin = cliExe "firecrawl-mcp";
     gitConflictMcp = cliExe "git-conflict-mcp";
     gitRebaseMcp = cliExe "git-rebase-mcp";
+    # Opt-in Aletheore MCP (https://www.aletheore.com). Null omits + retires key.
+    aletheore = if cfg.aletheore.enable then cliExe "aletheore" else null;
   };
 
   # Copy wrapper + merge-lib together. A lone `./merge-cursor-llm.sh` store
@@ -83,7 +85,23 @@ in
       are removed). Ensures ~/.serena/serena_config.yml excludes
       search_for_pattern (Cursor Grep stays the content-search path). Also
       writes Ponytail and Headroom Cursor rules. Defaults to cursor.enable.
+      Opt-in Aletheore MCP via cursor.llmContext.aletheore.enable
+      (https://www.aletheore.com).
     '';
+  };
+
+  options.cursor.llmContext.aletheore = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Upsert the Aletheore evidence MCP into ~/.cursor/mcp.json (wrapper
+        resolves the monorepo root via ~/.config/devenv4monorepo/devenv-root).
+        Requires the non-Nix catalog pin `aletheore` (mise pipx). Opt-in —
+        schema-heavy; complements Serena rather than replacing Instant Grep.
+        Product / paid Aletheore AIR plans: https://www.aletheore.com
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {

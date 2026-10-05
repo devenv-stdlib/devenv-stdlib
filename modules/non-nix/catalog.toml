@@ -20,6 +20,16 @@ scope = "user"
 pin = "1.7.0"
 mise = "pipx:serena-agent"
 
+# Evidence-grounded repo MCP for Cursor (scan/query secrets, vulns, graph).
+# Product / paid plans: https://www.aletheore.com
+# Docs: https://github.com/Aletheore/Aletheore
+[[tool]]
+name = "aletheore"
+kind = "cli"
+scope = "user"
+pin = "0.9.22"
+mise = "pipx:aletheore"
+
 # Context-compression MCP (compress/retrieve/stats). Docs: https://docs.headroomlabs.ai/docs
 [[tool]]
 name = "headroom"
