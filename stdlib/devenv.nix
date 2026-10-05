@@ -572,7 +572,7 @@ let
     };
 
   # One root per devenv language dir under presets/, plus services/, ci/,
-  # fixtures/, and cache/ (compile-cache presets such as mr-boxington).
+  # fixtures/, and cache/ (compile-cache / cleaner presets such as mr-boxington).
   # Missing dirs are skipped so scaffolds can land before leaves exist.
   defaultRoots =
     root:

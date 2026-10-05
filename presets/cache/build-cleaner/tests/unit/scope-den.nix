@@ -2,8 +2,9 @@
 let
   pe = import <devenv4monorepo/tests/lib/preset-eval.nix> { inherit lib; };
   inherit (pe) eval shellLib;
-  preset = import <devenv4monorepo/presets/cache/mr-boxington.nix>;
+  preset = import <devenv4monorepo/presets/cache/build-cleaner.nix>;
 
+  # Tip stdlib-presets denOptions extras for cache tools + HM payload merge.
   denOptions = {
     options = {
       den = {
@@ -29,11 +30,11 @@ let
           type = lib.types.bool;
           default = false;
         };
-        mr-boxington.enable = lib.mkOption {
+        build-cleaner.enable = lib.mkOption {
           type = lib.types.bool;
           default = false;
         };
-        build-cleaner.enable = lib.mkOption {
+        mr-boxington.enable = lib.mkOption {
           type = lib.types.bool;
           default = false;
         };
@@ -50,24 +51,22 @@ let
     };
   };
 
-  denStub = {
-    lib.policy = {
-      include = value: {
-        __policyEffect = "include";
-        inherit value;
-      };
-      exclude = value: {
-        __policyEffect = "exclude";
-        inherit value;
-      };
-    };
-    aspects = { };
-  };
-
   evalCache =
     presetModule: extra:
     lib.evalModules {
-      specialArgs.den = denStub;
+      specialArgs.den = pe.denStub or {
+        lib.policy = {
+          include = value: {
+            __policyEffect = "include";
+            inherit value;
+          };
+          exclude = value: {
+            __policyEffect = "exclude";
+            inherit value;
+          };
+        };
+        aspects = { };
+      };
       modules = [
         denOptions
         presetModule
@@ -75,6 +74,7 @@ let
       ];
     };
 
+  # pe.eval may lack cache tool options; use local evalCache for aspect HM checks.
   toolEnableFromPresetAspect =
     presetFile: presetPath: toolName: extra:
     let
@@ -106,31 +106,48 @@ let
     };
 in
 {
-  testCacheMrBoxingtonPresetScopeGlobal = {
-    expr = toolEnableFromPresetAspect <devenv4monorepo/presets/cache/mr-boxington.nix> [
+  testCacheBuildCleanerPresetScopeGlobal = {
+    expr = toolEnableFromPresetAspect <devenv4monorepo/presets/cache/build-cleaner.nix> [
       "cache"
-      "mr-boxington"
-    ] "mr-boxington" {
-      presets.cache.mr-boxington.enable = true;
-      presets.cache.mr-boxington.scope = "global";
+      "build-cleaner"
+    ] "build-cleaner" {
+      presets.cache.build-cleaner.enable = true;
+      presets.cache.build-cleaner.scope = "global";
     };
     expected = {
       enable = true;
       scope = "global";
       applied = true;
-      includeTools = [ "mr-boxington" ];
+      includeTools = [ "build-cleaner" ];
       toolEnable = true;
     };
   };
 
-  testCacheMrBoxingtonPresetScopeLocalSkipsGlobalTool = {
+  testCacheBuildCleanerPresetLocalConfigureLeavesToolOff = {
+    expr = toolEnableFromPresetAspect <devenv4monorepo/presets/cache/build-cleaner.nix> [
+      "cache"
+      "build-cleaner"
+    ] "build-cleaner" {
+      presets.cache.build-cleaner.enable = true;
+      presets.cache.build-cleaner.scope = "local";
+    };
+    expected = {
+      enable = true;
+      scope = "local";
+      applied = true;
+      includeTools = [ ];
+      toolEnable = false;
+    };
+  };
+
+  testCacheBuildCleanerPresetScopeLocalSkipsGlobalTool = {
     expr =
       let
         cfg =
           (eval preset {
-            presets.cache.mr-boxington.enable = true;
-            presets.cache.mr-boxington.scope = "local";
-          }).config.presets.cache.mr-boxington;
+            presets.cache.build-cleaner.enable = true;
+            presets.cache.build-cleaner.scope = "local";
+          }).config.presets.cache.build-cleaner;
       in
       {
         inherit (cfg) enable scope;
@@ -144,10 +161,10 @@ in
     };
   };
 
-  testCacheMrBoxingtonPresetDefaultsOptInLocal = {
+  testCacheBuildCleanerPresetDefaultsOptInLocal = {
     expr =
       let
-        cfg = (eval preset { }).config.presets.cache.mr-boxington;
+        cfg = (eval preset { }).config.presets.cache.build-cleaner;
       in
       {
         inherit (cfg) enable scope;

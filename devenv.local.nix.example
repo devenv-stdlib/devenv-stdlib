@@ -25,6 +25,11 @@
   # presets.cache.mr-boxington.enable = true;
   # presets.cache.mr-boxington.scope = "local"; # default
 
+  # build-cleaner: reclaim disk from build artifacts / caches (this repo only).
+  # For user-global install, set scope = "global" in home.local.nix instead.
+  # presets.cache.build-cleaner.enable = true;
+  # presets.cache.build-cleaner.scope = "local"; # default
+
   # languages.go.enable = true;
   # supported.go.min = "1.22.0";
   # supported.go.max = "1.24.0";
