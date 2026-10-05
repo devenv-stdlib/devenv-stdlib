@@ -13,8 +13,8 @@ on:
       - hooks/**
       - includes/cursor-agent-sandbox/**
       - .github/workflows/setup-tests.yml
-  # Always on PRs so ruleset checks `bats (ubuntu-…)` exist; path-filter skips
-  # the suite when setup paths are untouched (shim stays green).
+  # Always on PRs so required `setup.sh BATS (ubuntu-…)` checks exist; path-filter
+  # skips the suite when setup paths are untouched (job reports skipped).
   pull_request:
 
 # Read-only by default; only setup-bats needs actions: write for cache saves.
@@ -92,28 +92,3 @@ jobs:
         with:
           primary-key: ${{ steps.nix-cache.outputs.primary-key }}
           gc-max-store-size-linux: 5G
-
-  # Ruleset requires "bats (ubuntu-…)".
-  ruleset-bats:
-    name: bats (${{ matrix.os }})
-    needs: [changes, setup-bats]
-    if: always() && !cancelled()
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, ubuntu-26.04]
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    steps:
-      - name: Require setup.sh BATS matrix success or path-skip
-        run: |
-          if [ "${{ needs.changes.result }}" != "success" ]; then
-            echo "changes job result=${{ needs.changes.result }}"
-            exit 1
-          fi
-          if [ "${{ needs.changes.outputs.setup }}" != "true" ]; then
-            echo "path-skip: setup.sh BATS not required for this PR"
-            exit 0
-          fi
-          test "${{ needs.setup-bats.result }}" = "success"

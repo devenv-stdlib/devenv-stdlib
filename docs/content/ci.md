@@ -21,10 +21,10 @@ Each nix-unit suite stays single-process (no `--jobs`).
 
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
-| `ci.yml` | Push and pull request to `main`/`master` | **Lint (prek)** always first (fail-fast; treefmt + residual prek). On PRs, **Detect path changes** skips unit / integration / language-matrix when their paths are untouched; push to `main`/`master` always runs the full suite. Ruleset check names stay green on intentional path-skips via shim jobs. |
+| `ci.yml` | Push and pull request to `main`/`master` | **Lint (prek)** always first (fail-fast; treefmt + residual prek). On PRs, **Detect path changes** skips unit / integration / language-matrix when their paths are untouched; push to `main`/`master` always runs the full suite. Path-skipped jobs report as skipped against the ruleset’s real job names. |
 | `test.yml` | Called from `ci.yml` | Per-language `devenv test` for each supported version, on Ubuntu 24.04 and 26.04 (human-readable job titles per language/version) |
-| `setup-tests.yml` | Changes to setup/tag hooks, every tag push, and every PR | **setup.sh BATS** when setup paths change (PR path-filter + push `paths:`; ruleset shim `bats (ubuntu-…)` stays green on skip) |
-| `pages.yml` | Push to `master`/`main`, pull request, or manual | **Build docs site** when `docs/**` (or this workflow) changes on PRs; always on trunk push / `workflow_dispatch` for deploy (ruleset shim `build`) |
+| `setup-tests.yml` | Changes to setup/tag hooks, every tag push, and every PR | **setup.sh BATS** when setup paths change (PR path-filter + push `paths:`; skipped when untouched) |
+| `pages.yml` | Push to `master`/`main`, pull request, or manual | **Build docs site** when `docs/**` (or this workflow) changes on PRs; always on trunk push / `workflow_dispatch` for deploy |
 | `update-lock.yml` | Weekly Monday and `workflow_dispatch` | `devenv update git-hooks` only; PR when that input changes |
 
 CI and `setup.sh` install the devenv CLI from the **locked** `devenv` input revision in `devenv.lock` (`github:cachix/devenv/<rev>`), not floating `nixpkgs#devenv`. That keeps the CLI aligned with `require_version: true` in `devenv.yaml`. The v2.4.0 modules tag still ships `latest-version=2.3.1`, so `devenv.nix` sets `devenv.latestVersion = "2.4.0"` to match the release CLI.

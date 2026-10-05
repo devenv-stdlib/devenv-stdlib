@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   # Path filters on pull_request only; push to main/master always runs the full suite
-  # (release gate). Ruleset shims treat intentional path-skips as success.
+  # (release gate). Path-skipped jobs report as skipped (ruleset uses real job names).
   changes:
     name: Detect path changes
     runs-on: ubuntu-24.04
@@ -275,18 +275,6 @@ jobs:
               || echo "::warning::Could not comment on the pull request with prek output"
           fi
 
-  # Ruleset requires bare check context "prek" (was hooks.yml job id).
-  ruleset-prek:
-    name: prek
-    needs: lint
-    if: always() && !cancelled()
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    steps:
-      - name: Require lint success
-        run: test "${{ needs.lint.result }}" = "success"
-
   unit-tests:
     name: Unit tests (${{ matrix.os }})
     needs: [lint, changes]
@@ -367,30 +355,6 @@ jobs:
         with:
           primary-key: ${{ steps.nix-cache.outputs.primary-key }}
           gc-max-store-size-linux: 5G
-
-  # Ruleset requires "test-devenv-unit (ubuntu-…)". Human-readable matrix jobs use
-  # different display names; these shims keep the required contexts green/red.
-  ruleset-unit-tests:
-    name: test-devenv-unit (${{ matrix.os }})
-    needs: [changes, unit-tests]
-    if: always() && !cancelled()
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, ubuntu-26.04]
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Require unit matrix success or path-skip
-        run: |
-          if [ "${{ needs.changes.result }}" != "success" ]; then
-            echo "changes job result=${{ needs.changes.result }}"
-            exit 1
-          fi
-          if [ "${{ needs.changes.outputs.unit }}" != "true" ]; then
-            echo "path-skip: unit suite not required for this PR"
-            exit 0
-          fi
-          test "${{ needs.unit-tests.result }}" = "success"
 
   # Integration runs when its paths match; waits for unit only if unit also ran.
   integration-tests:
@@ -477,29 +441,6 @@ jobs:
           primary-key: ${{ steps.nix-cache.outputs.primary-key }}
           gc-max-store-size-linux: 5G
 
-  # Ruleset requires "test-devenv (ubuntu-…)".
-  ruleset-integration-tests:
-    name: test-devenv (${{ matrix.os }})
-    needs: [changes, integration-tests]
-    if: always() && !cancelled()
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, ubuntu-26.04]
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Require integration matrix success or path-skip
-        run: |
-          if [ "${{ needs.changes.result }}" != "success" ]; then
-            echo "changes job result=${{ needs.changes.result }}"
-            exit 1
-          fi
-          if [ "${{ needs.changes.outputs.integration }}" != "true" ]; then
-            echo "path-skip: integration suite not required for this PR"
-            exit 0
-          fi
-          test "${{ needs.integration-tests.result }}" = "success"
-
   check-language-matrix-workflow:
     name: Check language-matrix workflow exists
     needs: [changes, integration-tests]
@@ -524,56 +465,6 @@ jobs:
     needs: check-language-matrix-workflow
     if: needs.check-language-matrix-workflow.outputs.exists == 'true'
     uses: ./.github/workflows/test.yml
-
-  # Ruleset requires bare contexts "test-devenv" and "test". Matrix jobs report
-  # as "Integration tests (ubuntu-…)" / reusable "Language matrix / …"; shims
-  # below keep the required check names.
-  ruleset-test-devenv:
-    name: test-devenv
-    needs: [changes, integration-tests]
-    if: always() && !cancelled()
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Require integration matrix success or path-skip
-        run: |
-          if [ "${{ needs.changes.result }}" != "success" ]; then
-            echo "changes job result=${{ needs.changes.result }}"
-            exit 1
-          fi
-          if [ "${{ needs.changes.outputs.integration }}" != "true" ]; then
-            echo "path-skip: integration suite not required for this PR"
-            exit 0
-          fi
-          test "${{ needs.integration-tests.result }}" = "success"
-
-  ruleset-test:
-    name: test
-    needs: [changes, check-language-matrix-workflow, language-matrix]
-    if: always() && !cancelled()
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Require language-matrix workflow success, skip, or path-skip
-        run: |
-          if [ "${{ needs.changes.result }}" != "success" ]; then
-            echo "changes job result=${{ needs.changes.result }}"
-            exit 1
-          fi
-          if [ "${{ needs.changes.outputs.language }}" != "true" ]; then
-            echo "path-skip: language matrix not required for this PR"
-            exit 0
-          fi
-          gate="${{ needs.check-language-matrix-workflow.result }}"
-          if [ "$gate" != "success" ]; then
-            echo "language-matrix gate result=$gate"
-            exit 1
-          fi
-          exists="${{ needs.check-language-matrix-workflow.outputs.exists }}"
-          result="${{ needs.language-matrix.result }}"
-          if [ "$exists" = "true" ]; then
-            test "$result" = "success"
-          else
-            test "$result" = "skipped" || test "$result" = "success"
-          fi
 
   release:
     name: Semantic release
