@@ -46,7 +46,9 @@ else
               {
                 programs.rustfmt.enable = true;
                 settings.formatter.rustfmt = {
-                  command = "${pkgs.cargo}/bin/cargo";
+                  # Prefer pkgs.cargo when present (absolute path for treefmt).
+                  # Stub pkgs in unit evals often omit cargo — fall back to PATH.
+                  command = if pkgs ? cargo then "${pkgs.cargo}/bin/cargo" else "cargo";
                   options = lib.mkForce [
                     "fmt"
                     "--"
