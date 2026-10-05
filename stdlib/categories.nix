@@ -156,7 +156,9 @@ let
     release = n "bundle" "Local changelog and version CLIs." {
       children.changelog = n "zero-or-one" "One changelog generator (git-cliff or cocogitto)." { };
     };
-    scanners = n "bundle" "Secret, dependency, and image scanners. Not lang/ and not linters/." { };
+    scanners = n "bundle" "Secret, dependency, and image scanners. Not lang/ and not linters/." {
+      tools = [ "aletheore" ];
+    };
     secrets = n "bundle" "Decrypt and inject secrets. Not scanners." { };
     shell =
       n "bundle"

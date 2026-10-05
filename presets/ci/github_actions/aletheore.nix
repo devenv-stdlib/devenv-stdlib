@@ -1,4 +1,5 @@
-# Composable CI preset: owns aletheore.yml for Aletheore/Aletheore.
+# Composable CI preset: owns aletheore.yml for Aletheore/Aletheore and enables
+# the local Aletheore CLI tool (tools.scanners.aletheore → catalog pipx pin).
 # Attrpath: ci.github_actions.aletheore.
 #
 # Aletheore is a GitHub Action that scans a PR's base and head refs and posts
@@ -9,10 +10,10 @@
 # attachment, not an AttachmentPlan cache/coverage step.
 #
 # Opt out with presets.ci.github_actions.aletheore.enable = false and remove
-# .github/workflows/aletheore.yml. Aletheore Community is PolyForm
-# Noncommercial — org/commercial use needs a separate license from upstream.
-# Paid Aletheore AIR plans: https://www.aletheore.com
-{ lib, ... }:
+# .github/workflows/aletheore.yml (also drops tools.aletheore). Aletheore
+# Community is PolyForm Noncommercial — org/commercial use needs a separate
+# license from upstream. Paid Aletheore AIR plans: https://www.aletheore.com
+{ lib, tools, ... }:
 let
   # Underscore prefix so devenv.load does not treat this as a preset leaf.
   inherit (import ./aletheore/_workflow-text.nix { inherit lib; }) workflowText;
@@ -25,11 +26,16 @@ in
   ];
   description = ''
     Generate .github/workflows/aletheore.yml for Aletheore/Aletheore (GHA-only
-    evidence-grounded PR review diffs). Complements anti-slop / CodeRabbit;
-    not a local hook. Product site / paid plans: https://www.aletheore.com
+    evidence-grounded PR review diffs) and enable the local Aletheore CLI
+    (tools.scanners.aletheore; catalog pipx:aletheore). Complements anti-slop /
+    CodeRabbit; not a local hook. Product site / paid plans:
+    https://www.aletheore.com
   '';
   # Always available; presets.ci.github_actions.aletheore.enable turns it off.
   when = _: true;
+
+  # Local CLI leaf (mise/pipx catalog pin) — same pattern as ide.coderabbit → CLI.
+  tools = [ tools.scanners.aletheore ];
 
   module =
     { lib, ... }:

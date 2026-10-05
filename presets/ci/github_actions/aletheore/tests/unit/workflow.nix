@@ -25,6 +25,28 @@ let
               inherit name text;
               outPath = "/tmp/${name}";
             };
+            # tools.scanners.aletheore project payload (mise wrapper + install task).
+            writeShellScriptBin = name: text: {
+              inherit name text;
+              outPath = "/tmp/${name}";
+              meta.mainProgram = name;
+            };
+            mise = {
+              outPath = "/tmp/mise";
+              meta.mainProgram = "mise";
+            };
+            uv = {
+              outPath = "/tmp/uv";
+              meta.mainProgram = "uv";
+            };
+            curl = {
+              outPath = "/tmp/curl";
+              meta.mainProgram = "curl";
+            };
+            coreutils = {
+              outPath = "/tmp/coreutils";
+              meta.mainProgram = "coreutils";
+            };
           };
         }
         {
@@ -71,6 +93,11 @@ let
               type = lib.types.attrsOf freeform;
               default = { };
             };
+            # Aletheore CLI leaf adds aletheore:install when tasks exist.
+            tasks = lib.mkOption {
+              type = freeform;
+              default = { };
+            };
           };
           config = extra;
         }
@@ -101,6 +128,7 @@ in
         cfg = eval { };
         marker = cfg.stdlib.markers.aletheore or { };
         sync = cfg.scripts.sync-aletheore-workflow.exec or "";
+        includeTools = cfg.presets.ci.github_actions.aletheore.result.includeTools or [ ];
       in
       {
         applied = cfg.presets.ci.github_actions.aletheore.result.applied or false;
@@ -114,6 +142,11 @@ in
         hasSync = cfg.scripts ? sync-aletheore-workflow;
         syncCopiesAletheore = contains "aletheore.yml" sync;
         enterHasSync = contains "sync-aletheore-workflow" cfg.enterShell;
+        # Preset enables the local Aletheore CLI catalog leaf.
+        inherit includeTools;
+        toolEnable = (cfg.tools.aletheore or { }).enable or false;
+        hasAletheorePackage = lib.any (p: (p.name or "") == "aletheore") cfg.packages;
+        hasInstallTask = cfg.tasks ? "aletheore:install";
       };
     expected = {
       applied = true;
@@ -127,6 +160,10 @@ in
       hasSync = true;
       syncCopiesAletheore = true;
       enterHasSync = true;
+      includeTools = [ "aletheore" ];
+      toolEnable = true;
+      hasAletheorePackage = true;
+      hasInstallTask = true;
     };
   };
 
@@ -146,6 +183,9 @@ in
         actionOption = cfg.presets.ci.github_actions.aletheore.action;
         actionCommentOption = cfg.presets.ci.github_actions.aletheore.actionComment;
         failOnNewSecretsOption = cfg.presets.ci.github_actions.aletheore.failOnNewSecrets;
+        disabledToolEnable = (disabled.tools.aletheore or { }).enable or false;
+        disabledHasPackage = lib.any (p: (p.name or "") == "aletheore") disabled.packages;
+        disabledHasInstallTask = disabled.tasks ? "aletheore:install";
       };
     expected = {
       defaultApplied = true;
@@ -155,6 +195,9 @@ in
       actionOption = "Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30";
       actionCommentOption = "v0.9.22";
       failOnNewSecretsOption = true;
+      disabledToolEnable = false;
+      disabledHasPackage = false;
+      disabledHasInstallTask = false;
     };
   };
 
