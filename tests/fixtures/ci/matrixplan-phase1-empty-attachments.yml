@@ -43,7 +43,7 @@ jobs:
           rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
           nix profile add "github:cachix/devenv/${rev}"
       - name: Test
-        run: true
+        run: "true"
       - name: Save Nix store
         if: ${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
         uses: nix-community/cache-nix-action/save@v7
