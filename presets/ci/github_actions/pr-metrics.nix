@@ -33,6 +33,7 @@
 let
   # Underscore prefix so devenv.load does not treat this as a preset leaf.
   inherit (import ./pr-metrics/_workflow-text.nix { inherit lib; }) workflowText;
+  inherit (import ./pr-metrics/_code-file-extensions.nix { inherit lib; }) codeFileExtensions;
 in
 {
   path = [
@@ -144,9 +145,12 @@ in
           type = lib.types.nullOr lib.types.str;
           default = null;
           description = ''
-            PR Metrics `code-file-extensions` (newline-separated). `null` uses
-            the monorepo default (`nix` / `yml` / `yaml` — includes Nix, excludes
-            Markdown). The reject-oversized gate applies the same list so Action
+            PR Metrics `code-file-extensions` (newline-separated). `null`
+            derives from enabled `languages.*` plus always-on nix/yml/yaml, and
+            html/ts/tsx when docs tooling (`docs-dev` / `docs-build`) or
+            javascript/typescript/deno is on — see
+            `_code-file-extensions.nix`. The reject-oversized gate applies the
+            same final list (including `extraWith` overrides) so Action
             annotations and the size check measure the same product-code files.
             `""` omits the Action input (upstream top-10 defaults); the size
             gate still applies that same documented default extension list so it
@@ -215,7 +219,19 @@ in
     }:
     let
       cfg = config.presets.ci.github_actions.pr-metrics;
-      text = workflowText cfg;
+      # Docs site scripts (modules/test/devenv.nix) without languages.typescript.
+      docsTooling = (config.scripts ? docs-dev) || (config.scripts ? docs-build);
+      derivedExtensions = codeFileExtensions {
+        languages = config.languages or { };
+        inherit docsTooling;
+      };
+      # null → derive; "" → omit (Action defaults); string → override.
+      effectiveExtensions =
+        if cfg.codeFileExtensions == null then derivedExtensions else cfg.codeFileExtensions;
+      effectiveCfg = cfg // {
+        codeFileExtensions = effectiveExtensions;
+      };
+      text = workflowText effectiveCfg;
       workflowFile = pkgs.writeText "pr-metrics.yml" text;
     in
     {
@@ -235,6 +251,8 @@ in
           rejectAboveMedium
           exemptDraftPrs
           ;
+        codeFileExtensions = effectiveExtensions;
+        inherit docsTooling derivedExtensions;
         workflow = "pr-metrics.yml";
       };
 
