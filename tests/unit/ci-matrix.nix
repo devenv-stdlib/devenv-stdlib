@@ -260,6 +260,54 @@ in
     };
   };
 
+  testGhaOptionalIsPerCell = {
+    expr =
+      let
+        plan = matrix.plan {
+          runnerProfiles = matrix.defaultRunnerProfiles;
+          jobs.mixed = {
+            command = "true";
+            dimensions = {
+              runner = [ "ubuntu-lts-prev" ];
+            };
+            seeds = [ { toolchain = "3.12"; } ];
+            include = [
+              {
+                runner = "ubuntu-lts-curr";
+                toolchain = "3.13";
+                optional = true;
+              }
+            ];
+          };
+        };
+        yaml = gha.render plan;
+      in
+      {
+        # Required cells must not make the whole job continue-on-error: true.
+        jobLevelTrue = contains "continue-on-error: true\n" yaml;
+        perCell = contains "continue-on-error: \${{ matrix.optional == 'true' }}" yaml;
+        optionalTrueRow = contains "optional: \"true\"" yaml;
+        optionalFalseRow = contains "optional: \"false\"" yaml;
+        # Default language matrix stays free of optional keys.
+        pythonClean =
+          !(contains "optional:" (
+            versions.workflowText {
+              pythonOn = true;
+              python = versions.emptyPython // {
+                min = "3.12";
+              };
+            }
+          ));
+      };
+    expected = {
+      jobLevelTrue = false;
+      perCell = true;
+      optionalTrueRow = true;
+      optionalFalseRow = true;
+      pythonClean = true;
+    };
+  };
+
   testMatrixMaxCellsThrows = {
     expr = builtins.tryEval (
       matrix.expand {
