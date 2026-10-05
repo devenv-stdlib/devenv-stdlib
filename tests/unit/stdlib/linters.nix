@@ -51,4 +51,15 @@ in
       "ruff-check"
     ];
   };
+
+  # treefmt-nix still exposes programs.ruff as a renamed alias of ruff-check.
+  # Scanning it would builtins.trace an obsolete-option warning on every eval.
+  testReportEnabledTreefmtProgramsSkipsRuffAlias = {
+    expr = stdlib.report.enabledTreefmtPrograms {
+      ruff.enable = true;
+      ruff-check.enable = true;
+      ruff-format.enable = false;
+    };
+    expected = [ "ruff-check" ];
+  };
 }
