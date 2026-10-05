@@ -35,6 +35,7 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `.github/workflows/hooks.yml` | `prek` on pull requests; failure comment; pre-commit.ci lite autofix |
 | `.github/workflows/update-lock.yml` | Weekly `devenv update git-hooks` pull request |
 | `.github/workflows/test.yml` | Written by devenv on `enterShell`; **commit** this file |
+| `.devcontainer/devcontainer.json` | Written when `devcontainer.enable`; **commit** for Codespaces / Dev Containers |
 
 An existing destination `README.md` is left in place. This documentation site is not copied into the monorepo; use [devenv4monorepo.github.io](https://devenv4monorepo.github.io/).
 

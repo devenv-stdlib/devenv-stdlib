@@ -40,7 +40,7 @@ The terminal is user-global because you already have a terminal open to run `dev
 
 - Language packs, IDE `.vscode/extensions.json`, Serena `.serena/project.yml` `language_servers`, and language git hooks follow `languages.*` via `presets/<lang>/<category>/*.nix` (`stdlib.devenv.load`).
 - CI versions follow `supported.<lang>.min` / `max` / `unsupported` / `versions`. When min/max omit a patch (`3.12`, `22`), `modules/languages/catalog.json` supplies the latest **non-EOL** patch of each cycle in range. `refresh-toolchain-latest` rebuilds that catalog from [endoflife.date](https://endoflife.date).
-- `enterShell` writes `.github/workflows/test.yml` (**committed**), `.debtmap.toml`, `mise.toml`, `.vscode/extensions.json`, and `.serena/project.yml` (gitignored), installs `hooks/reference-transaction`, and runs `cursor-sync-extensions`. [prek](https://prek.j178.dev/) manages `pre-commit` and `commit-msg` only (generated `.pre-commit-config.yaml` is gitignored).
+- `enterShell` writes `.github/workflows/test.yml` (**committed**), `.devcontainer/devcontainer.json` (**committed** when `devcontainer.enable`), `.debtmap.toml`, `mise.toml`, `.vscode/extensions.json`, and `.serena/project.yml` (gitignored), installs `hooks/reference-transaction`, and runs `cursor-sync-extensions`. [prek](https://prek.j178.dev/) manages `pre-commit` and `commit-msg` only (generated `.pre-commit-config.yaml` is gitignored).
 
 ## How Home Manager stays out of the project PATH
 
