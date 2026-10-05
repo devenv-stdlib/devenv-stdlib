@@ -148,8 +148,10 @@ in
             the monorepo default (`nix` / `yml` / `yaml` — includes Nix, excludes
             Markdown). The reject-oversized gate applies the same list so Action
             annotations and the size check measure the same product-code files.
-            `""` omits the Action input (upstream top-10 defaults); any other
-            string replaces the Action default set (no merge).
+            `""` omits the Action input (upstream top-10 defaults); the size
+            gate still applies that same documented default extension list so it
+            does not count every eligible file. Any other string replaces the
+            Action default set (no merge).
           '';
         };
         continueOnError = lib.mkOption {
