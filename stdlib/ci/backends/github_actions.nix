@@ -20,8 +20,16 @@ let
     in
     if runs == null then
       cell.os or (throw "ci.backends.github_actions: cell missing runner profile and os")
+    else if builtins.isList runs then
+      # Single-label lists stay scalars so matrix.os is string-typed for
+      # actionlint/cache keys; multi-label lists stay arrays for runs-on.
+      if runs == [ ] then
+        throw "ci.backends.github_actions: empty runs-on for profile '${toString profileId}'"
+      else if lib.length runs == 1 then
+        lib.head runs
+      else
+        runs
     else
-      # Preserve multi-label runs-on lists; scalars stay scalars.
       runs;
 
   # Fields that must not appear in strategy.matrix.include rows.

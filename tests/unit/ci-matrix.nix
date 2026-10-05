@@ -338,13 +338,15 @@ in
       in
       {
         multiLabel = contains ''os: ["self-hosted", "linux", "x64", "gpu"]'' yaml;
-        # Single-label default profiles still render (as a one-element YAML list).
-        singleLabelList = contains ''os: ["ubuntu-24.04"]'' pythonYaml;
+        # Single-label default profiles stay scalars (actionlint-typed as string).
+        singleLabelScalar = contains ''os: "ubuntu-24.04"'' pythonYaml;
+        notOneElemList = !(contains ''os: ["ubuntu-24.04"]'' pythonYaml);
         notHeadOnly = !(contains ''os: "self-hosted"'' yaml);
       };
     expected = {
       multiLabel = true;
-      singleLabelList = true;
+      singleLabelScalar = true;
+      notOneElemList = true;
       notHeadOnly = true;
     };
   };
