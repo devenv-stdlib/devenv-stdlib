@@ -140,6 +140,7 @@ See `consumer-flake.nix.example`. A consumer flake typically looks like:
 
 ```nix
 devenv-stdlib.url = "github:thedrow/devenv4monorepo/<tag-or-sha>";
+# follows = lockfile reuse of the pin's inputs (not a binary cache)
 nixpkgs.follows = "devenv-stdlib/nixpkgs";
 ```
 
