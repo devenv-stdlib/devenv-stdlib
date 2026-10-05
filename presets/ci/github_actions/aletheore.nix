@@ -11,6 +11,7 @@
 # Opt out with presets.ci.github_actions.aletheore.enable = false and remove
 # .github/workflows/aletheore.yml. Aletheore Community is PolyForm
 # Noncommercial — org/commercial use needs a separate license from upstream.
+# Paid Aletheore AIR plans: https://www.aletheore.com
 { lib, ... }:
 let
   # Underscore prefix so devenv.load does not treat this as a preset leaf.
@@ -25,7 +26,7 @@ in
   description = ''
     Generate .github/workflows/aletheore.yml for Aletheore/Aletheore (GHA-only
     evidence-grounded PR review diffs). Complements anti-slop / CodeRabbit;
-    not a local hook.
+    not a local hook. Product site / paid plans: https://www.aletheore.com
   '';
   # Always available; presets.ci.github_actions.aletheore.enable turns it off.
   when = _: true;
