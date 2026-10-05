@@ -56,4 +56,20 @@ else
     category = "cache";
     defaultEnable = false;
     inherit package;
+    # Declared devenv tasks (presets export when local scope is on).
+    # Interactive `build-cleaner` (prompts) is not a task; use dry-run / script.
+    tasks =
+      { pkgs, ... }:
+      let
+        bc = package pkgs;
+        bin = if builtins.isAttrs bc && bc ? outPath then "${bc}/bin/build-cleaner" else "build-cleaner";
+      in
+      {
+        dry-run = {
+          exec = ''
+            set -euo pipefail
+            ${bin} --dry-run
+          '';
+        };
+      };
   }

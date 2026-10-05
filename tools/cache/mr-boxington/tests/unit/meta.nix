@@ -5,6 +5,12 @@ let
   discovered = stdlib.mkTool.specs [ <devenv4monorepo/tools/cache/mr-boxington.nix> ];
   byName = lib.listToAttrs (map (d: lib.nameValuePair d.spec.name d) discovered);
   mbx = byName."mr-boxington".spec;
+  taskLeaves =
+    let
+      raw = mbx.tasks or { };
+      resolved = if builtins.isFunction raw then raw { pkgs = { }; } else raw;
+    in
+    lib.sort (a: b: a < b) (builtins.attrNames resolved);
 in
 {
   testStdlibMrBoxingtonIsGlobalBinary = {
@@ -24,6 +30,7 @@ in
       devenvLoads = lib.any (d: d.spec.name == "mr-boxington") (
         lib.filter (d: d.spec.isLocal) discovered
       );
+      inherit taskLeaves;
     };
     expected = {
       category = "cache";
@@ -41,6 +48,11 @@ in
       ];
       denLoads = true;
       devenvLoads = false;
+      taskLeaves = [
+        "doctor"
+        "gc"
+        "stats"
+      ];
     };
   };
 }

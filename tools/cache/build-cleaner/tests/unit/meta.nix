@@ -4,6 +4,12 @@ let
   discovered = stdlib.mkTool.specs [ <devenv4monorepo/tools/cache/build-cleaner.nix> ];
   byName = lib.listToAttrs (map (d: lib.nameValuePair d.spec.name d) discovered);
   bc = byName."build-cleaner".spec;
+  taskLeaves =
+    let
+      raw = bc.tasks or { };
+      resolved = if builtins.isFunction raw then raw { pkgs = { }; } else raw;
+    in
+    lib.sort (a: b: a < b) (builtins.attrNames resolved);
 in
 {
   testStdlibBuildCleanerIsGlobalBinary = {
@@ -23,6 +29,7 @@ in
       devenvLoads = lib.any (d: d.spec.name == "build-cleaner") (
         lib.filter (d: d.spec.isLocal) discovered
       );
+      inherit taskLeaves;
     };
     expected = {
       category = "cache";
@@ -40,6 +47,7 @@ in
       ];
       denLoads = true;
       devenvLoads = false;
+      taskLeaves = [ "dry-run" ];
     };
   };
 }
