@@ -72,8 +72,10 @@ let
     };
 
   # Official zip releases (one binary at zip root by default).
-  # platformOf: pkgs -> platform key string (e.g. "linux-x64").
-  # urlFor: platform -> url; hashes: { <platform> = "sha256-…"; }
+  # platformOf: pkgs -> release artifact key (e.g. "linux-x64").
+  # urlFor: platform -> url; hashes: { <artifact key> = "sha256-…"; }
+  # platforms: Nix systems for meta.platforms (e.g. "x86_64-linux") — required;
+  # do not pass artifact keys here (they never match a Nix host).
   fromZipRelease =
     {
       pname,
@@ -81,6 +83,8 @@ let
       platformOf,
       urlFor,
       hashes,
+      # Nix system names for meta.platforms (not release artifact identifiers).
+      platforms,
       bin ? pname,
       # Extra $out/bin names → same binary (e.g. cr → coderabbit).
       binLinks ? [ ],
@@ -90,7 +94,6 @@ let
       # pkgs: string shell for postFixup (Linux ELF fixups, etc.).
       postFixup ? (_pkgs: ""),
       meta ? { },
-      platforms ? builtins.attrNames hashes,
     }:
     pkgs:
     let
