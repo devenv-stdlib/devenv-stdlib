@@ -389,13 +389,14 @@ rec {
 
   nodePackage = version: "nodejs_${lib.versions.major version}";
 
-  # Default runner profile ids (ubuntu LTS previous + current).
+  # Default runner profile ids (ubuntu LTS previous + current, x86_64).
   defaultRunnerIds = [
     "ubuntu-lts-prev"
     "ubuntu-lts-curr"
   ];
 
   # Build a MatrixPlan from the language-matrix snapshot (supported.* + flags).
+  # Opt-in M3 dims (fixtures / processes / arches) default off so YAML stays byte-stable.
   languageMatrixPlan =
     {
       pythonOn ? false,
@@ -407,12 +408,29 @@ rec {
       go ? emptyGo,
       javascript ? emptyJavascript,
       strategy ? { },
+      # Empty → omit dimension (default language matrix unchanged).
+      fixtures ? [ ],
+      processes ? [ ],
+      # Architectures whose runner profiles participate. Default x86_64-only.
+      arches ? [ "x86_64" ],
+      # Override profile catalog; null → default (+ aarch64 when arches asks for it).
+      runnerProfiles ? null,
     }:
     let
+      baseProfiles =
+        if runnerProfiles != null then
+          runnerProfiles
+        else
+          matrix.profilesForArches matrix.allRunnerProfiles arches;
+      runners = matrix.runnerIds baseProfiles;
+      extraDims =
+        lib.optionalAttrs (fixtures != [ ]) { fixture = fixtures; }
+        // lib.optionalAttrs (processes != [ ]) { process = processes; };
       mkJob = _name: rows: command: {
         dimensions = {
-          runner = defaultRunnerIds;
-        };
+          runner = runners;
+        }
+        // extraDims;
         seeds = rows;
         expansion = "cartesian";
         inherit command;
@@ -423,7 +441,7 @@ rec {
       };
     in
     matrix.plan {
-      runnerProfiles = matrix.defaultRunnerProfiles;
+      runnerProfiles = baseProfiles;
       jobs =
         lib.optionalAttrs pythonOn {
           python =
