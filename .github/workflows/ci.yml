@@ -333,9 +333,14 @@ jobs:
           rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
           nix profile add "github:cachix/devenv/${rev}"
 
-      - name: Unit suite
+      - name: Nix unit suite
+        # Public task: discovers tools/** + presets/** (+ tests/unit) via the
+        # private JUnit reporter (stdlib/private/nix-unit-junit.py).
+        run: devenv tasks run --show-output nix-unit:test
+
+      - name: BATS suite
         # --show-output: devenv tasks hide captured stdout unless showOutput / this flag
-        run: devenv tasks run --show-output devenv:test-devenv-unit
+        run: devenv tasks run --show-output devenv:test-devenv-bats
 
       - name: Upload JUnit reports
         if: ${{ always() && !env.ACT }}

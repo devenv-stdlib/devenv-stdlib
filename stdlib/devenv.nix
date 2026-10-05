@@ -796,6 +796,7 @@ in
         categoryPolicy.optionsModule
         categoryWarnings.optionsModule
         categoryWarnings.module
+        (import ./nix-unit.nix { inherit lib; }).module
       ]
     else
       [
@@ -811,5 +812,6 @@ in
         categoryWarnings.module
         generatedTasksModule
         reportModule
+        (import ./nix-unit.nix { inherit lib; }).module
       ];
 }

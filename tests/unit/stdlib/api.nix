@@ -33,6 +33,7 @@ let
     ++ names "report" stdlib.report
     ++ names "generate" stdlib.generate
     ++ names "tasks" stdlib.tasks
+    ++ names "nixUnit" stdlib.nixUnit
     ++ names "den" stdlib.den
     ++ names "devenv" stdlib.devenv
     ++ names "ci" stdlib.ci
@@ -336,6 +337,9 @@ in
       "log.warn'"
       "log.warnIf"
       "mkTool"
+      "nixUnit"
+      "nixUnit.module"
+      "nixUnit.taskId"
       "project"
       "project.alwaysOnGitHookNames"
       "project.alwaysOnHookNames"

@@ -8,9 +8,9 @@ bats tests/setup                  # setup.sh only
 bats tests/home                   # terminal-lib, bashrc.d, Cursor LLM merge, Serena config
 ```
 
-`test-devenv-unit` runs nix-unit (with `--quiet`: hide ✅ lines, keep failures + summary) and BATS with `--jobs "$(nproc)"` (GNU `parallel` is on the devenv PATH). BATS TAP goes to `junit/bats.log`; the CI log gets a pass count, or the full log on failure.
+`test-devenv-unit` runs `nix-unit:test` (all tools/** + presets/** unit suites, plus `tests/unit` when present) then BATS. CI invokes those as separate steps: `nix-unit:test` then `devenv:test-devenv-bats`. BATS TAP goes to `junit/bats.log`; the CI log gets a pass count, or the full log on failure.
 
-nix-unit is **not** one megasuite: the main suite covers stdlib, Den aspects, and other cross-cutting topics under `tests/unit/`, then the runner discovers each `tools/**/tests/unit/default.nix` and `presets/**/tests/unit/default.nix` and runs them as separate suites (JUnit files `nix-unit.xml` plus `nix-unit-<slug>.xml`). See [contributing](contributing.md#test-layout).
+nix-unit is **not** one megasuite: the main suite covers stdlib, Den aspects, and other cross-cutting topics under `tests/unit/`, then the runner discovers each `tools/**/tests/unit/default.nix` and `presets/**/tests/unit/default.nix` and runs them as separate suites (JUnit files `nix-unit.xml` plus `nix-unit-<slug>.xml`). See [contributing](contributing.md#test-layout). The JUnit XML reporter for nix-unit is a **private** stdlib detail (`stdlib/private/nix-unit-junit.py`); projects run the `nix-unit:test` task, not the script.
 
 `test-devenv-integration` runs the main nixosTest and actionlint, then builds any discovered `tools|presets/**/tests/integration/default.nix`. On GitHub-hosted runners (`GITHUB_ACTIONS`), nested act is skipped — the language matrix already runs via reusable `test.yml`. Locally, integration still runs nested act (matrix cells pinned one-at-a-time). Integration `nix-build` uses `-j "$(nproc)"`. Act step output is captured per job and printed only on failure.
 Local `test-devenv` runs the unit suite, then the integration suite (skips integration if unit failed).
@@ -20,7 +20,7 @@ Each nix-unit suite stays single-process (no `--jobs`).
 
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
-| `ci.yml` | Push and pull request to `main`/`master` | **Lint (prek)** always first (fail-fast; treefmt + residual prek). On PRs, **Detect path changes** skips unit / integration / language-matrix when their paths are untouched; push to `main`/`master` always runs the full suite. Path-skipped jobs report as skipped against the ruleset’s real job names. |
+| `ci.yml` | Push and pull request to `main`/`master` | **Lint (prek)** always first (fail-fast; treefmt + residual prek). On PRs, **Detect path changes** skips unit / integration / language-matrix when their paths are untouched; push to `main`/`master` always runs the full suite. Unit cells run `nix-unit:test` then `devenv:test-devenv-bats`. Path-skipped jobs report as skipped against the ruleset’s real job names. |
 | `test.yml` | Called from `ci.yml` | Per-language `devenv test` for each supported version, on Ubuntu 24.04 and 26.04 (human-readable job titles per language/version) |
 | `setup-tests.yml` | Changes to setup/tag hooks, every tag push, and every PR | **setup.sh BATS** when setup paths change (PR path-filter + push `paths:`; skipped when untouched) |
 | `pages.yml` | Push to `master`/`main`, pull request, or manual | **Build docs site** when `docs/**` (or this workflow) changes on PRs; always on trunk push / `workflow_dispatch` for deploy |
@@ -59,4 +59,4 @@ Then run `devenv tasks run ci:update-anti-slop` / `ci:update-pr-metrics` (or `st
 
 ## JUnit
 
-Unit and integration jobs write JUnit reports under `junit/` (gitignored). Logs stay summary-first: `junit-report.py --quiet` for nix-unit, BATS/act/nixosTest full transcripts on disk and on failure only in the job log. Tasks set `showOutput = true` (CI also passes `--show-output`) so those summaries are not swallowed. CI uploads the XML files and runs [publish-unit-test-result-action](https://github.com/EnricoMi/publish-unit-test-result-action).
+Unit and integration jobs write JUnit reports under `junit/` (gitignored). Logs stay summary-first: the private nix-unit JUnit reporter (`--quiet`) for nix-unit, BATS/act/nixosTest full transcripts on disk and on failure only in the job log. Tasks set `showOutput = true` (CI also passes `--show-output`) so those summaries are not swallowed. CI uploads the XML files and runs [publish-unit-test-result-action](https://github.com/EnricoMi/publish-unit-test-result-action).

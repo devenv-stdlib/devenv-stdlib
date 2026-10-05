@@ -8,7 +8,6 @@ _: {
 
     # devenv tasks and act have no TTY; tput/pretty-bats SIGPIPE without TERM.
     export TERM="''${TERM:-dumb}"
-    # junit-report.py tees nix-unit to STDOUT; keep that line-buffered under pipes.
     export PYTHONUNBUFFERED=1
 
     junit_dir="$DEVENV_ROOT/junit"
@@ -16,51 +15,9 @@ _: {
     mkdir -p "$junit_dir"
     status=0
 
-    # Main suite (stdlib / aspects / cross-cutting) plus additive per-owner suites
-    # under tools/**/tests/unit and presets/**/tests/unit (discover-suites.nix).
-    list_owner_unit_suites() {
-      # Same rules as tests/lib/discover-suites.nix: skip `_` prefixes, stop at the
-      # first `tests/` directory, and only accept its unit/default.nix (do not
-      # descend into nested fixture suites under tests/).
-      while IFS= read -r tests_dir; do
-        [ -n "$tests_dir" ] || continue
-        f="$tests_dir/unit/default.nix"
-        [ -f "$f" ] && printf '%s\n' "$f"
-      done < <(
-        find "$DEVENV_ROOT/tools" "$DEVENV_ROOT/presets" \
-          \( -name '_*' -prune \) -o \
-          \( -type d -name tests -prune -print \) \
-          | sort
-      )
-    }
-
-    suite_slug() {
-      local rel="$1"
-      rel="''${rel#/}"
-      rel="''${rel%/tests/unit/default.nix}"
-      printf '%s' "$rel" | tr '/' '-'
-    }
-
-    echo "==> nix-unit (main)"
-    python3 "$report" nix-unit \
-      --quiet \
-      --suite "$DEVENV_ROOT/tests/unit/default.nix" \
-      --unit-dir "$DEVENV_ROOT/tests/unit" \
-      --root "$DEVENV_ROOT" \
-      --output "$junit_dir/nix-unit.xml" || status=1
-
-    while IFS= read -r suite; do
-      [ -n "$suite" ] || continue
-      rel="''${suite#"$DEVENV_ROOT"/}"
-      slug="$(suite_slug "$rel")"
-      echo "==> nix-unit ($rel)"
-      python3 "$report" nix-unit \
-        --quiet \
-        --suite "$suite" \
-        --unit-dir "$(dirname "$suite")" \
-        --root "$DEVENV_ROOT" \
-        --output "$junit_dir/nix-unit-$slug.xml" || status=1
-    done < <(list_owner_unit_suites)
+    # nix-unit suites (main + tools/** + presets/**) via the public task.
+    # Private JUnit reporter lives under stdlib/private — do not call it here.
+    nix-unit-test || status=1
 
     echo "==> bats"
     # GNU parallel prompts once for a citation; silence that in CI/noninteractive.
@@ -131,9 +88,73 @@ _: {
     exit "$status"
   '';
 
+  # BATS-only (CI runs nix-unit:test separately for dogfood).
+  scripts.test-devenv-bats.exec = ''
+    set -euo pipefail
+    cd "$DEVENV_ROOT"
+    # shellcheck disable=SC1091
+    . "$DEVENV_ROOT/home/nix-path.sh"
+    ensure_nixpkgs_on_nix_path
+
+    export TERM="''${TERM:-dumb}"
+    export PYTHONUNBUFFERED=1
+    export XDG_CACHE_HOME="''${XDG_CACHE_HOME:-$HOME/.cache}"
+
+    junit_dir="$DEVENV_ROOT/junit"
+    report="$DEVENV_ROOT/tests/junit-report.py"
+    mkdir -p "$junit_dir"
+    status=0
+
+    mkdir -p "''${HOME}/.parallel"
+    touch "''${HOME}/.parallel/will-cite"
+
+    nix --extra-experimental-features 'nix-command flakes' flake prefetch-inputs "$DEVENV_ROOT" \
+      >/dev/null 2>&1 || echo "warn: nix flake prefetch-inputs failed; continuing"
+    for eval_file in "$DEVENV_ROOT"/tests/home/*-eval.nix; do
+      env NIX_CONFIG="experimental-features = nix-command flakes" \
+        nix-instantiate --eval --strict --impure "$eval_file" >/dev/null 2>&1 \
+        || echo "warn: warm-up eval of ''${eval_file##*/} failed; continuing"
+    done
+    git_cfg_n="''${GIT_CONFIG_COUNT:-0}"
+    export "GIT_CONFIG_KEY_$git_cfg_n=maintenance.auto" \
+      "GIT_CONFIG_VALUE_$git_cfg_n=false" GIT_CONFIG_COUNT=$((git_cfg_n + 1))
+
+    bats_log="$junit_dir/bats.log"
+    if bats --jobs 1 --formatter tap --report-formatter junit --output "$junit_dir" \
+      --print-output-on-failure --recursive "$DEVENV_ROOT/tests" >"$bats_log" 2>&1; then
+      ok_count="$(grep -c '^ok ' "$bats_log" || true)"
+      echo "==> bats: ok ($ok_count tests)"
+    else
+      status=1
+      echo "==> bats: FAILED"
+      cat "$bats_log"
+    fi
+    if [ ! -s "$junit_dir/report.xml" ]; then
+      if bats --jobs 1 --formatter junit --recursive "$DEVENV_ROOT/tests" \
+        >"$junit_dir/report.xml" 2>"$bats_log"; then
+        :
+      else
+        status=1
+        echo "==> bats junit fallback: FAILED"
+        cat "$bats_log"
+      fi
+    fi
+    python3 "$report" enrich-bats \
+      --input "$junit_dir/report.xml" \
+      --output "$junit_dir/bats.xml" \
+      --root "$DEVENV_ROOT" || true
+    rm -f "$junit_dir/report.xml"
+    exit "$status"
+  '';
+
   tasks."devenv:test-devenv-unit" = {
     exec = "test-devenv-unit";
     # devenv tasks capture stdout by default; stream summaries / failures live.
+    showOutput = true;
+  };
+
+  tasks."devenv:test-devenv-bats" = {
+    exec = "test-devenv-bats";
     showOutput = true;
   };
 }
