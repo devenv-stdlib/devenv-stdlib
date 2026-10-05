@@ -16,6 +16,12 @@ _: {
   devcontainer.enable = true;
   devcontainer.settings.updateContentCommand = "devenv shell -- true";
 
+  # Dogfood: opt-in CI preset ci.github_actions.pr-metrics (microsoft/PR-Metrics →
+  # .github/workflows/pr-metrics.yml). Framework default is off; consumers
+  # enable the same way. Rejects PRs larger than medium by default.
+  # See docs/content/ci.md and presets/examples/ci-pr-metrics.nix.
+  presets.ci.github_actions.pr-metrics.enable = true;
+
   enterShell = ''
     echo "devenv4monorepo ready: ''${USER:-unknown}@$(uname -n)"
 
