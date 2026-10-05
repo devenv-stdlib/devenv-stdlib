@@ -6,10 +6,7 @@ permissions:
   pull-requests: write
 
 on:
-  pull_request_target:
-    types:
-      - opened
-      - reopened
+  pull_request:
 
 jobs:
   anti-slop:

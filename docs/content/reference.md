@@ -32,7 +32,7 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `modules/languages/catalog.json` | Cycle → latest patch and EOL |
 | `hooks/reference-transaction` | Tag guard, installed on `devenv shell` |
 | `.github/workflows/ci.yml` | Lint (prek) first (treefmt + residual), then unit tests, integration tests, generated `test.yml`, semantic-release |
-| `.github/workflows/pr-quality.yml` | peakoss/anti-slop on `pull_request_target` (opened/reopened); written when `ci.github_actions.anti-slop` is enabled |
+| `.github/workflows/pr-quality.yml` | peakoss/anti-slop on `pull_request`; written when `ci.github_actions.anti-slop` is enabled |
 | `.github/workflows/update-lock.yml` | Weekly `devenv update git-hooks` pull request |
 | `.github/workflows/test.yml` | Written by devenv on `enterShell`; **commit** this file |
 | `.devcontainer/devcontainer.json` | Written when `devcontainer.enable`; **commit** for Codespaces / Dev Containers |

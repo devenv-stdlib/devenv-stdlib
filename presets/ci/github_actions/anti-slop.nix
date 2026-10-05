@@ -1,9 +1,11 @@
 # Composable CI preset: owns pr-quality.yml for peakoss/anti-slop.
 # Attrpath: ci.github_actions.anti-slop.
 #
-# anti-slop is a GitHub Action PR-quality / AI-slop gate
-# (pull_request_target). It is GHA-only — not treefmt, not prek, and not a
-# local hook.
+# anti-slop is a GitHub Action PR-quality / AI-slop gate (pull_request).
+# It is GHA-only — not treefmt, not prek, and not a local hook.
+# Uses pull_request (not pull_request_target) so the workflow file on the PR
+# head is eligible to run — required for dogfood on the introducing PR and
+# for any branch tip that has not yet landed on the base.
 #
 # Opt-in (dogfood parity): enable defaults to false. Projects that want the
 # check set presets.ci.github_actions.anti-slop.enable = true; this template
@@ -35,8 +37,8 @@ in
       options.presets.ci.github_actions.anti-slop = {
         action = lib.mkOption {
           type = lib.types.str;
-          # Immutable commit for v0.3.0 — pull_request_target + write must not
-          # follow a movable tag. Keep the human version in actionComment.
+          # Immutable commit for v0.3.0 — pull-requests: write must not follow
+          # a movable tag. Keep the human version in actionComment.
           default = "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2";
           description = ''
             Marketplace Action pin (`owner/repo@sha`). Default is the v0.3.0
