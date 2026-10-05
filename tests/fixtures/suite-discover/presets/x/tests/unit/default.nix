@@ -1,1 +1,6 @@
-{ testFixturePresetUnit = { expr = true; expected = true; }; }
+{
+  testFixturePresetUnit = {
+    expr = true;
+    expected = true;
+  };
+}

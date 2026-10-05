@@ -149,8 +149,7 @@ in
         text = stdlib.report.formatReport inv;
       in
       {
-        applied = inv.presets.applied;
-        inert = inv.presets.inert;
+        inherit (inv.presets) applied inert;
         tools = inv.tools.enabled;
         hooks = inv.gitHooks.enabled;
         matrixEmpty = inv.matrix.empty;

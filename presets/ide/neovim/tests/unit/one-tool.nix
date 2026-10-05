@@ -7,8 +7,9 @@ in
   testIdeNeovimPresetIsOneTool = {
     expr =
       let
-        result =
-          (eval (import <devenv4monorepo/presets/ide/neovim.nix>) { }).config.presets.ide.neovim.result;
+        inherit ((eval (import <devenv4monorepo/presets/ide/neovim.nix>) { }).config.presets.ide.neovim)
+          result
+          ;
       in
       {
         includeTools = sort result.includeTools;
