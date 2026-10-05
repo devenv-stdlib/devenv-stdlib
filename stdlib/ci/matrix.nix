@@ -275,9 +275,7 @@ let
       # silent per-job wipe would skip that job's command. Also covers the
       # all-jobs-empty case (misconfigured catalog / match that matches nothing).
       emptiedJob = lib.any (
-        name:
-        (matrixPlan.jobs.${name}.cells or [ ]) != [ ]
-        && (filteredJobs.${name}.cells or [ ]) == [ ]
+        name: (matrixPlan.jobs.${name}.cells or [ ]) != [ ] && (filteredJobs.${name}.cells or [ ]) == [ ]
       ) (lib.attrNames matrixPlan.jobs);
       anyJobFilters = lib.any (job: profileUsesFilters (mergeRaw job)) (lib.attrValues matrixPlan.jobs);
     in
