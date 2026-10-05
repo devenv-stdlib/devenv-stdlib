@@ -121,7 +121,7 @@ let
       empty ? false,
       runners ? [ ],
       languages ? { },
-      # Additive MatrixPlan summary from versions.matrixReport (ignored here).
+      # Additive MatrixPlan summary from versions.languageMatrixReport (ignored here).
       ...
     }:
     {

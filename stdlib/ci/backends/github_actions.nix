@@ -255,7 +255,7 @@ let
     in
     lib.concatMapStrings (n: jobYaml plan jobs.${n}) ordered;
 
-  # Render MatrixPlan → workflow YAML text (compatible with former versions.workflowText).
+  # Render MatrixPlan → workflow YAML text.
   render =
     plan:
     let

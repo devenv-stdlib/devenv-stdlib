@@ -213,13 +213,15 @@ let
   };
   emptyMultiYaml = gha.emptyWorkflow emptyMultiPlan;
 
-  languagePythonYaml = versions.workflowText {
-    pythonOn = true;
-    python = versions.emptyPython // {
-      min = "3.12";
-      max = "3.13";
-    };
-  };
+  languagePythonYaml = gha.render (
+    versions.languageMatrixPlan {
+      pythonOn = true;
+      python = versions.emptyPython // {
+        min = "3.12";
+        max = "3.13";
+      };
+    }
+  );
 
   shape =
     {

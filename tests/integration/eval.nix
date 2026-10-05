@@ -6,8 +6,10 @@
   matrixShapes ? import ./matrix-shapes.nix { inherit lib; },
 }:
 let
-  emptyYaml = versions.workflowText { };
-  pythonYaml = versions.workflowText {
+  gha = (import ../../stdlib/ci { inherit lib; }).backends.github_actions;
+  render = args: gha.render (versions.languageMatrixPlan args);
+  emptyYaml = render { };
+  pythonYaml = render {
     pythonOn = true;
     python = versions.emptyPython // {
       min = "3.12";

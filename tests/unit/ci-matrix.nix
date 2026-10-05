@@ -214,7 +214,7 @@ in
     };
   };
 
-  testLanguagePlanRendersLikeWorkflowText = {
+  testLanguagePlanRendersViaGha = {
     expr =
       let
         args = {
@@ -224,17 +224,14 @@ in
           };
         };
         plan = versions.languageMatrixPlan args;
-        viaPlan = gha.render plan;
-        viaShim = versions.workflowText args;
+        yaml = gha.render plan;
       in
       {
-        equal = viaPlan == viaShim;
-        hasPython = contains "python:" viaPlan;
-        hasOs = contains "ubuntu-24.04" viaPlan;
+        hasPython = contains "python:" yaml;
+        hasOs = contains "ubuntu-24.04" yaml;
         cellCount = lib.length plan.jobs.python.cells;
       };
     expected = {
-      equal = true;
       hasPython = true;
       hasOs = true;
       cellCount = 2; # two LTS runners × one python version
@@ -272,12 +269,14 @@ in
         # Default language matrix stays free of optional keys.
         pythonClean =
           !(contains "optional:" (
-            versions.workflowText {
-              pythonOn = true;
-              python = versions.emptyPython // {
-                min = "3.12";
-              };
-            }
+            gha.render (
+              versions.languageMatrixPlan {
+                pythonOn = true;
+                python = versions.emptyPython // {
+                  min = "3.12";
+                };
+              }
+            )
           ));
       };
     expected = {
@@ -310,12 +309,14 @@ in
           };
         };
         yaml = gha.render plan;
-        pythonYaml = versions.workflowText {
-          pythonOn = true;
-          python = versions.emptyPython // {
-            min = "3.12";
-          };
-        };
+        pythonYaml = gha.render (
+          versions.languageMatrixPlan {
+            pythonOn = true;
+            python = versions.emptyPython // {
+              min = "3.12";
+            };
+          }
+        );
       in
       {
         multiLabel = contains ''os: ["self-hosted", "linux", "x64", "gpu"]'' yaml;
@@ -434,7 +435,7 @@ in
           jobs = { };
         };
         yaml = gha.emptyWorkflow multiPlan;
-        defaultEmpty = versions.workflowText { };
+        defaultEmpty = gha.render (versions.languageMatrixPlan { });
       in
       {
         # Full label list is one matrix.os value (include form).

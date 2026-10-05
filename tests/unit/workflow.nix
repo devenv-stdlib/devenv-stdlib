@@ -1,15 +1,20 @@
 {
   lib,
   versions,
+  ci,
   policy,
   contains,
   ...
 }:
+let
+  gha = ci.backends.github_actions;
+  render = args: gha.render (versions.languageMatrixPlan args);
+in
 {
   testWorkflowNoLanguagesIsReusable = {
     expr =
       let
-        yaml = versions.workflowText { };
+        yaml = render { };
       in
       {
         name = contains "name: Test" yaml;
@@ -40,7 +45,7 @@
   testWorkflowPythonJob = {
     expr =
       let
-        yaml = versions.workflowText {
+        yaml = render {
           pythonOn = true;
           python = versions.emptyPython // {
             min = "3.12";
@@ -83,7 +88,7 @@
   testWorkflowRustGoJavascriptJobs = {
     expr =
       let
-        yaml = versions.workflowText {
+        yaml = render {
           rustOn = true;
           goOn = true;
           javascriptOn = true;

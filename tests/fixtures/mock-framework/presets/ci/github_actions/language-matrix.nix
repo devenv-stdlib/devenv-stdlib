@@ -22,7 +22,7 @@ _: {
     in
     lib.mkMerge [
       {
-        # Shape mirrors modules/languages/versions-lib.nix matrixReport.
+        # Shape mirrors modules/languages/versions-lib.nix languageMatrixReport.
         stdlib.markers.ciMatrix = {
           inherit empty;
           runners = [

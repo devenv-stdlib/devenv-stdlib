@@ -37,6 +37,7 @@ _: {
           })
         )
         log
+        ci
         ;
 
       # CI matrix inputs (supported.* and per-language ciMatrix) come from
@@ -81,8 +82,12 @@ _: {
       problemList = versions.problems snapshot;
 
       generate = import ../../../stdlib/generate.nix { inherit lib; };
+      # MatrixPlan → GHA YAML (no workflowText shim).
+      matrixPlan = versions.languageMatrixPlan snapshot;
+      workflowYaml = ci.backends.github_actions.render matrixPlan;
+
       workflowFile = lib.throwIf (problemList != [ ]) (lib.concatStringsSep "\n" problemList) (
-        pkgs.writeText "test.yml" (generate.ensureTrailingNewline (versions.workflowText snapshot))
+        pkgs.writeText "test.yml" (generate.ensureTrailingNewline workflowYaml)
       );
       syncExec = generate.mkSyncFileExec {
         storePath = workflowFile;
@@ -93,9 +98,9 @@ _: {
       {
         stdlib = {
           # Structured matrix for stdlib.report (devenv evaluator).
-          markers.ciMatrix = versions.matrixReport snapshot;
+          markers.ciMatrix = versions.languageMatrixReport snapshot;
           # Full MatrixPlan (expanded cells) for tooling / future backends.
-          markers.ciMatrixPlan = versions.languageMatrixPlan snapshot;
+          markers.ciMatrixPlan = matrixPlan;
 
           generated = [
             {

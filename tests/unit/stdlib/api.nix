@@ -400,8 +400,8 @@ in
       "versions.jsRuntimes"
       "versions.languageJobs"
       "versions.languageMatrixPlan"
+      "versions.languageMatrixReport"
       "versions.matchesCycle"
-      "versions.matrixReport"
       "versions.matrixRow"
       "versions.nodePackage"
       "versions.omitsPatch"
@@ -425,7 +425,6 @@ in
       "versions.ubuntuLts"
       "versions.ubuntuRunners"
       "versions.withPolicyMin"
-      "versions.workflowText"
     ];
   };
 
