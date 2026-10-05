@@ -53,7 +53,7 @@ in
     ];
   };
 
-  # Enable path still drives helpers (Copier flags); cascade documents fan-out.
+  # Enable path still drives helpers (languages.*.enable); cascade documents fan-out.
   testDenPythonEnableStillDrivesHooks = {
     expr = (project.languageHooks { languages.python.enable = true; }).ruff;
     expected = true;

@@ -1,56 +1,10 @@
-% copier, apply
+% copier
 
-# Copy monorepo from latest tagged template release
-copier copy --trust <template_url> <dest>
+; Copier stays on PATH as a general scaffolding CLI (future projects feature).
+; This package is consumed via a Nix flake pin — see % package, consume.
 
-$ template_url: echo 'https://github.com/devenv4monorepo/devenv4monorepo.git'
-$ dest: echo 'path/to/monorepo'
+# Show Copier version
+copier --version
 
-# Copy from local devenv4monorepo checkout (unreleased template work)
-copier copy --trust --vcs-ref HEAD <template_dir> <dest>
-
-$ template_dir: echo '/path/to/devenv4monorepo'
-$ dest: echo 'path/to/monorepo'
-
-# Bootstrap after first copy (commit answers first; see % copier, answers)
-./setup.sh
-
-# Enter devenv after bootstrap
-devenv shell
-
-% copier, update
-
-# Check whether a newer template Git tag exists
-copier check-update
-
-# Update monorepo from latest template Git tag (keep working tree clean)
-copier update --trust
-
-# Update from template branch (unreleased template work)
-copier update --trust --vcs-ref HEAD
-
-# Pick up home/ and modules/ after template merge
-home-switch
-
-# Re-enter shell after copier update
-devenv shell
-
-% copier, answers
-
-; Commit .copier-answers.yml and devenv.local.nix — never .env
-; Do not edit .copier-answers.yml by hand; copier update needs it
-; Questionnaire writes devenv.local.nix; copier update re-asks (defaults = last answers)
-; File stores brave_search and firecrawl booleans — not secret keys
-
-# Stage Copier-generated files for commit (not .env)
-git add .copier-answers.yml devenv.local.nix
-
-% copier, secrets
-
-; Brave/Firecrawl API keys go to SecretSpec — default dotenv (.env)
-; Keys are not stored in .copier-answers.yml; leave empty to skip that MCP
-; Override provider with SECRETSPEC_PROVIDER or devenv.local.yaml (keyring, env, onepassword, …)
-; Existing destination .env is never overwritten (_skip_if_exists) — do not commit .env
-
-# Edit gitignored secrets file (dotenv provider)
-${EDITOR:-nano} .env
+# Copier help
+copier --help

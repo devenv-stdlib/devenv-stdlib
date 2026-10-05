@@ -30,7 +30,7 @@ Same four-child shape for rust / go / javascript / typescript.
 JS+TS share prettier, Serena `typescript` server, and the typescript IDE pack
 (`project.javascriptOn`) — see `language-cascade.nix` `shared`.
 
-Copier still only sets `languages.*.enable` in `devenv.local.nix`.
+`languages.*.enable` in `devenv.local.nix` remains the enable gate.
 
 ## Project IDEs (Phase 2 W2.4)
 

@@ -85,11 +85,9 @@ _: {
     done
     # git >= 2.55 runs geometric auto-maintenance detached after `git commit`
     # (maintenance.geometric-repack.auto = 100: two loose objects under
-    # objects/17 are enough). copier.bats commits a ~500-object template and
-    # copier then clones it / rmtree()s its throwaway repos while that repack
-    # is still deleting loose objects: `failed to copy file …: No such file`,
-    # `Directory not empty: '…/.git/objects'`. Turn it off for every git the
-    # tests spawn, appending to any GIT_CONFIG_* the caller already set.
+    # objects/17 are enough). Dense git commits in throwaway test trees can
+    # race geometric auto-maintenance (clone / rmtree while repack deletes
+    # loose objects). Turn it off for every git the tests spawn.
     git_cfg_n="''${GIT_CONFIG_COUNT:-0}"
     export "GIT_CONFIG_KEY_$git_cfg_n=maintenance.auto" \
       "GIT_CONFIG_VALUE_$git_cfg_n=false" GIT_CONFIG_COUNT=$((git_cfg_n + 1))

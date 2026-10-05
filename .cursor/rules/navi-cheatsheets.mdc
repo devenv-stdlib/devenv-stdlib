@@ -20,7 +20,7 @@ the topic is clearly separate (e.g. `tests` vs `terminal`).
 
 Every `tools/<…>.nix` leaf (`mkTool` `name`) has `cheats/<name>.cheat`. The
 first `%` tag is that leaf name so `navi <tool name>` matches the status
-report hint. Keep commands template-specific (enable leaf, hooks, home-switch);
+report hint. Keep commands package-specific (enable leaf, hooks, home-switch);
 do not copy community [denisidoro/cheats](https://github.com/denisidoro/cheats).
 
 ## Syntax
@@ -38,7 +38,7 @@ $ var: command that lists suggestions
 
 - `%` starts a tag group; `#` description; `$` variable suggestions; `;` comments
 - `@` extends another tag group’s variables/context
-- Commands must match real scripts/options in this template (`home-switch`,
+- Commands must match real scripts/options in this package (`home-switch`,
   `update`, `copier`, devenv tasks, hooks, …) — no invented flags
 
 ## Do / do not
@@ -48,5 +48,5 @@ $ var: command that lists suggestions
 # ✅ GOOD — add another # block under % devenv, bootstrap in cheats/devenv.cheat
 
 # ❌ BAD — generic git tips (use denisidoro/cheats)
-# ✅ GOOD — template-specific: commitlint types, tag guard, prek, catalog.toml
+# ✅ GOOD — package-specific: commitlint types, tag guard, prek, catalog.toml
 ```

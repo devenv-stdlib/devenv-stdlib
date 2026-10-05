@@ -5,7 +5,7 @@
 # Composition lives in modules/den/homes.nix + modules/aspects/* (cursor, terminal, home-cli).
 # Optional host overrides: home.local.nix (imported by den.homes).
 #
-# Kept as a path so Copier destinations still receive a recognizable filename;
+# Kept as a path so consumer checkouts still receive a recognizable filename;
 # do not pass `-f home.nix` — that path is unsupported after cutover.
 {
   assertions = [

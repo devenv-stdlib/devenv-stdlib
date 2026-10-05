@@ -15,7 +15,6 @@ nix-unit is **not** one megasuite: the main suite covers stdlib, Den aspects, an
 `test-devenv-integration` runs the main nixosTest and actionlint, then builds any discovered `tools|presets/**/tests/integration/default.nix`. On GitHub-hosted runners (`GITHUB_ACTIONS`), nested act is skipped — the language matrix already runs via reusable `test.yml`. Locally, integration still runs nested act (matrix cells pinned one-at-a-time). Integration `nix-build` uses `-j "$(nproc)"`. Act step output is captured per job and printed only on failure.
 Local `test-devenv` runs the unit suite, then the integration suite (skips integration if unit failed).
 Each nix-unit suite stays single-process (no `--jobs`).
-`tests/copier.bats` copies this template into a throwaway directory and checks `copier update`; it is excluded from generated monorepos.
 
 ## Workflows
 

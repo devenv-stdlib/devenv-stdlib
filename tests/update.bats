@@ -31,7 +31,7 @@ EOF
   chmod +x "$BIN/devenv"
 }
 
-@test "consumer mode runs devenv update, local-catalog, leaves pins, prints copier hint" {
+@test "consumer mode runs devenv update, local-catalog, leaves pins, prints pin hint" {
   mkdir -p "$FIXTURE/modules/non-nix" "$FIXTURE/modules/update"
   cat >"$FIXTURE/modules/non-nix/catalog.toml" <<'EOF'
 # Shipped. Docs: https://example.test
@@ -52,7 +52,7 @@ EOF
   PATH="$BIN:$PATH" run bash "$UPDATE_SH"
   [ "$status" -eq 0 ]
   grep -qx 'devenv-stub:update' "$STUB_LOG"
-  [[ $output == *"copier update"* || $output == *"catalog.local.toml"* ]]
+  [[ $output == *"devenv-stdlib"* || $output == *"catalog.local.toml"* ]]
   [[ $output == *local-catalog-stub* ]]
 }
 
@@ -69,7 +69,7 @@ EOF
   [ -f "$FIXTURE/local.marker" ]
 }
 
-@test "template mode runs a mocked refresher and does not call devenv update" {
+@test "publisher mode runs a mocked refresher and does not call devenv update" {
   mkdir -p "$FIXTURE/includes/update"
   printf '# helpers\n' >"$FIXTURE/includes/update/lib.sh"
   cat >"$FIXTURE/includes/update/dummy.sh" <<'EOF'
@@ -82,7 +82,7 @@ EOF
   PATH="$BIN:$PATH" run bash "$UPDATE_SH"
   [ "$status" -eq 0 ]
   [[ $output == *dummy-refresher* ]]
-  [[ $output == *template\ mode* ]]
+  [[ $output == *publisher\ mode* ]]
   [ -f "$FIXTURE/refreshed.marker" ]
   [ ! -e "$STUB_LOG" ]
 }

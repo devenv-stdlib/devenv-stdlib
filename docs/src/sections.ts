@@ -39,7 +39,7 @@ export const sections: DocSection[] = [
   section("overview", "Overview", overview),
   section("architecture", "Architecture", architecture),
   section("stdlib", "Standard library", stdlib),
-  section("apply", "Apply to a monorepo", apply),
+  section("apply", "Consume the package", apply),
   section("bootstrap", "Bootstrap", bootstrap),
   section("tools", "Tools and CLI", tools),
   section("languages", "Languages and versions", languages),

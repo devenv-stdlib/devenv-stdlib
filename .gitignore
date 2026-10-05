@@ -4,18 +4,18 @@
 # Devenv
 .devenv
 .devenv*
-# devenv.local.nix is gitignored here (template development). Generated
-# monorepos use .gitignore.jinja, which commits that file.
+# devenv.local.nix is gitignored here (publisher dogfood). Consumers
+# commit their own devenv.local.nix.
 devenv.local.nix
 devenv.local.yaml
 home.local.nix
 # Consumer extras live in catalog.local.toml (committed in monorepos).
 modules/non-nix/catalog.local.toml
 
-# SecretSpec dotenv (9Router password, Brave / Firecrawl). Copier may write this.
+# SecretSpec dotenv (Brave / Firecrawl).
 .env
 
-# Consumer hook for `update` (host extras). Template pins stay in-tree.
+# Consumer hook for `update` (host extras). Framework pins live on the flake pin.
 update.local.sh
 
 # direnv

@@ -112,12 +112,12 @@ ensure_local_catalog() {
   printf '%s\n' "$path"
 }
 
-require_template() {
+require_publisher() {
   local cmd=$1
   local root
   root=$(update_repo_root)
   if [[ ! -d $root/includes/update ]]; then
-    die "Error: ${cmd} only works in the template checkout (includes/update/ missing).
+    die "Error: ${cmd} only works in the publisher checkout (includes/update/ missing).
 Monorepo users: use non-nix:add-local / non-nix:remove-local instead."
   fi
 }
@@ -377,7 +377,7 @@ Run: ${task} --help"
   fi
 
   if [[ $catalog_kind == shipped ]]; then
-    require_template "$task"
+    require_publisher "$task"
   fi
 
   [[ -n $NAME ]] || die "Error: --name is required.
@@ -487,7 +487,7 @@ Run: ${task} --help"
   fi
 
   if [[ $catalog_kind == shipped ]]; then
-    require_template "$task"
+    require_publisher "$task"
   fi
 
   [[ -n $NAME ]] || die "Error: --name is required.
@@ -531,7 +531,7 @@ Edit modules/non-nix catalog files (preserves sibling comments).
 
 Commands:
   add-local / remove-local   modules/non-nix/catalog.local.toml
-  add / remove               modules/non-nix/catalog.toml (template only)
+  add / remove               modules/non-nix/catalog.toml (publisher only)
 
 Run a command with --help for flags and Examples.
 EOF

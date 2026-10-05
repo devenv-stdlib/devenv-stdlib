@@ -24,11 +24,11 @@ NixOS-module-like attrset and hand it to devenv via `imports` (spike proves
 resolve + eval; full `modules/` import lands at cutover).
 
 Not chosen: flake-parts `devenv.shells` primary path (would reshape
-shell/CI/Copier and trip criterion 3).
+shell/CI and trip criterion 3).
 
 ## What landed after cutover (Phase 4)
 
-- Copier → `languages.*.enable` remains the enable gate (W4.4).
+- `languages.*.enable` remains the enable gate (W4.4).
 - `modules/lib/project.nix` keeps pure hooks/serena/vscode/debtmap helpers.
 - Dual adapters (`den-language-shim`, `den-project-bridge`) **deleted**.
 - HM path: `home-switch` → flake `#developer` only (no `home-switch-den`).

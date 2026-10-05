@@ -1,7 +1,7 @@
 # Language aspect DAG + project class payloads.
 # Includes are the cascade source of truth. Project class modules resolve via
 # den.lib.aspects.resolve → devenv-shaped eval (flake denProjectClass).
-# Copier still owns languages.*.enable (W4.4 — no aspect-includes questionnaire).
+# languages.*.enable remains the enable gate (W4.4 — no aspect-includes questionnaire).
 { den, lib, ... }:
 let
   cascade = import ../den/_cascades/language-cascade.nix;

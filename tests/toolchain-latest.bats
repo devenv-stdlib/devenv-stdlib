@@ -13,7 +13,7 @@ setup() {
   [[ $output == *"self-test ok"* ]]
 }
 
-@test "toolchain-latest catalog has every Copier max default" {
+@test "toolchain-latest catalog has every toolchain-latest max default" {
   for name in rust go python nodejs bun deno; do
     grep -q "^${name}: \"" "$REPO_DIR/includes/toolchain-latest.yml"
   done

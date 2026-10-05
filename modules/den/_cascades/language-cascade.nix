@@ -1,5 +1,5 @@
 # Pure cascade metadata for Phase 2 language aspects.
-# Copier still only flips languages.*.enable; this DAG is the readable fan-out.
+# languages.*.enable flips the gate; this DAG is the readable fan-out.
 #
 # JS+TS share prettier / Serena "typescript" server / typescript IDE pack via
 # today's javascriptOn — documented under `shared` (not duplicate leaf aspects).

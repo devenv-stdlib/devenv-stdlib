@@ -26,11 +26,8 @@ dockerd-rootless-setuptool.sh install
 systemctl --user enable --now docker
 loginctl enable-linger "$USER"
 
-# Apply this template to a monorepo (latest tagged release)
-copier copy --trust <template-git-url> <dest>
-
-# Apply this checkout, including work not tagged yet
-copier copy --trust --vcs-ref HEAD <template-path> <dest>
+# Consumer flake example (pin devenv-stdlib)
+$EDITOR consumer-flake.nix.example
 
 % devenv, update
 
@@ -46,19 +43,13 @@ devenv update
 # Refresh only the git-hooks lock input (CI runs this weekly)
 devenv update git-hooks
 
-# Report whether a newer template Git tag exists
-copier check-update
+# Bump the devenv-stdlib framework pin (consumers)
+nix flake update devenv-stdlib
 
-# Pull the latest tagged template into an existing monorepo copy
-copier update --trust
-
-# Pull template changes from a branch or HEAD (keep working tree clean)
-copier update --trust --vcs-ref HEAD
-
-# After copier update: re-apply Home Manager when home/ changed
+# After pin or lock change: re-apply Home Manager when home/ changed
 home-switch
 
-# After copier update or lock change: enter shell to pick up modules/
+# After pin or lock change: enter shell to pick up modules/
 devenv shell
 
 # Add a team tool to modules/non-nix/catalog.local.toml

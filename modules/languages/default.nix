@@ -49,7 +49,7 @@ in
   ];
 
   # Toolchains stay off in this repo. Generated monorepos enable them
-  # via the Copier questionnaire (devenv.local.nix). That also installs matching Cursor
+  # via devenv.local.nix. That also installs matching Cursor
   # extensions, writes this project's .vscode recommendations/settings,
   # and turns on that language's git-hooks.
 

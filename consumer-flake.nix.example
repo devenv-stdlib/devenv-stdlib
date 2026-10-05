@@ -1,10 +1,12 @@
-# Generated monorepo flake. Framework code comes from the devenv-stdlib input
-# pinned to the Copier template commit. stdlib/ is not part of this tree.
+# Example consumer flake. Pin devenv-stdlib (this package) and build Den
+# outputs with `root` = the consumer tree. Copy into your repo as flake.nix
+# (or merge the input + packaging import into an existing flake).
 {
-  description = "{{ project_name }} (devenv4monorepo)";
+  description = "example-monorepo (devenv-stdlib consumer)";
 
   inputs = {
-    devenv-stdlib.url = "github:thedrow/devenv4monorepo/{{ _commit }}";
+    # Prefer a release tag once published; otherwise a commit SHA.
+    devenv-stdlib.url = "github:thedrow/devenv4monorepo/<tag-or-sha>";
     nixpkgs.follows = "devenv-stdlib/nixpkgs";
     home-manager.follows = "devenv-stdlib/home-manager";
     den.follows = "devenv-stdlib/den";
@@ -18,7 +20,7 @@
     let
       lib = inputs.nixpkgs.lib;
       stdlib = inputs.devenv-stdlib.stdlib;
-      # Framework preset files ship in the pin. Local presets/ holds Omer's
+      # Framework preset files ship in the pin. Local presets/ holds your
       # selection and community files; later paths override the same name.
       # Add ./tools once that directory exists (a missing path literal fails eval).
       localDirs = [
@@ -36,7 +38,7 @@
     in
     project
     // {
-      # Omer's selection and any local tools/presets, loaded from this tree.
+      # Your selection and any local tools/presets, loaded from this tree.
       # Framework sources are the flake input, not files under stdlib/.
       stdlibPresets = {
         den = stdlib.den.load localDirs;

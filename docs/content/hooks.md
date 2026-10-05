@@ -55,7 +55,7 @@ Autofixes (including PRs from forks) are pushed by [pre-commit.ci lite](https://
 
 ## Conventional Commits
 
-Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `ci:`, `test:`, `chore:`). The `commitlint` hook rejects other subjects. On push to `master` or `main`, CI runs [semantic-release](https://semantic-release.gitbook.io/semantic-release/) to version, tag, and publish a GitHub Release. Those tags are what `copier copy` and `copier update` use by default.
+Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `ci:`, `test:`, `chore:`). The `commitlint` hook rejects other subjects. On push to `master` or `main`, CI runs [semantic-release](https://semantic-release.gitbook.io/semantic-release/) to version, tag, and publish a GitHub Release. Those tags are what consumers pin as `devenv-stdlib` by default once releases exist.
 
 ## Hook versions
 

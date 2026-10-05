@@ -27,7 +27,7 @@ DEFAULT_JSON = ROOT / "modules" / "languages" / "catalog.json"
 API = "https://endoflife.date/api/{product}.json"
 USER_AGENT = "devenv4monorepo/toolchain-latest"
 
-# product on endoflife.date → default supported.*.min in copier.yml
+# product on endoflife.date → default supported.*.min in docs / examples
 PRODUCTS = {
     "rust": ("rust", "1.85.0"),
     "go": ("go", "1.22.0"),

@@ -327,7 +327,7 @@ print_rootless_docker_hint() {
     return 0
   fi
   cat <<EOF
-This template defaults to rootless Docker (act).
+This stack defaults to rootless Docker (act).
 The user socket is missing ($sock). Install Engine extras, then:
 
   dockerd-rootless-setuptool.sh install

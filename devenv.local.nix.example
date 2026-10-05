@@ -1,15 +1,15 @@
 { ... }:
 {
-  # Extra options for devenv.local.nix. Copier already writes `name`
-  # and enabled languages from the questionnaire; add max/unsupported,
-  # debtmap, or packages below that block. Do not edit .copier-answers.yml.
+  # Extra options for devenv.local.nix. Set `name` and enabled languages
+  # yourself (there is no questionnaire). Add max/unsupported, debtmap,
+  # or packages as needed.
   #
   # After devenv shell, `update` runs devenv update, refreshes
   # modules/non-nix/catalog.local.toml (Nix if promotable, else mise),
   # then update.local.sh if executable (gitignored). Put host-only
   # extras in update.local.sh. Team tools belong in catalog.local.toml.
-  # Do not edit modules/non-nix/catalog.toml; those pins move with
-  # copier update.
+  # Do not edit modules/non-nix/catalog.toml; those pins move with the
+  # devenv-stdlib flake pin.
 
   # packages = [ pkgs.hello ];
 

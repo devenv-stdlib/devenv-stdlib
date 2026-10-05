@@ -14,7 +14,7 @@
       nixpkgs.config.allowUnfree = true;
     };
 
-    # Template developer home — cursor + terminal + home-cli.
+    # Package dogfood home — cursor + terminal + home-cli.
     # Language / project-ide aspects use the project class (see modules/den/classes/project.nix).
     homes.x86_64-linux.developer = { };
 

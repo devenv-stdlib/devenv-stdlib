@@ -39,7 +39,7 @@
   # docker.rootless.enable = false;
 
   # Bump your own uv/npx tools in gitignored update.local.sh (repo root).
-  # Template pins (Serena, Headroom, Brave, …) move with copier update.
+  # Framework pins (Serena, Headroom, Brave, …) move with the devenv-stdlib flake pin.
 
   # terminal.quakeKeybinding = "ctrl-`";
   # terminal.heightPercent = 40;

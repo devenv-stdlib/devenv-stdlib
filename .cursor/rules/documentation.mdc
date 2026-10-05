@@ -13,23 +13,23 @@ User-facing behavior changes are unfinished until **`docs/content/`** matches. U
 
 | Change | Update |
 | --- | --- |
-| Copier copy/update, answers, `devenv.local.nix` | `docs/content/apply.md` |
-| `setup.sh`, `home-switch`, consumer commands | `docs/content/bootstrap.md` |
+| Flake pin, consumer layout, `devenv.local.nix` | `docs/content/apply.md` |
+| `setup.sh`, `home-switch`, everyday commands | `docs/content/bootstrap.md` |
 | `languages.*`, `supported.*`, catalog, Rust edition | `docs/content/languages.md` |
 | Git hooks, commitlint, tag guard (user-facing) | `docs/content/hooks.md` |
 | Terminal, Quake, Cursor, Home Manager | `docs/content/terminal.md` |
 | Workflows, BATS, JUnit, Pages URL | `docs/content/ci.md` |
-| What a generated monorepo contains | `docs/content/reference.md` |
+| Package / consumer layout reference | `docs/content/reference.md` |
 | Architecture / motivation | `docs/content/architecture.md`, `overview.md` |
 | New or retired shipped tool | `docs/content/tools.md` (docs + donate link if the project publishes one) |
-| Template development, tests, catalog, layout, Pages | `docs/content/contributing.md` |
+| Package development, tests, catalog, layout, Pages | `docs/content/contributing.md` |
 | New top-level topic | new `docs/content/<id>.md`, import `?raw` in `docs/src/sections.ts` |
 
 ## Do
 
 - Name the real option, script, workflow, or file.
 - Add or drop sidenav headings by editing `##` lines; `sections.ts` derives ids from those titles.
-- Leave `docs/` and `.github/workflows/pages.yml` out of generated monorepos (`copier.yml` `_exclude`).
+- Document package-first consumption (flake pin), not Copier template copy.
 - Link the live site as `https://devenv4monorepo.github.io/` (section hashes like `#contributing`).
 
 ```
@@ -39,7 +39,6 @@ User-facing behavior changes are unfinished until **`docs/content/`** matches. U
 
 ## Do not
 
-- Skip `docs/content/` because the change is “small” if a user would see a different command, option, or default.
-- Sync the README to the docs site.
-- Document internal-only refactors (renames with no user surface, generated files, hook formatting).
-- Enable `languages.javascript` / `languages.typescript` just to work on `docs/`.
+- Mirror docs tables into `README.md`.
+- Leave Copier questionnaire / answers-file language in user-facing docs.
+- Invent flags or paths that are not in the tree.

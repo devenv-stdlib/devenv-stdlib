@@ -61,7 +61,7 @@ let
     };
     check-added-large-files = mkPrek true "Block unexpectedly large added files." { };
     check-case-conflicts = mkPrek true "Detect filename case conflicts." { };
-    check-merge-conflicts = mkPrek true "Detect merge conflict markers (incl. Copier)." { };
+    check-merge-conflicts = mkPrek true "Detect merge conflict markers." { };
   };
 
   treefmt = lib.filterAttrs (_: v: v.backend == "treefmt") catalog;

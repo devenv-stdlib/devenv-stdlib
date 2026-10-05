@@ -2,7 +2,7 @@
 
 **Den owns composition.** Aspects + `includes` are the cascade source of truth.
 `home-switch` is Den-only (`den.homes` → flake `#developer`). Pure helpers in
-`modules/lib/project.nix` still map Copier `languages.*.enable` → hooks / serena
+`modules/lib/project.nix` still map `languages.*.enable` → hooks / serena
 / vscode / debtmap lists.
 
 ## Prefer: new feature as an aspect
@@ -43,7 +43,7 @@ now visible as two class keys on one aspect when needed.
 - Grepping `project.nix` `langOn` to learn fan-out — read aspect `includes` /
   `modules/den/CASCADES.md` first.
 - Reviving a parallel legacy HM root (`home-manager -f home.nix`).
-- Putting Copier questionnaire logic into Den policies.
+- Putting language questionnaire / scaffolding logic into Den policies.
 - Forking devenv or migrating to flake-parts `devenv.shells` for the project
   class (abort criterion 3). Use `den.lib.aspects.resolve "project" aspect`
   and import the module under `modules/` instead.

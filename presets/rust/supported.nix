@@ -24,7 +24,7 @@ in
             default = null;
             description = ''
               Optional workspace Rust edition for rustfmt and rust-analyzer.
-              Cargo.toml crates should use the same edition. Copier defaults
+              Cargo.toml crates should use the same edition. Recommended defaults
               to 2024, which needs rustc 1.85+.
             '';
           };

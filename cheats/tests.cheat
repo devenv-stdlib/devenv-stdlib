@@ -12,8 +12,8 @@ bats tests/setup
 # Home Manager tests (terminal-lib, bashrc.d, Cursor LLM)
 bats tests/home
 
-# Copier copy/update (template-only; excluded from monorepos)
-bats tests/copier.bats
+# update dispatcher (publisher vs consumer)
+bats tests/update.bats
 
 % tests, nix-unit
 

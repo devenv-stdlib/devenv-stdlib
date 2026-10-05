@@ -5,7 +5,7 @@
 # Pure language enable → hooks / serena / vscode / debtmap helpers.
 # Cascade fan-out ("what does python enable?") lives in
 # modules/den/_cascades/language-cascade.nix and den.aspects.* includes — not
-# in this file. Enable flags still come from Copier / languages.*.enable.
+# in this file. Enable flags still come from languages.*.enable.
 rec {
   langOn = languages: name: (languages.${name} or { }).enable or false;
 
@@ -129,7 +129,7 @@ rec {
     ++ lib.optionals (langOn languages "python") vscodeLanguageIds.python
     ++ lib.optionals (javascriptOn languages) vscodeLanguageIds.typescript;
 
-  # Always-on Serena language_servers id for this template (Nix).
+  # Always-on Serena language_servers id for this package (Nix).
   serenaAlwaysLanguageServers = [ "nix" ];
 
   # Ids written to generated .serena/project.yml. javascript and
