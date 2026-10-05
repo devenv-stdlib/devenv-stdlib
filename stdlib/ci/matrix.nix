@@ -159,18 +159,48 @@ let
     else
       cells;
 
+  # Runner ids whose profile metadata is current Ubuntu LTS: highest `release`
+  # among profiles with distro = "ubuntu". Custom catalogs with different ids
+  # still participate as long as they carry release/distro metadata.
+  currentLtsRunnerIds =
+    profiles:
+    let
+      ubuntu = lib.filterAttrs (
+        _: p: (p.distro or null) == "ubuntu" && (p.release or null) != null
+      ) profiles;
+      releases = lib.unique (map (p: p.release) (lib.attrValues ubuntu));
+      maxRelease =
+        if releases == [ ] then
+          null
+        else
+          lib.foldl' (a: b: if lib.versionOlder a b then b else a) (lib.head releases) (lib.tail releases);
+    in
+    if maxRelease == null then
+      [ ]
+    else
+      lib.attrNames (lib.filterAttrs (_: p: p.release == maxRelease) ubuntu);
+
+  # matchAny patterns for current-LTS runners; throws when none can be resolved.
+  currentLtsMatchAny =
+    profiles:
+    let
+      ids = currentLtsRunnerIds profiles;
+    in
+    if ids == [ ] then
+      throw "ci.matrix: pr expansion profile found no current-LTS runners (need ubuntu profiles with release metadata)"
+    else
+      map (id: { runner = id; }) ids;
+
   # Named expansion profiles: same dimensions, different cell filters (PR vs schedule).
   # Empty attrset = identity (keep all cells). `match` / `matchAny` / `exclude` use
   # the same partial-match semantics as job.exclude.
+  # `selectCurrentLts` (pr default) is resolved in forProfile against the plan's
+  # runnerProfiles — not fixed ids — so caller-supplied catalogs keep cells.
   defaultExpansionProfiles = {
     schedule = { };
     push = { };
     pr = {
-      # Slim PR smoke: current Ubuntu LTS runners only (x86_64 + aarch64 ids).
-      matchAny = [
-        { runner = "ubuntu-lts-curr"; }
-        { runner = "ubuntu-lts-curr-aarch64"; }
-      ];
+      selectCurrentLts = true;
     };
   };
 
@@ -197,11 +227,20 @@ let
     let
       catalogs = matrixPlan.expansionProfiles or defaultExpansionProfiles;
       profileName = if builtins.isString profileOrName then profileOrName else null;
-      baseProfile =
+      rawBase =
         if profileName != null then
           catalogs.${profileName} or (throw "ci.matrix: unknown expansion profile '${profileName}'")
         else
           profileOrName;
+      # Resolve selectCurrentLts against this plan's runner catalog before overlays.
+      baseProfile =
+        if rawBase.selectCurrentLts or false then
+          (builtins.removeAttrs rawBase [ "selectCurrentLts" ])
+          // {
+            matchAny = currentLtsMatchAny (matrixPlan.runnerProfiles or { });
+          }
+        else
+          rawBase;
       mergeProfile =
         job:
         let
@@ -209,11 +248,7 @@ let
         in
         # Overlay keys replace base; lists are replaced wholesale (not concatenated).
         baseProfile // overlay;
-    in
-    matrixPlan
-    // {
-      activeProfile = profileName;
-      jobs = lib.mapAttrs (
+      filteredJobs = lib.mapAttrs (
         _: job:
         let
           p = mergeProfile job;
@@ -223,7 +258,28 @@ let
           cells = filterCells (job.cells or [ ]) p;
         }
       ) matrixPlan.jobs;
-    };
+      # Reject a silently empty PR plan when the full plan had cells (misconfigured
+      # runner catalog / dimensions that miss every current-LTS id).
+      hadCells = lib.any (j: (j.cells or [ ]) != [ ]) (lib.attrValues matrixPlan.jobs);
+      keepsCells = lib.any (j: (j.cells or [ ]) != [ ]) (lib.attrValues filteredJobs);
+      selectingCurrentLts =
+        (rawBase.selectCurrentLts or false)
+        && !(lib.any (
+          job:
+          let
+            overlay = if profileName != null then (job.expansionProfiles or { }).${profileName} or { } else { };
+          in
+          overlay ? match || overlay ? matchAny
+        ) (lib.attrValues matrixPlan.jobs));
+    in
+    if selectingCurrentLts && hadCells && !keepsCells then
+      throw "ci.matrix: pr expansion profile removed all cells (no cell runner matches current-LTS profiles)"
+    else
+      matrixPlan
+      // {
+        activeProfile = profileName;
+        jobs = filteredJobs;
+      };
 
   # Assemble a MatrixPlan: profiles + expanded jobs.
   plan =
@@ -346,6 +402,8 @@ in
     defaultStrategy
     profilesForArches
     runnerIds
+    currentLtsRunnerIds
+    currentLtsMatchAny
     matchesPartial
     cartesian
     expand
