@@ -12,7 +12,7 @@
 #
 #   presets.ci.github_actions.anti-slop = {
 #     enable = true;
-#     action = "peakoss/anti-slop@v0.3.0";
+#     action = "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2"; # v0.3.0
 #     maxFailures = 4;
 #     closePr = true;
 #     exemptDraftPrs = true;

@@ -83,7 +83,8 @@ let
   };
 
   defaultCfg = {
-    action = "peakoss/anti-slop@v0.3.0";
+    action = "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2";
+    actionComment = "v0.3.0";
     maxFailures = 4;
     closePr = true;
     exemptDraftPrs = true;
@@ -132,7 +133,7 @@ in
     expected = {
       applied = true;
       hasMarker = true;
-      action = "peakoss/anti-slop@v0.3.0";
+      action = "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2";
       workflow = "pr-quality.yml";
       maxFailures = 4;
       closePr = true;
@@ -151,7 +152,8 @@ in
       {
         hasName = contains "name: PR Quality" yaml;
         hasTarget = contains "pull_request_target" yaml;
-        hasAction = contains "peakoss/anti-slop@v0.3.0" yaml;
+        hasAction = contains "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2" yaml;
+        hasActionComment = contains "# v0.3.0" yaml;
         hasMax = contains "max-failures: 4" yaml;
         hasClose = contains "close-pr: true" yaml;
         hasExemptDraft = contains "exempt-draft-prs: true" yaml;
@@ -163,6 +165,7 @@ in
       hasName = true;
       hasTarget = true;
       hasAction = true;
+      hasActionComment = true;
       hasMax = true;
       hasClose = true;
       hasExemptDraft = true;
