@@ -114,9 +114,9 @@ build-act-image              # devenv-act:24.04 for local act
 
 ### Test layout
 
-- **Main / cross-cutting:** `tests/unit/default.nix` loads topic files from `tests/unit/*.nix`, `tests/unit/stdlib/`, and `tests/unit/aspects/` via `tests/lib/suite.nix` (no hard-coded topic list).
-- **Per tool / preset:** keep the leaf as `tools/…/<name>.nix` or `presets/…/<name>.nix`. Add a sibling directory `<name>/tests/unit/` (and optionally `integration/`) with `default.nix` plus topic files. `stdlib.discover` and the devenv preset collector skip `tests/` so suites are never treated as tools or presets.
-- **Shared helpers:** `tests/lib/harness.nix`, `tests/lib/suite.nix`, `tests/lib/preset-eval.nix`, `tests/lib/discover-suites.nix`.
+- **Main / cross-cutting:** `tests/unit/default.nix` loads topic files from `tests/unit/*.nix`, `tests/unit/stdlib/`, and `tests/unit/aspects/` via `tests/lib/suite.nix` (no hard-coded topic list). Stdlib loader/API tests use **`tests/fixtures/mock-framework/`** (mock tools + presets), not the production `tools/` / `presets/` trees.
+- **Per tool / preset:** keep the leaf as `tools/…/<name>.nix` or `presets/…/<name>.nix`. Add a sibling directory `<name>/tests/unit/` (and optionally `integration/`) with `default.nix` plus topic files for **real** leaf coverage. `stdlib.discover` and the devenv preset collector skip `tests/` so suites are never treated as tools or presets.
+- **Shared helpers:** `tests/lib/harness.nix`, `tests/lib/suite.nix`, `tests/lib/preset-eval.nix`, `tests/lib/discover-suites.nix`, `tests/lib/mock-framework.nix`.
 - **Run one owner suite:** `nix-unit -I nixpkgs=flake:nixpkgs -I devenv4monorepo=$PWD tools/ide/vscode/tests/unit/default.nix`
 | `tests/setup/setup.bats` | `setup.sh` (sources the script; `main` guard) |
 | `tests/copier.bats` | `copier copy` / `update`; answers omit secret keys; not copied into monorepos |

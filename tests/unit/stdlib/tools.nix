@@ -1,19 +1,16 @@
-# Additive P1 checks: mkTool metadata, nested categories, profiler placement.
-# Does not evaluate Home Manager or nixpkgs.
+# mkTool / discover / shell API coverage against mock-framework tools only.
+# Real tool inventories live in per-owner suites under tools/**/tests/unit.
 { lib, ... }:
 let
   stdlib = import ../../../stdlib { inherit lib; };
-  discovered = stdlib.mkTool.specs (stdlib.discover [ ../../../tools ]);
+  mock = import ../../lib/mock-framework.nix { inherit lib; };
+  discovered = stdlib.mkTool.specs (stdlib.discover [ mock.tools ]);
   byName = lib.listToAttrs (map (d: lib.nameValuePair d.spec.name d) discovered);
   spec = name: byName.${name}.spec;
-  valgrind = spec "valgrind";
-  cargoValgrind = spec "cargo-valgrind";
-  cpu = lib.sort (a: b: a < b) (
-    map (d: d.spec.name) (lib.filter (d: d.spec.category == "profilers.cpu") discovered)
-  );
-  memory = lib.sort (a: b: a < b) (
-    map (d: d.spec.name) (lib.filter (d: d.spec.category == "profilers.memory") discovered)
-  );
+  names = lib.sort (a: b: a < b) (map (d: d.spec.name) discovered);
+  byCategory =
+    cat:
+    lib.sort (a: b: a < b) (map (d: d.spec.name) (lib.filter (d: d.spec.category == cat) discovered));
 in
 {
   testStdlibTerminalCategoryExactlyOne = {
@@ -32,7 +29,34 @@ in
     };
   };
 
-  testStdlibNoToolUsesFlatProfilerCategory = {
+  testMockDiscoverSkipsUnderscoreDirs = {
+    expr = {
+      inherit names;
+      hasIgnored = byName ? "not-a-tool";
+    };
+    expected = {
+      names = [
+        "mock-alt"
+        "mock-bash"
+        "mock-check"
+        "mock-cpu"
+        "mock-ext"
+        "mock-hist"
+        "mock-ide"
+        "mock-mem"
+        "mock-mem-dep"
+        "mock-prettier"
+        "mock-pyright"
+        "mock-ruff"
+        "mock-rustfmt"
+        "mock-term"
+        "mock-zsh"
+      ];
+      hasIgnored = false;
+    };
+  };
+
+  testMockNoToolUsesFlatProfilerCategory = {
     expr = lib.any (d: d.spec.category == "profilers") discovered;
     expected = false;
   };
@@ -53,79 +77,70 @@ in
     expected = false;
   };
 
-  testStdlibCpuProfilers = {
-    expr = cpu;
-    expected = [
-      "cargo-flamegraph"
-      "pprof"
-      "py-spy"
-      "samply"
-    ];
-  };
-
-  testStdlibMemoryProfilers = {
-    expr = memory;
-    expected = [
-      "cargo-valgrind"
-      "valgrind"
-    ];
-  };
-
-  testStdlibMigratedToolCategories = {
+  testMockProfilerCategories = {
     expr = {
-      alacritty = (spec "alacritty").category;
-      warp = (spec "warp").category;
-      zellij = (spec "zellij").category;
-      bash = (spec "bash").category;
-      zsh = (spec "zsh").category;
-      elvish = (spec "elvish").category;
-      atuin = (spec "atuin").category;
-      blesh = (spec "blesh").category;
-      starship = (spec "starship").category;
-      cursor = (spec "cursor").category;
-      vscode = (spec "vscode").category;
-      neovim = (spec "neovim").category;
-      nano = (spec "nano").category;
-      neovimInstall = (spec "neovim").install;
+      cpu = byCategory "profilers.cpu";
+      memory = byCategory "profilers.memory";
     };
     expected = {
-      alacritty = "terminal";
-      warp = "terminal";
-      zellij = "terminal.mux";
-      bash = "shell";
-      zsh = "shell";
-      elvish = "shell";
-      atuin = "shell.history";
-      blesh = "shell";
-      starship = "shell.prompt";
-      cursor = "ide";
-      vscode = "ide";
-      neovim = "ide";
-      nano = "ide";
-      neovimInstall = {
-        kind = "hm-program";
-        program = "nixvim";
+      cpu = [ "mock-cpu" ];
+      memory = [
+        "mock-mem"
+        "mock-mem-dep"
+      ];
+    };
+  };
+
+  testMockMemDepDependsOnMem = {
+    expr = {
+      inherit ((spec "mock-mem-dep")) category dependsOn;
+      inherit ((spec "mock-mem-dep").install) attr;
+    };
+    expected = {
+      category = "profilers.memory";
+      dependsOn = [ "mock-mem" ];
+      attr = "hello";
+    };
+  };
+
+  testMockToolCategoriesAndInstallKinds = {
+    expr = {
+      term = (spec "mock-term").category;
+      altDefault = (spec "mock-alt").defaultEnable;
+      bash = (spec "mock-bash").category;
+      hist = (spec "mock-hist").category;
+      ide = {
+        inherit ((spec "mock-ide")) category upgrade;
+        inherit ((spec "mock-ide").install) kind program;
+      };
+      ext = {
+        inherit ((spec "mock-ext")) upgrade;
+        inherit ((spec "mock-ext").install)
+          kind
+          publisher
+          extension
+          registry
+          ;
       };
     };
-  };
-
-  testStdlibShellToolsDefaults = {
-    expr = {
-      bash = (spec "bash").defaultEnable;
-      zsh = (spec "zsh").defaultEnable;
-      elvish = (spec "elvish").defaultEnable;
-      registered = lib.sort (a: b: a < b) (stdlib.categories.resolve "shell").tools;
-    };
     expected = {
-      bash = true;
-      zsh = false;
-      elvish = false;
-      registered = [
-        "bash"
-        "blesh"
-        "elvish"
-        "zsh"
-      ];
+      term = "terminal";
+      altDefault = false;
+      bash = "shell";
+      hist = "shell.history";
+      ide = {
+        category = "ide";
+        upgrade = "self";
+        kind = "hm-program";
+        program = "mock-ide";
+      };
+      ext = {
+        upgrade = "catalog";
+        kind = "vscode-extension";
+        publisher = "mock";
+        extension = "mock-ext";
+        registry = "open-vsx";
+      };
     };
   };
 
@@ -219,39 +234,24 @@ in
     };
   };
 
-  testStdlibMemoryToolsAreNotCpu = {
-    expr = lib.any (
-      d:
-      d.spec.category == "profilers.cpu" && (d.spec.name == "valgrind" || d.spec.name == "cargo-valgrind")
-    ) discovered;
-    expected = false;
-  };
-
-  testStdlibProfilersOffByDefault = {
+  testMockProfilersOffByDefault = {
     expr = {
-      valgrind = valgrind.defaultEnable;
-      cargo-valgrind = cargoValgrind.defaultEnable;
-      samply = (spec "samply").defaultEnable;
+      cpu = (spec "mock-cpu").defaultEnable;
+      mem = (spec "mock-mem").defaultEnable;
     };
     expected = {
-      valgrind = false;
-      cargo-valgrind = false;
-      samply = false;
+      cpu = false;
+      mem = false;
     };
   };
 
-  testStdlibHarnessToolsAreNotLoaded = {
-    expr = byName ? opencode || byName ? claude-code || byName ? codex;
-    expected = false;
-  };
-
-  testStdlibLocalLangTools = {
+  testMockLocalLangTools = {
     expr =
       let
-        ruff = spec "ruff";
-        prettier = spec "prettier";
-        rustfmt = spec "rustfmt";
-        checkPython = spec "check-python";
+        ruff = spec "mock-ruff";
+        prettier = spec "mock-prettier";
+        rustfmt = spec "mock-rustfmt";
+        check = spec "mock-check";
       in
       {
         ruff = {
@@ -266,17 +266,16 @@ in
         };
         prettier.category = prettier.category;
         rustfmt.category = rustfmt.category;
-        checkPython = {
-          inherit (checkPython) category isLocal;
+        check = {
+          inherit (check) category isLocal;
         };
         denIgnoresLocal =
           let
-            denMods = stdlib.den.load [ ../../../tools ];
-            # den.load still returns modules for global tools; local names are absent.
-            names = map (d: d.spec.name) (lib.filter (d: d.spec.isLocal) discovered);
+            denMods = stdlib.den.load [ mock.tools ];
+            localNames = map (d: d.spec.name) (lib.filter (d: d.spec.isLocal) discovered);
           in
           {
-            hasLocalFiles = names != [ ];
+            hasLocalFiles = localNames != [ ];
             denNonEmpty = denMods != [ ];
           };
       };
@@ -291,7 +290,7 @@ in
       };
       prettier.category = "lang.javascript.linters";
       rustfmt.category = "lang.rust.linters";
-      checkPython = {
+      check = {
         category = "lang.python";
         isLocal = true;
       };
@@ -302,70 +301,59 @@ in
     };
   };
 
-  testStdlibLocalToolNames = {
+  testMockLocalToolNames = {
     expr = lib.sort (a: b: a < b) (map (d: d.spec.name) (lib.filter (d: d.spec.isLocal) discovered));
     expected = [
-      "check-python"
-      "clippy"
-      "debug-statements"
-      "gofmt"
-      "golangci-lint"
-      "prettier"
-      "pyright"
-      "ruff"
-      "rustfmt"
-      "sort-requirements-txt"
-      "ty"
+      "mock-check"
+      "mock-prettier"
+      "mock-pyright"
+      "mock-ruff"
+      "mock-rustfmt"
     ];
   };
 
-  testStdlibToolAttrpathsMirrorCategories = {
+  testMockToolAttrpathsMirrorCategories = {
     expr =
       let
         refs = stdlib.mkTool.refsFromSpecs discovered;
       in
       {
-        pyright = (spec "pyright").path;
-        ruff = (spec "ruff").path;
-        bash = (spec "bash").path;
-        atuin = (spec "atuin").path;
-        blesh = (spec "blesh").path;
-        samply = (spec "samply").path;
-        ref = refs.python.lint.pyright.path;
+        pyright = (spec "mock-pyright").path;
+        ruff = (spec "mock-ruff").path;
+        bash = (spec "mock-bash").path;
+        hist = (spec "mock-hist").path;
+        cpu = (spec "mock-cpu").path;
+        ref = refs.python.lint.mock-pyright.path;
       };
     expected = {
       pyright = [
         "python"
         "lint"
-        "pyright"
+        "mock-pyright"
       ];
       ruff = [
         "python"
         "lint"
-        "ruff"
+        "mock-ruff"
       ];
       bash = [
         "shell"
-        "bash"
+        "mock-bash"
       ];
-      atuin = [
+      hist = [
         "shell"
         "history"
-        "atuin"
+        "mock-hist"
       ];
-      blesh = [
-        "shell"
-        "blesh"
-      ];
-      samply = [
+      cpu = [
         "profilers"
         "cpu"
-        "samply"
+        "mock-cpu"
       ];
       ref = [
         "python"
         "lint"
-        "pyright"
+        "mock-pyright"
       ];
     };
   };
