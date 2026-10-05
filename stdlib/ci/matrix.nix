@@ -259,21 +259,14 @@ let
         }
       ) matrixPlan.jobs;
       # Reject a silently empty PR plan when the full plan had cells (misconfigured
-      # runner catalog / dimensions that miss every current-LTS id).
+      # runner catalog, or a match/matchAny overlay that matches nothing). Overlays
+      # must not disable this guard — empty plans render as green empty workflows.
       hadCells = lib.any (j: (j.cells or [ ]) != [ ]) (lib.attrValues matrixPlan.jobs);
       keepsCells = lib.any (j: (j.cells or [ ]) != [ ]) (lib.attrValues filteredJobs);
-      selectingCurrentLts =
-        (rawBase.selectCurrentLts or false)
-        && !(lib.any (
-          job:
-          let
-            overlay = if profileName != null then (job.expansionProfiles or { }).${profileName} or { } else { };
-          in
-          overlay ? match || overlay ? matchAny
-        ) (lib.attrValues matrixPlan.jobs));
+      selectingCurrentLts = rawBase.selectCurrentLts or false;
     in
     if selectingCurrentLts && hadCells && !keepsCells then
-      throw "ci.matrix: pr expansion profile removed all cells (no cell runner matches current-LTS profiles)"
+      throw "ci.matrix: pr expansion profile removed all cells (no cells matched the profile)"
     else
       matrixPlan
       // {

@@ -716,6 +716,32 @@ in
     };
   };
 
+  # Unmatched pr overlay must throw (not return a zero-cell plan / green empty workflow).
+  testExpansionProfileUnmatchedOverlayThrows = {
+    expr = builtins.tryEval (
+      matrix.forProfile (matrix.plan {
+        runnerProfiles = matrix.defaultRunnerProfiles;
+        jobs.python = {
+          command = "true";
+          dimensions.runner = [
+            "ubuntu-lts-prev"
+            "ubuntu-lts-curr"
+          ];
+          seeds = [ { version = "3.12"; } ];
+          expansionProfiles.pr = {
+            match = {
+              runner = "does-not-exist";
+            };
+          };
+        };
+      }) "pr"
+    );
+    expected = {
+      success = false;
+      value = false;
+    };
+  };
+
   # Custom runner ids: pr selects by release metadata, not fixed ubuntu-lts-curr.
   testExpansionProfilePrUsesRunnerMetadata = {
     expr =
