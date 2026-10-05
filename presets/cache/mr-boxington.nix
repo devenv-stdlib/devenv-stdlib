@@ -57,33 +57,52 @@ let
     unset _mbx_shim
   '';
 
+  # Always imported via applyPreset (even when disabled). Keep package eval
+  # inside mkIf values (attrset construction must not force the drv), and only
+  # emit `tasks` when the host declares that option — mkIf does not suppress
+  # "option does not exist" for fixtures that omit it (e.g. language-matrix
+  # unit eval via defaultRoots + cache/).
   localModule =
     {
       lib,
       config,
+      options,
       pkgs,
       ...
     }:
     let
       cfg = config.presets.cache.mr-boxington;
-      mbx = mbxPackage pkgs;
+      enabled = cfg.enable && cfg.scope == "local";
     in
     {
       options.presets.cache.mr-boxington.scope = scopeOption;
-      config = lib.mkIf (cfg.enable && cfg.scope == "local") {
-        packages = [ mbx ];
-        tasks."mr-boxington:setup" = {
-          exec = ''
-            set -euo pipefail
-            if ! ${mbxBin mbx} setup --local; then
-              echo "mr-boxington: mbx setup --local failed (continuing)" >&2
-            fi
-          '';
-          after = [ "mise:install" ];
-        };
-        tasks."devenv:enterShell".after = [ "mr-boxington:setup" ];
-        enterShell = shimPathSnippet;
-      };
+      config = lib.mkMerge (
+        [
+          (lib.mkIf enabled {
+            packages = [ (mbxPackage pkgs) ];
+            enterShell = shimPathSnippet;
+          })
+        ]
+        ++ lib.optionals (options ? tasks) [
+          (lib.mkIf enabled (
+            let
+              mbx = mbxPackage pkgs;
+            in
+            {
+              tasks."mr-boxington:setup" = {
+                exec = ''
+                  set -euo pipefail
+                  if ! ${mbxBin mbx} setup --local; then
+                    echo "mr-boxington: mbx setup --local failed (continuing)" >&2
+                  fi
+                '';
+                after = [ "mise:install" ];
+              };
+              tasks."devenv:enterShell".after = [ "mr-boxington:setup" ];
+            }
+          ))
+        ]
+      );
     };
 
   # Thin (devenv): local install via module mkIf; no local mkTool leaf.
