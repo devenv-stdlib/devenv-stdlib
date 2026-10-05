@@ -32,6 +32,21 @@ let
       type = freeform;
       default = { };
     };
+    # Present so assertions can read tools.<leaf>.enable without loading
+    # every local tool module into this fixture.
+    tools = lib.mkOption {
+      type = freeform;
+      default = { };
+    };
+    # devenv.load always imports `lower` (serena / vscode files + sync scripts).
+    files = lib.mkOption {
+      type = lib.types.attrsOf freeform;
+      default = { };
+    };
+    scripts = lib.mkOption {
+      type = lib.types.attrsOf freeform;
+      default = { };
+    };
   };
 
   eval =
@@ -48,9 +63,11 @@ let
           config = extra;
         }
       ]
+      # Empty tools roots: thin build-cleaner has no local tool leaf; loading
+      # all of tools/** would require a full devenv option surface (git-hooks, …).
       ++ devenvLoad.load {
         presets = [ <devenv4monorepo/presets/cache> ];
-        tools = [ <devenv4monorepo/tools> ];
+        tools = [ ];
       };
     }).config;
 in
