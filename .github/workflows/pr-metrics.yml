@@ -45,7 +45,7 @@ jobs:
           echo "Medium ceiling (product-code lines): ${medium_max} (baseSize=${BASE_SIZE} growthRate=${GROWTH_RATE})"
           product=""
           if git rev-parse --verify "${BASE_SHA}^{commit}" >/dev/null 2>&1; then
-            product=$(git diff --numstat "${BASE_SHA}...HEAD" | awk '$1 == "-" { next } { path = $3; sub(/^.* => /, "", path); if (path ~ /(^|\/)package-lock\.json$/) next; if (path ~ /[Tt]est|[Tt]EST|\.[Ss]pec\./) next; p += $1 } END { print p+0 }')
+            product=$(git diff --numstat "${BASE_SHA}...HEAD" | awk '$1 == "-" { next } { path = $3; sub(/^.* => /, "", path); if (path ~ /(^|\/)package-lock\.json$/) next; if (path ~ /(^|\/)(tests?|__tests__|spec)\//) next; if (path ~ /(^|[\/_.-])[Tt]ests?([_.-]|\.|$)|\.[Ss]pec\.|\.[Tt]est\./) next; p += $1 } END { print p+0 }')
             echo "Product-code lines added (approx): ${product}"
           else
             echo "::warning::Base SHA ${BASE_SHA} not available locally; falling back to title prefix."
