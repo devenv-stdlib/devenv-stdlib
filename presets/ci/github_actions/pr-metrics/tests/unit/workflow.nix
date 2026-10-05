@@ -177,6 +177,7 @@ in
       in
       {
         hasName = contains "name: PR Metrics" yaml;
+        hasJobName = contains "name: PR size (pr-metrics)" yaml;
         hasPullRequest = contains "pull_request:" yaml;
         hasReadyForReview = contains "ready_for_review" yaml;
         hasAction = contains prMetricsSha yaml;
@@ -207,6 +208,7 @@ in
       };
     expected = {
       hasName = true;
+      hasJobName = true;
       hasPullRequest = true;
       hasReadyForReview = true;
       hasAction = true;

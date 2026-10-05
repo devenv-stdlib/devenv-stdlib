@@ -156,6 +156,7 @@ in
       ]
       ++ jobIf
       ++ [
+        "    name: PR size (pr-metrics)"
         "    runs-on: ubuntu-24.04"
         "    steps:"
         checkoutUses
