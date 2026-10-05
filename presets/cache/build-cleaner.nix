@@ -46,19 +46,39 @@ let
       lib,
       config,
       pkgs,
+      options,
       ...
-    }:
+    }@moduleArgs:
     let
       cfg = config.presets.cache.build-cleaner;
+      tasksLib = import ../../stdlib/tasks.nix { inherit lib; };
+      # Scope-gate here (mkIf), not via exportTasks = cfg: … in applyPreset —
+      # reading config while building applyPreset's taskConfig cycles.
+      exported =
+        if options ? tasks then
+          tasksLib.export {
+            items = [ toolRefs.cache.build-cleaner ];
+            # tool-ref carries tasks from refsFromSpecs; load tool roots optional.
+            discovered = [ ];
+            inherit moduleArgs;
+          }
+        else
+          { };
     in
     {
       options.presets.cache.build-cleaner.scope = scopeOption;
-      config = lib.mkIf (cfg.enable && cfg.scope == "local") {
-        packages = [ (bcPackage pkgs) ];
-      };
+      config = lib.mkMerge [
+        (lib.mkIf (cfg.enable && cfg.scope == "local") {
+          packages = [ (bcPackage pkgs) ];
+        })
+        (lib.mkIf (cfg.enable && cfg.scope == "local" && exported != { }) {
+          tasks = exported;
+        })
+      ];
     };
 
   # Thin (devenv): local install via module mkIf; no local mkTool leaf.
+  # Tool-declared dry-run is exported from localModule when scope=local.
   thin = {
     path = [
       "cache"

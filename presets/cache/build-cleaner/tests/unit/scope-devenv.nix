@@ -63,11 +63,10 @@ let
           config = extra;
         }
       ]
-      # Empty tools roots: thin build-cleaner has no local tool leaf; loading
-      # all of tools/** would require a full devenv option surface (git-hooks, …).
+      # Cache tool specs needed so exportTasks can resolve declared leaves.
       ++ devenvLoad.load {
         presets = [ <devenv4monorepo/presets/cache> ];
-        tools = [ ];
+        tools = [ <devenv4monorepo/tools/cache> ];
       };
     }).config;
 in
@@ -86,6 +85,7 @@ in
         inherit (result) applied includeTools;
         tool = (cfg.tools.build-cleaner or { }).enable or false;
         hasPackage = builtins.elem "build-cleaner-fixture" cfg.packages;
+        hasDryRunTask = cfg.tasks ? "build-cleaner:dry-run";
       };
     expected = {
       enable = true;
@@ -94,6 +94,7 @@ in
       includeTools = [ ];
       tool = false;
       hasPackage = true;
+      hasDryRunTask = true;
     };
   };
 

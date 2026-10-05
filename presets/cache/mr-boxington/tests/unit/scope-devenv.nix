@@ -64,11 +64,11 @@ let
           config = extra;
         }
       ]
-      # Empty tools roots: thin mbx has no local tool leaf; loading all of
-      # tools/** would require a full devenv option surface (git-hooks, …).
+      # Cache tool specs needed so exportTasks can resolve declared leaves
+      # (global binary leaves are not loaded as local modules).
       ++ devenvLoad.load {
         presets = [ <devenv4monorepo/presets/cache> ];
-        tools = [ ];
+        tools = [ <devenv4monorepo/tools/cache> ];
       };
     }).config;
 in
@@ -89,6 +89,9 @@ in
         # Global mkTool leaf is not loaded into devenv (HM-only).
         tool = (cfg.tools.mr-boxington or { }).enable or false;
         hasSetupTask = cfg.tasks ? "mr-boxington:setup";
+        hasDoctorTask = cfg.tasks ? "mr-boxington:doctor";
+        hasGcTask = cfg.tasks ? "mr-boxington:gc";
+        hasStatsTask = cfg.tasks ? "mr-boxington:stats";
         hasPackage = builtins.elem "mbx-fixture" cfg.packages;
       };
     expected = {
@@ -98,6 +101,9 @@ in
       includeTools = [ ];
       tool = false;
       hasSetupTask = true;
+      hasDoctorTask = true;
+      hasGcTask = true;
+      hasStatsTask = true;
       hasPackage = true;
     };
   };
