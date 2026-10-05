@@ -9,9 +9,12 @@ bats tests/home                   # terminal-lib, bashrc.d, Cursor LLM merge, Se
 ```
 
 `test-devenv-unit` runs nix-unit (with `--quiet`: hide ✅ lines, keep failures + summary) and BATS with `--jobs "$(nproc)"` (GNU `parallel` is on the devenv PATH). BATS TAP goes to `junit/bats.log`; the CI log gets a pass count, or the full log on failure.
-`test-devenv-integration` runs nixosTest and actionlint. On GitHub-hosted runners (`GITHUB_ACTIONS`), nested act is skipped — the language matrix already runs via reusable `test.yml`. Locally, integration still runs nested act (matrix cells pinned one-at-a-time). Integration `nix-build` uses `-j "$(nproc)"`. Act step output is captured per job and printed only on failure.
+
+nix-unit is **not** one megasuite: the main suite covers stdlib, Den aspects, and other cross-cutting topics under `tests/unit/`, then the runner discovers each `tools/**/tests/unit/default.nix` and `presets/**/tests/unit/default.nix` and runs them as separate suites (JUnit files `nix-unit.xml` plus `nix-unit-<slug>.xml`). See [contributing](contributing.md#test-layout).
+
+`test-devenv-integration` runs the main nixosTest and actionlint, then builds any discovered `tools|presets/**/tests/integration/default.nix`. On GitHub-hosted runners (`GITHUB_ACTIONS`), nested act is skipped — the language matrix already runs via reusable `test.yml`. Locally, integration still runs nested act (matrix cells pinned one-at-a-time). Integration `nix-build` uses `-j "$(nproc)"`. Act step output is captured per job and printed only on failure.
 Local `test-devenv` runs the unit suite, then the integration suite (skips integration if unit failed).
-nix-unit stays single-process (no `--jobs`; forking per topic file is slower than one suite).
+Each nix-unit suite stays single-process (no `--jobs`).
 `tests/copier.bats` copies this template into a throwaway directory and checks `copier update`; it is excluded from generated monorepos.
 
 ## Workflows
