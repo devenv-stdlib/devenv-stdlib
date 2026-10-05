@@ -12,7 +12,7 @@ let
     map (name: "          ${name}: ${attrs.${name}}") names;
 in
 {
-  # cfg: { action, maxFailures, closePr, exemptDraftPrs, extraWith }
+  # cfg: { action, actionComment?, maxFailures, closePr, exemptDraftPrs, extraWith }
   workflowText =
     cfg:
     let
@@ -22,6 +22,9 @@ in
         exempt-draft-prs = boolYaml cfg.exemptDraftPrs;
       };
       withAttrs = named // cfg.extraWith;
+      comment = cfg.actionComment or "";
+      usesLine =
+        if comment == "" then "      - uses: ${cfg.action}" else "      - uses: ${cfg.action} # ${comment}";
     in
     lib.concatStringsSep "\n" (
       [
@@ -42,7 +45,7 @@ in
         "  anti-slop:"
         "    runs-on: ubuntu-24.04"
         "    steps:"
-        "      - uses: ${cfg.action}"
+        usesLine
         "        with:"
       ]
       ++ withLines withAttrs

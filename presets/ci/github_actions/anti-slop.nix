@@ -35,10 +35,20 @@ in
       options.presets.ci.github_actions.anti-slop = {
         action = lib.mkOption {
           type = lib.types.str;
-          default = "peakoss/anti-slop@v0.3.0";
+          # Immutable commit for v0.3.0 — pull_request_target + write must not
+          # follow a movable tag. Keep the human version in actionComment.
+          default = "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2";
           description = ''
-            Marketplace Action pin (`owner/repo@tag`). Prefer an immutable
-            release tag (e.g. v0.3.0) over the moving `v0` major line.
+            Marketplace Action pin (`owner/repo@sha`). Default is the v0.3.0
+            release commit (not the movable `v0.3.0` / `v0` tags).
+          '';
+        };
+        actionComment = lib.mkOption {
+          type = lib.types.str;
+          default = "v0.3.0";
+          description = ''
+            Trailing YAML comment on the generated `uses:` line (release tag
+            label for humans). Empty string omits the comment.
           '';
         };
         maxFailures = lib.mkOption {
@@ -96,6 +106,7 @@ in
         enable = true;
         inherit (cfg)
           action
+          actionComment
           maxFailures
           closePr
           exemptDraftPrs
