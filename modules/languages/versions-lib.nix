@@ -563,11 +563,8 @@ rec {
     in
     if rawJobs == "" then "" else padJob rawJobs;
 
-  # Thin shim → MatrixPlan + GHA backend render.
-  workflowText = args: gha.render (languageMatrixPlan args);
-
-  # Structured view of the same strategy that workflowText emits (for stdlib.report).
-  matrixReport =
+  # Language-shaped matrix inventory for stdlib.report / markers.ciMatrix.
+  languageMatrixReport =
     args:
     let
       pythonOn = args.pythonOn or false;

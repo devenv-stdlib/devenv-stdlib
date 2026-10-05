@@ -143,7 +143,7 @@ in
               enable = true;
             };
           };
-          matrix = versions.matrixReport {
+          matrix = versions.languageMatrixReport {
             pythonOn = true;
             python = versions.emptyPython // {
               min = "3.12";
@@ -424,7 +424,7 @@ in
   };
 
   testMatrixReportEmpty = {
-    expr = (versions.matrixReport { }).empty;
+    expr = (versions.languageMatrixReport { }).empty;
     expected = true;
   };
 }

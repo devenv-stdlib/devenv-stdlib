@@ -4,19 +4,19 @@ let
   inherit (pkgs) lib;
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
   project = import ../../modules/lib/project.nix { inherit lib; };
+  gha = (import ../../stdlib/ci { inherit lib; }).backends.github_actions;
+  render = args: gha.render (versions.languageMatrixPlan args);
   evalOk = import ./eval.nix { inherit lib versions project; };
   matrixShapes = import ./matrix-shapes.nix { inherit lib; };
 
-  emptyYaml = pkgs.writeText "test-empty.yml" (versions.workflowText { });
-  pythonYaml = pkgs.writeText "test-python.yml" (
-    versions.workflowText {
-      pythonOn = true;
-      python = versions.emptyPython // {
-        min = "3.12";
-        max = "3.13";
-      };
-    }
-  );
+  emptyYaml = pkgs.writeText "test-empty.yml" (render { });
+  pythonYaml = pkgs.writeText "test-python.yml" (render {
+    pythonOn = true;
+    python = versions.emptyPython // {
+      min = "3.12";
+      max = "3.13";
+    };
+  });
   matrixEtc = lib.listToAttrs (
     map (name: {
       name = "devenv/matrix-${name}.yml";
