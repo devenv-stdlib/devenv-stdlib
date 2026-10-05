@@ -22,6 +22,10 @@
 #   };
 #
 # This template dogfoods the same enable in the root devenv.nix.
-{ }:
+{ lib }:
 {
+  # Documentation-only sentinel (examples/ is not in defaultRoots).
+  meta.description = lib.mkDefault ''
+    Enable presets.ci.github_actions.anti-slop in devenv.nix / devenv.local.nix.
+  '';
 }
