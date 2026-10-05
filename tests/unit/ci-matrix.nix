@@ -366,7 +366,7 @@ in
     };
   };
 
-  # CodeRabbit: multiline job.command → block scalar; keep | prefix; single-line plain.
+  # CodeRabbit: multiline → block scalar; keep | prefix; always JSON-quote singles.
   testGhaMultilineCommandIsBlockScalar = {
     expr =
       let
@@ -386,6 +386,7 @@ in
         already = mk "|\n              echo already";
         single = mk "true";
         colonSpace = mk "echo foo: bar";
+        hashComment = mk "printf '%s\\n' 'hello # world'";
         # Match the Test step specifically (workflow also has other run: | steps).
         testStep = "name: Test\n        run: ";
       in
@@ -393,17 +394,23 @@ in
         multiHasBlock = contains "${testStep}|\n                echo one\n                echo two" multi;
         multiNotInline = !(contains "${testStep}echo one\necho two" multi);
         alreadyKeepsPrefix = contains "${testStep}|\n                echo already" already;
-        singlePlain = contains "${testStep}true" single;
+        singleQuoted = contains ''${testStep}"true"'' single;
+        singleNotPlain = !(contains "${testStep}true\n" single);
         colonSpaceQuoted = contains ''${testStep}"echo foo: bar"'' colonSpace;
         colonSpaceNotPlain = !(contains "${testStep}echo foo: bar" colonSpace);
+        hashQuoted = contains ''${testStep}"printf '%s\\n' 'hello # world'"'' hashComment;
+        hashNotPlain = !(contains "${testStep}printf '%s\\n' 'hello # world'" hashComment);
       };
     expected = {
       multiHasBlock = true;
       multiNotInline = true;
       alreadyKeepsPrefix = true;
-      singlePlain = true;
+      singleQuoted = true;
+      singleNotPlain = true;
       colonSpaceQuoted = true;
       colonSpaceNotPlain = true;
+      hashQuoted = true;
+      hashNotPlain = true;
     };
   };
 
