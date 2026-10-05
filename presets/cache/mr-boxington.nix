@@ -42,8 +42,6 @@ let
       __stdlibMeta = true;
     }).install.package;
 
-  mbxFor = pkgs: mbxPackage pkgs;
-
   # Store path when real package; plain name for unit-test stubs.
   mbxBin = mbx: if builtins.isAttrs mbx && mbx ? outPath then "${mbx}/bin/mbx" else "mbx";
 
@@ -68,7 +66,7 @@ let
     }:
     let
       cfg = config.presets.cache.mr-boxington;
-      mbx = mbxFor pkgs;
+      mbx = mbxPackage pkgs;
     in
     {
       options.presets.cache.mr-boxington.scope = scopeOption;
