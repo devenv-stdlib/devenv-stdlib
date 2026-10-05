@@ -23,14 +23,17 @@ let
       value.source = pkgs.writeText "matrix-${name}.yml" matrixShapes.fixtures.${name};
     }) matrixShapes.names
   );
-  # Copy repo root into the store so versions-lib → stdlib/ci relative imports resolve.
+  # Copy repo root into the store so eval.nix / versions-lib / project
+  # relative imports (stdlib/ci, stdlib/linters) resolve. A lone
+  # `${./file.nix}` store file makes `../../stdlib/...` resolve as
+  # `/stdlib/...`.
   evalNix = pkgs.writeText "eval.nix" ''
-    import ${./eval.nix} {
+    import (${../..} + "/tests/integration/eval.nix") {
       lib = (import <nixpkgs> { }).lib;
       versions = import (${../..} + "/modules/languages/versions-lib.nix") {
         lib = (import <nixpkgs> { }).lib;
       };
-      project = import ${../../modules/lib/project.nix} {
+      project = import (${../..} + "/modules/lib/project.nix") {
         lib = (import <nixpkgs> { }).lib;
       };
       matrixShapes = import (${../..} + "/tests/integration/matrix-shapes.nix") {
