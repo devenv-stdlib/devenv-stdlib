@@ -19,4 +19,4 @@ jobs:
           fail-on-new-secrets: true
           fail-on-new-vulnerabilities: false
           full: false
-          post-pr-comment: true
+          post-pr-comment: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
