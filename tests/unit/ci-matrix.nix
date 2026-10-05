@@ -623,6 +623,99 @@ in
     };
   };
 
+  # M5: schedule / PR expansion profiles (slim PR vs full schedule).
+  testExpansionProfilePrSlimesRunners = {
+    expr =
+      let
+        full = matrix.plan {
+          runnerProfiles = matrix.defaultRunnerProfiles;
+          jobs.python = {
+            command = "true";
+            dimensions.runner = [
+              "ubuntu-lts-prev"
+              "ubuntu-lts-curr"
+            ];
+            seeds = [
+              { version = "3.12"; }
+              { version = "3.13"; }
+            ];
+          };
+        };
+        pr = matrix.forProfile full "pr";
+        schedule = matrix.forProfile full "schedule";
+      in
+      {
+        fullCount = lib.length full.jobs.python.cells;
+        prCount = lib.length pr.jobs.python.cells;
+        prRunners = lib.unique (map (c: c.runner) pr.jobs.python.cells);
+        scheduleCount = lib.length schedule.jobs.python.cells;
+        active = pr.activeProfile;
+      };
+    expected = {
+      fullCount = 4;
+      prCount = 2;
+      prRunners = [ "ubuntu-lts-curr" ];
+      scheduleCount = 4;
+      active = "pr";
+    };
+  };
+
+  testLanguagePlanExpansionProfile = {
+    expr =
+      let
+        args = {
+          pythonOn = true;
+          python = versions.emptyPython // {
+            min = "3.12";
+          };
+        };
+        full = versions.languageMatrixPlan args;
+        pr = versions.languageMatrixPlan (args // { expansionProfile = "pr"; });
+      in
+      {
+        fullCells = lib.length full.jobs.python.cells;
+        prCells = lib.length pr.jobs.python.cells;
+        prRunner = (lib.head pr.jobs.python.cells).runner;
+      };
+    expected = {
+      fullCells = 2;
+      prCells = 1;
+      prRunner = "ubuntu-lts-curr";
+    };
+  };
+
+  testExpansionProfileJobOverlay = {
+    expr =
+      let
+        full = matrix.plan {
+          runnerProfiles = matrix.defaultRunnerProfiles;
+          jobs.python = {
+            command = "true";
+            dimensions.runner = [
+              "ubuntu-lts-prev"
+              "ubuntu-lts-curr"
+            ];
+            seeds = [ { version = "3.12"; } ];
+            expansionProfiles.pr = {
+              match = {
+                runner = "ubuntu-lts-prev";
+              };
+            };
+          };
+        };
+        pr = matrix.forProfile full "pr";
+      in
+      {
+        # Job overlay replaces default pr matchAny with match on prev.
+        runner = (lib.head pr.jobs.python.cells).runner;
+        count = lib.length pr.jobs.python.cells;
+      };
+    expected = {
+      runner = "ubuntu-lts-prev";
+      count = 1;
+    };
+  };
+
   testLanguagePlanArchesFilterRunnerProfilesOverride = {
     expr =
       let
