@@ -113,7 +113,7 @@ in
             "              if not chunk:"
             "                  i += 1"
             "                  continue"
-            "              fields = chunk.split(b\"\\t\")"
+            "              fields = chunk.split(b\"\\t\", 2)"
             "              if len(fields) < 2:"
             "                  i += 1"
             "                  continue"
