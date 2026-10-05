@@ -10,6 +10,11 @@
 # - lang.<id>.linters  ↔ presets <id>.lint.*
 # - services.<id>      ↔ presets services.<id>.*
 #
+# Any-of language groups (categoryPolicy.anyOfLanguageGroups, today
+# javascript+typescript) share usage: an applied javascript.lint.prettier
+# (javascript-or-typescript) counts for lang.typescript.linters too — e.g. the
+# docs site enables TypeScript only and is formatted by shared Prettier.
+#
 # Opt out with stdlib.categoryWarnings.enable = false.
 # Optional tool inventory: stdlib.categoryWarnings.toolIndex
 #   ([ { name, category, enable } ]) so enabled tools count as usage.
@@ -36,40 +41,68 @@ let
     leaves: prefix:
     lib.filter (leaf: (leaf.result.applied or false) && pathHasPrefix prefix leaf.path) leaves;
 
+  # Sibling languages from any-of policies (javascript ↔ typescript).
+  siblingsOf =
+    lang:
+    lib.concatLists (
+      map (
+        group: if lib.elem lang group then lib.filter (l: l != lang) group else [ ]
+      ) categoryPolicy.anyOfLanguageGroups
+    );
+
   mkWarning = path: ''
     category ${path}: available but unused (no enabled tool or applied preset under this category)
   '';
 
   checks =
     let
-      langChecks = lib.concatMap (lang: [
-        {
-          path = "lang.${lang}";
-          available = categoryPolicy.languageAvailable lang;
-          toolPrefix = "lang.${lang}";
-          presetPrefix = [ lang ];
-        }
-        {
-          path = "lang.${lang}.linters";
-          available = categoryPolicy.languageAvailable lang;
-          toolPrefix = "lang.${lang}.linters";
-          presetPrefix = [
-            lang
-            "lint"
-          ];
-        }
-      ]) supported.languages;
+      langChecks = lib.concatMap (
+        lang:
+        let
+          siblings = siblingsOf lang;
+        in
+        [
+          {
+            path = "lang.${lang}";
+            available = categoryPolicy.languageAvailable lang;
+            toolPrefixes = [ "lang.${lang}" ] ++ map (s: "lang.${s}") siblings;
+            presetPrefixes = [ [ lang ] ] ++ map (s: [ s ]) siblings;
+          }
+          {
+            path = "lang.${lang}.linters";
+            available = categoryPolicy.languageAvailable lang;
+            toolPrefixes = [ "lang.${lang}.linters" ] ++ map (s: "lang.${s}.linters") siblings;
+            presetPrefixes = [
+              [
+                lang
+                "lint"
+              ]
+            ]
+            ++ map (s: [
+              s
+              "lint"
+            ]) siblings;
+          }
+        ]
+      ) supported.languages;
       serviceChecks = map (svc: {
         path = "services.${svc}";
         available = categoryPolicy.serviceAvailable svc;
-        toolPrefix = "services.${svc}";
-        presetPrefix = [
-          "services"
-          svc
+        toolPrefixes = [ "services.${svc}" ];
+        presetPrefixes = [
+          [
+            "services"
+            svc
+          ]
         ];
       }) supported.services;
     in
     langChecks ++ serviceChecks;
+
+  categoryUsed =
+    tools: leaves: c:
+    lib.any (prefix: enabledToolsUnder tools prefix != [ ]) c.toolPrefixes
+    || lib.any (prefix: appliedPresetsUnder leaves prefix != [ ]) c.presetPrefixes;
 
   unusedPaths =
     {
@@ -81,11 +114,7 @@ let
     let
       presetLeaves = if leaves != null then leaves else report.flattenPresetLeaves presets;
       active = lib.filter (c: c.available config) checks;
-      unused = lib.filter (
-        c:
-        enabledToolsUnder tools c.toolPrefix == [ ]
-        && appliedPresetsUnder presetLeaves c.presetPrefix == [ ]
-      ) active;
+      unused = lib.filter (c: !(categoryUsed tools presetLeaves c)) active;
     in
     map (c: c.path) unused;
 
@@ -101,7 +130,8 @@ let
           description = ''
             When true, warn about language/service categories that are
             available (languages.* / services.* / categoryPolicies) but have
-            no enabled tool and no applied preset underneath.
+            no enabled tool and no applied preset underneath. Shared any-of
+            groups (javascript-or-typescript) count sibling lint/tool usage.
           '';
         };
         toolIndex = lib.mkOption {
@@ -156,5 +186,7 @@ in
     mkWarning
     pathHasPrefix
     categoryHasPrefix
+    siblingsOf
+    categoryUsed
     ;
 }
