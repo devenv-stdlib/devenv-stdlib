@@ -168,10 +168,18 @@ _: {
         cat "$owner_log"
       fi
     done < <(
-      find "$DEVENV_ROOT/tools" "$DEVENV_ROOT/presets" \
-        \( -name '_*' -prune \) -o \
-        \( -path '*/tests/integration/default.nix' -print \) \
-        | sort
+      # Same rules as tests/lib/discover-suites.nix: stop at the first tests/
+      # directory (do not run nested fixture integration suites under tests/).
+      while IFS= read -r tests_dir; do
+        [ -n "$tests_dir" ] || continue
+        f="$tests_dir/integration/default.nix"
+        [ -f "$f" ] && printf '%s\n' "$f"
+      done < <(
+        find "$DEVENV_ROOT/tools" "$DEVENV_ROOT/presets" \
+          \( -name '_*' -prune \) -o \
+          \( -type d -name tests -prune -print \) \
+          | sort
+      )
     )
 
     echo "==> integration junit reports in $junit_dir"

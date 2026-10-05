@@ -1,9 +1,9 @@
 # Packaging: flake outputs stdlib and lib are one devenv-stdlib attrset.
+# version / apiVersion goldens live in api.nix; this suite covers flake wiring.
 { lib, ... }:
 let
   root = ../../..;
   stdlib = import (root + "/stdlib") { inherit lib; };
-  versionInfo = import (root + "/stdlib/version.nix");
   flake = builtins.getFlake (toString root);
   required = [
     "apiVersion"
@@ -14,16 +14,6 @@ let
   ];
 in
 {
-  testStdlibVersion = {
-    expr = stdlib.version;
-    expected = versionInfo.version;
-  };
-
-  testStdlibApiVersion = {
-    expr = stdlib.apiVersion;
-    expected = versionInfo.apiVersion;
-  };
-
   testStdlibPublishesLoaders = {
     expr = map (name: builtins.hasAttr name stdlib) required;
     expected = [

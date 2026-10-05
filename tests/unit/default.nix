@@ -5,5 +5,10 @@
 let
   lib = import <nixpkgs/lib>;
   suite = import ../lib/suite.nix { inherit lib; };
+  inherit (suite) mergeTests;
 in
-(suite.load ./.) // (suite.load ./stdlib) // (suite.load ./aspects)
+lib.foldl' (acc: dir: mergeTests (toString dir) acc (suite.load dir)) { } [
+  ./.
+  ./stdlib
+  ./aspects
+]
