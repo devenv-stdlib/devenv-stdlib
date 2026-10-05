@@ -7,9 +7,10 @@ in
   testIdeCoderabbitPresetIsExtensionAndCli = {
     expr =
       let
-        result =
-          (eval (import <devenv4monorepo/presets/ide/coderabbit.nix>) { })
-          .config.presets.ide.coderabbit.result;
+        inherit
+          ((eval (import <devenv4monorepo/presets/ide/coderabbit.nix>) { }).config.presets.ide.coderabbit)
+          result
+          ;
       in
       {
         includeTools = sort result.includeTools;

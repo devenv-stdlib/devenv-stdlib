@@ -92,7 +92,7 @@ in
         refs = devenvLoad.refsOf mock.presetRoots;
       in
       {
-        path = refs.python.lint.mock-ruff.path;
+        inherit (refs.python.lint.mock-ruff) path;
         id = presetLib.pathString refs.python.lint.mock-ruff.path;
       };
     expected = {
@@ -160,7 +160,7 @@ in
         normalized = presetLib.normalizeTool tools.python.lint.mock-pyright;
       in
       {
-        path = tools.python.lint.mock-pyright.path;
+        inherit (tools.python.lint.mock-pyright) path;
         inherit (normalized) name;
       };
     expected = {
@@ -301,7 +301,7 @@ in
         };
       in
       {
-        applied = cfg.presets.demo.strict-gate.result.applied;
+        inherit (cfg.presets.demo.strict-gate.result) applied;
         failed = failedAssertions cfg;
       };
     expected = {
@@ -338,7 +338,7 @@ in
         ide = lib.findFirst (d: d.name == "ide.mock-ide") null decls;
       in
       {
-        path = ide.path;
+        inherit (ide) path;
         toolName = (builtins.head ide.tools).path;
       };
     expected = {

@@ -8,7 +8,7 @@ if false then
   { inherit pkgs config; }
 else
   let
-    tool = (import ../../../../lib.nix { inherit lib; }).tool;
+    inherit ((import ../../../../lib.nix { inherit lib; })) tool;
     spec = {
       name = "mock-prettier";
       category = "lang.javascript.linters";
