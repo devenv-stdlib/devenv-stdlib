@@ -51,12 +51,18 @@ let
     sort (lib.filter (name: (hooks'.${name} or { }).enable or false) (builtins.attrNames hooks'));
 
   # treefmt-nix programs.<name>.enable → sorted enabled formatter/linter ids.
+  # Skip obsolete aliases: reading programs.ruff.enable traces
+  # "Obsolete option … renamed to programs.ruff-check.enable" via
+  # treefmt-nix's mkRenamedOptionModule (numtide/treefmt-nix programs/ruff-check.nix).
+  treefmtObsoleteProgramAliases = [ "ruff" ];
+
   enabledTreefmtPrograms =
     programs:
     let
       programs' = asAttrs programs;
+      names = lib.subtractLists treefmtObsoleteProgramAliases (builtins.attrNames programs');
     in
-    sort (lib.filter (name: (programs'.${name} or { }).enable or false) (builtins.attrNames programs'));
+    sort (lib.filter (name: (programs'.${name} or { }).enable or false) names);
 
   presetInventory =
     presets:
