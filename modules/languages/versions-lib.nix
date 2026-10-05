@@ -423,12 +423,21 @@ rec {
         else
           matrix.profilesForArches matrix.allRunnerProfiles arches;
       runners = matrix.runnerIds baseProfiles;
+      anyLang = pythonOn || rustOn || goOn || javascriptOn;
+      # Empty runners (e.g. arches = ["arm64"] instead of aarch64) would drop
+      # every language cell; gha.render then emits emptyWorkflow and green-passes.
+      # Fail plan construction instead of silently skipping enabled languages.
+      checkedRunners =
+        if anyLang && runners == [ ] then
+          throw "versions.languageMatrixPlan: enabled language(s) selected no runner profiles (arches=${builtins.toJSON arches}); refusing empty matrix that would render as a green no-language workflow. Use catalog arch ids (x86_64, aarch64) or a non-empty runnerProfiles override."
+        else
+          runners;
       extraDims =
         lib.optionalAttrs (fixtures != [ ]) { fixture = fixtures; }
         // lib.optionalAttrs (processes != [ ]) { process = processes; };
       mkJob = _name: rows: command: {
         dimensions = {
-          runner = runners;
+          runner = checkedRunners;
         }
         // extraDims;
         seeds = rows;
@@ -440,42 +449,45 @@ rec {
         // strategy;
       };
     in
-    matrix.plan {
-      runnerProfiles = baseProfiles;
-      jobs =
-        lib.optionalAttrs pythonOn {
-          python =
-            mkJob "python" (pythonRows python)
-              "devenv --option languages.python.enable:bool true --option languages.python.version:string \${{ matrix.python_version }} --option supported.python.min:string \${{ matrix.policy_min }} test";
-        }
-        // lib.optionalAttrs rustOn {
-          rust =
-            mkJob "rust" (rustRows rust)
-              "devenv --option languages.rust.enable:bool true --option languages.rust.channel:string \${{ matrix.channel }} --option languages.rust.version:string \${{ matrix.version }} --option supported.rust.min:string \${{ matrix.policy_min }} test";
-        }
-        // lib.optionalAttrs goOn {
-          go =
-            mkJob "go" (goRows go)
-              "devenv --option languages.go.enable:bool true --option languages.go.version:string \${{ matrix.version }} --option supported.go.min:string \${{ matrix.policy_min }} test";
-        }
-        // lib.optionalAttrs javascriptOn {
-          # Interpolated into gha.jobYaml after that string's indent strip. Body lines
-          # are already 8 spaces — same as `sudo mkdir` after jobYaml's 6-space strip.
-          # Trailing newline omitted: padJob would prefix that empty line with two spaces.
-          javascript = mkJob "javascript" (javascriptRows javascript) (
-            lib.removeSuffix "\n" ''
-              |
-                      if [ "''${{ matrix.runtime }}" = nodejs ]; then
-                        devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ''${{ matrix.pkg }} test
-                      elif [ "''${{ matrix.runtime }}" = bun ]; then
-                        devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
-                      else
-                        devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
-                      fi
-            ''
-          );
-        };
-    };
+    # Force the empty-runners check at plan construction (not only when cells expand).
+    builtins.seq checkedRunners (
+      matrix.plan {
+        runnerProfiles = baseProfiles;
+        jobs =
+          lib.optionalAttrs pythonOn {
+            python =
+              mkJob "python" (pythonRows python)
+                "devenv --option languages.python.enable:bool true --option languages.python.version:string \${{ matrix.python_version }} --option supported.python.min:string \${{ matrix.policy_min }} test";
+          }
+          // lib.optionalAttrs rustOn {
+            rust =
+              mkJob "rust" (rustRows rust)
+                "devenv --option languages.rust.enable:bool true --option languages.rust.channel:string \${{ matrix.channel }} --option languages.rust.version:string \${{ matrix.version }} --option supported.rust.min:string \${{ matrix.policy_min }} test";
+          }
+          // lib.optionalAttrs goOn {
+            go =
+              mkJob "go" (goRows go)
+                "devenv --option languages.go.enable:bool true --option languages.go.version:string \${{ matrix.version }} --option supported.go.min:string \${{ matrix.policy_min }} test";
+          }
+          // lib.optionalAttrs javascriptOn {
+            # Interpolated into gha.jobYaml after that string's indent strip. Body lines
+            # are already 8 spaces — same as `sudo mkdir` after jobYaml's 6-space strip.
+            # Trailing newline omitted: padJob would prefix that empty line with two spaces.
+            javascript = mkJob "javascript" (javascriptRows javascript) (
+              lib.removeSuffix "\n" ''
+                |
+                        if [ "''${{ matrix.runtime }}" = nodejs ]; then
+                          devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ''${{ matrix.pkg }} test
+                        elif [ "''${{ matrix.runtime }}" = bun ]; then
+                          devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
+                        else
+                          devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
+                        fi
+              ''
+            );
+          };
+      }
+    );
 
   # Cell → legacy report row (`os` label instead of runner profile id).
   cellToReportRow =

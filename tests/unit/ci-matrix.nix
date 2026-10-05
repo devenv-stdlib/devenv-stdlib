@@ -605,4 +605,21 @@ in
       postgresSvc = true;
     };
   };
+
+  # Empty arches filter must not green-pass via no-language workflow.
+  testLanguagePlanEmptyRunnersThrows = {
+    expr = builtins.tryEval (
+      versions.languageMatrixPlan {
+        pythonOn = true;
+        python = versions.emptyPython // {
+          min = "3.12";
+        };
+        arches = [ "arm64" ]; # typo — catalog uses aarch64
+      }
+    );
+    expected = {
+      success = false;
+      value = false;
+    };
+  };
 }
