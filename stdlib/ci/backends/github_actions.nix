@@ -60,23 +60,31 @@ let
     attrs:
     let
       names = [ "os" ] ++ lib.filter (n: n != "os") (lib.attrNames attrs);
-      # Booleans unquoted for ${{ matrix.optional }}; lists as YAML arrays.
+      # JSON encoding is YAML-safe for scalars (quotes, bools, numbers).
       fmt =
         name:
         let
           v = attrs.${name};
         in
-        if builtins.isBool v then
-          "${name}: ${if v then "true" else "false"}"
-        else if builtins.isList v then
+        if builtins.isList v then
           "${name}: [${lib.concatStringsSep ", " (map builtins.toJSON v)}]"
         else
-          "${name}: \"${toString v}\"";
+          "${name}: ${builtins.toJSON v}";
     in
     "        - ${fmt (lib.head names)}"
     + lib.concatMapStrings (name: "\n          ${fmt name}") (lib.tail names);
 
   padJob = text: "  " + lib.replaceStrings [ "\n" ] [ "\n  " ] (lib.removeSuffix "\n" text);
+
+  # Emit run: as a block scalar when command is multiline (unless already `|…`).
+  runYaml =
+    command:
+    if lib.hasPrefix "|" command then
+      "run: ${command}"
+    else if lib.hasInfix "\n" command then
+      "run: |\n              ${lib.replaceStrings [ "\n" ] [ "\n              " ] command}"
+    else
+      "run: ${command}";
 
   jobYaml =
     plan: job:
@@ -140,7 +148,7 @@ let
               rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
               nix profile add "github:cachix/devenv/''${rev}"
           - name: Test
-            run: ${testRun}
+            ${runYaml testRun}
           - name: Save Nix store
             if: ''${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
             uses: nix-community/cache-nix-action/save@v7
@@ -152,26 +160,46 @@ let
   emptyWorkflow =
     plan:
     let
-      runners = lib.unique (
-        lib.concatMap (
-          id:
-          let
-            bag = (plan.runnerProfiles.${id} or { }).providers.github_actions or { };
-            runs = bag.runs-on or [ ];
-          in
-          if builtins.isList runs then runs else lib.optional (runs != null) runs
-        ) (lib.attrNames plan.runnerProfiles)
-      );
-      # Keep previous-then-current order from default profiles when possible.
+      # One matrix value per profile — do not flatten multi-label runs-on lists.
       preferred = [
         "ubuntu-24.04"
         "ubuntu-26.04"
       ];
-      osList =
-        if runners == [ ] then
-          preferred
+      profileValues = lib.filter (v: v != null) (
+        map (
+          id:
+          let
+            bag = (plan.runnerProfiles.${id} or { }).providers.github_actions or { };
+            runs = bag.runs-on or null;
+          in
+          if runs == null then
+            null
+          else if builtins.isList runs then
+            if runs == [ ] then null else runs
+          else
+            [ runs ]
+        ) (lib.attrNames plan.runnerProfiles)
+      );
+      # Unwrap single-label lists to scalars for the compact empty-matrix form.
+      toMatrixValue = v: if builtins.isList v && lib.length v == 1 then lib.head v else v;
+      raw = if profileValues == [ ] then preferred else map toMatrixValue profileValues;
+      scalars = lib.filter builtins.isString raw;
+      lists = lib.filter builtins.isList raw;
+      orderedScalars =
+        lib.filter (p: lib.elem p scalars) preferred ++ lib.filter (s: !(lib.elem s preferred)) scalars;
+      ordered = orderedScalars ++ lists;
+      hasMulti = lists != [ ];
+      fmtOs =
+        v: if builtins.isList v then "[${lib.concatStringsSep ", " (map builtins.toJSON v)}]" else v;
+      matrixYaml =
+        if hasMulti then
+          "include:\n${
+            lib.concatMapStringsSep "\n" (
+              v: "            - os: ${if builtins.isList v then fmtOs v else builtins.toJSON v}"
+            ) ordered
+          }"
         else
-          lib.filter (r: lib.elem r runners) preferred ++ lib.filter (r: !(lib.elem r preferred)) runners;
+          "os: [${lib.concatStringsSep ", " ordered}]";
     in
     ''
       name: Test
@@ -183,7 +211,7 @@ let
           strategy:
             fail-fast: false
             matrix:
-              os: [${lib.concatStringsSep ", " osList}]
+              ${matrixYaml}
           runs-on: ''${{ matrix.os }}
           steps:
             - run: echo "No languages enabled; skipping per-version devenv test."
