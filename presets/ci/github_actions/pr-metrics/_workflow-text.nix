@@ -17,6 +17,15 @@ let
   usesWithComment =
     action: comment:
     if comment == "" then "      - uses: ${action}" else "      - uses: ${action} # ${comment}";
+
+  # Monorepo-sensible product extensions when the option is left null.
+  # Includes Nix + GHA YAML; excludes Markdown (docs-only diffs stay out of
+  # product-code). Providing any list replaces the Action default set.
+  defaultCodeFileExtensions = ''
+    nix
+    yml
+    yaml
+  '';
 in
 {
   # cfg: {
@@ -25,9 +34,17 @@ in
   #   fileMatchingPatterns?, testMatchingPatterns?, codeFileExtensions?,
   #   continueOnError, rejectAboveMedium, exemptDraftPrs, extraWith
   # }
+  inherit defaultCodeFileExtensions;
+
   workflowText =
     cfg:
     let
+      # null → monorepo default (nix/yml/yaml); "" → omit Action input; else override.
+      effectiveExtensions =
+        if (cfg.codeFileExtensions or null) == null then
+          defaultCodeFileExtensions
+        else
+          cfg.codeFileExtensions;
       named = {
         base-size = toString cfg.baseSize;
         growth-rate = toString cfg.growthRate;
@@ -35,7 +52,7 @@ in
       }
       // optionalStr "file-matching-patterns" (cfg.fileMatchingPatterns or null)
       // optionalStr "test-matching-patterns" (cfg.testMatchingPatterns or null)
-      // optionalStr "code-file-extensions" (cfg.codeFileExtensions or null);
+      // optionalStr "code-file-extensions" effectiveExtensions;
       withAttrs = named // cfg.extraWith;
       actionUses = usesWithComment cfg.action (cfg.actionComment or "");
       checkoutUses = usesWithComment cfg.checkoutAction (cfg.checkoutComment or "");
@@ -51,7 +68,9 @@ in
       # Reject > medium without relying on a title write. Fork pull_request runs
       # get a read-only GITHUB_TOKEN by default, so microsoft/PR-Metrics may not
       # be able to prefix the title; compute product-code adds from git instead.
-      # Title format (v1.7.18 loc): `XS✔ ◾ title` — also accept README `✔️` / `▪️`.
+      # Fail closed when the base commit is missing — never trust a title prefix
+      # alone (fork authors can set XS/S/M while the token cannot rewrite it).
+      # Extension filter matches `code-file-extensions` so gate and Action agree.
       rejectSteps =
         if !cfg.rejectAboveMedium then
           [ ]
@@ -65,17 +84,21 @@ in
             "          BASE_SHA: \${{ github.event.pull_request.base.sha }}"
             "          BASE_SIZE: ${toString cfg.baseSize}"
             "          GROWTH_RATE: ${toString cfg.growthRate}"
+            "          CODE_EXTS: ${builtins.toJSON effectiveExtensions}"
             "        run: |"
             "          set -euo pipefail"
             "          medium_max=$(awk -v b=\"\${BASE_SIZE}\" -v g=\"\${GROWTH_RATE}\" 'BEGIN { printf \"%.0f\", b * g * g }')"
             "          echo \"Medium ceiling (product-code lines): \${medium_max} (baseSize=\${BASE_SIZE} growthRate=\${GROWTH_RATE})\""
-            "          product=\"\""
-            "          if git rev-parse --verify \"\${BASE_SHA}^{commit}\" >/dev/null 2>&1; then"
-            "            # --numstat -z: NUL records; renames are added<TAB>deleted<TAB><NUL>old<NUL>new<NUL>"
-            "            # (brace-form paths like tests/unit/{ => aspects}/foo break tab awk)."
-            "            product=$(BASE_SHA=\"\${BASE_SHA}\" python3 -c '"
+            "          if ! git rev-parse --verify \"\${BASE_SHA}^{commit}\" >/dev/null 2>&1; then"
+            "            echo \"::error::Base SHA \${BASE_SHA} not available locally; refusing to determine PR size.\""
+            "            exit 1"
+            "          fi"
+            "          # --numstat -z: NUL records; renames are added<TAB>deleted<TAB><NUL>old<NUL>new<NUL>"
+            "          # (brace-form paths like tests/unit/{ => aspects}/foo break tab awk)."
+            "          product=$(BASE_SHA=\"\${BASE_SHA}\" CODE_EXTS=\"\${CODE_EXTS}\" python3 -c '"
             "          import os, re, subprocess"
             "          base = os.environ[\"BASE_SHA\"]"
+            "          exts = {e.strip().lstrip(\".\").lower() for e in os.environ.get(\"CODE_EXTS\", \"\").splitlines() if e.strip()}"
             "          raw = subprocess.check_output([\"git\", \"diff\", \"--numstat\", \"-z\", f\"{base}...HEAD\"])"
             "          parts = raw.split(b\"\\0\")"
             "          product = 0"
@@ -105,33 +128,21 @@ in
             "                  continue"
             "              if lock.search(path) or test_dir.search(path) or test_file.search(path):"
             "                  continue"
+            "              if exts:"
+            "                  if \".\" not in path.rsplit(\"/\", 1)[-1]:"
+            "                      continue"
+            "                  if path.rsplit(\".\", 1)[-1].lower() not in exts:"
+            "                      continue"
             "              product += int(added)"
             "          print(product)"
             "          ')"
-            "            echo \"Product-code lines added (approx): \${product}\""
-            "          else"
-            "            echo \"::warning::Base SHA \${BASE_SHA} not available locally; falling back to title prefix.\""
-            "          fi"
-            "          if [[ -n \"\${product}\" ]]; then"
-            "            if (( product >= medium_max )); then"
-            "              echo \"::error::PR size exceeds medium (\${product} product lines >= \${medium_max}). Split the change, raise baseSize/growthRate, or set presets.ci.github_actions.pr-metrics.rejectAboveMedium = false.\""
-            "              exit 1"
-            "            fi"
-            "            echo \"PR size within allowed maximum (medium).\""
-            "            exit 0"
-            "          fi"
-            "          title=$(gh api \"repos/\${GITHUB_REPOSITORY}/pulls/\${PR_NUMBER}\" --jq .title)"
-            "          echo \"PR title: \${title}\""
-            "          if [[ \"\${title}\" =~ ^(XS|S|M)[[:space:]]*(✔|✔️|⚠️)?[[:space:]]*(◾|▪️) ]]; then"
-            "            echo \"PR size within allowed maximum (medium) via title prefix.\""
-            "            exit 0"
-            "          fi"
-            "          if [[ \"\${title}\" =~ ^(L|[0-9]*XL)[[:space:]]*(✔|✔️|⚠️)?[[:space:]]*(◾|▪️) ]]; then"
-            "            echo \"::error::PR size exceeds medium (L/XL title prefix). Split the change, raise baseSize/growthRate, or set presets.ci.github_actions.pr-metrics.rejectAboveMedium = false.\""
+            "          echo \"Product-code lines added (approx): \${product}\""
+            "          if (( product >= medium_max )); then"
+            "            echo \"::error::PR size exceeds medium (\${product} product lines >= \${medium_max}). Split the change, raise baseSize/growthRate, or set presets.ci.github_actions.pr-metrics.rejectAboveMedium = false.\""
             "            exit 1"
             "          fi"
-            "          echo \"::error::Could not determine PR size (no git base diff and unrecognized title prefix); refusing while rejectAboveMedium is enabled.\""
-            "          exit 1"
+            "          echo \"PR size within allowed maximum (medium).\""
+            "          exit 0"
           ];
     in
     lib.concatStringsSep "\n" (
