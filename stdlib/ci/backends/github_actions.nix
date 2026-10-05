@@ -39,7 +39,7 @@ let
   rowAttrs =
     plan: cell:
     {
-      # When true, keep a string optional flag for per-cell continue-on-error.
+      # When true, keep a bool optional flag for per-cell continue-on-error.
       keepOptional ? false,
     }:
     let
@@ -50,7 +50,7 @@ let
         if keepOptional then
           rest
           // {
-            optional = if cell.optional or false then "true" else "false";
+            optional = cell.optional or false;
           }
         else
           rest;
@@ -61,7 +61,16 @@ let
     attrs:
     let
       names = [ "os" ] ++ lib.filter (n: n != "os") (lib.attrNames attrs);
-      fmt = name: "${name}: \"${toString attrs.${name}}\"";
+      # Booleans must be unquoted so ${{ matrix.optional }} is a real bool.
+      fmt =
+        name:
+        let
+          v = attrs.${name};
+        in
+        if builtins.isBool v then
+          "${name}: ${if v then "true" else "false"}"
+        else
+          "${name}: \"${toString v}\"";
     in
     "        - ${fmt (lib.head names)}"
     + lib.concatMapStrings (name: "\n          ${fmt name}") (lib.tail names);
@@ -88,7 +97,7 @@ let
         if jobOptional then
           "\n    continue-on-error: true"
         else if anyCellOptional then
-          "\n    continue-on-error: \${{ matrix.optional == 'true' }}"
+          "\n    continue-on-error: \${{ matrix.optional }}"
         else
           "";
     in
