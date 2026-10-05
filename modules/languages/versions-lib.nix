@@ -364,8 +364,21 @@ rec {
     "        - ${fmt (lib.head names)}"
     + lib.concatMapStrings (name: "\n          ${fmt name}") (lib.tail names);
 
+  # Human-readable GitHub Actions job titles. Matrix dims beyond os vary by language.
+  # ''${{ … }} → literal ${{ … }} in the generated workflow YAML.
+  jobDisplayName =
+    name:
+    {
+      python = "Python \${{ matrix.python_version }} (\${{ matrix.os }})";
+      rust = "Rust \${{ matrix.channel }} \${{ matrix.version }} (\${{ matrix.os }})";
+      go = "Go \${{ matrix.version }} (\${{ matrix.os }})";
+      javascript = "JavaScript \${{ matrix.runtime }} \${{ matrix.version }} (\${{ matrix.os }})";
+    }
+    .${name} or "${name} (\${{ matrix.os }})";
+
   jobYaml = name: rows: testRun: ''
     ${name}:
+      name: ${jobDisplayName name}
       runs-on: ''${{ matrix.os }}
       strategy:
         fail-fast: false
@@ -512,6 +525,7 @@ rec {
           workflow_call:
         jobs:
           no-language-matrix:
+            name: No language matrix (''${{ matrix.os }})
             strategy:
               fail-fast: false
               matrix:

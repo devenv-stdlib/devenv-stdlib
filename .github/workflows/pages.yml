@@ -19,7 +19,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-docs:
+    name: Build docs site
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -31,21 +32,35 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: docs/package-lock.json
-      - run: npm ci
-      - run: npm run build
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Build docs
+        run: npm run build
         env:
           VITE_BASE: /
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/dist
 
-  deploy:
+  # Ruleset requires bare check context "build".
+  ruleset-build:
+    name: build
+    needs: build-docs
+    if: always() && !cancelled()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require docs build success
+        run: test "${{ needs.build-docs.result }}" = "success"
+
+  deploy-pages:
+    name: Deploy docs to GitHub Pages
     if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-    needs: build
+    needs: build-docs
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - id: deploy
+        name: Deploy pages artifact
         uses: actions/deploy-pages@v4
