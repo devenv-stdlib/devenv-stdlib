@@ -108,6 +108,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         if: github.event_name != 'pull_request'
+        with:
+          # Do not write GITHUB_TOKEN into .git/config for PR-controlled hooks.
+          persist-credentials: false
 
       - uses: actions/checkout@v4
         if: github.event_name == 'pull_request'
@@ -115,6 +118,7 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Own workspace under act
         if: ${{ env.ACT }}
