@@ -1,9 +1,10 @@
 # Unit tests for language → PR-Metrics code-file-extensions derivation.
 { lib, ... }:
 let
-  inherit (import <devenv4monorepo/presets/ci/github_actions/pr-metrics/_code-file-extensions.nix> {
-    inherit lib;
-  })
+  inherit
+    (import <devenv4monorepo/presets/ci/github_actions/pr-metrics/_code-file-extensions.nix> {
+      inherit lib;
+    })
     codeFileExtensions
     alwaysBase
     docsExtensions
@@ -22,7 +23,9 @@ in
   testPrMetricsExtDocsTooling = {
     expr =
       let
-        exts = split (codeFileExtensions { docsTooling = true; });
+        exts = split (codeFileExtensions {
+          docsTooling = true;
+        });
       in
       {
         hasBase = hasAll alwaysBase exts;
@@ -46,11 +49,9 @@ in
   testPrMetricsExtPython = {
     expr =
       let
-        exts = split (
-          codeFileExtensions {
-            languages.python.enable = true;
-          }
-        );
+        exts = split (codeFileExtensions {
+          languages.python.enable = true;
+        });
       in
       {
         hasPy = builtins.elem "py" exts;
@@ -69,11 +70,9 @@ in
   testPrMetricsExtTypescriptImpliesDocs = {
     expr =
       let
-        exts = split (
-          codeFileExtensions {
-            languages.typescript.enable = true;
-          }
-        );
+        exts = split (codeFileExtensions {
+          languages.typescript.enable = true;
+        });
       in
       {
         hasTs = builtins.elem "ts" exts;
@@ -90,14 +89,12 @@ in
   testPrMetricsExtRustAndGo = {
     expr =
       let
-        exts = split (
-          codeFileExtensions {
-            languages = {
-              rust.enable = true;
-              go.enable = true;
-            };
-          }
-        );
+        exts = split (codeFileExtensions {
+          languages = {
+            rust.enable = true;
+            go.enable = true;
+          };
+        });
       in
       {
         hasRs = builtins.elem "rs" exts;
