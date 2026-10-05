@@ -97,25 +97,34 @@ let
     else
       "run: ${builtins.toJSON command}";
 
+  # YAML-safe scalar (same toJSON approach as matrixRow). secret:NAME → ${{ secrets.NAME }}.
+  yamlScalar =
+    raw:
+    if builtins.isString raw && lib.hasPrefix "secret:" raw then
+      "\${{ secrets.${lib.removePrefix "secret:" raw} }}"
+    else if builtins.isBool raw then
+      (if raw then "true" else "false")
+    else if builtins.isInt raw then
+      toString raw
+    else
+      builtins.toJSON raw;
+
   # Format a with:/env: map. Secret *names* become ${{ secrets.NAME }} only.
   kvBlock =
     indent: attrs:
-    lib.concatMapStrings (
-      name:
-      let
-        raw = attrs.${name};
-        value =
-          if builtins.isString raw && lib.hasPrefix "secret:" raw then
-            "\${{ secrets.${lib.removePrefix "secret:" raw} }}"
-          else if builtins.isBool raw then
-            (if raw then "true" else "false")
-          else if builtins.isInt raw then
-            toString raw
-          else
-            toString raw;
-      in
-      "\n${indent}${name}: ${value}"
-    ) (lib.attrNames attrs);
+    lib.concatMapStrings (name: "\n${indent}${name}: ${yamlScalar attrs.${name}}") (
+      lib.attrNames attrs
+    );
+
+  # Attachment run: at post-dedent indent; single-line values are YAML-safe scalars.
+  attachRunYaml =
+    command:
+    if lib.hasPrefix "|" command then
+      "run: ${command}"
+    else if lib.hasInfix "\n" command then
+      "run: |\n        ${lib.replaceStrings [ "\n" ] [ "\n        " ] command}"
+    else
+      "run: ${yamlScalar command}";
 
   # One GHA step fragment at post-dedent indent (4 spaces before `-`).
   # padJob then adds +2. Secrets on the provider bag → env: NAME: ${{ secrets.NAME }}.
@@ -139,37 +148,31 @@ let
       uses = bag.uses or null;
       run = bag.run or null;
       header =
-        "    - name: ${stepName}"
+        "    - name: ${yamlScalar stepName}"
         + (if ifClause == null then "" else "\n      if: ${ifClause}")
         + (
           if uses != null then
-            "\n      uses: ${uses}"
+            "\n      uses: ${yamlScalar uses}"
           else if run != null then
-            let
-              # runYaml assumes 12-space "run:" under 10-space `-` (pre-dedent).
-              # Post-dedent steps use 4-space `-` / 6-space body — re-indent.
-              raw = runYaml run;
-            in
-            "\n      " + lib.replaceStrings [ "\n              " ] [ "\n        " ] raw
+            "\n      ${attachRunYaml run}"
           else
             throw "ci.backends.github_actions: attachment '${stepName}' needs uses or run"
         );
       withBlock = if withAttrs == { } then "" else "\n      with:" + kvBlock "        " withAttrs;
       envBlock = if envAttrs == { } then "" else "\n      env:" + kvBlock "        " envAttrs;
+      # Explicit 4-space step indent (do not use '' strings — Nix strips common indent).
       artifactSteps = lib.concatMapStrings (
         art:
         let
           artName = art.id or art.name or "artifact";
           path = art.path or (throw "ci.backends.github_actions: artifact missing path");
         in
-        ''
-          - name: Upload ${artName}
-            if: ''${{ always() }}
-            uses: actions/upload-artifact@v4
-            with:
-              name: ${artName}
-              path: ${path}
-        ''
+        "    - name: ${yamlScalar "Upload ${artName}"}\n"
+        + "      if: \${{ always() }}\n"
+        + "      uses: actions/upload-artifact@v4\n"
+        + "      with:\n"
+        + "        name: ${yamlScalar artName}\n"
+        + "        path: ${yamlScalar path}\n"
       ) (attachment.artifacts or [ ]);
     in
     header + withBlock + envBlock + "\n" + artifactSteps;
@@ -238,11 +241,14 @@ let
         provider = "github_actions";
         language = job.name or null;
       };
-      preSlots = slotStepsYaml slotted "pre-toolchain" + slotStepsYaml slotted "pre-command";
+      preToolchain = slotStepsYaml slotted "pre-toolchain";
+      preCommand = slotStepsYaml slotted "pre-command";
       postSlots = slotStepsYaml slotted "post-command";
       alwaysSlots = slotStepsYaml slotted "always";
       # Marker lines sit at step indent so empty-plan replace drops them with no
       # extra blank lines (byte-stable vs MatrixPlan phase-1 jobYaml).
+      # pre-toolchain: after checkout/act, before nix/devenv toolchain bootstrap.
+      # pre-command: after Install devenv (toolchain on PATH), before Test.
       body = ''
         ${job.name}:
           name: ${displayName}
@@ -265,6 +271,7 @@ let
                 if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
                   sudo chown "$(id -u):$(id -g)" /nix
                 fi
+            __ATTACH_PRE_TOOLCHAIN__
             - uses: cachix/install-nix-action@v31
             - name: Restore Nix store
               id: nix-cache
@@ -281,7 +288,7 @@ let
                 # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
                 rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
                 nix profile add "github:cachix/devenv/''${rev}"
-            __ATTACH_PRE__
+            __ATTACH_PRE_COMMAND__
             - name: Test
               ${runYaml testRun}
             __ATTACH_POST__
@@ -298,12 +305,14 @@ let
     # 4 spaces — same as post-dedent step list items.
     lib.replaceStrings
       [
-        "    __ATTACH_PRE__\n"
+        "    __ATTACH_PRE_TOOLCHAIN__\n"
+        "    __ATTACH_PRE_COMMAND__\n"
         "    __ATTACH_POST__\n"
         "    __ATTACH_ALWAYS__\n"
       ]
       [
-        preSlots
+        preToolchain
+        preCommand
         postSlots
         alwaysSlots
       ]
@@ -423,5 +432,6 @@ in
     rowAttrs
     attachmentStepYaml
     renderAttachments
+    yamlScalar
     ;
 }

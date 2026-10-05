@@ -56,6 +56,23 @@ let
       }
     ];
   };
+
+  # Colon / special chars that break unquoted YAML scalars.
+  awkwardPlan = attachments.plan {
+    caches = [
+      {
+        id = "awk name: cache";
+        providers.github_actions = {
+          name = "restore: cache";
+          uses = "example/cache@v1";
+          slot = "pre-command";
+          "with" = {
+            path = "src: build";
+          };
+        };
+      }
+    ];
+  };
 in
 {
   testAttachmentsEmptyPlanShape = {
@@ -186,20 +203,20 @@ in
           };
         yaml = gha.render plan;
         # Order anchors: cache before Test step, cov between Test and Save, report after Save.
-        cacheAt = lib.strings.stringLength (lib.head (lib.splitString "- name: fake-cache" yaml));
+        cacheAt = lib.strings.stringLength (lib.head (lib.splitString ''name: "fake-cache"'' yaml));
         testAt = lib.strings.stringLength (lib.head (lib.splitString "- name: Test\n" yaml));
-        covAt = lib.strings.stringLength (lib.head (lib.splitString "- name: fake-cov" yaml));
+        covAt = lib.strings.stringLength (lib.head (lib.splitString ''name: "fake-cov"'' yaml));
         saveAt = lib.strings.stringLength (lib.head (lib.splitString "- name: Save Nix store" yaml));
-        reportAt = lib.strings.stringLength (lib.head (lib.splitString "- name: fake-report" yaml));
+        reportAt = lib.strings.stringLength (lib.head (lib.splitString ''name: "fake-report"'' yaml));
       in
       {
-        hasCache = contains "uses: example/cache-action@v1" yaml;
-        hasCov = contains "uses: example/codecov@v1" yaml;
-        hasReport = contains "uses: example/junit@v1" yaml;
+        hasCache = contains ''uses: "example/cache-action@v1"'' yaml;
+        hasCov = contains ''uses: "example/codecov@v1"'' yaml;
+        hasReport = contains ''uses: "example/junit@v1"'' yaml;
         secretBinding = contains "CODECOV_TOKEN: \${{ secrets.CODECOV_TOKEN }}" yaml;
         # No raw secret values — only the secrets.* expression.
         noRawToken = !(contains "CODECOV_TOKEN: tok_" yaml);
-        alwaysIf = contains "name: fake-report\n        if: \${{ always() }}" yaml;
+        alwaysIf = contains "name: \"fake-report\"\n        if: \${{ always() }}" yaml;
         orderOk = cacheAt < testAt && testAt < covAt && covAt < saveAt && saveAt < reportAt;
       };
     expected = {
@@ -213,6 +230,149 @@ in
     };
   };
 
+  # CodeRabbit: with:/name/run values with colons must be YAML-safe scalars.
+  testGhaAttachmentYamlSafeScalars = {
+    expr =
+      let
+        plan =
+          matrix.plan {
+            runnerProfiles = matrix.defaultRunnerProfiles;
+            jobs.python = {
+              command = "true";
+              dimensions.runner = [ "ubuntu-lts-prev" ];
+              seeds = [ { version = "3.12"; } ];
+            };
+          }
+          // {
+            attachments = awkwardPlan;
+          };
+        yaml = gha.render plan;
+      in
+      {
+        quotedName = contains ''name: "restore: cache"'' yaml;
+        quotedPath = contains ''path: "src: build"'' yaml;
+        # Unquoted form would be invalid YAML (`path: src: build`).
+        brokenPath = contains "path: src: build" yaml;
+        yamlScalarHelper = gha.yamlScalar "src: build";
+      };
+    expected = {
+      quotedName = true;
+      quotedPath = true;
+      brokenPath = false;
+      yamlScalarHelper = ''"src: build"'';
+    };
+  };
+
+  # CodeRabbit: pre-toolchain before nix/devenv bootstrap; pre-command before Test.
+  testGhaPreToolchainBeforeBootstrap = {
+    expr =
+      let
+        plan =
+          matrix.plan {
+            runnerProfiles = matrix.defaultRunnerProfiles;
+            jobs.rust = {
+              command = "true";
+              dimensions.runner = [ "ubuntu-lts-prev" ];
+              seeds = [ { version = "stable"; } ];
+            };
+          }
+          // {
+            attachments = attachments.plan {
+              caches = [
+                {
+                  id = "prep-tc";
+                  providers.github_actions = {
+                    uses = "example/prep@v1";
+                    slot = "pre-toolchain";
+                  };
+                }
+                {
+                  id = "pre-cmd";
+                  providers.github_actions = {
+                    uses = "example/pre@v1";
+                    slot = "pre-command";
+                  };
+                }
+              ];
+            };
+          };
+        yaml = gha.render plan;
+        prepAt = lib.strings.stringLength (lib.head (lib.splitString ''name: "prep-tc"'' yaml));
+        installNixAt = lib.strings.stringLength (
+          lib.head (lib.splitString "uses: cachix/install-nix-action@v31" yaml)
+        );
+        preCmdAt = lib.strings.stringLength (lib.head (lib.splitString ''name: "pre-cmd"'' yaml));
+        testAt = lib.strings.stringLength (lib.head (lib.splitString "- name: Test\n" yaml));
+        devenvAt = lib.strings.stringLength (lib.head (lib.splitString "- name: Install devenv" yaml));
+      in
+      {
+        prepBeforeNix = prepAt < installNixAt;
+        preCmdAfterDevenv = preCmdAt > devenvAt;
+        preCmdBeforeTest = preCmdAt < testAt;
+      };
+    expected = {
+      prepBeforeNix = true;
+      preCmdAfterDevenv = true;
+      preCmdBeforeTest = true;
+    };
+  };
+
+  # CodeRabbit: artifact uploads stay job steps (4-space post-dedent indent).
+  testGhaAttachmentArtifactsAreJobSteps = {
+    expr =
+      let
+        plan =
+          matrix.plan {
+            runnerProfiles = matrix.defaultRunnerProfiles;
+            jobs.python = {
+              command = "true";
+              dimensions.runner = [ "ubuntu-lts-prev" ];
+              seeds = [ { version = "3.12"; } ];
+            };
+          }
+          // {
+            attachments = attachments.plan {
+              reporting = [
+                {
+                  id = "junit-pub";
+                  providers.github_actions = {
+                    uses = "example/junit@v1";
+                    slot = "always";
+                  };
+                  artifacts = [
+                    {
+                      id = "junit";
+                      path = "junit/**/*.xml";
+                    }
+                  ];
+                }
+              ];
+            };
+          };
+        yaml = gha.render plan;
+        # After padJob, steps are indented with 6 spaces before `-`.
+        uploadStep = contains ''- name: "Upload junit"'' yaml;
+        uploadUses = contains "uses: actions/upload-artifact@v4" yaml;
+        quotedPath = contains ''path: "junit/**/*.xml"'' yaml;
+        # Column-zero upload would sit outside steps.
+        flushLeft = contains "\n- name: \"Upload junit\"" yaml;
+      in
+      {
+        inherit
+          uploadStep
+          uploadUses
+          quotedPath
+          flushLeft
+          ;
+      };
+    expected = {
+      uploadStep = true;
+      uploadUses = true;
+      quotedPath = true;
+      flushLeft = false;
+    };
+  };
+
   testGhaLanguageFilterSkipsRustOnlyCache = {
     expr =
       let
@@ -222,9 +382,9 @@ in
         yaml = gha.render plan;
       in
       {
-        noCache = !(contains "fake-cache" yaml);
-        hasCov = contains "fake-cov" yaml;
-        hasReport = contains "fake-report" yaml;
+        noCache = !(contains ''"fake-cache"'' yaml);
+        hasCov = contains ''"fake-cov"'' yaml;
+        hasReport = contains ''"fake-report"'' yaml;
       };
     expected = {
       noCache = true;
@@ -281,9 +441,9 @@ in
         };
       in
       {
-        preHasCache = contains "fake-cache" slots.pre-command;
+        preHasCache = contains ''"fake-cache"'' slots.pre-command;
         postHasCov = contains "secrets.CODECOV_TOKEN" slots.post-command;
-        alwaysHasReport = contains "fake-report" slots.always;
+        alwaysHasReport = contains ''"fake-report"'' slots.always;
         preToolchainEmpty = slots.pre-toolchain == "";
       };
     expected = {
