@@ -48,8 +48,9 @@ jobs:
               - 'includes/**'
               - '.agents/skills/**'
               - 'skills-lock.json'
+              # Keep tests/** inclusive: dorny/paths-filter@v3 default quantifier
+              # "some" makes a lone '!tests/setup/**' match unrelated paths.
               - 'tests/**'
-              - '!tests/setup/**'
               - '.github/workflows/ci.yml'
               - '.github/workflows/test.yml'
             integration:
