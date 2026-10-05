@@ -11,9 +11,9 @@
 #
 # Defaults (when enabled):
 #   - baseSize = 200, growthRate = "2.0" → medium ends at 800 product-code lines
+#   - codeFileExtensions = null → nix/yml/yaml (Action + gate share the list)
 #   - rejectAboveMedium = true → fail when product lines >= medium ceiling
-#     (git diff primary; L/XL title prefix also rejects; fail-closed if size
-#     cannot be determined — missing/unrecognized prefix with no git base)
+#     (git diff only; missing base commit fails closed — no title-prefix trust)
 #   - exemptDraftPrs = true → drafts skipped (ready_for_review re-runs)
 #   - continueOnError = true on the annotate step (upstream recommendation)
 #

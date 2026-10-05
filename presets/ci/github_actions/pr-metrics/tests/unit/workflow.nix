@@ -198,9 +198,12 @@ in
         # Tight test-path filter (not bare /test/ substring).
         hasTightTestDirs = contains "(tests?|__tests__|spec)" yaml;
         hasLooseTestSubstr = contains "/[Tt]est|[Tt]EST|" yaml;
-        hasFailClosed = contains "Could not determine PR size" yaml;
-        hasLocSep = contains "◾" yaml;
-        hasReadmeSep = contains "▪️" yaml;
+        hasFailClosedBase = contains "refusing to determine PR size" yaml;
+        hasNoTitleFallback = !(contains "falling back to title prefix" yaml);
+        hasCodeExts = contains "code-file-extensions:" yaml;
+        hasNixExt = contains "nix" yaml;
+        hasCodeExtsEnv = contains "CODE_EXTS:" yaml;
+        hasExtFilter = contains "CODE_EXTS" yaml;
         hasDraftSkip = contains "!github.event.pull_request.draft" yaml;
         hasToken = contains "PR_METRICS_ACCESS_TOKEN" yaml;
         hasRunner = contains "runs-on: ubuntu-24.04" yaml;
@@ -228,9 +231,12 @@ in
       hasNoTabAwkRename = true;
       hasTightTestDirs = true;
       hasLooseTestSubstr = false;
-      hasFailClosed = true;
-      hasLocSep = true;
-      hasReadmeSep = true;
+      hasFailClosedBase = true;
+      hasNoTitleFallback = true;
+      hasCodeExts = true;
+      hasNixExt = true;
+      hasCodeExtsEnv = true;
+      hasExtFilter = true;
       hasDraftSkip = true;
       hasToken = true;
       hasRunner = true;

@@ -144,8 +144,12 @@ in
           type = lib.types.nullOr lib.types.str;
           default = null;
           description = ''
-            PR Metrics `code-file-extensions` (newline-separated). `null` leaves
-            the Action default extension set.
+            PR Metrics `code-file-extensions` (newline-separated). `null` uses
+            the monorepo default (`nix` / `yml` / `yaml` — includes Nix, excludes
+            Markdown). The reject-oversized gate applies the same list so Action
+            annotations and the size check measure the same product-code files.
+            `""` omits the Action input (upstream top-10 defaults); any other
+            string replaces the Action default set (no merge).
           '';
         };
         continueOnError = lib.mkOption {
@@ -162,9 +166,11 @@ in
           type = lib.types.bool;
           default = true;
           description = ''
-            Fail the job when the PR Metrics title prefix is larger than medium
-            (L, XL, 2XL, …), or when the size prefix is missing / unrecognized
-            (fail-closed). Opt out with `false` to annotate only. Raise
+            Fail the job when git product-code adds (same extensions as
+            `codeFileExtensions`) meet or exceed the medium ceiling
+            (`baseSize * growthRate²`). Requires the PR base commit locally
+            (`fetchDepth = 0` by default); missing base fails closed — no title
+            prefix trust. Opt out with `false` to annotate only. Raise
             `baseSize` / `growthRate` to widen what counts as medium.
           '';
         };

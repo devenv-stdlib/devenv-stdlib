@@ -30,6 +30,7 @@ jobs:
         continue-on-error: true
         with:
           base-size: "200"
+          code-file-extensions: "nix\nyml\nyaml\n"
           growth-rate: "2.0"
           test-factor: "1.0"
       - name: Reject oversized PRs
@@ -40,17 +41,21 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BASE_SIZE: 200
           GROWTH_RATE: 2.0
+          CODE_EXTS: "nix\nyml\nyaml\n"
         run: |
           set -euo pipefail
           medium_max=$(awk -v b="${BASE_SIZE}" -v g="${GROWTH_RATE}" 'BEGIN { printf "%.0f", b * g * g }')
           echo "Medium ceiling (product-code lines): ${medium_max} (baseSize=${BASE_SIZE} growthRate=${GROWTH_RATE})"
-          product=""
-          if git rev-parse --verify "${BASE_SHA}^{commit}" >/dev/null 2>&1; then
-            # --numstat -z: NUL records; renames are added<TAB>deleted<TAB><NUL>old<NUL>new<NUL>
-            # (brace-form paths like tests/unit/{ => aspects}/foo break tab awk).
-            product=$(BASE_SHA="${BASE_SHA}" python3 -c '
+          if ! git rev-parse --verify "${BASE_SHA}^{commit}" >/dev/null 2>&1; then
+            echo "::error::Base SHA ${BASE_SHA} not available locally; refusing to determine PR size."
+            exit 1
+          fi
+          # --numstat -z: NUL records; renames are added<TAB>deleted<TAB><NUL>old<NUL>new<NUL>
+          # (brace-form paths like tests/unit/{ => aspects}/foo break tab awk).
+          product=$(BASE_SHA="${BASE_SHA}" CODE_EXTS="${CODE_EXTS}" python3 -c '
           import os, re, subprocess
           base = os.environ["BASE_SHA"]
+          exts = {e.strip().lstrip(".").lower() for e in os.environ.get("CODE_EXTS", "").splitlines() if e.strip()}
           raw = subprocess.check_output(["git", "diff", "--numstat", "-z", f"{base}...HEAD"])
           parts = raw.split(b"\0")
           product = 0
@@ -80,30 +85,18 @@ jobs:
                   continue
               if lock.search(path) or test_dir.search(path) or test_file.search(path):
                   continue
+              if exts:
+                  if "." not in path.rsplit("/", 1)[-1]:
+                      continue
+                  if path.rsplit(".", 1)[-1].lower() not in exts:
+                      continue
               product += int(added)
           print(product)
           ')
-            echo "Product-code lines added (approx): ${product}"
-          else
-            echo "::warning::Base SHA ${BASE_SHA} not available locally; falling back to title prefix."
-          fi
-          if [[ -n "${product}" ]]; then
-            if (( product >= medium_max )); then
-              echo "::error::PR size exceeds medium (${product} product lines >= ${medium_max}). Split the change, raise baseSize/growthRate, or set presets.ci.github_actions.pr-metrics.rejectAboveMedium = false."
-              exit 1
-            fi
-            echo "PR size within allowed maximum (medium)."
-            exit 0
-          fi
-          title=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq .title)
-          echo "PR title: ${title}"
-          if [[ "${title}" =~ ^(XS|S|M)[[:space:]]*(✔|✔️|⚠️)?[[:space:]]*(◾|▪️) ]]; then
-            echo "PR size within allowed maximum (medium) via title prefix."
-            exit 0
-          fi
-          if [[ "${title}" =~ ^(L|[0-9]*XL)[[:space:]]*(✔|✔️|⚠️)?[[:space:]]*(◾|▪️) ]]; then
-            echo "::error::PR size exceeds medium (L/XL title prefix). Split the change, raise baseSize/growthRate, or set presets.ci.github_actions.pr-metrics.rejectAboveMedium = false."
+          echo "Product-code lines added (approx): ${product}"
+          if (( product >= medium_max )); then
+            echo "::error::PR size exceeds medium (${product} product lines >= ${medium_max}). Split the change, raise baseSize/growthRate, or set presets.ci.github_actions.pr-metrics.rejectAboveMedium = false."
             exit 1
           fi
-          echo "::error::Could not determine PR size (no git base diff and unrecognized title prefix); refusing while rejectAboveMedium is enabled."
-          exit 1
+          echo "PR size within allowed maximum (medium)."
+          exit 0
