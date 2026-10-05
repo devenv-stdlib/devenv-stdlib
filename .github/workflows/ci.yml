@@ -99,17 +99,12 @@ jobs:
           fi
 
   # Fail-fast gate: lint before unit/integration/language matrix/release.
-  # Display name is human-readable; ruleset still requires the bare check "prek".
+  # Read-only: PR head hooks must not see write-scoped tokens (report job below).
   lint:
     name: Lint (prek)
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      actions: write
-      pull-requests: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
       - uses: actions/checkout@v4
         if: github.event_name != 'pull_request'
@@ -135,12 +130,11 @@ jobs:
       - uses: cachix/install-nix-action@v31
 
       - name: Restore Nix store
-        id: nix-cache
         if: ${{ !env.ACT }}
         uses: nix-community/cache-nix-action/restore@v7
         with:
-          primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix', 'modules/hooks/**', 'modules/debtmap/hooks.nix') }}
-          restore-prefixes-first-match: nix-${{ runner.os }}-${{ github.job }}-
+          primary-key: nix-${{ runner.os }}-lint-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix', 'modules/hooks/**', 'modules/debtmap/hooks.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-lint-
 
       - uses: cachix/cachix-action@v16
         with:
@@ -154,10 +148,92 @@ jobs:
 
       - name: Run prek
         id: prek
+        # Unset tokens so PR-controlled hooks cannot call the GitHub API.
+        env:
+          GITHUB_TOKEN: ""
+          GH_TOKEN: ""
         run: |
           set -uo pipefail
+          unset GITHUB_TOKEN GH_TOKEN || true
 
-          marker='<!-- prek-hooks-report -->'
+          set +e
+          devenv shell -- prek run --all-files --show-diff-on-failure --color=never \
+            2>&1 | tee prek.log
+          status=${PIPESTATUS[0]}
+          set -e
+
+          if [ "$status" -ne 0 ]; then
+            {
+              bt='`'
+              fence='````'
+              printf '%s\n\n' '<!-- prek-hooks-report -->'
+              printf '%s\n\n' "## prek failed on this pull request"
+              printf '%s\n\n' "${bt}prek run --all-files${bt} did not pass. Output:"
+              printf '%s\n' "$fence"
+              if [ -s prek.log ]; then
+                head -c 50000 prek.log
+                echo
+              else
+                echo "(prek produced no output)"
+              fi
+              printf '%s\n\n' "$fence"
+              printf '%s\n' "Fix locally with ${bt}devenv shell${bt} and ${bt}prek run --all-files${bt}, or commit on the host so hooks run."
+            } >prek-comment.md
+          fi
+          exit "$status"
+
+      - name: Upload prek log
+        if: ${{ always() && !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: prek.log
+          path: prek.log
+          if-no-files-found: ignore
+
+      - name: Upload prek failure comment body
+        if: ${{ failure() && !env.ACT && github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: prek-comment
+          path: prek-comment.md
+          if-no-files-found: ignore
+
+      - uses: pre-commit-ci/lite-action@v1.1.0
+        if: ${{ always() && !env.ACT && github.event_name == 'pull_request' }}
+        with:
+          msg: "chore: apply hook autofixes"
+
+  # Write-scoped PR comments stay out of the job that executes PR-head hooks.
+  report-prek:
+    name: Report prek on pull request
+    needs: lint
+    if: always() && !cancelled() && github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Skip under act
+        if: ${{ env.ACT }}
+        run: echo "Skipping PR comment under act"
+
+      - name: Download prek failure comment body
+        id: download
+        if: ${{ !env.ACT }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: prek-comment
+          path: report
+
+      - name: Upsert or clear prek report comment
+        if: ${{ !env.ACT }}
+        env:
+          LINT_RESULT: ${{ needs.lint.result }}
+        run: |
+          set -euo pipefail
           repo='${{ github.repository }}'
           comment_ids() {
             gh api --paginate "repos/${repo}/issues/${PR_NUMBER}/comments" \
@@ -185,62 +261,15 @@ jobs:
               gh api --method POST "repos/${repo}/issues/${PR_NUMBER}/comments" --input - <<<"$payload" >/dev/null
             fi
           }
-          write_comment_body() {
-            {
-              bt='`'
-              fence='````'
-              printf '%s\n\n' "$marker"
-              printf '%s\n\n' "## prek failed on this pull request"
-              printf '%s\n\n' "${bt}prek run --all-files${bt} did not pass. Output:"
-              printf '%s\n' "$fence"
-              if [ -s prek.log ]; then
-                head -c 50000 prek.log
-                echo
-              else
-                echo "(prek produced no output)"
-              fi
-              printf '%s\n\n' "$fence"
-              printf '%s\n' "Fix locally with ${bt}devenv shell${bt} and ${bt}prek run --all-files${bt}, or commit on the host so hooks run."
-            } >prek-comment.md
-          }
 
-          set +e
-          devenv shell -- prek run --all-files --show-diff-on-failure --color=never \
-            2>&1 | tee prek.log
-          status=${PIPESTATUS[0]}
-          set -e
-
-          if [ "$status" -ne 0 ]; then
-            if [ "${{ github.event_name }}" = "pull_request" ]; then
-              write_comment_body
-              upsert_report_comment prek-comment.md \
-                || echo "::warning::Could not comment on the pull request with prek output"
-            fi
-            exit "$status"
-          fi
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
+          if [ "$LINT_RESULT" = "success" ]; then
             delete_report_comments || true
+            exit 0
           fi
-
-      - name: Upload prek log
-        if: ${{ always() && !env.ACT }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: prek.log
-          path: prek.log
-          if-no-files-found: ignore
-
-      - uses: pre-commit-ci/lite-action@v1.1.0
-        if: ${{ always() && !env.ACT && github.event_name == 'pull_request' }}
-        with:
-          msg: "chore: apply hook autofixes"
-
-      - name: Save Nix store
-        if: ${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
-        uses: nix-community/cache-nix-action/save@v7
-        with:
-          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
-          gc-max-store-size-linux: 5G
+          if [ -f report/prek-comment.md ]; then
+            upsert_report_comment report/prek-comment.md \
+              || echo "::warning::Could not comment on the pull request with prek output"
+          fi
 
   # Ruleset requires bare check context "prek" (was hooks.yml job id).
   ruleset-prek:
@@ -248,6 +277,8 @@ jobs:
     needs: lint
     if: always() && !cancelled()
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: Require lint success
         run: test "${{ needs.lint.result }}" = "success"
