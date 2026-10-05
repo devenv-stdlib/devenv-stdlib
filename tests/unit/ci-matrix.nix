@@ -451,7 +451,7 @@ in
         flatSelfHosted = contains ''os: "self-hosted"'' yaml;
         flatGpuOnly = contains "os: [self-hosted, linux, gpu]" yaml;
         # Default empty matrix stays the compact preferred LTS form.
-        defaultCompact = contains "os: [ubuntu-24.04, ubuntu-26.04]" defaultEmpty;
+        defaultCompact = contains ''os: ["ubuntu-24.04", "ubuntu-26.04"]'' defaultEmpty;
       };
     expected = {
       includeForm = true;
