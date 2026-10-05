@@ -38,11 +38,24 @@ let
 
   rowAttrs =
     plan: cell:
+    {
+      # When true, keep a string optional flag for per-cell continue-on-error.
+      keepOptional ? false,
+    }:
     let
       os = ghaOs plan cell;
-      rest = removeAttrs cell metaKeys;
+      strip = if keepOptional then lib.filter (k: k != "optional") metaKeys else metaKeys;
+      rest = removeAttrs cell strip;
+      withOpt =
+        if keepOptional then
+          rest
+          // {
+            optional = if cell.optional or false then "true" else "false";
+          }
+        else
+          rest;
     in
-    { inherit os; } // removeAttrs rest [ "os" ];
+    { inherit os; } // removeAttrs withOpt [ "os" ];
 
   matrixRow =
     attrs:
@@ -59,15 +72,25 @@ let
     plan: job:
     let
       cells = job.cells or [ ];
-      rows = map (cell: rowAttrs plan cell) cells;
+      jobOptional = job.optional or false;
+      anyCellOptional = lib.any (c: c.optional or false) cells;
+      # Only emit optional in include rows when mixed required/optional cells.
+      keepOptional = !jobOptional && anyCellOptional;
+      rows = map (cell: rowAttrs plan cell { inherit keepOptional; }) cells;
       strategy = matrixLib.defaultStrategy // (job.strategy or { });
       inherit (strategy) failFast maxParallel;
-      optional = job.optional or false || lib.any (c: c.optional or false) cells;
       testRun =
         job.command or (throw "ci.backends.github_actions: job '${job.name or "?"}' missing command");
       maxParallelYaml =
         if maxParallel == null then "" else "\n      max-parallel: ${toString maxParallel}";
-      continueYaml = if optional then "\n    continue-on-error: true" else "";
+      # Job-level continue-on-error only for job.optional; otherwise per-cell via matrix.
+      continueYaml =
+        if jobOptional then
+          "\n    continue-on-error: true"
+        else if anyCellOptional then
+          "\n    continue-on-error: \${{ matrix.optional == 'true' }}"
+        else
+          "";
     in
     ''
       ${job.name}:
