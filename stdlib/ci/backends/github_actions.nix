@@ -226,6 +226,7 @@ let
         workflow_call:
       jobs:
         no-language-matrix:
+          name: No language matrix (''${{ matrix.os }})
           strategy:
             fail-fast: false
             matrix:
