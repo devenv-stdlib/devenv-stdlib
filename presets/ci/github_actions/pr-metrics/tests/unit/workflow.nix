@@ -191,6 +191,9 @@ in
         hasContinue = contains "continue-on-error: true" yaml;
         hasReject = contains "Reject oversized PRs" yaml;
         hasGitGate = contains "git diff --numstat" yaml;
+        # Tight test-path filter (not bare /test/ substring).
+        hasTightTestDirs = contains "(tests?|__tests__|spec)" yaml;
+        hasLooseTestSubstr = contains "/[Tt]est|[Tt]EST|" yaml;
         hasFailClosed = contains "Could not determine PR size" yaml;
         hasLocSep = contains "◾" yaml;
         hasReadmeSep = contains "▪️" yaml;
@@ -215,6 +218,8 @@ in
       hasContinue = true;
       hasReject = true;
       hasGitGate = true;
+      hasTightTestDirs = true;
+      hasLooseTestSubstr = false;
       hasFailClosed = true;
       hasLocSep = true;
       hasReadmeSep = true;
