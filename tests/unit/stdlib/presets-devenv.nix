@@ -373,7 +373,7 @@ in
       {
         tool = cfg.tools.mock-check.enable;
         hasTask = t != null;
-        exec = (t or { }).exec or null;
+        exec = if t == null then null else t.exec or null;
       };
     expected = {
       tool = true;
@@ -392,9 +392,9 @@ in
       {
         hasSample = sample != null;
         hasReport = report != null;
-        sampleBefore = (sample or { }).before or [ ];
-        reportAfter = (report or { }).after or [ ];
-        sampleExec = (sample or { }).exec or null;
+        sampleBefore = if sample == null then [ ] else sample.before or [ ];
+        reportAfter = if report == null then [ ] else report.after or [ ];
+        sampleExec = if sample == null then null else sample.exec or null;
       };
     expected = {
       hasSample = true;

@@ -82,6 +82,87 @@ in
     };
   };
 
+  # Separate workflow entries for the same satellite must keep every anchor.
+  testWorkflowsMergesEdgesAcrossEntries = {
+    expr = tasks.workflows [
+      {
+        around = "rust:build";
+        before = [ "mr-boxington:doctor" ];
+        after = [ "mr-boxington:gc" ];
+      }
+      {
+        around = "rust:test";
+        before = [ "mr-boxington:doctor" ];
+        after = [ "mr-boxington:gc" ];
+      }
+    ];
+    expected = {
+      "mr-boxington:doctor".before = [
+        "rust:build"
+        "rust:test"
+      ];
+      "mr-boxington:gc".after = [
+        "rust:build"
+        "rust:test"
+      ];
+    };
+  };
+
+  # Exported task bodies keep their edges when composed edges are merged in.
+  testMergeEdgesPreservesExportedOrdering = {
+    expr = tasks.mergeEdges [
+      {
+        "mr-boxington:doctor" = {
+          exec = "doctor";
+          before = [ "enterShell" ];
+        };
+        "mr-boxington:gc" = {
+          exec = "gc";
+        };
+      }
+      {
+        "mr-boxington:doctor".before = [ "rust:build" ];
+        "mr-boxington:gc".after = [ "rust:build" ];
+      }
+    ];
+    expected = {
+      "mr-boxington:doctor" = {
+        exec = "doctor";
+        before = [
+          "enterShell"
+          "rust:build"
+        ];
+      };
+      "mr-boxington:gc" = {
+        exec = "gc";
+        after = [ "rust:build" ];
+      };
+    };
+  };
+
+  # Non-ordering attrs still last-wins (same as recursiveUpdate / zip last).
+  testMergeEdgesLastWinsNonOrdering = {
+    expr = tasks.mergeEdges [
+      {
+        "t:a" = {
+          exec = "old";
+          description = "keep-me-if-only-left";
+        };
+      }
+      {
+        "t:a" = {
+          exec = "new";
+        };
+      }
+    ];
+    expected = {
+      "t:a" = {
+        exec = "new";
+        description = "keep-me-if-only-left";
+      };
+    };
+  };
+
   testMockCpuDeclaresTasks = {
     expr =
       let

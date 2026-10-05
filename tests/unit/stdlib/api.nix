@@ -389,6 +389,7 @@ in
       "tasks.export"
       "tasks.hostHasTasks"
       "tasks.lower"
+      "tasks.mergeEdges"
       "tasks.mkTaskRef"
       "tasks.normalizeExport"
       "tasks.normalizeTaskId"
