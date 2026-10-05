@@ -151,19 +151,22 @@ in
       in
       {
         hasName = contains "name: PR Quality" yaml;
-        hasTarget = contains "pull_request_target" yaml;
+        # pull_request (not _target): workflow on the PR head can run / dogfood.
+        hasPullRequest = contains "pull_request:" yaml;
+        lacksTarget = !(contains "pull_request_target" yaml);
         hasAction = contains "peakoss/anti-slop@57858eead489d08b255fab2af45a506c2ca6eab2" yaml;
         hasActionComment = contains "# v0.3.0" yaml;
         hasMax = contains "max-failures: 4" yaml;
         hasClose = contains "close-pr: true" yaml;
         hasExemptDraft = contains "exempt-draft-prs: true" yaml;
         hasRunner = contains "runs-on: ubuntu-24.04" yaml;
-        # No checkout — pull_request_target must not run untrusted code.
+        # No checkout — action uses the GitHub API only (no untrusted PR tree).
         hasCheckout = contains "actions/checkout" yaml;
       };
     expected = {
       hasName = true;
-      hasTarget = true;
+      hasPullRequest = true;
+      lacksTarget = true;
       hasAction = true;
       hasActionComment = true;
       hasMax = true;

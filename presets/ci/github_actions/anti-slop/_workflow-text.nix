@@ -35,11 +35,13 @@ in
         "  issues: read"
         "  pull-requests: write"
         ""
+        # pull_request (not pull_request_target): GHA only loads
+        # pull_request_target workflows from the *base* branch, so a PR that
+        # introduces pr-quality.yml would never run the check on itself.
+        # Same-repo dogfood matches aletheore.yml; still no checkout of the
+        # PR head (action uses the GitHub API only).
         "on:"
-        "  pull_request_target:"
-        "    types:"
-        "      - opened"
-        "      - reopened"
+        "  pull_request:"
         ""
         "jobs:"
         "  anti-slop:"

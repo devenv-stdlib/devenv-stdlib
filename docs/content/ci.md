@@ -25,7 +25,7 @@ Each nix-unit suite stays single-process (no `--jobs`).
 | `test.yml` | Called from `ci.yml` | Per-language `devenv test` for each supported version, on Ubuntu 24.04 and 26.04 (human-readable job titles per language/version) |
 | `setup-tests.yml` | Changes to setup/tag hooks, every tag push, and every PR | **setup.sh BATS** when setup paths change (PR path-filter + push `paths:`; skipped when untouched) |
 | `pages.yml` | Push to `master`/`main`, pull request, or manual | **Build docs site** when `docs/**` (or this workflow) changes on PRs; always on trunk push / `workflow_dispatch` for deploy |
-| `pr-quality.yml` | `pull_request_target` (opened, reopened) | [peakoss/anti-slop](https://github.com/marketplace/actions/anti-slop) PR quality / AI-slop checks (GHA-only; not a local hook) |
+| `pr-quality.yml` | `pull_request` | [peakoss/anti-slop](https://github.com/marketplace/actions/anti-slop) PR quality / AI-slop checks (GHA-only; not a local hook) |
 | `pr-metrics.yml` | Pull request (opened / sync / ready_for_review / …) | [microsoft/PR-Metrics](https://github.com/marketplace/actions/pr-metrics) when `presets.ci.github_actions.pr-metrics.enable` — **parallel** with **Lint (prek)** (own workflow). Job/check **`PR size (pr-metrics)`** fails when reject-above-medium trips; add that context to the branch ruleset after merge to block merge. Drafts skipped by default. |
 | `update-lock.yml` | Weekly Monday and `workflow_dispatch` | `devenv update git-hooks` only; PR when that input changes |
 
@@ -37,7 +37,7 @@ Host jobs restore `/nix` from the GitHub Actions cache (`cache-nix-action/restor
 
 `devenv shell` writes `.github/workflows/test.yml` as a reusable workflow (`workflow_call`) that runs `devenv test` per language per version. That writer is the composable preset `ci.github_actions.language-matrix` (`presets/ci/github_actions/language-matrix.nix`). Cross-language matrices (Rust × Python) are not supported yet. The stdlib status report (eval warnings + `enterShell`) lists the resulting matrix alongside enabled git-hooks.
 
-`devenv shell` also writes `.github/workflows/pr-quality.yml` when you enable the composable preset `ci.github_actions.anti-slop` (`presets/ci/github_actions/anti-slop.nix`). That workflow runs [peakoss/anti-slop](https://github.com/peakoss/anti-slop) on `pull_request_target` (opened/reopened) — a forge-side PR quality gate that complements Lint (prek) in `ci.yml`. It is not a treefmt or prek hook and cannot run locally.
+`devenv shell` also writes `.github/workflows/pr-quality.yml` when you enable the composable preset `ci.github_actions.anti-slop` (`presets/ci/github_actions/anti-slop.nix`). That workflow runs [peakoss/anti-slop](https://github.com/peakoss/anti-slop) on `pull_request` — a forge-side PR quality gate that complements Lint (prek) in `ci.yml`. It uses `pull_request` (not `pull_request_target`) so the workflow file on the PR head is eligible to run (required for dogfood on the introducing PR; `pull_request_target` only loads workflows from the base branch). It is not a treefmt or prek hook and cannot run locally.
 
 **Consumers (opt-in):** marketplace Actions are off by default. Enable the same preset this template dogfoods:
 
