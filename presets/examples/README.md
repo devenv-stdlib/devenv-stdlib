@@ -11,7 +11,7 @@ includes = with presets; [
 ];
 ```
 
-See `python.nix` for a worked example.
+See `python.nix` for a worked language example.
 
 ## CI: anti-slop (PR quality)
 
@@ -25,3 +25,7 @@ presets.ci.github_actions.anti-slop.enable = true;
 Run `devenv tasks run ci:update-anti-slop` (or `stdlib:update-generated`)
 and commit `.github/workflows/pr-quality.yml`. See `ci-anti-slop.nix` and
 [CI docs](../../docs/content/ci.md).
+
+## CI: Aletheore (PR review)
+
+See [`ci-aletheore.md`](ci-aletheore.md) ([Aletheore](https://www.aletheore.com) evidence-grounded PR diffs; paid plans on that site).
