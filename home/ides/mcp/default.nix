@@ -30,7 +30,8 @@ let
   # Aletheore MCP is repo-scoped (`aletheore mcp <abs-path>`). User-global
   # ~/.cursor/mcp.json has no single project root, so resolve via the path
   # home-switch writes for this monorepo, then DEVENV_ROOT. Never fall back to
-  # $PWD — Cursor may start outside the monorepo.
+  # $PWD — Cursor may start outside the monorepo. Accept a candidate only when
+  # it looks like this template root (`devenv.nix` marker).
   # pipx/uv numpy needs libstdc++ from nixpkgs (same as tools.scanners.aletheore).
   aletheoreLibPath = lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ];
   aletheoreMcp =
@@ -42,6 +43,9 @@ let
         ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
           export LD_LIBRARY_PATH="${aletheoreLibPath}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
         ''}
+        is_monorepo_root() {
+          [ -n "$1" ] && [ -d "$1" ] && [ -f "$1/devenv.nix" ]
+        }
         root=""
         root_file="''${XDG_CONFIG_HOME:-$HOME/.config}/devenv4monorepo/devenv-root"
         is_monorepo_root() {
@@ -54,7 +58,7 @@ let
           if is_monorepo_root "''${DEVENV_ROOT:-}"; then
             root="$DEVENV_ROOT"
           else
-            echo "aletheore-mcp: no known monorepo root (run home-switch to write ~/.config/devenv4monorepo/devenv-root, or set DEVENV_ROOT)" >&2
+            echo "aletheore-mcp: no known monorepo root (run home-switch to write ~/.config/devenv4monorepo/devenv-root, or set DEVENV_ROOT to a directory with devenv.nix)" >&2
             exit 1
           fi
         fi

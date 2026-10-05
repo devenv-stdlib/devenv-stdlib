@@ -97,7 +97,8 @@ in
       description = ''
         Upsert the Aletheore evidence MCP into ~/.cursor/mcp.json (wrapper
         resolves the monorepo root via ~/.config/devenv4monorepo/devenv-root
-        or DEVENV_ROOT; fails closed if neither is set — no $PWD fallback).
+        or DEVENV_ROOT, accepting only a directory that contains `devenv.nix`;
+        fails closed if neither is a valid root — no $PWD fallback).
         Requires the non-Nix catalog pin `aletheore` (mise pipx). Opt-in —
         schema-heavy; complements Serena rather than replacing Instant Grep.
         Product / paid Aletheore AIR plans: https://www.aletheore.com
