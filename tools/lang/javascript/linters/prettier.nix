@@ -24,7 +24,9 @@ else
         # git-hooks scope (JS/TS only) so yamlfmt / other formatters stay sole owners.
         treefmt.config = {
           programs.prettier.enable = true;
-          settings.formatter.prettier.includes = [
+          # mkForce: treefmt-nix defaults also include md/yaml/json/css/html;
+          # replace those so only JS/TS stay in scope (yamlfmt owns YAML).
+          settings.formatter.prettier.includes = lib.mkForce [
             "*.cjs"
             "*.js"
             "*.jsx"
