@@ -27,6 +27,11 @@ _: {
   # See docs/content/ci.md and presets/examples/ci-pr-metrics.nix.
   presets.ci.github_actions.pr-metrics.enable = true;
 
+  # Dogfood: opt-in CI preset ci.github_actions.anti-slop (peakoss/anti-slop →
+  # .github/workflows/pr-quality.yml). Framework default is off; consumers
+  # enable the same way. See docs/content/ci.md and presets/examples/.
+  presets.ci.github_actions.anti-slop.enable = true;
+
   enterShell = ''
     echo "devenv4monorepo ready: ''${USER:-unknown}@$(uname -n)"
 

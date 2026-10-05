@@ -23,9 +23,11 @@ in
     # break. presets/examples/ is documentation only.
     # CI language/OS matrix strategy is
     # presets/ci/github_actions/language-matrix.nix
-    # (attrpath ci.github_actions.language-matrix). Forge-side PR gates
-    # (pr-metrics, anti-slop, aletheore) are sibling github_actions writers.
-
+    # (attrpath ci.github_actions.language-matrix).
+    # Opt-in PR quality / AI-slop gate is
+    # presets/ci/github_actions/anti-slop.nix
+    # (attrpath ci.github_actions.anti-slop → pr-quality.yml; dogfood enable in
+    # root devenv.nix). presets/examples/ is documentation only.
     ./debtmap/hooks.nix
     ./languages
     ./debtmap

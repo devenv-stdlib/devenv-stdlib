@@ -3,8 +3,12 @@
 #
 # anti-slop is a GitHub Action PR-quality / AI-slop gate
 # (pull_request_target). It is GHA-only — not treefmt, not prek, and not a
-# local hook. Opt out with presets.ci.github_actions.anti-slop.enable = false
-# and remove .github/workflows/pr-quality.yml.
+# local hook.
+#
+# Opt-in (dogfood parity): enable defaults to false. Projects that want the
+# check set presets.ci.github_actions.anti-slop.enable = true; this template
+# dogfoods that in devenv.nix. Turn off and remove .github/workflows/pr-quality.yml
+# when disabling.
 { lib, ... }:
 let
   # Underscore prefix so devenv.load does not treat this as a preset leaf.
@@ -17,10 +21,12 @@ in
     "anti-slop"
   ];
   description = ''
-    Generate .github/workflows/pr-quality.yml for peakoss/anti-slop (GHA-only
-    PR quality / AI-slop checks). Complements hooks.yml prek; not a local hook.
+    Opt-in: write .github/workflows/pr-quality.yml for peakoss/anti-slop
+    (GHA-only PR quality / AI-slop checks). Enable with
+    presets.ci.github_actions.anti-slop.enable = true. Complements prek; not a
+    local hook.
   '';
-  # Always available; presets.ci.github_actions.anti-slop.enable turns it off.
+  # Always discoverable; enable is opt-in (mkDefault false below).
   when = _: true;
 
   module =
@@ -65,6 +71,11 @@ in
           };
         };
       };
+
+      # Marketplace Action — opt-in per CI dogfood parity (not on by default).
+      # leafOptions sets enable default true; this mkDefault wins until the
+      # consumer (or this template's devenv.nix) sets enable = true.
+      config.presets.ci.github_actions.anti-slop.enable = lib.mkDefault false;
     };
 
   project =

@@ -1,4 +1,5 @@
 # Real anti-slop CI preset: owns pr-quality.yml sync + marker surface.
+# Framework default is opt-in (enable = false); dogfood sets enable = true.
 { lib, ... }:
 let
   devenvLoad = import <devenv4monorepo/stdlib/devenv.nix> { inherit lib; };
@@ -77,6 +78,10 @@ let
 
   contains = needle: haystack: lib.hasInfix needle haystack;
 
+  enabled = {
+    presets.ci.github_actions.anti-slop.enable = true;
+  };
+
   defaultCfg = {
     action = "peakoss/anti-slop@v0.3.0";
     maxFailures = 4;
@@ -86,10 +91,29 @@ let
   };
 in
 {
-  testCiAntiSlopPresetOwnsWorkflow = {
+  testCiAntiSlopOptInByDefault = {
     expr =
       let
         cfg = eval { };
+      in
+      {
+        applied = cfg.presets.ci.github_actions.anti-slop.result.applied or false;
+        enable = cfg.presets.ci.github_actions.anti-slop.enable;
+        hasMarker = cfg.stdlib.markers ? antiSlop;
+        hasSync = cfg.scripts ? sync-anti-slop-workflow;
+      };
+    expected = {
+      applied = false;
+      enable = false;
+      hasMarker = false;
+      hasSync = false;
+    };
+  };
+
+  testCiAntiSlopPresetOwnsWorkflow = {
+    expr =
+      let
+        cfg = eval enabled;
         marker = cfg.stdlib.markers.antiSlop or { };
         sync = cfg.scripts.sync-anti-slop-workflow.exec or "";
       in
@@ -116,32 +140,6 @@ in
       hasSync = true;
       syncCopiesPrQuality = true;
       enterHasSync = true;
-    };
-  };
-
-  testCiAntiSlopDisableRemovesWriter = {
-    expr =
-      let
-        cfg = eval { };
-        disabled = eval {
-          presets.ci.github_actions.anti-slop.enable = false;
-        };
-      in
-      {
-        defaultApplied = cfg.presets.ci.github_actions.anti-slop.result.applied or false;
-        disabledApplied = disabled.presets.ci.github_actions.anti-slop.result.applied or false;
-        disabledHasMarker = disabled.stdlib.markers ? antiSlop;
-        disabledHasSync = disabled.scripts ? sync-anti-slop-workflow;
-        actionOption = cfg.presets.ci.github_actions.anti-slop.action;
-        maxFailuresOption = cfg.presets.ci.github_actions.anti-slop.maxFailures;
-      };
-    expected = {
-      defaultApplied = true;
-      disabledApplied = false;
-      disabledHasMarker = false;
-      disabledHasSync = false;
-      actionOption = "peakoss/anti-slop@v0.3.0";
-      maxFailuresOption = 4;
     };
   };
 
@@ -189,6 +187,7 @@ in
         );
         cfg = eval {
           presets.ci.github_actions.anti-slop = {
+            enable = true;
             maxFailures = 2;
             closePr = false;
             extraWith = {
