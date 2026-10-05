@@ -61,6 +61,7 @@ in
         ""
         "jobs:"
         "  anti-slop:"
+        "    name: PR quality (anti-slop)"
         "    runs-on: ubuntu-24.04"
         "    steps:"
         usesLine
