@@ -3,7 +3,7 @@
 # Install or update Nix, devenv, Cachix, and Home Manager
 ./setup.sh
 
-# Enter the project toolchain (git, gh, copier, nixfmt, bats, …)
+# Enter the project toolchain (git, gh, nixfmt, bats, …)
 devenv shell
 
 # Re-apply Home Manager after editing Den aspects or home.local.nix
