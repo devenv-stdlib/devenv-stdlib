@@ -287,7 +287,7 @@ grep -A2 excluded_tools ~/.serena/serena_config.yml
 
 ### Context7
 
-[Context7](https://github.com/upstash/context7) is a remote MCP for up-to-date library docs. Home Manager upserts `https://mcp.context7.com/mcp` into `~/.cursor/mcp.json`. No API key is asked at copy time.
+[Context7](https://github.com/upstash/context7) is a remote MCP for up-to-date library docs. Home Manager upserts `https://mcp.context7.com/mcp` into `~/.cursor/mcp.json`. No API key is needed.
 
 - Docs: [github.com/upstash/context7](https://github.com/upstash/context7)
 - Donate: [github.com/sponsors/upstash](https://github.com/sponsors/upstash)
@@ -390,7 +390,7 @@ build-act-image
 
 ### endoflife.date
 
-The catalog script fetches cycle/EOL data from [endoflife.date](https://endoflife.date). Template authors run:
+The catalog script fetches cycle/EOL data from [endoflife.date](https://endoflife.date). Package authors run:
 
 ```bash
 refresh-toolchain-latest
