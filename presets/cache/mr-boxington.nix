@@ -33,7 +33,16 @@ let
     '';
   };
 
-  mbxFor = pkgs: pkgs.mr-boxington or (import ../../stdlib/mr-boxington.nix { inherit pkgs; });
+  # Package recipe lives on the tool leaf (install.package); prefer stubs in tests.
+  mbxPackage =
+    (import ../../tools/cache/mr-boxington.nix {
+      inherit lib;
+      pkgs = { };
+      config = { };
+      __stdlibMeta = true;
+    }).install.package;
+
+  mbxFor = pkgs: mbxPackage pkgs;
 
   # Store path when real package; plain name for unit-test stubs.
   mbxBin = mbx: if builtins.isAttrs mbx && mbx ? outPath then "${mbx}/bin/mbx" else "mbx";
