@@ -3,6 +3,7 @@
   lib,
   versions,
   project,
+  matrixShapes ? import ./matrix-shapes.nix { inherit lib; },
 }:
 let
   emptyYaml = versions.workflowText { };
@@ -56,4 +57,5 @@ assert
 assert !(project.languageHooks { }).prettier;
 assert !(project.languageHooks { }).debtmap;
 assert project.typescriptBundlerMissing true null;
+assert matrixShapes.ok;
 true

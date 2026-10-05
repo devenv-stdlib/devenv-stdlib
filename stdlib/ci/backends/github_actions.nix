@@ -107,14 +107,14 @@ let
       inherit (strategy) failFast maxParallel;
       testRun =
         job.command or (throw "ci.backends.github_actions: job '${job.name or "?"}' missing command");
-      maxParallelYaml =
-        if maxParallel == null then "" else "\n      max-parallel: ${toString maxParallel}";
+      maxParallelYaml = if maxParallel == null then "" else "\n    max-parallel: ${toString maxParallel}";
       # Job-level continue-on-error only for job.optional; otherwise per-cell via matrix.
+      # Interpolated snippets skip Nix '' dedent; match post-dedent sibling indent (padJob +2).
       continueYaml =
         if jobOptional then
-          "\n    continue-on-error: true"
+          "\n  continue-on-error: true"
         else if anyCellOptional then
-          "\n    continue-on-error: \${{ matrix.optional }}"
+          "\n  continue-on-error: \${{ matrix.optional }}"
         else
           "";
     in

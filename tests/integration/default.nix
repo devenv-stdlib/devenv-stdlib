@@ -5,6 +5,7 @@ let
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
   project = import ../../modules/lib/project.nix { inherit lib; };
   evalOk = import ./eval.nix { inherit lib versions project; };
+  matrixShapes = import ./matrix-shapes.nix { inherit lib; };
 
   emptyYaml = pkgs.writeText "test-empty.yml" (versions.workflowText { });
   pythonYaml = pkgs.writeText "test-python.yml" (
@@ -16,6 +17,12 @@ let
       };
     }
   );
+  matrixEtc = lib.listToAttrs (
+    map (name: {
+      name = "devenv/matrix-${name}.yml";
+      value.source = pkgs.writeText "matrix-${name}.yml" matrixShapes.fixtures.${name};
+    }) matrixShapes.names
+  );
   # Copy repo root into the store so versions-lib → stdlib/ci relative imports resolve.
   evalNix = pkgs.writeText "eval.nix" ''
     import ${./eval.nix} {
@@ -26,10 +33,14 @@ let
       project = import ${../../modules/lib/project.nix} {
         lib = (import <nixpkgs> { }).lib;
       };
+      matrixShapes = import (${../..} + "/tests/integration/matrix-shapes.nix") {
+        lib = (import <nixpkgs> { }).lib;
+      };
     }
   '';
 in
 assert evalOk;
+assert matrixShapes.ok;
 pkgs.testers.runNixOSTest {
   name = "devenv4monorepo";
 
@@ -50,7 +61,8 @@ pkgs.testers.runNixOSTest {
         "devenv/test-python.yml".source = pythonYaml;
         "devenv/eval.nix".source = evalNix;
         "devenv/actionlint.yaml".source = ../../.github/actionlint.yaml;
-      };
+      }
+      // matrixEtc;
     };
     nix.settings.experimental-features = [
       "nix-command"
@@ -79,5 +91,18 @@ pkgs.testers.runNixOSTest {
     machine.succeed("nix-instantiate --eval --strict /etc/devenv/eval.nix")
     machine.succeed("actionlint -config-file /etc/devenv/actionlint.yaml /etc/devenv/test-empty.yml")
     machine.succeed("actionlint -config-file /etc/devenv/actionlint.yaml /etc/devenv/test-python.yml")
+    for path in [
+    ${lib.concatMapStringsSep "\n" (
+      n: "        '/etc/devenv/matrix-${n}.yml',"
+    ) matrixShapes.actionlintNames}
+    ]:
+        machine.succeed(f"actionlint -config-file /etc/devenv/actionlint.yaml {path}")
+    machine.succeed("grep -F 'toolchain: \"nightly\"' /etc/devenv/matrix-filtered.yml")
+    machine.succeed("grep -F '3.12\\\"beta' /etc/devenv/matrix-quoted-scalar.yml")
+    machine.succeed("grep -F 'continue-on-error: ''${{ matrix.optional }}' /etc/devenv/matrix-mixed-optional.yml")
+    machine.succeed("grep -F 'max-parallel: 2' /etc/devenv/matrix-max-parallel.yml")
+    machine.succeed("grep -F 'os: [\"true\"]' /etc/devenv/matrix-empty-true-label.yml")
+    machine.succeed("grep -F 'os: [\"self-hosted\", \"linux\", \"x64\", \"gpu\"]' /etc/devenv/matrix-multi-label.yml")
+    machine.succeed("grep -F 'include:' /etc/devenv/matrix-empty-multi-label.yml")
   '';
 }
