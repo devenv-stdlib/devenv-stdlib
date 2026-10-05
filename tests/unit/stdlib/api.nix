@@ -36,6 +36,7 @@ let
     ++ names "devenv" stdlib.devenv
     ++ names "ci" stdlib.ci
     ++ names "ci.matrix" stdlib.ci.matrix
+    ++ names "ci.attachments" stdlib.ci.attachments
     ++ names "ci.backends" stdlib.ci.backends
     ++ names "ci.backends.github_actions" stdlib.ci.backends.github_actions
     ++ names "versions" (stdlib.versions { })
@@ -234,8 +235,22 @@ in
       "categoryWarnings.unusedPaths"
       "categoryWarnings.unusedWarnings"
       "ci"
+      "ci.attachments"
+      "ci.attachments.allAttachments"
+      "ci.attachments.assertSlot"
+      "ci.attachments.autoEnable"
+      "ci.attachments.bySlot"
+      "ci.attachments.emptyPlan"
+      "ci.attachments.matchesLanguage"
+      "ci.attachments.mergeLists"
+      "ci.attachments.plan"
+      "ci.attachments.report"
+      "ci.attachments.resolve"
+      "ci.attachments.select"
+      "ci.attachments.slots"
       "ci.backends"
       "ci.backends.github_actions"
+      "ci.backends.github_actions.attachmentStepYaml"
       "ci.backends.github_actions.emptyWorkflow"
       "ci.backends.github_actions.ghaOs"
       "ci.backends.github_actions.jobYaml"
@@ -243,6 +258,7 @@ in
       "ci.backends.github_actions.matrixRow"
       "ci.backends.github_actions.padJob"
       "ci.backends.github_actions.render"
+      "ci.backends.github_actions.renderAttachments"
       "ci.backends.github_actions.rowAttrs"
       "ci.matrix"
       "ci.matrix.aarch64RunnerProfiles"

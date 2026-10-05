@@ -1,7 +1,9 @@
 # Render a MatrixPlan to GitHub Actions reusable-workflow YAML (test.yml shape).
+# Optionally merges an AttachmentPlan into step slots around the primary command.
 { lib }:
 let
   matrixLib = import ../matrix.nix { inherit lib; };
+  attachmentsLib = import ../attachments.nix { inherit lib; };
 
   ghaOs =
     plan: cell:
@@ -95,6 +97,110 @@ let
     else
       "run: ${builtins.toJSON command}";
 
+  # Format a with:/env: map. Secret *names* become ${{ secrets.NAME }} only.
+  kvBlock =
+    indent: attrs:
+    lib.concatMapStrings (
+      name:
+      let
+        raw = attrs.${name};
+        value =
+          if builtins.isString raw && lib.hasPrefix "secret:" raw then
+            "\${{ secrets.${lib.removePrefix "secret:" raw} }}"
+          else if builtins.isBool raw then
+            (if raw then "true" else "false")
+          else if builtins.isInt raw then
+            toString raw
+          else
+            toString raw;
+      in
+      "\n${indent}${name}: ${value}"
+    ) (lib.attrNames attrs);
+
+  # One GHA step fragment at post-dedent indent (4 spaces before `-`).
+  # padJob then adds +2. Secrets on the provider bag → env: NAME: ${{ secrets.NAME }}.
+  attachmentStepYaml =
+    attachment:
+    let
+      bag = attachment.providers.github_actions or { };
+      stepName = bag.name or attachment.id or "attachment";
+      slot = bag.slot or "pre-command";
+      secrets = bag.secrets or [ ];
+      withAttrs = bag."with" or { };
+      envAttrs =
+        (bag.env or { })
+        // lib.listToAttrs (
+          map (s: {
+            name = s;
+            value = "secret:${s}";
+          }) secrets
+        );
+      ifClause = bag."if" or (if slot == "always" then "\${{ always() }}" else null);
+      uses = bag.uses or null;
+      run = bag.run or null;
+      header =
+        "    - name: ${stepName}"
+        + (if ifClause == null then "" else "\n      if: ${ifClause}")
+        + (
+          if uses != null then
+            "\n      uses: ${uses}"
+          else if run != null then
+            let
+              # runYaml assumes 12-space "run:" under 10-space `-` (pre-dedent).
+              # Post-dedent steps use 4-space `-` / 6-space body — re-indent.
+              raw = runYaml run;
+            in
+            "\n      " + lib.replaceStrings [ "\n              " ] [ "\n        " ] raw
+          else
+            throw "ci.backends.github_actions: attachment '${stepName}' needs uses or run"
+        );
+      withBlock = if withAttrs == { } then "" else "\n      with:" + kvBlock "        " withAttrs;
+      envBlock = if envAttrs == { } then "" else "\n      env:" + kvBlock "        " envAttrs;
+      artifactSteps = lib.concatMapStrings (
+        art:
+        let
+          artName = art.id or art.name or "artifact";
+          path = art.path or (throw "ci.backends.github_actions: artifact missing path");
+        in
+        ''
+          - name: Upload ${artName}
+            if: ''${{ always() }}
+            uses: actions/upload-artifact@v4
+            with:
+              name: ${artName}
+              path: ${path}
+        ''
+      ) (attachment.artifacts or [ ]);
+    in
+    header + withBlock + envBlock + "\n" + artifactSteps;
+
+  slotStepsYaml = slotted: slot: lib.concatMapStrings attachmentStepYaml (slotted.${slot} or [ ]);
+
+  # Standalone helper for host workflows — same step shape, keyed by slot.
+  renderAttachments =
+    attachmentPlan:
+    {
+      language ? null,
+      provider ? "github_actions",
+      forge ? null,
+    }:
+    let
+      ctx = {
+        inherit
+          provider
+          language
+          forge
+          ;
+      };
+      slotted = attachmentsLib.bySlot attachmentPlan ctx;
+    in
+    lib.listToAttrs (
+      map (slot: {
+        name = slot;
+        value = slotStepsYaml slotted slot;
+      }) attachmentsLib.slots
+    );
+
   jobYaml =
     plan: job:
     let
@@ -127,54 +233,81 @@ let
           javascript = "JavaScript \${{ matrix.runtime }} \${{ matrix.version }} (\${{ matrix.os }})";
         }
         .${job.name} or "${job.name} (\${{ matrix.os }})";
+      attachmentPlan = plan.attachments or attachmentsLib.emptyPlan;
+      slotted = attachmentsLib.bySlot attachmentPlan {
+        provider = "github_actions";
+        language = job.name or null;
+      };
+      preSlots = slotStepsYaml slotted "pre-toolchain" + slotStepsYaml slotted "pre-command";
+      postSlots = slotStepsYaml slotted "post-command";
+      alwaysSlots = slotStepsYaml slotted "always";
+      # Marker lines sit at step indent so empty-plan replace drops them with no
+      # extra blank lines (byte-stable vs MatrixPlan phase-1 jobYaml).
+      body = ''
+        ${job.name}:
+          name: ${displayName}
+          runs-on: ''${{ matrix.os }}${continueYaml}
+          strategy:
+            fail-fast: ${if failFast then "true" else "false"}${maxParallelYaml}
+            matrix:
+              include:
+        ${lib.concatMapStringsSep "\n" matrixRow rows}
+          steps:
+            - uses: actions/checkout@v4
+            - name: Own workspace under act
+              if: ''${{ env.ACT }}
+              run: |
+                sudo mkdir -p /home/runner/.cache/nix /nix
+                # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
+                # Nested act matrix cells share one /nix volume; recursive chown races with
+                # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
+                sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache
+                if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
+                  sudo chown "$(id -u):$(id -g)" /nix
+                fi
+            - uses: cachix/install-nix-action@v31
+            - name: Restore Nix store
+              id: nix-cache
+              if: ''${{ !env.ACT }}
+              uses: nix-community/cache-nix-action/restore@v7
+              with:
+                primary-key: nix-''${{ matrix.os }}-''${{ github.job }}-''${{ hashFiles('devenv.lock', 'devenv.yaml') }}
+                restore-prefixes-first-match: nix-''${{ matrix.os }}-''${{ github.job }}-
+            - uses: cachix/cachix-action@v16
+              with:
+                name: devenv
+            - name: Install devenv
+              run: |
+                # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
+                rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
+                nix profile add "github:cachix/devenv/''${rev}"
+            __ATTACH_PRE__
+            - name: Test
+              ${runYaml testRun}
+            __ATTACH_POST__
+            - name: Save Nix store
+              if: ''${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+              uses: nix-community/cache-nix-action/save@v7
+              with:
+                primary-key: ''${{ steps.nix-cache.outputs.primary-key }}
+                gc-max-store-size-linux: 5G
+            __ATTACH_ALWAYS__
+      '';
     in
-    ''
-      ${job.name}:
-        name: ${displayName}
-        runs-on: ''${{ matrix.os }}${continueYaml}
-        strategy:
-          fail-fast: ${if failFast then "true" else "false"}${maxParallelYaml}
-          matrix:
-            include:
-      ${lib.concatMapStringsSep "\n" matrixRow rows}
-        steps:
-          - uses: actions/checkout@v4
-          - name: Own workspace under act
-            if: ''${{ env.ACT }}
-            run: |
-              sudo mkdir -p /home/runner/.cache/nix /nix
-              # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
-              # Nested act matrix cells share one /nix volume; recursive chown races with
-              # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
-              sudo chown -R "$(id -u):$(id -g)" "''${GITHUB_WORKSPACE}" /home/runner/.cache
-              if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
-                sudo chown "$(id -u):$(id -g)" /nix
-              fi
-          - uses: cachix/install-nix-action@v31
-          - name: Restore Nix store
-            id: nix-cache
-            if: ''${{ !env.ACT }}
-            uses: nix-community/cache-nix-action/restore@v7
-            with:
-              primary-key: nix-''${{ matrix.os }}-''${{ github.job }}-''${{ hashFiles('devenv.lock', 'devenv.yaml') }}
-              restore-prefixes-first-match: nix-''${{ matrix.os }}-''${{ github.job }}-
-          - uses: cachix/cachix-action@v16
-            with:
-              name: devenv
-          - name: Install devenv
-            run: |
-              # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
-              rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
-              nix profile add "github:cachix/devenv/''${rev}"
-          - name: Test
-            ${runYaml testRun}
-          - name: Save Nix store
-            if: ''${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
-            uses: nix-community/cache-nix-action/save@v7
-            with:
-              primary-key: ''${{ steps.nix-cache.outputs.primary-key }}
-              gc-max-store-size-linux: 5G
-    '';
+    # Body min-indent is 8 spaces (`        ${job.name}`), so markers dedent to
+    # 4 spaces — same as post-dedent step list items.
+    lib.replaceStrings
+      [
+        "    __ATTACH_PRE__\n"
+        "    __ATTACH_POST__\n"
+        "    __ATTACH_ALWAYS__\n"
+      ]
+      [
+        preSlots
+        postSlots
+        alwaysSlots
+      ]
+      body;
 
   emptyWorkflow =
     plan:
@@ -288,5 +421,7 @@ in
     render
     ghaOs
     rowAttrs
+    attachmentStepYaml
+    renderAttachments
     ;
 }
