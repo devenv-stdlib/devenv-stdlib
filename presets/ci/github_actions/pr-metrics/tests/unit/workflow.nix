@@ -211,8 +211,9 @@ in
         hasFailClosedBase = contains "refusing to determine PR size" yaml;
         hasNoTitleFallback = !(contains "falling back to title prefix" yaml);
         hasCodeExts = contains "code-file-extensions:" yaml;
-        hasNixExt = contains ''code-file-extensions: "nix\nyml\nyaml\n"'' yaml;
-        hasCodeExtsEnv = contains ''CODE_EXTS: "nix\nyml\nyaml\n"'' yaml;
+        # defaultCfg uses derivedDogfood (docs tooling on) — assert exact Action + gate values.
+        hasNixExt = contains "code-file-extensions: ${builtins.toJSON derivedDogfood}" yaml;
+        hasCodeExtsEnv = contains "CODE_EXTS: ${builtins.toJSON derivedDogfood}" yaml;
         hasExtFilter = contains "not in exts" yaml;
         hasDraftSkip = contains "!github.event.pull_request.draft" yaml;
         hasToken = contains "PR_METRICS_ACCESS_TOKEN" yaml;
@@ -338,7 +339,7 @@ in
       {
         hasActionExts = contains ''code-file-extensions: "rs\npy\n"'' yaml;
         hasGateExts = contains ''CODE_EXTS: "rs\npy\n"'' yaml;
-        lacksDefaultGate = !(contains ''CODE_EXTS: "nix\nyml\nyaml\n"'' yaml);
+        lacksDefaultGate = !(contains "CODE_EXTS: ${builtins.toJSON derivedDogfood}" yaml);
       };
     expected = {
       hasActionExts = true;
