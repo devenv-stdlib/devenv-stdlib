@@ -110,6 +110,27 @@ in
     };
   };
 
+  # tool-ref from refsFromSpecs carries tasks; export works with discovered = [].
+  testExportToolRefWithoutDiscoveredRoots = {
+    expr =
+      let
+        refs = toolLib.refsFromSpecs discovered;
+      in
+      tasks.export {
+        items = [ refs.profilers.cpu.mock-cpu ];
+        discovered = [ ];
+        moduleArgs = { };
+      };
+    expected = {
+      "mock-cpu:sample" = {
+        exec = "echo mock-cpu-sample";
+      };
+      "mock-cpu:report" = {
+        exec = "echo mock-cpu-report";
+      };
+    };
+  };
+
   testRefsFromSpecs = {
     expr =
       let

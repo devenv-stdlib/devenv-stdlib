@@ -414,8 +414,15 @@ let
           decl.project;
       # Presets export tool-declared tasks and/or compose workflow edges.
       # Only when the host declares options.tasks (devenv); fixtures may omit it.
+      #
+      # Do NOT gate on `logged.applied` inside this let: the value is wrapped in
+      # `mkIf logged.applied` below, and pushDownProperties forces `content`.
+      # Re-checking `logged.applied` here re-enters realize → config → cycle
+      # (infinite recursion / Failed to get attribute 'config.cachix.enable').
+      # exportTasks / workflows must be static lists (or not read `config`);
+      # scope-gated exports belong in the preset `module` mkIf, like packages.
       taskConfig =
-        if !(logged.applied && tasksLib.hostHasTasks moduleArgs) then
+        if !(tasksLib.hostHasTasks moduleArgs) then
           { }
         else
           let
