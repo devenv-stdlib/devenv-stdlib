@@ -31,8 +31,17 @@ let
               outPath = "/tmp/${name}";
               meta.mainProgram = name;
             };
+            # libstdc++ for the Aletheore CLI wrapper (numpy wheels).
+            stdenv = {
+              hostPlatform.isLinux = true;
+              cc.cc.lib.outPath = "/tmp/libstdcxx";
+            };
+            # Shape enough for lib.getExe (derivation + mainProgram).
             mise = {
+              type = "derivation";
               outPath = "/tmp/mise";
+              outputName = "out";
+              name = "mise";
               meta.mainProgram = "mise";
             };
             uv = {
@@ -147,6 +156,14 @@ in
         toolEnable = (cfg.tools.aletheore or { }).enable or false;
         hasAletheorePackage = lib.any (p: (p.name or "") == "aletheore") cfg.packages;
         hasInstallTask = cfg.tasks ? "aletheore:install";
+        # Wrapper prefixes nixpkgs libstdc++ for pipx/uv numpy wheels.
+        wrapperExportsLibstdcxx =
+          let
+            pkg = lib.findFirst (p: (p.name or "") == "aletheore") null cfg.packages;
+          in
+          pkg != null
+          && contains "LD_LIBRARY_PATH=" (pkg.text or "")
+          && contains "/tmp/libstdcxx" (pkg.text or "");
       };
     expected = {
       applied = true;
@@ -164,6 +181,7 @@ in
       toolEnable = true;
       hasAletheorePackage = true;
       hasInstallTask = true;
+      wrapperExportsLibstdcxx = true;
     };
   };
 
