@@ -111,13 +111,6 @@ build-act-image              # devenv-act:24.04 for local act
 | `tests/unit/` | Main nix-unit suite: `stdlib/`, `aspects/`, and cross-cutting topics (versions, hooks, matrices, non-nix, …) |
 | `tools/**/tests/{unit,integration}/` | Per-tool suites (discovered; not imported into the main suite) |
 | `presets/**/tests/{unit,integration}/` | Per-preset suites (discovered) |
-
-### Test layout
-
-- **Main / cross-cutting:** `tests/unit/default.nix` loads topic files from `tests/unit/*.nix`, `tests/unit/stdlib/`, and `tests/unit/aspects/` via `tests/lib/suite.nix` (no hard-coded topic list). Stdlib loader/API tests use **`tests/fixtures/mock-framework/`** (mock tools + presets), not the production `tools/` / `presets/` trees.
-- **Per tool / preset:** keep the leaf as `tools/…/<name>.nix` or `presets/…/<name>.nix`. Add a sibling directory `<name>/tests/unit/` (and optionally `integration/`) with `default.nix` plus topic files for **real** leaf coverage. `stdlib.discover` and the devenv preset collector skip `tests/` so suites are never treated as tools or presets.
-- **Shared helpers:** `tests/lib/harness.nix`, `tests/lib/suite.nix`, `tests/lib/preset-eval.nix`, `tests/lib/discover-suites.nix`, `tests/lib/mock-framework.nix`.
-- **Run one owner suite:** `nix-unit -I nixpkgs=flake:nixpkgs -I devenv4monorepo=$PWD tools/ide/vscode/tests/unit/default.nix`
 | `tests/setup/setup.bats` | `setup.sh` (sources the script; `main` guard) |
 | `tests/copier.bats` | `copier copy` / `update`; answers omit secret keys; not copied into monorepos |
 | `tests/update.bats` | `update` template vs consumer; pin helpers; skills refresher (stubbed `npx`); no live registry |
@@ -132,6 +125,13 @@ build-act-image              # devenv-act:24.04 for local act
 | `tests/home/docker-rootless.bats` | `DOCKER_HOST` defaults to the rootless socket; CI is a no-op |
 | `tests/tag-hook.bats` | failing suite blocks `git tag` |
 | `tests/integration/` | nixosTest (generated `test.yml` + eval asserts) |
+
+### Test layout
+
+- **Main / cross-cutting:** `tests/unit/default.nix` loads topic files from `tests/unit/*.nix`, `tests/unit/stdlib/`, and `tests/unit/aspects/` via `tests/lib/suite.nix` (no hard-coded topic list). Stdlib loader/API tests use **`tests/fixtures/mock-framework/`** (mock tools + presets), not the production `tools/` / `presets/` trees.
+- **Per tool / preset:** keep the leaf as `tools/…/<name>.nix` or `presets/…/<name>.nix`. Add a sibling directory `<name>/tests/unit/` (and optionally `integration/`) with `default.nix` plus topic files for **real** leaf coverage. `stdlib.discover` and the devenv preset collector skip `tests/` so suites are never treated as tools or presets.
+- **Shared helpers:** `tests/lib/harness.nix`, `tests/lib/suite.nix`, `tests/lib/preset-eval.nix`, `tests/lib/discover-suites.nix`, `tests/lib/mock-framework.nix`.
+- **Run one owner suite:** `nix-unit -I nixpkgs=flake:nixpkgs -I devenv4monorepo=$PWD tools/ide/vscode/tests/unit/default.nix`
 
 `test-devenv-integration` `actionlint`s generated `test.yml` and fixtures, then `act workflow_call` on the Python fixture. Skip nested act when `ACT` is set. `.actrc` maps `ubuntu-24.04` and `ubuntu-26.04` to `devenv-act:24.04` (no `act-26.04` image yet). `.github/actionlint.yaml` lists `ubuntu-26.04` until actionlint's built-in runner list includes it.
 
