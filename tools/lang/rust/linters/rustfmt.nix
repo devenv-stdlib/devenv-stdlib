@@ -1,4 +1,4 @@
-# Local rustfmt git-hook and edition-aware editor args.
+# Local rustfmt via treefmt, edition-aware editor args.
 args@{
   pkgs,
   lib,
@@ -18,26 +18,43 @@ else
       };
       upgrade = "none";
       project =
-        { config, ... }:
+        {
+          config,
+          pkgs,
+          lib,
+          ...
+        }:
         let
           edition = config.supported.rust.edition or null;
         in
         {
           # Format via devenv treefmt (not a separate git-hooks.rustfmt entry).
-          # treefmt-nix defaults programs.rustfmt.edition to "2024"; when the
-          # workspace has no supported.rust.edition, clear --edition so rustfmt
-          # follows Cargo.toml / rustfmt.toml (2021 workspaces stay valid).
-          # Nest edition under programs.rustfmt — a sibling `//` would replace
-          # `{ enable = true; }` entirely (same pitfall as yamlfmt settings).
-          treefmt.config = {
-            programs.rustfmt = {
-              enable = true;
-            }
-            // lib.optionalAttrs (edition != null) { inherit edition; };
-          }
-          // lib.optionalAttrs (edition == null) {
-            settings.formatter.rustfmt.options = lib.mkForce [ ];
-          };
+          # treefmt-nix defaults programs.rustfmt.edition to "2024". When
+          # supported.rust.edition is set, pass it. When unset, invoke via
+          # `cargo fmt` so the workspace Cargo.toml edition is honored (bare
+          # rustfmt defaults to 2015 and ignores the manifest). Always keep
+          # skip_children so out-of-line modules are not double-formatted.
+          treefmt.config =
+            if edition != null then
+              {
+                programs.rustfmt = {
+                  enable = true;
+                  inherit edition;
+                };
+              }
+            else
+              {
+                programs.rustfmt.enable = true;
+                settings.formatter.rustfmt = {
+                  command = "${pkgs.cargo}/bin/cargo";
+                  options = lib.mkForce [
+                    "fmt"
+                    "--"
+                    "--config"
+                    "skip_children=true"
+                  ];
+                };
+              };
 
           stdlib.lang.rust.settings = lib.optionalAttrs (edition != null) {
             "rust-analyzer.rustfmt.extraArgs" = [
