@@ -14,7 +14,8 @@ let
     map (name: "          ${name}: ${builtins.toJSON attrs.${name}}") names;
 in
 {
-  # cfg: { action, actionComment?, maxFailures, closePr, exemptDraftPrs, extraWith }
+  # cfg: { action, actionComment?, maxFailures, closePr, exemptDraftPrs,
+  #         exemptAuthorAssociation, extraWith }
   workflowText =
     cfg:
     let
@@ -22,6 +23,8 @@ in
         max-failures = toString cfg.maxFailures;
         close-pr = boolYaml cfg.closePr;
         exempt-draft-prs = boolYaml cfg.exemptDraftPrs;
+        # Marketplace default is OWNER,MEMBER,COLLABORATOR; empty = scan everyone.
+        exempt-author-association = cfg.exemptAuthorAssociation;
       };
       withAttrs = named // cfg.extraWith;
       comment = cfg.actionComment or "";

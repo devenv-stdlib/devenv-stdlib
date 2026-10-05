@@ -45,7 +45,7 @@ Host jobs restore `/nix` from the GitHub Actions cache (`cache-nix-action/restor
 presets.ci.github_actions.anti-slop.enable = true;
 ```
 
-Then commit the synced `.github/workflows/pr-quality.yml`. Tune `action` (default pins the v0.3.0 commit SHA; `actionComment` labels the `uses:` line), `maxFailures`, `closePr`, `exemptDraftPrs` (drafts exempt by default), or pass further Action inputs via `extraWith`. Disable with `enable = false` and remove the workflow file. See `presets/examples/ci-anti-slop.nix`.
+Then commit the synced `.github/workflows/pr-quality.yml`. Tune `action` (default pins the v0.3.0 commit SHA; `actionComment` labels the `uses:` line), `maxFailures`, `closePr`, `exemptDraftPrs` (drafts exempt by default), `exemptAuthorAssociation` (empty by default — no OWNER/MEMBER/COLLABORATOR skip; marketplace default would exempt those), or pass further Action inputs via `extraWith`. Disable with `enable = false` and remove the workflow file. See `presets/examples/ci-anti-slop.nix`.
 
 ## JUnit
 
