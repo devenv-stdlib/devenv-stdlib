@@ -13,14 +13,6 @@ let
         github_actions = {
           runs-on = [ "ubuntu-24.04" ];
         };
-        circleci = {
-          resource_class = "medium";
-          executor = {
-            machine = {
-              image = "ubuntu-2404:current";
-            };
-          };
-        };
       };
     };
     ubuntu-lts-curr = {
@@ -31,14 +23,6 @@ let
       providers = {
         github_actions = {
           runs-on = [ "ubuntu-26.04" ];
-        };
-        circleci = {
-          resource_class = "medium";
-          executor = {
-            machine = {
-              image = "ubuntu-2604:current";
-            };
-          };
         };
       };
     };

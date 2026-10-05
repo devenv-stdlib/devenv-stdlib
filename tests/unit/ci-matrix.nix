@@ -1,4 +1,4 @@
-# stdlib.ci.matrix IR + GHA/CircleCI backends.
+# stdlib.ci.matrix IR + GHA backend.
 {
   lib,
   ci,
@@ -9,7 +9,6 @@
 let
   inherit (ci) matrix;
   gha = ci.backends.github_actions;
-  cci = ci.backends.circleci;
 in
 {
   testMatrixCartesian = {
@@ -196,7 +195,7 @@ in
     };
   };
 
-  testMatrixDefaultProfilesHaveGhaAndCircleci = {
+  testMatrixDefaultProfilesHaveGha = {
     expr =
       let
         p = matrix.defaultRunnerProfiles;
@@ -204,13 +203,13 @@ in
       {
         prevGha = p.ubuntu-lts-prev.providers.github_actions.runs-on;
         currGha = p.ubuntu-lts-curr.providers.github_actions.runs-on;
-        prevCci = p.ubuntu-lts-prev.providers.circleci.resource_class;
+        prevProviders = lib.attrNames p.ubuntu-lts-prev.providers;
         arch = p.ubuntu-lts-curr.arch;
       };
     expected = {
       prevGha = [ "ubuntu-24.04" ];
       currGha = [ "ubuntu-26.04" ];
-      prevCci = "medium";
+      prevProviders = [ "github_actions" ];
       arch = "x86_64";
     };
   };
@@ -239,24 +238,6 @@ in
       hasPython = true;
       hasOs = true;
       cellCount = 2; # two LTS runners × one python version
-    };
-  };
-
-  testCircleciBackendStub = {
-    expr =
-      let
-        r = cci.render (matrix.plan { jobs = { }; });
-      in
-      {
-        inherit (r) implemented path;
-        textNull = r.text == null;
-        mentionsStub = contains "stub" r.message;
-      };
-    expected = {
-      implemented = false;
-      path = ".circleci/config.yml";
-      textNull = true;
-      mentionsStub = true;
     };
   };
 
