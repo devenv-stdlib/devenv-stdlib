@@ -85,6 +85,31 @@ in
           '';
           example = "MEMBER,COLLABORATOR";
         };
+        requireCommitAuthorMatch = lib.mkOption {
+          type = lib.types.bool;
+          # Marketplace default true. Agent / co-authored tips use a different
+          # git author than the PR opener; LLM-free projects can set true.
+          default = false;
+          description = ''
+            anti-slop `require-commit-author-match` — require every commit
+            author to match the PR opener. Default false; set true if the
+            project disallows LLM / third-party commit authors.
+          '';
+        };
+        requireMaintainerCanModify = lib.mkOption {
+          type = lib.types.bool;
+          # Marketplace default true, but GitHub's maintainer_can_modify is
+          # only meaningful for fork PRs — same-repo PRs always report false
+          # even when maintainers already have push access (peakoss/anti-slop
+          # does not special-case same-repo). Default false for dogfood.
+          default = false;
+          description = ''
+            anti-slop `require-maintainer-can-modify`. Default false: the
+            marketplace check fails every same-repo PR because GitHub always
+            sets `maintainer_can_modify` false when head and base share a
+            repository. Enable only if you primarily receive fork PRs.
+          '';
+        };
         extraWith = lib.mkOption {
           type = lib.types.attrsOf lib.types.str;
           default = { };
@@ -131,6 +156,8 @@ in
           closePr
           exemptDraftPrs
           exemptAuthorAssociation
+          requireCommitAuthorMatch
+          requireMaintainerCanModify
           ;
         workflow = "pr-quality.yml";
       };
