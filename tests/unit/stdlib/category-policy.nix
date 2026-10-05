@@ -593,7 +593,7 @@ in
         checked = bound.requires;
       in
       {
-        inheritWhen = bound.when { } == false;
+        inheritWhen = !(bound.when { });
         inheritWhenOn = bound.when { languages.python.enable = true; };
         nRequires = builtins.length checked;
         inherit ((builtins.head checked)) message;
