@@ -93,9 +93,9 @@ let
   };
 
   defaultCfg = {
-    action = "microsoft/PR-Metrics@v1.7.18";
-    actionComment = "";
-    checkoutAction = "actions/checkout@v4";
+    action = "microsoft/PR-Metrics@ac92804a3a0c8b711ca02dd9956ac6a7f2a1d2ca";
+    actionComment = "v1.7.18";
+    checkoutAction = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262";
     fetchDepth = 0;
     baseSize = 200;
     growthRate = "2.0";
@@ -152,7 +152,7 @@ in
     expected = {
       applied = true;
       hasMarker = true;
-      action = "microsoft/PR-Metrics@v1.7.18";
+      action = "microsoft/PR-Metrics@ac92804a3a0c8b711ca02dd9956ac6a7f2a1d2ca";
       workflow = "pr-metrics.yml";
       baseSize = 200;
       growthRate = "2.0";
@@ -173,14 +173,16 @@ in
         hasName = contains "name: PR Metrics" yaml;
         hasPullRequest = contains "pull_request:" yaml;
         hasReadyForReview = contains "ready_for_review" yaml;
-        hasAction = contains "microsoft/PR-Metrics@v1.7.18" yaml;
-        hasCheckout = contains "actions/checkout@v4" yaml;
+        hasAction = contains "microsoft/PR-Metrics@ac92804a3a0c8b711ca02dd9956ac6a7f2a1d2ca" yaml;
+        hasActionComment = contains "# v1.7.18" yaml;
+        hasCheckout = contains "actions/checkout@11d5960a326750d5838078e36cf38b85af677262" yaml;
         hasFetchDepth = contains "fetch-depth: 0" yaml;
-        hasBase = contains "base-size: 200" yaml;
-        hasGrowth = contains "growth-rate: 2.0" yaml;
-        hasTestFactor = contains "test-factor: 1.0" yaml;
+        hasBase = contains "base-size: \"200\"" yaml;
+        hasGrowth = contains "growth-rate: \"2.0\"" yaml;
+        hasTestFactor = contains "test-factor: \"1.0\"" yaml;
         hasContinue = contains "continue-on-error: true" yaml;
         hasReject = contains "Reject oversized PRs" yaml;
+        hasTitleSep = contains "▪️" yaml;
         hasDraftSkip = contains "!github.event.pull_request.draft" yaml;
         hasToken = contains "PR_METRICS_ACCESS_TOKEN" yaml;
         hasRunner = contains "runs-on: ubuntu-24.04" yaml;
@@ -192,6 +194,7 @@ in
       hasPullRequest = true;
       hasReadyForReview = true;
       hasAction = true;
+      hasActionComment = true;
       hasCheckout = true;
       hasFetchDepth = true;
       hasBase = true;
@@ -199,6 +202,7 @@ in
       hasTestFactor = true;
       hasContinue = true;
       hasReject = true;
+      hasTitleSep = true;
       hasDraftSkip = true;
       hasToken = true;
       hasRunner = true;
@@ -236,7 +240,7 @@ in
         yamlLacksDraftIf = contains "!github.event.pull_request.draft" yaml;
         yamlLacksContinue = contains "continue-on-error" yaml;
         yamlLacksFetchDepth = contains "fetch-depth" yaml;
-        yamlHasTest0 = contains "test-factor: 0.0" yaml;
+        yamlHasTest0 = contains "test-factor: \"0.0\"" yaml;
       };
     expected = {
       rejectAboveMedium = false;

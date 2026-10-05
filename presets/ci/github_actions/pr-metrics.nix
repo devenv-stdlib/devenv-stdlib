@@ -52,27 +52,28 @@ in
       options.presets.ci.github_actions.pr-metrics = {
         action = lib.mkOption {
           type = lib.types.str;
-          # Immutable release tag (marketplace README pin). Prefer tags over a
-          # floating major line; pull_request (not pull_request_target) so a
-          # release tag is acceptable — same posture as Aletheore.
-          default = "microsoft/PR-Metrics@v1.7.18";
+          # Pin the release by commit SHA; pull_request does not make a tag
+          # immutable (same posture as anti-slop). Human-readable tag stays in
+          # actionComment.
+          default = "microsoft/PR-Metrics@ac92804a3a0c8b711ca02dd9956ac6a7f2a1d2ca";
           description = ''
-            Marketplace Action pin (`owner/repo@tag`). Prefer an immutable
-            release tag over a moving major line.
+            Marketplace Action pin (`owner/repo@sha`). Prefer a full commit SHA
+            over a mutable tag; put the release tag in `actionComment`.
           '';
         };
         actionComment = lib.mkOption {
           type = lib.types.str;
-          default = "";
+          default = "v1.7.18";
           description = ''
-            Trailing YAML comment on the generated `uses:` line. Empty string
-            omits the comment.
+            Trailing YAML comment on the generated `uses:` line (release tag for
+            readability). Empty string omits the comment.
           '';
         };
         checkoutAction = lib.mkOption {
           type = lib.types.str;
-          default = "actions/checkout@v4";
-          description = "Checkout Action pin used before microsoft/PR-Metrics.";
+          # actions/checkout@v4 → 11d5960… (verified tag peel).
+          default = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262";
+          description = "Checkout Action pin (full commit SHA) used before microsoft/PR-Metrics.";
         };
         fetchDepth = lib.mkOption {
           type = lib.types.nullOr lib.types.ints.unsigned;
@@ -147,7 +148,8 @@ in
           default = true;
           description = ''
             Fail the job when the PR Metrics title prefix is larger than medium
-            (L, XL, 2XL, …). Opt out with `false` to annotate only. Raise
+            (L, XL, 2XL, …), or when the size prefix is missing / unrecognized
+            (fail-closed). Opt out with `false` to annotate only. Raise
             `baseSize` / `growthRate` to widen what counts as medium.
           '';
         };

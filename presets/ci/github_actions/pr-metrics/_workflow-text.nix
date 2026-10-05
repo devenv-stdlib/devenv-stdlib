@@ -7,7 +7,9 @@ let
     let
       names = lib.sort (a: b: a < b) (builtins.attrNames attrs);
     in
-    map (name: "          ${name}: ${attrs.${name}}") names;
+    # Quote every with: value as a YAML scalar (toJSON) so embedded :, #, or
+    # newlines in extraWith / pattern inputs cannot break the workflow.
+    map (name: "          ${name}: ${builtins.toJSON attrs.${name}}") names;
 
   # Optional scalar → include only when non-null / non-empty.
   optionalStr = name: value: if value == null || value == "" then { } else { ${name} = value; };
@@ -39,9 +41,10 @@ in
       fetchDepthLine =
         if cfg.fetchDepth == null then [ ] else [ "          fetch-depth: ${toString cfg.fetchDepth}" ];
 
-      # microsoft/PR-Metrics annotates titles as `<size><test?> ◾ <title>`
-      # (sizes XS/S/M/L/XL/2XL…). It has no fail-on-size input, so this step
-      # enforces "reject > medium" by reading the updated title.
+      # microsoft/PR-Metrics annotates titles as `<size> <test?> ▪️ <title>`
+      # (sizes XS/S/M/L/XL/2XL…; README example `XS ✔️ ▪️ …`). It has no
+      # fail-on-size input, so this step enforces "reject > medium" by reading
+      # the updated title. Fail closed when the prefix is missing/unrecognized.
       rejectSteps =
         if !cfg.rejectAboveMedium then
           [ ]
@@ -57,15 +60,15 @@ in
             "          title=\"\$(gh api \"repos/\${GITHUB_REPOSITORY}/pulls/\${PR_NUMBER}\" --jq .title)\""
             "          echo \"PR title: \${title}\""
             "          # Allowed: XS / S / M (product lines < baseSize * growthRate^2)."
-            "          if [[ \"\${title}\" =~ ^(XS|S|M)(✔|⚠️)?[[:space:]]*◾ ]]; then"
+            "          if [[ \"\${title}\" =~ ^(XS|S|M)[[:space:]]*(✔️|⚠️)?[[:space:]]*▪️ ]]; then"
             "            echo \"PR size within allowed maximum (medium).\""
             "            exit 0"
             "          fi"
-            "          if [[ \"\${title}\" =~ ^(L|[0-9]*XL)(✔|⚠️)?[[:space:]]*◾ ]]; then"
+            "          if [[ \"\${title}\" =~ ^(L|[0-9]*XL)[[:space:]]*(✔️|⚠️)?[[:space:]]*▪️ ]]; then"
             "            echo \"::error::PR size exceeds medium (L/XL). Split the change, raise baseSize/growthRate, or set presets.ci.github_actions.pr-metrics.rejectAboveMedium = false.\""
             "            exit 1"
             "          fi"
-            "          echo \"::error::Could not determine PR Metrics size prefix from title; refusing while rejectAboveMedium is enabled.\""
+            "          echo \"::error::Could not determine PR Metrics size prefix from title (missing or unrecognized); refusing while rejectAboveMedium is enabled.\""
             "          exit 1"
           ];
     in

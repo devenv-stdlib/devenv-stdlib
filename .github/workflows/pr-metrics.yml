@@ -18,18 +18,18 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: microsoft/PR-Metrics@v1.7.18
+      - uses: microsoft/PR-Metrics@ac92804a3a0c8b711ca02dd9956ac6a7f2a1d2ca # v1.7.18
         name: PR Metrics
         env:
           PR_METRICS_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
         with:
-          base-size: 200
-          growth-rate: 2.0
-          test-factor: 1.0
+          base-size: "200"
+          growth-rate: "2.0"
+          test-factor: "1.0"
       - name: Reject oversized PRs
         if: always()
         env:
@@ -40,13 +40,13 @@ jobs:
           title="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq .title)"
           echo "PR title: ${title}"
           # Allowed: XS / S / M (product lines < baseSize * growthRate^2).
-          if [[ "${title}" =~ ^(XS|S|M)(✔|⚠️)?[[:space:]]*◾ ]]; then
+          if [[ "${title}" =~ ^(XS|S|M)[[:space:]]*(✔️|⚠️)?[[:space:]]*▪️ ]]; then
             echo "PR size within allowed maximum (medium)."
             exit 0
           fi
-          if [[ "${title}" =~ ^(L|[0-9]*XL)(✔|⚠️)?[[:space:]]*◾ ]]; then
+          if [[ "${title}" =~ ^(L|[0-9]*XL)[[:space:]]*(✔️|⚠️)?[[:space:]]*▪️ ]]; then
             echo "::error::PR size exceeds medium (L/XL). Split the change, raise baseSize/growthRate, or set presets.ci.github_actions.pr-metrics.rejectAboveMedium = false."
             exit 1
           fi
-          echo "::error::Could not determine PR Metrics size prefix from title; refusing while rejectAboveMedium is enabled."
+          echo "::error::Could not determine PR Metrics size prefix from title (missing or unrecognized); refusing while rejectAboveMedium is enabled."
           exit 1
