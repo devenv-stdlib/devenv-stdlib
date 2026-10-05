@@ -109,25 +109,17 @@ in
         emptyEqPlain = withEmpty == plain;
         missingEqPlain = withMissing == plain;
         matchesFixture = withEmpty == fixture;
-        # Also matches the versions.workflowText shim path.
-        shimEq =
-          plain == versions.workflowText {
-            pythonOn = true;
-            python = versions.emptyPython // {
-              min = "3.12";
-            };
-          };
       };
     expected = {
       emptyEqPlain = true;
       missingEqPlain = true;
       matchesFixture = true;
-      shimEq = false; # shim expands two LTS runners; basePlan is one cell
     };
   };
 
-  # Narrower shim equality: same snapshot → identical YAML with empty attachments.
-  testGhaEmptyAttachmentsMatchLanguageMatrixShim = {
+  # languageMatrixPlan render is unchanged when an empty AttachmentPlan is attached
+  # (workflowText/matrixReport shims removed in MatrixPlan M5 / #149).
+  testGhaEmptyAttachmentsMatchLanguageMatrixPlan = {
     expr =
       let
         args = {
@@ -139,15 +131,12 @@ in
         plan = versions.languageMatrixPlan args;
         viaPlan = gha.render plan;
         viaEmpty = gha.render (plan // { attachments = attachments.emptyPlan; });
-        viaShim = versions.workflowText args;
       in
       {
         emptyEqPlan = viaEmpty == viaPlan;
-        planEqShim = viaPlan == viaShim;
       };
     expected = {
       emptyEqPlan = true;
-      planEqShim = true;
     };
   };
 
