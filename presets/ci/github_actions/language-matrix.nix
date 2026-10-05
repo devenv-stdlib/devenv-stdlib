@@ -1,6 +1,6 @@
 # Composable CI preset: owns language/OS test.yml matrix generation.
 # Attrpath: ci.github_actions.language-matrix.
-# Behavior matches the former modules/languages/versions.nix.
+# Builds a MatrixPlan (stdlib.ci.matrix) and renders via the GHA backend.
 _: {
   path = [
     "ci"
@@ -9,7 +9,7 @@ _: {
   ];
   description = ''
     Generate .github/workflows/test.yml from stdlib.lang.*.ciMatrix flags and
-    supported.* version policies (Ubuntu LTS runners).
+    supported.* version policies via stdlib.ci.matrix (Ubuntu LTS runner profiles).
   '';
   # Always available; presets.ci.github_actions.language-matrix.enable can turn
   # the writer off.
@@ -91,17 +91,21 @@ _: {
     in
     lib.mkMerge [
       {
-        # Structured matrix for stdlib.report (devenv evaluator).
-        stdlib.markers.ciMatrix = versions.matrixReport snapshot;
+        stdlib = {
+          # Structured matrix for stdlib.report (devenv evaluator).
+          markers.ciMatrix = versions.matrixReport snapshot;
+          # Full MatrixPlan (expanded cells) for tooling / future backends.
+          markers.ciMatrixPlan = versions.languageMatrixPlan snapshot;
 
-        stdlib.generated = [
-          {
-            path = ".github/workflows/test.yml";
-            task = "ci:update-language-matrix";
-            script = "sync-language-versions-workflow";
-            source = workflowFile;
-          }
-        ];
+          generated = [
+            {
+              path = ".github/workflows/test.yml";
+              task = "ci:update-language-matrix";
+              script = "sync-language-versions-workflow";
+              source = workflowFile;
+            }
+          ];
+        };
 
         scripts.sync-language-versions-workflow.exec = syncExec;
       }
