@@ -58,6 +58,8 @@ let
     )
     # Opt-in cache.mr-boxington (scope = local|global); enable defaults false.
     (root + "/presets/cache/mr-boxington.nix")
+    # Opt-in cache.build-cleaner (scope = local|global); enable defaults false.
+    (root + "/presets/cache/build-cleaner.nix")
   ]
   ++ (stdlib.den.load [ (root + "/tools") ]);
 
