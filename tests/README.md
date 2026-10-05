@@ -13,6 +13,8 @@
 
 The main suite must not load production `tools/` or `presets/` for API coverage. Use `tests/lib/mock-framework.nix` + `tests/fixtures/mock-framework/{tools,presets}/` instead. Real leaf behavior stays in owner suites.
 
+Mocks are a **small representative set** of shapes/kinds (categories, install kinds, dependsOn, scopes, gates, …) — not a one-for-one mirror of every real linter or tool. Do not expand the fixture tree into a full production inventory.
+
 Owner suites are discovered additively: any `tools/**/tests/unit/default.nix` or `presets/**/tests/unit/default.nix` is a separate nix-unit invocation. Integration uses the same pattern under `tests/integration/default.nix`.
 
 `stdlib.discover` and devenv preset collection skip `tests/` directories so colocated suites are not loaded as tools or presets.
