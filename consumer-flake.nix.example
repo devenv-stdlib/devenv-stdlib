@@ -38,6 +38,8 @@
           lib
           stdlib
           ;
+        # Consumer overlay only. Framework modules/home/tools/cache presets
+        # resolve from the pin (frameworkRoot defaults to packaging/../.).
         root = ./.;
       };
     in

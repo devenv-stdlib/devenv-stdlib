@@ -16,7 +16,7 @@ host (Ubuntu 24.04 or 26.04 LTS)  --home-switch-->  user profile (terminal, Curs
 
 **Package (this git repo).** The publishable devenv-stdlib flake (`outputs.stdlib` ≡ `outputs.lib`), framework sources under `stdlib/`, shippable `presets/` and `tools/`, packaging helpers, the toolchain catalog, and the docs site. You develop the package here. Consumers take framework code from the flake pin — they do not vendor `stdlib/` or `packaging/` by copying this tree.
 
-**Consumer (the destination monorepo).** Pins `inputs.devenv-stdlib`, imports `${inputs.devenv-stdlib}/packaging/den-outputs.nix` with `root = ./.`, loads framework presets from the pin plus local `./presets`, and owns `devenv.local.nix` / `home.local.nix`. `devenv shell` is the project toolchain: git hooks, language versions, generated `.github/workflows/test.yml`. Leaving the directory (or `direnv`) drops that PATH.
+**Consumer (the destination monorepo).** Pins `inputs.devenv-stdlib`, imports `${inputs.devenv-stdlib}/packaging/den-outputs.nix` with `root = ./.` (consumer overlay only; framework modules/home/tools resolve from the pin), loads framework presets from the pin plus local `./presets`, and owns `devenv.local.nix` / `home.local.nix`. `devenv shell` is the project toolchain: git hooks, language versions, generated `.github/workflows/test.yml`. Leaving the directory (or `direnv`) drops that PATH.
 
 **Host (the person).** Home Manager applies the Den `homeConfigurations.developer` profile (`home-switch`). The dropdown terminal, Starship, Cursor, `rg`, `fd`, `gh`, and the other user-global CLIs stay available after you `cd` away. `setup.sh` installs Nix, devenv, Cachix, and Home Manager once per machine. Supported hosts are the current Ubuntu LTS and the previous one, with **rootless Docker** as the default Engine (local `act`). GitHub Actions keeps the runner’s rootful daemon. Den also declares **stub** `den.hosts` for NixOS/Darwin class matrices (`shell-tools` portable aspect); GNOME quake terminals stay Ubuntu/HM-only — see `modules/den/MULTI-OS.md`.
 
@@ -25,7 +25,7 @@ The terminal is user-global because you already have a terminal open to run `dev
 ## How a consumer wires the pin
 
 1. Add `devenv-stdlib.url = "github:thedrow/devenv4monorepo/<tag-or-sha>"` (see `consumer-flake.nix.example`).
-2. Import `${inputs.devenv-stdlib}/packaging/den-outputs.nix` with `stdlib = inputs.devenv-stdlib.stdlib` and `root = ./.`.
+2. Import `${inputs.devenv-stdlib}/packaging/den-outputs.nix` with `stdlib = inputs.devenv-stdlib.stdlib` and `root = ./.` (overlay). Framework Den modules and cache presets come from the pin (`frameworkRoot`), not from copied paths under `root`.
 3. Load `"${inputs.devenv-stdlib}/presets"` and local `./presets` (later paths override).
 4. Enable languages and version bounds in committed `devenv.local.nix` (start from `devenv.local.nix.example`). In this publisher checkout that file stays gitignored so experiments do not leak.
 5. Optional secrets go to SecretSpec / `.env` — not into the flake URL.
