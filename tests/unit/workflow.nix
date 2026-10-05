@@ -100,12 +100,18 @@
         rust = contains "rust:" yaml;
         go = contains "go:" yaml;
         javascript = contains "javascript:" yaml;
+        rustName = contains "name: Rust \${{ matrix.channel }} \${{ matrix.version }} (\${{ matrix.os }})" yaml;
+        goName = contains "name: Go \${{ matrix.version }} (\${{ matrix.os }})" yaml;
+        javascriptName = contains "name: JavaScript \${{ matrix.runtime }} \${{ matrix.version }} (\${{ matrix.os }})" yaml;
         deno = contains "languages.deno.enable" yaml;
       };
     expected = {
       rust = true;
       go = true;
       javascript = true;
+      rustName = true;
+      goName = true;
+      javascriptName = true;
       deno = true;
     };
   };
