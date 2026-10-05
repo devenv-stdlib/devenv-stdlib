@@ -260,6 +260,7 @@ in
       "ci.backends.github_actions.render"
       "ci.backends.github_actions.renderAttachments"
       "ci.backends.github_actions.rowAttrs"
+      "ci.backends.github_actions.yamlScalar"
       "ci.matrix"
       "ci.matrix.aarch64RunnerProfiles"
       "ci.matrix.allRunnerProfiles"
