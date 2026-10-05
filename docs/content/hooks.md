@@ -29,15 +29,23 @@ Language-gated formatters are still thin tool presets (`presets/<lang>/lint/…`
 ## Local and CI commands
 
 ```bash
-# Format / lint every treefmt-backed program
+# Format / lint every treefmt-backed program (writes fixes)
 treefmt
 
-# Check mode (CI-friendly; fail if files would change)
+# Check mode (fail if files would change)
 treefmt --fail-on-change
 
 # Full hook set: treefmt + residual prek (commit-msg hooks need a commit)
 prek run --all-files
 ```
+
+The generated `treefmt` git-hooks / prek entry is check mode, not format-only:
+
+```text
+treefmt --fail-on-change --no-cache
+```
+
+Pinned in `modules/linters` via `git-hooks.hooks.treefmt.settings.fail-on-change` / `no-cache` (both `true`). So `prek run --all-files` in CI fails when any treefmt-backed program would rewrite a file; it does not silently pass after formatting.
 
 CI (`hooks.yml`) runs `prek run --all-files` after `devenv shell` materializes the generated hook config. That single prek run includes the `treefmt` hook plus residual checks. If prek fails, the job comments with the log (and uploads `prek.log`). A later green run removes that comment.
 

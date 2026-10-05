@@ -62,7 +62,16 @@ in
       treefmt.enable = lib.mkDefault treefmtEnabled;
 
       # One git-hooks entry runs the whole treefmt suite (same wrapper as `treefmt`).
-      git-hooks.hooks.treefmt.enable = lib.mkIf config.treefmt.enable true;
+      # CI (`prek run --all-files`) must fail when formatting would rewrite files —
+      # not silently format-and-pass. git-hooks.nix defaults these to true; pin
+      # them so a future upstream default flip cannot regress CI.
+      git-hooks.hooks.treefmt = lib.mkIf config.treefmt.enable {
+        enable = true;
+        settings = {
+          fail-on-change = true; # → `treefmt --fail-on-change`
+          no-cache = true; # → `treefmt --no-cache`
+        };
+      };
 
       # Vendored upstream skills — not ours to reflow (matches former git-hooks.excludes).
       # Also ignore stray relative Nix stores (bad XDG_CACHE_HOME) and build products.
