@@ -14,6 +14,7 @@
 let
   categories = import ./categories.nix { inherit lib; };
   categoryPolicy = import ./category-policy.nix { inherit lib; };
+  tasksLib = import ./tasks.nix { inherit lib; };
 
   installKinds = [
     "nix"
@@ -181,6 +182,9 @@ let
         ;
       categoryNode = node;
       dependsOn = spec.dependsOn or [ ];
+      # Declared devenv task leaves (unqualified). Empty means none.
+      # Attrset or moduleArgs → attrset; lowered as "<name>:<leaf>".
+      tasks = spec.tasks or { };
       isGlobal = builtins.elem "global" scopes;
       isLocal = builtins.elem "local" scopes;
     };
@@ -247,6 +251,8 @@ let
     };
 
   # devenv / project leaf (local scope). Never imports Den.
+  # When the tool declares `tasks` and the host has options.tasks, those leaves
+  # are lowered automatically on enable (presets may also export/compose).
   applyLocal =
     moduleArgs: spec:
     let
@@ -256,6 +262,12 @@ let
       rendered = if builtins.isFunction raw then raw moduleArgs else raw;
       deps = checked.dependsOn;
       policyAssertions = categoryPolicy.toolAssertions moduleArgs.config (policyArgOf checked);
+      loweredTasks = tasksLib.lower {
+        inherit (checked) name tasks;
+        inherit moduleArgs;
+      };
+      taskConfig =
+        if loweredTasks != { } && tasksLib.hostHasTasks moduleArgs then { tasks = loweredTasks; } else { };
     in
     assert require checked.isLocal "mkTool ${checked.name}: applyLocal is for local (project) tools";
     {
@@ -280,6 +292,7 @@ let
               ++ policyAssertions;
           }
           rendered
+          taskConfig
         ]
       );
     };
@@ -298,6 +311,9 @@ let
         defaultEnable = spec.defaultEnable or false;
         dependsOn = spec.dependsOn or [ ];
       }
+      // lib.optionalAttrs (spec ? path) { inherit (spec) path; }
+      // lib.optionalAttrs (spec ? categoryPolicy) { inherit (spec) categoryPolicy; }
+      // lib.optionalAttrs (spec ? tasks) { inherit (spec) tasks; }
       // lib.optionalAttrs (spec ? project) { inherit (spec) project; }
       // lib.optionalAttrs (!(spec ? project && !(spec ? homeManager))) {
         # Default global install unless the caller only passed project.
@@ -336,6 +352,7 @@ let
       }
       // lib.optionalAttrs (spec ? path) { inherit (spec) path; }
       // lib.optionalAttrs (spec ? categoryPolicy) { inherit (spec) categoryPolicy; }
+      // lib.optionalAttrs (spec ? tasks) { inherit (spec) tasks; }
       // lib.optionalAttrs (spec ? project) { inherit (spec) project; }
       // lib.optionalAttrs (spec ? imports) { inherit (spec) imports; }
       // lib.optionalAttrs (!(spec ? project && !(spec ? homeManager))) {
@@ -402,4 +419,6 @@ in
     refsFromPaths
     refsFromSpecs
     ;
+  # Re-export for callers that only import tool.nix.
+  tasks = tasksLib;
 }

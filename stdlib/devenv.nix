@@ -9,6 +9,10 @@
 # tool-ref values from refsOfTools / mkTool.refsFromSpecs. Enable options
 # stay at tools.<leaf>.enable; global vs local is an internal payload split.
 #
+# Tools may declare devenv task leaves (`tasks` on mkTool). Local tools lower
+# them on enable. Thin presets may `exportTasks` (tool refs) and `workflows`
+# (compose before/after around an anchor) — see stdlib/tasks.nix.
+#
 # Logging goes through stdlib.log (nix-log is private). End-of-eval report
 # uses module warnings + enterShell — no wrapper scripts. Tracked generated
 # files are tasks + enterShell dry-run, not enterShell writers.
@@ -26,6 +30,7 @@
 let
   presetLib = import ./preset.nix { inherit lib; };
   toolLib = import ./tool.nix { inherit lib; };
+  tasksLib = import ./tasks.nix { inherit lib; };
   loadLib = import ./load.nix { inherit lib; };
   categoryPolicy = import ./category-policy.nix { inherit lib; };
   projectLib = import ../modules/lib/project.nix { inherit lib; };
@@ -345,14 +350,14 @@ let
     raw != null && raw != { };
 
   applyPreset =
-    decl:
+    decl: discoveredTools:
     {
       config,
       lib,
       pkgs ? { },
       options,
       ...
-    }:
+    }@moduleArgs:
     let
       enable = presetLib.getPresetAttr config decl.path "enable";
       strict = presetLib.getPresetAttr config decl.path "strict";
@@ -407,6 +412,22 @@ let
           }
         else
           decl.project;
+      # Presets export tool-declared tasks and/or compose workflow edges.
+      # Only when the host declares options.tasks (devenv); fixtures may omit it.
+      taskConfig =
+        if !(logged.applied && tasksLib.hostHasTasks moduleArgs) then
+          { }
+        else
+          let
+            exported = tasksLib.export {
+              items = decl.exportTasks or [ ];
+              discovered = discoveredTools;
+              inherit moduleArgs;
+            };
+            composed = tasksLib.workflows (decl.workflows or [ ]);
+            merged = lib.recursiveUpdate exported composed;
+          in
+          lib.optionalAttrs (merged != { }) { tasks = merged; };
     in
     {
       imports = lib.optional (decl ? module && decl.module != null) decl.module;
@@ -418,6 +439,7 @@ let
         # Project payload only. Tool enables are lowered in enablePresetTools
         # so tools.* merges do not re-enter realize via mkIf logged.applied.
         (lib.mkIf logged.applied projectConfig)
+        (lib.mkIf logged.applied taskConfig)
       ];
     };
 
@@ -751,6 +773,7 @@ in
       args = normalizeLoadArgs rootsOrAttrs;
       toolRefs = refsOfTools args.tools;
       decls = declsOf args.presets toolRefs;
+      discoveredTools = toolLib.specs (loadLib.discover args.tools);
       toolModules = localToolModules args.tools;
     in
     if decls == [ ] && toolModules == [ ] then
@@ -766,7 +789,7 @@ in
         (presetOptions decls)
       ]
       ++ toolModules
-      ++ map applyPreset decls
+      ++ map (decl: applyPreset decl discoveredTools) decls
       ++ map enablePresetTools decls
       ++ [
         lower

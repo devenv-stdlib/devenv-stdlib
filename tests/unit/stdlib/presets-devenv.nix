@@ -34,6 +34,10 @@ let
       type = lib.types.listOf lib.types.anything;
       default = [ ];
     };
+    tasks = lib.mkOption {
+      type = freeform;
+      default = { };
+    };
     assertions = lib.mkOption {
       type = lib.types.listOf lib.types.anything;
       default = [ ];
@@ -358,5 +362,46 @@ in
   testMockPresetExtraOptionIsDeclared = {
     expr = (eval { }).presets.terminal.mock-provider.provider;
     expected = "alacritty";
+  };
+
+  testMockLocalToolAutoLowersTasks = {
+    expr =
+      let
+        cfg = eval { languages.python.enable = true; };
+        t = cfg.tasks."mock-check:verify" or null;
+      in
+      {
+        tool = cfg.tools.mock-check.enable;
+        hasTask = t != null;
+        exec = (t or { }).exec or null;
+      };
+    expected = {
+      tool = true;
+      hasTask = true;
+      exec = "echo mock-check-verify";
+    };
+  };
+
+  testMockPresetExportsAndComposesTasks = {
+    expr =
+      let
+        cfg = eval { presets.demo.task-workflow.enable = true; };
+        sample = cfg.tasks."mock-cpu:sample" or null;
+        report = cfg.tasks."mock-cpu:report" or null;
+      in
+      {
+        hasSample = sample != null;
+        hasReport = report != null;
+        sampleBefore = (sample or { }).before or [ ];
+        reportAfter = (report or { }).after or [ ];
+        sampleExec = (sample or { }).exec or null;
+      };
+    expected = {
+      hasSample = true;
+      hasReport = true;
+      sampleBefore = [ "demo:build" ];
+      reportAfter = [ "demo:build" ];
+      sampleExec = "echo mock-cpu-sample";
+    };
   };
 }

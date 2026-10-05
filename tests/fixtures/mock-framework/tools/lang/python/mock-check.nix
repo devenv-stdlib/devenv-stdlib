@@ -16,6 +16,12 @@ else
         kind = "project";
       };
       upgrade = "none";
+      # Representative tool-declared devenv tasks (auto-lowered on enable).
+      tasks = {
+        verify = {
+          exec = "echo mock-check-verify";
+        };
+      };
       project = {
         git-hooks.hooks.mock-check.enable = true;
       };
