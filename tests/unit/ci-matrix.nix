@@ -285,9 +285,9 @@ in
       {
         # Required cells must not make the whole job continue-on-error: true.
         jobLevelTrue = contains "continue-on-error: true\n" yaml;
-        perCell = contains "continue-on-error: \${{ matrix.optional == 'true' }}" yaml;
-        optionalTrueRow = contains "optional: \"true\"" yaml;
-        optionalFalseRow = contains "optional: \"false\"" yaml;
+        perCell = contains "continue-on-error: \${{ matrix.optional }}" yaml;
+        optionalTrueRow = contains "optional: true" yaml;
+        optionalFalseRow = contains "optional: false" yaml;
         # Default language matrix stays free of optional keys.
         pythonClean =
           !(contains "optional:" (
