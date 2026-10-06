@@ -60,16 +60,16 @@ When adding a non-Nix tool to the **template**: run `devenv tasks run non-nix:ad
 
 ## Generated files
 
-Tracked generated files are **not** written on `enterShell`, except the opt-in `pr-quality.yml` and `pr-metrics.yml` workflows, which their presets sync on shell entry. Dry-run on shell entry reports stale paths; write them with devenv tasks (`--dry-run` compares only, including newline-only diffs).
+Tracked generated files are **not** written on `enterShell`. Dry-run on shell entry reports stale paths; write them with devenv tasks (`--dry-run` compares only, including newline-only diffs).
 
 | File | Writer | Git | Update |
 | --- | --- | --- | --- |
 | `.github/workflows/test.yml` | `ci.github_actions.language-matrix` | committed | `devenv tasks run ci:update-language-matrix` |
-| `.github/workflows/pr-quality.yml` | `ci.github_actions.anti-slop` | committed | `enterShell` (`sync-anti-slop-workflow`) |
-| `.github/workflows/pr-metrics.yml` | `ci.github_actions.pr-metrics` | committed | `enterShell` (`sync-pr-metrics-workflow`) |
+| `.github/workflows/pr-quality.yml` | `ci.github_actions.anti-slop` | committed | `devenv tasks run ci:update-anti-slop` |
+| `.github/workflows/pr-metrics.yml` | `ci.github_actions.pr-metrics` | committed | `devenv tasks run ci:update-pr-metrics` |
 | `.vscode/extensions.json` | `stdlib.devenv.load` | gitignored | `devenv tasks run ides:update-extensions-json` |
 | `.vscode/settings.json` | `stdlib.devenv.load` | committed when it changes | `devenv tasks run ides:update-settings-json` |
-| language-matrix + IDE JSON above | `stdlib:update-generated` | — | `devenv tasks run stdlib:update-generated` |
+| language-matrix + anti-slop + pr-metrics + IDE JSON above | `stdlib:update-generated` | — | `devenv tasks run stdlib:update-generated` |
 | `.devcontainer/devcontainer.json` | devenv `devcontainer.enable` | committed | devenv built-in |
 | `.serena/project.yml` | `stdlib.devenv.load` (`files`) | gitignored | `devenv:files` |
 | `.debtmap.toml` | `modules/debtmap/` | gitignored | `devenv:files` |

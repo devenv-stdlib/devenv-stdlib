@@ -32,9 +32,9 @@ Paths that land in a **generated monorepo** (Copier copy). Template-only trees (
 | `modules/languages/catalog.json` | Cycle → latest patch and EOL |
 | `hooks/reference-transaction` | Tag guard, installed on `devenv shell` |
 | `.github/workflows/ci.yml` | Lint (prek) first (treefmt + residual), then unit tests, integration tests, generated `test.yml`, semantic-release |
-| `.github/workflows/pr-quality.yml` | peakoss/anti-slop on `pull_request`; written when `ci.github_actions.anti-slop` is enabled |
+| `.github/workflows/pr-quality.yml` | peakoss/anti-slop on `pull_request`; refresh with `ci:update-anti-slop` when the preset is enabled |
 | `.github/workflows/update-lock.yml` | Weekly `devenv update git-hooks` pull request |
-| `.github/workflows/test.yml` | Written by devenv on `enterShell`; **commit** this file |
+| `.github/workflows/test.yml` | Language matrix; refresh with `ci:update-language-matrix`; **commit** this file |
 | `.devcontainer/devcontainer.json` | Written when `devcontainer.enable`; **commit** for Codespaces / Dev Containers |
 
 An existing destination `README.md` is left in place. This documentation site is not copied into the monorepo; use [devenv4monorepo.github.io](https://devenv4monorepo.github.io/).
