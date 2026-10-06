@@ -72,6 +72,10 @@ let
               type = lib.types.attrsOf freeform;
               default = { };
             };
+            tasks = lib.mkOption {
+              type = freeform;
+              default = { };
+            };
             treefmt = lib.mkOption {
               type = freeform;
               default = { };
@@ -160,7 +164,12 @@ in
         exemptDraftPrs = marker.exemptDraftPrs or false;
         hasSync = cfg.scripts ? sync-pr-metrics-workflow;
         syncCopiesPrMetrics = contains "pr-metrics.yml" sync;
-        enterHasSync = contains "sync-pr-metrics-workflow" cfg.enterShell;
+        hasUpdateTask = cfg.tasks ? "ci:update-pr-metrics";
+        hasCompositeTask = cfg.tasks ? "stdlib:update-generated";
+        enterWritesWorkflow = contains "sync-pr-metrics-workflow" cfg.enterShell;
+        enterHasStaleHint = contains "ci:update-pr-metrics" cfg.enterShell;
+        generatedPath =
+          (lib.findFirst (g: g.path == ".github/workflows/pr-metrics.yml") null cfg.stdlib.generated) != null;
       };
     expected = {
       applied = true;
@@ -175,7 +184,11 @@ in
       exemptDraftPrs = true;
       hasSync = true;
       syncCopiesPrMetrics = true;
-      enterHasSync = true;
+      hasUpdateTask = true;
+      hasCompositeTask = true;
+      enterWritesWorkflow = false;
+      enterHasStaleHint = true;
+      generatedPath = true;
     };
   };
 

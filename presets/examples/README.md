@@ -22,5 +22,6 @@ repo dogfoods in root `devenv.nix`):
 presets.ci.github_actions.anti-slop.enable = true;
 ```
 
-`enterShell` writes `.github/workflows/pr-quality.yml` — commit it. See
-`ci-anti-slop.nix` and [CI docs](../../docs/content/ci.md).
+Run `devenv tasks run ci:update-anti-slop` (or `stdlib:update-generated`)
+and commit `.github/workflows/pr-quality.yml`. See `ci-anti-slop.nix` and
+[CI docs](../../docs/content/ci.md).

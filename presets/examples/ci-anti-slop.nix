@@ -3,8 +3,9 @@
 # Shows how a consumer enables the peakoss/anti-slop PR quality gate. The
 # framework preset lives at presets/ci/github_actions/anti-slop.nix (attrpath
 # ci.github_actions.anti-slop) and defaults to off (marketplace Action). Set
-# enable = true in devenv.nix / devenv.local.nix; enterShell syncs
-# .github/workflows/pr-quality.yml — commit that file.
+# enable = true in devenv.nix / devenv.local.nix; then
+# `devenv tasks run ci:update-anti-slop` (or stdlib:update-generated) and
+# commit .github/workflows/pr-quality.yml.
 #
 #   presets.ci.github_actions.anti-slop.enable = true;
 #
