@@ -56,7 +56,9 @@ let
     trim-trailing-whitespace = mkPrek true "Strip trailing whitespace." {
       excludes = [ "^devenv\\.lock$" ];
     };
-    end-of-file-fixer = mkPrek true "Ensure a trailing newline at EOF." { };
+    end-of-file-fixer = mkPrek true "Ensure a trailing newline at EOF." {
+      excludes = [ "^devenv\\.lock$" ];
+    };
     check-added-large-files = mkPrek true "Block unexpectedly large added files." { };
     check-case-conflicts = mkPrek true "Detect filename case conflicts." { };
     check-merge-conflicts = mkPrek true "Detect merge conflict markers (incl. Copier)." { };
