@@ -289,7 +289,7 @@ in
         enter = stdlib.report.mkEnterShellSnippet inv;
       in
       {
-        mode = (builtins.head inv.generated).mode;
+        inherit ((builtins.head inv.generated)) mode;
         usesTail = contains "tail -c1" enter;
         namesLock = contains "devenv.lock is stale" enter;
         noCmpAgainstEmptySource = !(contains "cmp -s ''" enter);

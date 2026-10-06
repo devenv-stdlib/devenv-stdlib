@@ -174,8 +174,8 @@ let
       matrix = if matrix == null then null else matrixInventory matrix;
       unusedCategories = sort unusedCategories;
       generated = map (g: {
-        path = g.path;
-        task = g.task;
+        inherit (g) path;
+        inherit (g) task;
         script = g.script or null;
         source = toString (g.source or "");
         mode = g.mode or "copy";
