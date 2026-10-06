@@ -42,11 +42,12 @@ in
     "pr-metrics"
   ];
   description = ''
-    Opt-in: write .github/workflows/pr-metrics.yml for microsoft/PR-Metrics
-    (GHA-only PR size / test-coverage indicators). Runs in parallel with Lint
-    (prek); check context `PR size (pr-metrics)` fails on reject-above-medium —
-    add it to the branch ruleset after merge to block merge. Rejects PRs larger
-    than medium by default. Enable with
+    Opt-in: own .github/workflows/pr-metrics.yml for microsoft/PR-Metrics
+    (GHA-only PR size / test-coverage indicators). Does not write on enterShell;
+    run `devenv tasks run ci:update-pr-metrics` (or stdlib:update-generated).
+    Runs in parallel with Lint (prek); check context `PR size (pr-metrics)`
+    fails on reject-above-medium — add it to the branch ruleset after merge to
+    block merge. Rejects PRs larger than medium by default. Enable with
     presets.ci.github_actions.pr-metrics.enable = true. Complements anti-slop /
     Aletheore; not a local hook.
   '';
@@ -215,6 +216,7 @@ in
       config,
       lib,
       pkgs,
+      options,
       ...
     }:
     let
@@ -231,47 +233,51 @@ in
       effectiveCfg = cfg // {
         codeFileExtensions = effectiveExtensions;
       };
-      text = workflowText effectiveCfg;
+      generate = import ../../../stdlib/generate.nix { inherit lib; };
+      text = generate.ensureTrailingNewline (workflowText effectiveCfg);
       workflowFile = pkgs.writeText "pr-metrics.yml" text;
-    in
-    {
-      # Structured marker for tests / future stdlib.report sections.
-      stdlib.markers.prMetrics = {
-        enable = true;
-        inherit (cfg)
-          action
-          actionComment
-          checkoutAction
-          checkoutComment
-          fetchDepth
-          baseSize
-          growthRate
-          testFactor
-          continueOnError
-          rejectAboveMedium
-          exemptDraftPrs
-          ;
-        codeFileExtensions = effectiveExtensions;
-        inherit docsTooling derivedExtensions;
-        workflow = "pr-metrics.yml";
+      syncExec = generate.mkSyncFileExec {
+        storePath = workflowFile;
+        relPath = ".github/workflows/pr-metrics.yml";
       };
+    in
+    lib.mkMerge [
+      {
+        # Structured marker for tests / future stdlib.report sections.
+        stdlib.markers.prMetrics = {
+          enable = true;
+          inherit (cfg)
+            action
+            actionComment
+            checkoutAction
+            checkoutComment
+            fetchDepth
+            baseSize
+            growthRate
+            testFactor
+            continueOnError
+            rejectAboveMedium
+            exemptDraftPrs
+            ;
+          codeFileExtensions = effectiveExtensions;
+          inherit docsTooling derivedExtensions;
+          workflow = "pr-metrics.yml";
+        };
 
-      scripts.sync-pr-metrics-workflow.exec = ''
-        set -euo pipefail
-        dest="$DEVENV_ROOT/.github/workflows/pr-metrics.yml"
-        mkdir -p "$(dirname "$dest")"
-        tmp="$(mktemp)"
-        cp ${lib.escapeShellArg workflowFile} "$tmp"
-        if ! cmp -s "$tmp" "$dest" 2>/dev/null; then
-          mv "$tmp" "$dest"
-          echo "wrote .github/workflows/pr-metrics.yml"
-        else
-          rm -f "$tmp"
-        fi
-      '';
+        stdlib.generated = [
+          {
+            path = ".github/workflows/pr-metrics.yml";
+            task = "ci:update-pr-metrics";
+            script = "sync-pr-metrics-workflow";
+            source = workflowFile;
+          }
+        ];
 
-      enterShell = ''
-        sync-pr-metrics-workflow
-      '';
-    };
+        scripts.sync-pr-metrics-workflow.exec = syncExec;
+      }
+      # mkIf false still defines `tasks` and breaks fixtures without that option.
+      (lib.optionalAttrs (options ? tasks) {
+        tasks."ci:update-pr-metrics".exec = syncExec;
+      })
+    ];
 }

@@ -4,8 +4,8 @@
 # with reject-above-medium. The framework preset lives at
 # presets/ci/github_actions/pr-metrics.nix (attrpath ci.github_actions.pr-metrics)
 # and defaults to off (marketplace Action). Set enable = true in devenv.nix /
-# devenv.local.nix; enterShell syncs .github/workflows/pr-metrics.yml — commit
-# that file.
+# devenv.local.nix; then `devenv tasks run ci:update-pr-metrics` (or
+# stdlib:update-generated) and commit .github/workflows/pr-metrics.yml.
 #
 #   presets.ci.github_actions.pr-metrics.enable = true;
 #

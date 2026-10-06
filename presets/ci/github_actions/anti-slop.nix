@@ -27,12 +27,13 @@ in
     "anti-slop"
   ];
   description = ''
-    Opt-in: write .github/workflows/pr-quality.yml for peakoss/anti-slop
-    (GHA-only PR quality / AI-slop checks). Runs in parallel with Lint (prek);
-    check context `PR quality (anti-slop)` fails the job on gate failure — add
-    it to the branch ruleset after merge to block merge. Enable with
-    presets.ci.github_actions.anti-slop.enable = true. Complements prek; not a
-    local hook.
+    Opt-in: own .github/workflows/pr-quality.yml for peakoss/anti-slop
+    (GHA-only PR quality / AI-slop checks). Does not write on enterShell; run
+    `devenv tasks run ci:update-anti-slop` (or stdlib:update-generated). Runs
+    in parallel with Lint (prek); check context `PR quality (anti-slop)` fails
+    the job on gate failure — add it to the branch ruleset after merge to block
+    merge. Enable with presets.ci.github_actions.anti-slop.enable = true.
+    Complements prek; not a local hook.
   '';
   # Always discoverable; enable is opt-in (mkDefault false below).
   when = _: true;
@@ -144,46 +145,51 @@ in
       config,
       lib,
       pkgs,
+      options,
       ...
     }:
     let
       cfg = config.presets.ci.github_actions.anti-slop;
-      text = workflowText cfg;
+      generate = import ../../../stdlib/generate.nix { inherit lib; };
+      text = generate.ensureTrailingNewline (workflowText cfg);
       workflowFile = pkgs.writeText "pr-quality.yml" text;
-    in
-    {
-      # Structured marker for tests / future stdlib.report sections.
-      stdlib.markers.antiSlop = {
-        enable = true;
-        inherit (cfg)
-          action
-          actionComment
-          maxFailures
-          closePr
-          exemptDraftPrs
-          exemptAuthorAssociation
-          requireCommitAuthorMatch
-          requireMaintainerCanModify
-          ;
-        workflow = "pr-quality.yml";
+      syncExec = generate.mkSyncFileExec {
+        storePath = workflowFile;
+        relPath = ".github/workflows/pr-quality.yml";
       };
+    in
+    lib.mkMerge [
+      {
+        # Structured marker for tests / future stdlib.report sections.
+        stdlib.markers.antiSlop = {
+          enable = true;
+          inherit (cfg)
+            action
+            actionComment
+            maxFailures
+            closePr
+            exemptDraftPrs
+            exemptAuthorAssociation
+            requireCommitAuthorMatch
+            requireMaintainerCanModify
+            ;
+          workflow = "pr-quality.yml";
+        };
 
-      scripts.sync-anti-slop-workflow.exec = ''
-        set -euo pipefail
-        dest="$DEVENV_ROOT/.github/workflows/pr-quality.yml"
-        mkdir -p "$(dirname "$dest")"
-        tmp="$(mktemp)"
-        cp ${lib.escapeShellArg workflowFile} "$tmp"
-        if ! cmp -s "$tmp" "$dest" 2>/dev/null; then
-          mv "$tmp" "$dest"
-          echo "wrote .github/workflows/pr-quality.yml"
-        else
-          rm -f "$tmp"
-        fi
-      '';
+        stdlib.generated = [
+          {
+            path = ".github/workflows/pr-quality.yml";
+            task = "ci:update-anti-slop";
+            script = "sync-anti-slop-workflow";
+            source = workflowFile;
+          }
+        ];
 
-      enterShell = ''
-        sync-anti-slop-workflow
-      '';
-    };
+        scripts.sync-anti-slop-workflow.exec = syncExec;
+      }
+      # mkIf false still defines `tasks` and breaks fixtures without that option.
+      (lib.optionalAttrs (options ? tasks) {
+        tasks."ci:update-anti-slop".exec = syncExec;
+      })
+    ];
 }

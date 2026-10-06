@@ -72,6 +72,10 @@ let
               type = lib.types.attrsOf freeform;
               default = { };
             };
+            tasks = lib.mkOption {
+              type = freeform;
+              default = { };
+            };
           };
           config = extra;
         }
@@ -140,7 +144,12 @@ in
         requireMaintainerCanModify = marker.requireMaintainerCanModify or true;
         hasSync = cfg.scripts ? sync-anti-slop-workflow;
         syncCopiesPrQuality = contains "pr-quality.yml" sync;
-        enterHasSync = contains "sync-anti-slop-workflow" cfg.enterShell;
+        hasUpdateTask = cfg.tasks ? "ci:update-anti-slop";
+        hasCompositeTask = cfg.tasks ? "stdlib:update-generated";
+        enterWritesWorkflow = contains "sync-anti-slop-workflow" cfg.enterShell;
+        enterHasStaleHint = contains "ci:update-anti-slop" cfg.enterShell;
+        generatedPath =
+          (lib.findFirst (g: g.path == ".github/workflows/pr-quality.yml") null cfg.stdlib.generated) != null;
       };
     expected = {
       applied = true;
@@ -155,7 +164,11 @@ in
       requireMaintainerCanModify = false;
       hasSync = true;
       syncCopiesPrQuality = true;
-      enterHasSync = true;
+      hasUpdateTask = true;
+      hasCompositeTask = true;
+      enterWritesWorkflow = false;
+      enterHasStaleHint = true;
+      generatedPath = true;
     };
   };
 
