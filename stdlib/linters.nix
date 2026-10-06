@@ -53,8 +53,12 @@ let
     check-json = mkPrek true "Reject invalid JSON." { };
     check-toml = mkPrek true "Reject invalid TOML (syntax)." { };
     taplo-lint = mkPrek true "Lint TOML with taplo lint." { };
-    trim-trailing-whitespace = mkPrek true "Strip trailing whitespace." { };
-    end-of-file-fixer = mkPrek true "Ensure a trailing newline at EOF." { };
+    trim-trailing-whitespace = mkPrek true "Strip trailing whitespace." {
+      excludes = [ "^devenv\\.lock$" ];
+    };
+    end-of-file-fixer = mkPrek true "Ensure a trailing newline at EOF." {
+      excludes = [ "^devenv\\.lock$" ];
+    };
     check-added-large-files = mkPrek true "Block unexpectedly large added files." { };
     check-case-conflicts = mkPrek true "Detect filename case conflicts." { };
     check-merge-conflicts = mkPrek true "Detect merge conflict markers (incl. Copier)." { };
