@@ -159,6 +159,8 @@ let
       matrix ? null,
       # Dotted category paths available but unused (stdlib.categoryWarnings).
       unusedCategories ? [ ],
+      # Tracked generated files: { path, task, script?, source }.
+      generated ? [ ],
     }:
     {
       presets = presetInventory presets;
@@ -171,6 +173,13 @@ let
       };
       matrix = if matrix == null then null else matrixInventory matrix;
       unusedCategories = sort unusedCategories;
+      generated = map (g: {
+        path = g.path;
+        task = g.task;
+        script = g.script or null;
+        source = toString (g.source or "");
+        mode = g.mode or "copy";
+      }) generated;
     };
 
   formatSection =
@@ -225,9 +234,54 @@ let
       ++ formatSection "Enabled git-hooks / pre-commit" (inv.gitHooks.enabled or [ ])
       ++ formatSection "Unused available categories" (inv.unusedCategories or [ ])
       ++ formatMatrix (inv.matrix or null)
+      ++ formatGenerated (inv.generated or [ ])
     );
 
   mkEvalWarning = formatReport;
+
+  formatGenerated =
+    files:
+    if files == [ ] then
+      [ ]
+    else
+      [ "Generated files (devenv tasks run stdlib:update-generated):" ]
+      ++ map (g: "  - ${g.path} ← ${g.task}") files;
+
+  mkEnterShellGeneratedCheck =
+    files:
+    if files == [ ] then
+      ""
+    else
+      let
+        staleIf =
+          g:
+          if (g.mode or "copy") == "ensure-newline" then
+            ''
+              dest="$DEVENV_ROOT/${g.path}"
+              if [ ! -f "$dest" ] || [ ! -s "$dest" ] || [ "$(tail -c1 "$dest" | tr -d '\n' | wc -c)" -ne 0 ]; then
+            ''
+          else
+            ''
+              if ! cmp -s ${lib.escapeShellArg (toString g.source)} "$DEVENV_ROOT/${g.path}" 2>/dev/null; then
+            '';
+      in
+      ''
+        _stdlib_generated_stale=0
+        ${lib.concatMapStrings (g: ''
+          ${staleIf g}
+            if [ "$_stdlib_generated_stale" -eq 0 ]; then
+              printf '%s\n' "Generated files need update:"
+            fi
+            printf '%s\n' "  - ${g.path} is stale — run: devenv tasks run ${g.task}"
+            _stdlib_generated_stale=1
+          fi
+        '') files}
+        if [ "$_stdlib_generated_stale" -eq 0 ]; then
+          printf '%s\n' "Generated files: up to date"
+        else
+          printf '%s\n' "Regenerate all with: devenv tasks run stdlib:update-generated"
+        fi
+      '';
 
   mkEnterShellSnippet =
     inv:
@@ -237,6 +291,7 @@ let
     in
     ''
       printf '%s\n' '${escaped}'
+      ${mkEnterShellGeneratedCheck (inv.generated or [ ])}
     '';
 
   logInventory =
@@ -264,5 +319,7 @@ in
     flattenToolLeaves
     logInventory
     toolsNaviHint
+    formatGenerated
+    mkEnterShellGeneratedCheck
     ;
 }
