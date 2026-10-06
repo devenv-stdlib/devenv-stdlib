@@ -147,7 +147,7 @@ def refresh(
 def _self_test() -> None:
     assert align_max("1.80.0", "1.98.1") == "1.98.0"
     assert align_max("1.22.0", "1.27.1") == "1.27.0"
-    assert align_max("3.12", "3.14.7") == "3.14"
+    assert align_max("3.12", "3.14.6") == "3.14"
     assert align_max("22", "26.8.1") == "26"
     assert align_max("1.1.0", "1.4.2") == "1.4.0"
     assert align_max("2.0.0", "2.9.6") == "2.9.0"
@@ -157,13 +157,13 @@ def _self_test() -> None:
     assert is_eol("2026-08-19", "2026-09-05") is True
     assert is_eol("2028-10-31", "2026-09-05") is False
     rows = [
-        {"cycle": "3.14", "latest": "3.14.7", "eol": "2030-10-31"},
+        {"cycle": "3.14", "latest": "3.14.6", "eol": "2030-10-31"},
         {"cycle": "3.9", "latest": "3.9.25", "eol": "2025-10-31"},
     ]
     releases = parse_releases(rows, "2026-09-05")
-    assert releases[0] == {"cycle": "3.14", "latest": "3.14.7", "eol": False}
+    assert releases[0] == {"cycle": "3.14", "latest": "3.14.6", "eol": False}
     assert releases[1] == {"cycle": "3.9", "latest": "3.9.25", "eol": True}
-    assert newest_supported(releases) == "3.14.7"
+    assert newest_supported(releases) == "3.14.6"
 
     class _JsonResp:
         def __init__(self, body):
@@ -191,7 +191,7 @@ def _self_test() -> None:
         raise AssertionError(req.full_url)
 
     catalog, latest = collect(opener=opener, today="2026-09-05")
-    assert catalog["python"]["latest"] == "3.14.7"
+    assert catalog["python"]["latest"] == "3.14.6"
     assert latest["python"] == "3.14"
     assert latest["rust"] == "1.98.0"
     print("toolchain-latest self-test ok")
