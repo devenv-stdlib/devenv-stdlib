@@ -487,7 +487,8 @@ rec {
     let
       # Interpolated into jobYaml after that string's indent strip. Body lines
       # are already 8 spaces — same as `sudo mkdir` after jobYaml's 6-space strip.
-      javascriptTestRun = ''
+      # Trailing newline omitted: padJob would prefix that empty line with two spaces.
+      javascriptTestRun = lib.removeSuffix "\n" ''
         |
                 if [ "''${{ matrix.runtime }}" = nodejs ]; then
                   devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ''${{ matrix.pkg }} test
