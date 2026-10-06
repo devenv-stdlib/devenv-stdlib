@@ -105,7 +105,8 @@ _: {
 
         scripts.sync-language-versions-workflow.exec = syncExec;
       }
-      (lib.mkIf (options ? tasks) {
+      # mkIf false still defines `tasks` and breaks fixtures without that option.
+      (lib.optionalAttrs (options ? tasks) {
         tasks."ci:update-language-matrix".exec = syncExec;
       })
     ];
