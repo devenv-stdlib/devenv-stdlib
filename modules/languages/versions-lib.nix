@@ -485,6 +485,18 @@ rec {
       javascript ? emptyJavascript,
     }:
     let
+      # Interpolated into jobYaml after that string's indent strip. Body lines
+      # are already 8 spaces — same as `sudo mkdir` after jobYaml's 6-space strip.
+      javascriptTestRun = ''
+        |
+                if [ "''${{ matrix.runtime }}" = nodejs ]; then
+                  devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ''${{ matrix.pkg }} test
+                elif [ "''${{ matrix.runtime }}" = bun ]; then
+                  devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
+                else
+                  devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
+                fi
+      '';
       rawJobs = lib.concatStrings (
         lib.optional pythonOn (
           jobYaml "python" (pythonRows python)
@@ -498,18 +510,7 @@ rec {
           jobYaml "go" (goRows go)
             "devenv --option languages.go.enable:bool true --option languages.go.version:string \${{ matrix.version }} --option supported.go.min:string \${{ matrix.policy_min }} test"
         )
-        ++ lib.optional javascriptOn (
-          jobYaml "javascript" (javascriptRows javascript) ''
-            |
-                          if [ "''${{ matrix.runtime }}" = nodejs ]; then
-                            devenv --option languages.javascript.enable:bool true --option languages.javascript.package:pkg ''${{ matrix.pkg }} test
-                          elif [ "''${{ matrix.runtime }}" = bun ]; then
-                            devenv --option languages.javascript.enable:bool true --option languages.javascript.bun.enable:bool true test
-                          else
-                            devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
-                          fi
-          ''
-        )
+        ++ lib.optional javascriptOn (jobYaml "javascript" (javascriptRows javascript) javascriptTestRun)
       );
     in
     if rawJobs == "" then "" else padJob rawJobs;
