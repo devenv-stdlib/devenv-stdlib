@@ -10,6 +10,7 @@
 }:
 let
   cfg = config.linters;
+  lintersLib = import ../../stdlib/linters.nix { inherit lib; };
 in
 {
   # Vendored upstream skills (Vercel skills CLI); not ours to lint or reflow.
@@ -81,6 +82,7 @@ in
 
     trim-trailing-whitespace = lib.mkIf cfg.trim-trailing-whitespace.enable {
       enable = true;
+      excludes = lintersLib.catalog.trim-trailing-whitespace.excludes;
     };
 
     end-of-file-fixer = lib.mkIf cfg.end-of-file-fixer.enable {
