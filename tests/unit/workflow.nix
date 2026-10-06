@@ -1,4 +1,5 @@
 {
+  lib,
   versions,
   policy,
   contains,
@@ -114,6 +115,29 @@
       javascriptName = true;
       deno = true;
     };
+  };
+
+  # Language-matrix JS cells rewrite test.yml during devenv test when the
+  # generated `run: |` body is over-indented; yamlfmt (and prettier if YAML
+  # is in scope) then trips treefmt --fail-on-change.
+  testWorkflowJavascriptTestRunMatchesOtherBlockIndent = {
+    expr =
+      let
+        yaml = versions.workflowText {
+          javascriptOn = true;
+          javascript = versions.emptyJavascript // {
+            runtimes = [ "deno" ];
+            deno = policy { min = "2.1.0"; };
+          };
+        };
+        lines = lib.splitString "\n" yaml;
+        firstMatching = needle: lib.head (lib.filter (line: lib.hasInfix needle line) lines);
+        leadingSpaces = line: lib.stringLength (builtins.head (builtins.match "( *).*" line));
+        sudoIndent = leadingSpaces (firstMatching "sudo mkdir -p");
+        ifIndent = leadingSpaces (firstMatching ''if [ "''${{ matrix.runtime }}" = nodejs ]'');
+      in
+      sudoIndent == ifIndent;
+    expected = true;
   };
 
   testUbuntuLts = {
