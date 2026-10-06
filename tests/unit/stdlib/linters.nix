@@ -23,6 +23,11 @@ in
     };
   };
 
+  testTrimTrailingWhitespaceExcludesDevenvLock = {
+    expr = linters.catalog.trim-trailing-whitespace.excludes;
+    expected = [ "^devenv\\.lock$" ];
+  };
+
   testLintersAlwaysOnSplit = {
     expr = {
       treefmtHasNixfmt = lib.elem "nixfmt" linters.alwaysOnTreefmt;
