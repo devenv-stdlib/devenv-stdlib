@@ -66,6 +66,10 @@ let
               type = lib.types.attrsOf freeform;
               default = { };
             };
+            tasks = lib.mkOption {
+              type = freeform;
+              default = { };
+            };
           };
           config = extra;
         }
@@ -95,6 +99,14 @@ in
         hasMarker = cfg.stdlib.markers ? ciMatrix;
         matrixEmpty = (cfg.stdlib.markers.ciMatrix or { }).empty or true;
         hasSync = cfg.scripts ? sync-language-versions-workflow;
+        hasUpdateTask = cfg.tasks ? "ci:update-language-matrix";
+        hasExtensionsTask = cfg.tasks ? "ides:update-extensions-json";
+        hasSettingsTask = cfg.tasks ? "ides:update-settings-json";
+        hasCompositeTask = cfg.tasks ? "stdlib:update-generated";
+        enterWritesMatrix = contains "sync-language-versions-workflow" cfg.enterShell;
+        enterHasStaleHint = contains "ci:update-language-matrix" cfg.enterShell;
+        enterHasExtensionsHint = contains "ides:update-extensions-json" cfg.enterShell;
+        filesHasExtensions = cfg.files ? ".vscode/extensions.json";
         reportWarning = lib.any (w: lib.hasInfix "stdlib status:" w) cfg.warnings;
         enterHasReport = contains "stdlib status:" cfg.enterShell;
         reportListsHooks = lib.any (w: lib.hasInfix "ruff" w) cfg.warnings;
@@ -109,6 +121,14 @@ in
       hasMarker = true;
       matrixEmpty = false;
       hasSync = true;
+      hasUpdateTask = true;
+      hasExtensionsTask = true;
+      hasSettingsTask = true;
+      hasCompositeTask = true;
+      enterWritesMatrix = false;
+      enterHasStaleHint = true;
+      enterHasExtensionsHint = true;
+      filesHasExtensions = false;
       reportWarning = true;
       enterHasReport = true;
       reportListsHooks = true;

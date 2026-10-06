@@ -226,6 +226,82 @@ in
     };
   };
 
+  testReportGeneratedFilesDryRunOnEnterShell = {
+    expr =
+      let
+        inv = stdlib.report.inventory {
+          generated = [
+            {
+              path = ".github/workflows/test.yml";
+              task = "ci:update-language-matrix";
+              script = "sync-language-versions-workflow";
+              source = "/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-test.yml";
+            }
+            {
+              path = ".vscode/extensions.json";
+              task = "ides:update-extensions-json";
+              script = "sync-vscode-extensions-json";
+              source = "/nix/store/ffffffffffffffffffffffffffffffff-extensions.json";
+            }
+          ];
+        };
+        text = stdlib.report.formatReport inv;
+        enter = stdlib.report.mkEnterShellSnippet inv;
+      in
+      {
+        paths = map (g: g.path) inv.generated;
+        formatListsMatrix = contains ".github/workflows/test.yml ← ci:update-language-matrix" text;
+        formatListsExtensions = contains ".vscode/extensions.json ← ides:update-extensions-json" text;
+        formatListsComposite = contains "stdlib:update-generated" text;
+        enterHasCmp = contains "cmp -s" enter;
+        enterHasStaleHint = contains "is stale — run: devenv tasks run ci:update-language-matrix" enter;
+        enterHasComposite = contains "devenv tasks run stdlib:update-generated" enter;
+        enterHasUpToDate = contains "Generated files: up to date" enter;
+      };
+    expected = {
+      paths = [
+        ".github/workflows/test.yml"
+        ".vscode/extensions.json"
+      ];
+      formatListsMatrix = true;
+      formatListsExtensions = true;
+      formatListsComposite = true;
+      enterHasCmp = true;
+      enterHasStaleHint = true;
+      enterHasComposite = true;
+      enterHasUpToDate = true;
+    };
+  };
+
+  testReportEnsureNewlineDryRunDoesNotCmpLock = {
+    expr =
+      let
+        inv = stdlib.report.inventory {
+          generated = [
+            {
+              path = "devenv.lock";
+              task = "lock:update-devenv-lock";
+              script = "sync-devenv-lock";
+              mode = "ensure-newline";
+            }
+          ];
+        };
+        enter = stdlib.report.mkEnterShellSnippet inv;
+      in
+      {
+        mode = (builtins.head inv.generated).mode;
+        usesTail = contains "tail -c1" enter;
+        namesLock = contains "devenv.lock is stale" enter;
+        noCmpAgainstEmptySource = !(contains "cmp -s ''" enter);
+      };
+    expected = {
+      mode = "ensure-newline";
+      usesTail = true;
+      namesLock = true;
+      noCmpAgainstEmptySource = true;
+    };
+  };
+
   testMockCiLanguageMatrixPresetOwnsWorkflow = {
     expr =
       let
@@ -242,10 +318,15 @@ in
         hasMarker = cfg.stdlib.markers ? ciMatrix;
         matrixEmpty = (cfg.stdlib.markers.ciMatrix or { }).empty or true;
         hasSync = cfg.scripts ? sync-language-versions-workflow;
+        hasUpdateTask = cfg.tasks ? "ci:update-language-matrix";
+        hasCompositeTask = cfg.tasks ? "stdlib:update-generated";
+        enterWritesMatrix = contains "sync-language-versions-workflow" cfg.enterShell;
+        enterHasStaleHint = contains "ci:update-language-matrix" cfg.enterShell;
         reportWarning = lib.any (w: lib.hasInfix "stdlib status:" w) cfg.warnings;
         enterHasReport = contains "stdlib status:" cfg.enterShell;
         hooksIncludeRuff = (cfg.git-hooks.hooks.mock-ruff or { }).enable or false;
         reportListsHooks = lib.any (w: lib.hasInfix "mock-ruff" w) cfg.warnings;
+        reportListsGenerated = lib.any (w: lib.hasInfix ".github/workflows/test.yml" w) cfg.warnings;
       };
     expected = {
       applied = true;
@@ -253,10 +334,15 @@ in
       hasMarker = true;
       matrixEmpty = false;
       hasSync = true;
+      hasUpdateTask = true;
+      hasCompositeTask = true;
+      enterWritesMatrix = false;
+      enterHasStaleHint = true;
       reportWarning = true;
       enterHasReport = true;
       hooksIncludeRuff = true;
       reportListsHooks = true;
+      reportListsGenerated = true;
     };
   };
 
