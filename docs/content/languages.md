@@ -4,6 +4,8 @@ Languages stay off in this template repo. Generated monorepos enable them throug
 
 `devenv shell` writes `.serena/project.yml` (gitignored) from `languages.*`. This template keeps languages off, so the list is `[nix]` only. A generated monorepo with rust on gets `[nix, rust]`. JavaScript and TypeScript both map to Serena's `typescript` id (once). Override in `.serena/project.local.yml` (already gitignored). There is no committed stub; the file appears after the first `devenv shell`.
 
+Project `.vscode/extensions.json` and `.vscode/settings.json` are not written on `enterShell`. When they are stale, the stdlib status report tells you to run `devenv tasks run ides:update-extensions-json` / `ides:update-settings-json` (or `stdlib:update-generated`).
+
 `copier copy` writes `name`, `languages.*`, and `supported.*`. `copier update` re-asks those questions. Add extra options from `devenv.local.nix.example` (debtmap, packages, `supported.*.max`) below the generated block.
 
 ## Version policy

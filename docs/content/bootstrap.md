@@ -49,7 +49,11 @@ That is `home-manager switch -b backup --flake .#developer --impure`. `home-swit
 | `update` | Our devenv script (`devenv run update`): in a generated repo, `devenv update`, then `catalog.local.toml` (Nix or mise), then `update.local.sh`; in this template, refresh shipped non-Nix pins. Not the devenv CLI. |
 | `non-nix:add-local` / `non-nix:remove-local` | Add or remove a team tool in `modules/non-nix/catalog.local.toml` (creates the file from root `catalog.local.toml.example` if missing). Example: `devenv tasks run non-nix:add-local -- --name example-cli --kind cli --scope project --pin 1.0.0 --mise ubi:owner/example-cli --docs 'Example CLI. Docs: https://example.com'`. |
 | `devenv update` | devenv CLI: flake inputs in `devenv.lock` only (`nixpkgs`, `git-hooks`, …) |
-| `devenv shell` | Enter the project toolchain |
+| `devenv shell` | Enter the project toolchain. Status report dry-runs tracked generated files; it does not write them. |
+| `ci:update-language-matrix` | Write `.github/workflows/test.yml` (`devenv tasks run ci:update-language-matrix`; `--dry-run` compares only). |
+| `ides:update-extensions-json` | Write `.vscode/extensions.json`. |
+| `ides:update-settings-json` | Write `.vscode/settings.json`. |
+| `stdlib:update-generated` | Run the generation tasks above in order. |
 | `home-switch` | Re-apply Den Home Manager after editing aspects / `home.local.nix` |
 | `navi` | Browse repo `cheats/` plus community [denisidoro/cheats](https://github.com/denisidoro/cheats) |
 | `devenv test` | Build the env, check the toolchain, and run BATS |

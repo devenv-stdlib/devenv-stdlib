@@ -60,17 +60,23 @@ When adding a non-Nix tool to the **template**: run `devenv tasks run non-nix:ad
 
 ## Generated files
 
-| File | Writer | Git |
-| --- | --- | --- |
-| `.github/workflows/test.yml` | `presets/ci/github_actions/language-matrix.nix` (`ci.github_actions.language-matrix`) | committed |
-| `.devcontainer/devcontainer.json` | devenv `devcontainer.enable` | committed |
-| `.vscode/extensions.json` | `presets/<lang>/<category>/*.nix` via `stdlib.devenv.load` | gitignored |
-| `.serena/project.yml` | `presets/<lang>/<category>/*.nix` via `stdlib.devenv.load` | gitignored |
-| `.vscode/settings.json` | `cursor-sync-extensions` / `vscode-sync-extensions` | committed when it changes |
-| `.debtmap.toml` | `modules/debtmap/` | gitignored |
-| `mise.toml` | `modules/mise/` from `modules/non-nix/catalog.toml` (+ `catalog.local.toml`) | gitignored |
-| `.pre-commit-config.yaml` | git-hooks.nix / prek | gitignored |
-| `.env` | Copier from `.env.jinja` when keys were pasted | gitignored |
+Tracked generated files are **not** written on `enterShell`, except the opt-in `pr-quality.yml` and `pr-metrics.yml` workflows, which their presets sync on shell entry. Dry-run on shell entry reports stale paths; write them with devenv tasks (`--dry-run` compares only, including newline-only diffs).
+
+| File | Writer | Git | Update |
+| --- | --- | --- | --- |
+| `.github/workflows/test.yml` | `ci.github_actions.language-matrix` | committed | `devenv tasks run ci:update-language-matrix` |
+| `.github/workflows/pr-quality.yml` | `ci.github_actions.anti-slop` | committed | `enterShell` (`sync-anti-slop-workflow`) |
+| `.github/workflows/pr-metrics.yml` | `ci.github_actions.pr-metrics` | committed | `enterShell` (`sync-pr-metrics-workflow`) |
+| `.vscode/extensions.json` | `stdlib.devenv.load` | gitignored | `devenv tasks run ides:update-extensions-json` |
+| `.vscode/settings.json` | `stdlib.devenv.load` | committed when it changes | `devenv tasks run ides:update-settings-json` |
+| `test.yml`, `extensions.json`, `settings.json` | `stdlib:update-generated` | — | `devenv tasks run stdlib:update-generated` |
+| `.devcontainer/devcontainer.json` | devenv `devcontainer.enable` | committed | devenv built-in |
+| `.serena/project.yml` | `stdlib.devenv.load` (`files`) | gitignored | `devenv:files` |
+| `.debtmap.toml` | `modules/debtmap/` | gitignored | `devenv:files` |
+| `mise.toml` | `modules/mise/` from `modules/non-nix/catalog.toml` (+ `catalog.local.toml`) | gitignored | `devenv:files` |
+| `.pre-commit-config.yaml` | git-hooks.nix / prek | gitignored | git-hooks |
+| `.env` | Copier from `.env.jinja` when keys were pasted | gitignored | Copier |
+| `devenv.lock` | devenv CLI | committed | `devenv update` |
 
 ## Documentation site
 
