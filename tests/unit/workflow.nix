@@ -140,6 +140,24 @@
     expected = true;
   };
 
+  # padJob prefixes every line. A trailing newline on javascriptTestRun
+  # becomes a two-space blank line in the YAML (yamlfmt then strips it).
+  testWorkflowJavascriptRunBlockHasNoPaddedBlankLines = {
+    expr =
+      let
+        yaml = versions.workflowText {
+          javascriptOn = true;
+          javascript = versions.emptyJavascript // {
+            runtimes = [ "deno" ];
+            deno = policy { min = "2.1.0"; };
+          };
+        };
+        lines = lib.splitString "\n" yaml;
+      in
+      lib.any (line: builtins.match " +" line != null) lines;
+    expected = false;
+  };
+
   testUbuntuLts = {
     expr = versions.ubuntuLts;
     expected = {
