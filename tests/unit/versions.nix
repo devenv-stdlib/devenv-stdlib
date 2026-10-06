@@ -9,21 +9,21 @@ let
     inherit lib;
     catalog = {
       python = {
-        latest = "3.14.7";
+        latest = "3.14.6";
         releases = [
           {
             cycle = "3.14";
-            latest = "3.14.7";
+            latest = "3.14.6";
             eol = false;
           }
           {
             cycle = "3.13";
-            latest = "3.13.15";
+            latest = "3.13.14";
             eol = false;
           }
           {
             cycle = "3.12";
-            latest = "3.12.14";
+            latest = "3.12.13";
             eol = false;
           }
           {
@@ -208,7 +208,7 @@ in
     expr = versions.inRange (policy {
       min = "3.12";
       max = "3.14";
-    }) "3.14.7";
+    }) "3.14.6";
     expected = true;
   };
 
@@ -282,9 +282,9 @@ in
       max = "3.14";
     });
     expected = [
-      "3.12.14"
-      "3.13.15"
-      "3.14.7"
+      "3.12.13"
+      "3.13.14"
+      "3.14.6"
     ];
   };
 
@@ -295,8 +295,8 @@ in
       unsupported = [ "3.13" ];
     });
     expected = [
-      "3.12.14"
-      "3.14.7"
+      "3.12.13"
+      "3.14.6"
     ];
   };
 
@@ -304,11 +304,11 @@ in
     expr = cataloged.resolvedVersionsFor "python" (policy {
       min = "3.12";
       max = "3.14";
-      unsupported = [ "3.13.15" ];
+      unsupported = [ "3.13.14" ];
     });
     expected = [
-      "3.12.14"
-      "3.14.7"
+      "3.12.13"
+      "3.14.6"
     ];
   };
 
@@ -328,7 +328,7 @@ in
     expr = cataloged.resolvedVersionsFor "python" (policy {
       min = "3.12";
     });
-    expected = [ "3.12.14" ];
+    expected = [ "3.12.13" ];
   };
 
   testPatchedRangeIgnoresCatalog = {
