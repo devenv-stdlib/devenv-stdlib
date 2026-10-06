@@ -3,8 +3,7 @@
 # cmp treats newline-only differences as drift.
 { lib }:
 let
-  ensureTrailingNewline =
-    text: if text == "" || lib.hasSuffix "\n" text then text else text + "\n";
+  ensureTrailingNewline = text: if text == "" || lib.hasSuffix "\n" text then text else text + "\n";
 
   parseDryRun = ''
     dry_run=0
