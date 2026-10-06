@@ -34,6 +34,11 @@ else
             "*.ts"
             "*.tsx"
           ];
+          # yamlfmt owns YAML. Keep prettier off *.yml even if treefmt-nix defaults leak.
+          settings.formatter.prettier.excludes = [
+            "*.yml"
+            "*.yaml"
+          ];
         };
 
         # Surface under javascript so merge order stays stable; settings are identical for TS.
