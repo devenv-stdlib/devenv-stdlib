@@ -63,7 +63,7 @@ _: {
           echo "mock sync-language-versions-workflow"
         '';
       }
-      (lib.mkIf (options ? tasks) {
+      (lib.optionalAttrs (options ? tasks) {
         tasks."ci:update-language-matrix".exec = ''
           echo "mock sync-language-versions-workflow"
         '';

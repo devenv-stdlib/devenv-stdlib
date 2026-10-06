@@ -601,7 +601,8 @@ let
             cursor-sync-extensions
           '';
         }
-        (lib.mkIf (options ? tasks) {
+        # mkIf false still defines `tasks` and breaks fixtures without that option.
+        (lib.optionalAttrs (options ? tasks) {
           tasks."ides:update-extensions-json".exec = generate.mkSyncFileExec {
             storePath = extensionsJson;
             relPath = ".vscode/extensions.json";
@@ -641,7 +642,8 @@ let
           '';
     in
     {
-      config = lib.mkIf (options ? tasks) {
+      # mkIf false still defines `tasks`; omit the attr when the option is absent.
+      config = lib.optionalAttrs (options ? tasks) {
         tasks."stdlib:update-generated".exec = body;
       };
     };
