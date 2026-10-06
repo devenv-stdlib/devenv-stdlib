@@ -31,6 +31,7 @@ let
     ++ names "linters" stdlib.linters
     ++ names "log" stdlib.log
     ++ names "report" stdlib.report
+    ++ names "generate" stdlib.generate
     ++ names "den" stdlib.den
     ++ names "devenv" stdlib.devenv
     ++ names "versions" (stdlib.versions { })
@@ -244,6 +245,10 @@ in
       "devenv.load"
       "devenvSupported"
       "discover"
+      "generate"
+      "generate.ensureTrailingNewline"
+      "generate.mkEnsureTrailingNewlineExec"
+      "generate.mkSyncFileExec"
       "harness"
       "harness.cardinality"
       "harness.category"
@@ -300,10 +305,12 @@ in
       "report.enabledTreefmtPrograms"
       "report.flattenPresetLeaves"
       "report.flattenToolLeaves"
+      "report.formatGenerated"
       "report.formatReport"
       "report.inventory"
       "report.logInventory"
       "report.matrixInventory"
+      "report.mkEnterShellGeneratedCheck"
       "report.mkEnterShellSnippet"
       "report.mkEvalWarning"
       "report.toolsNaviHint"
