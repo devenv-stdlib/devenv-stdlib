@@ -1,0 +1,6 @@
+{
+  "name": "devenv",
+  "image": "ghcr.io/cachix/devenv/devenv:latest",
+  "user": "devenv",
+  "install": "devenv allow && devenv shell -c true"
+}
