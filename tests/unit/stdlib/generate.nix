@@ -47,12 +47,12 @@ in
   testGenerateEnsureNewlineExecHonorsDryRun = {
     expr =
       let
-        nl = generate.mkEnsureTrailingNewlineExec { relPath = "devenv.lock"; };
+        nl = generate.mkEnsureTrailingNewlineExec { relPath = "example.lock"; };
       in
       {
         hasDryRunFlag = contains "--dry-run" nl;
-        hasDest = contains "devenv.lock" nl;
-        dryRunExitsOne = contains "stale: devenv.lock" nl;
+        hasDest = contains "example.lock" nl;
+        dryRunExitsOne = contains "stale: example.lock" nl;
         appendsNewline = lib.hasInfix "printf '\\n'" nl;
       };
     expected = {
