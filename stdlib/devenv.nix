@@ -10,7 +10,8 @@
 # stay at tools.<leaf>.enable; global vs local is an internal payload split.
 #
 # Logging goes through stdlib.log (nix-log is private). End-of-eval report
-# uses module warnings + enterShell — no wrapper scripts.
+# uses module warnings + enterShell — no wrapper scripts. Tracked generated
+# files are tasks + enterShell dry-run, not enterShell writers.
 #
 # Local mkTool leaves (project payload) live under tools/** and are lowered
 # here via applyLocal. Thin presets list tool attrpath refs; when applied
@@ -30,7 +31,41 @@ let
   projectLib = import ../modules/lib/project.nix { inherit lib; };
   log = import ./log.nix { inherit lib nix-log; };
   report = import ./report.nix { inherit lib log; };
+  generate = import ./generate.nix { inherit lib; };
   categoryWarnings = import ./category-warnings.nix { inherit lib; };
+
+  generatedFileType = lib.types.submodule {
+    options = {
+      path = lib.mkOption {
+        type = lib.types.str;
+        description = "Path relative to DEVENV_ROOT of a generated tracked file.";
+      };
+      task = lib.mkOption {
+        type = lib.types.str;
+        description = "devenv task that writes this file.";
+      };
+      script = lib.mkOption {
+        type = lib.types.str;
+        description = "PATH command that writes this file (honors --dry-run).";
+      };
+      source = lib.mkOption {
+        type = lib.types.anything;
+        default = "";
+        description = "Nix store path of the desired contents (mode = copy).";
+      };
+      mode = lib.mkOption {
+        type = lib.types.enum [
+          "copy"
+          "ensure-newline"
+        ];
+        default = "copy";
+        description = ''
+          copy: replace the file with source bytes.
+          ensure-newline: leave contents in place; only add a trailing newline.
+        '';
+      };
+    };
+  };
 
   # Selected-pack order matches former modules/ides (rust, go, python, then the
   # shared JS/TS pack). javascript is visited before typescript so lib.unique
@@ -276,6 +311,17 @@ let
               description = "Print the status summary on devenv enterShell.";
             };
           };
+
+          generated = lib.mkOption {
+            type = lib.types.listOf generatedFileType;
+            default = [ ];
+            description = ''
+              Git-tracked files produced by stdlib generators. enterShell dry-runs
+              these (no writes) and the status report names the update task when
+              a file is stale. `devenv tasks run stdlib:update-generated` writes
+              all of them.
+            '';
+          };
         };
       } (map (decl: lib.setAttrByPath ([ "presets" ] ++ decl.path) (leafOptions config decl)) decls);
     };
@@ -293,6 +339,7 @@ let
       config,
       lib,
       pkgs ? { },
+      options,
       ...
     }:
     let
@@ -344,6 +391,7 @@ let
               config
               lib
               pkgs
+              options
               ;
           }
         else
@@ -446,6 +494,7 @@ let
       config,
       lib,
       pkgs ? { },
+      options,
       ...
     }:
     let
@@ -468,62 +517,137 @@ let
       );
       idesLib = import ../modules/ides/lib.nix { inherit pkgs lib; };
       selected = lib.concatMap (name: idesLib.ext.${name}) extensionSets;
+      extensionsJson = builtins.toFile "extensions.json" (
+        generate.ensureTrailingNewline (
+          builtins.toJSON {
+            inherit recommendations unwantedRecommendations;
+          }
+        )
+      );
+      settingsJson = builtins.toFile "settings.json" (
+        generate.ensureTrailingNewline (builtins.toJSON settings)
+      );
     in
     {
-      config = {
-        files.".serena/project.yml".yaml = {
-          project_name = config.name or "devenv-shell";
-          language_servers = serenaLanguageServers langs;
-          encoding = "utf-8";
-          activation_command = null;
-          activation_command_timeout = 180.0;
-          line_ending = null;
-          language_backend = null;
-          ignore_all_files_in_gitignore = true;
-          ls_specific_settings = { };
-          ls_workspace_folders = [ "." ];
-          ls_additional_workspace_folders = [ ];
-          ignored_paths = [ ];
-          read_only = false;
-          excluded_tools = [ ];
-          included_optional_tools = [ ];
-          fixed_tools = [ ];
-          default_modes = null;
-          added_modes = null;
-          initial_prompt = "";
-          symbol_info_budget = null;
-          read_only_memory_patterns = [ ];
-          ignored_memory_patterns = [ ];
-        };
+      config = lib.mkMerge [
+        {
+          files.".serena/project.yml".yaml = {
+            project_name = config.name or "devenv-shell";
+            language_servers = serenaLanguageServers langs;
+            encoding = "utf-8";
+            activation_command = null;
+            activation_command_timeout = 180.0;
+            line_ending = null;
+            language_backend = null;
+            ignore_all_files_in_gitignore = true;
+            ls_specific_settings = { };
+            ls_workspace_folders = [ "." ];
+            ls_additional_workspace_folders = [ ];
+            ignored_paths = [ ];
+            read_only = false;
+            excluded_tools = [ ];
+            included_optional_tools = [ ];
+            fixed_tools = [ ];
+            default_modes = null;
+            added_modes = null;
+            initial_prompt = "";
+            symbol_info_budget = null;
+            read_only_memory_patterns = [ ];
+            ignored_memory_patterns = [ ];
+          };
 
-        files.".vscode/extensions.json".json = {
-          inherit recommendations unwantedRecommendations;
-        };
+          # Internal: lets fixture tests see merged editor settings without
+          # evaluating the extension symlink script (that needs nixpkgs).
+          stdlib.markers.ideSettings = settings;
 
-        # Internal: lets fixture tests see merged editor settings without
-        # evaluating the extension symlink script (that needs nixpkgs).
-        stdlib.markers.ideSettings = settings;
+          stdlib.generated = [
+            {
+              path = ".vscode/extensions.json";
+              task = "ides:update-extensions-json";
+              script = "sync-vscode-extensions-json";
+              source = extensionsJson;
+            }
+            {
+              path = ".vscode/settings.json";
+              task = "ides:update-settings-json";
+              script = "sync-vscode-settings-json";
+              source = settingsJson;
+            }
+          ];
 
-        # Package symlinks stay lazy so unit tests can read files without nixpkgs.
-        scripts.cursor-sync-extensions.exec = idesLib.mkSyncScript {
-          extensionsDir = "$HOME/.cursor/extensions";
-          logPrefix = "cursor";
-          inherit selected settings;
-        };
-        scripts.vscode-sync-extensions.exec = idesLib.mkSyncScript {
-          extensionsDir = "$HOME/.vscode/extensions";
-          logPrefix = "ides";
-          inherit selected settings;
-        };
+          scripts.sync-vscode-extensions-json.exec = generate.mkSyncFileExec {
+            storePath = extensionsJson;
+            relPath = ".vscode/extensions.json";
+          };
+          scripts.sync-vscode-settings-json.exec = generate.mkSyncFileExec {
+            storePath = settingsJson;
+            relPath = ".vscode/settings.json";
+          };
 
-        enterShell = ''
-          cursor-sync-extensions
-        '';
+          # Package symlinks stay lazy so unit tests can read files without nixpkgs.
+          # Home-dir links only; tracked .vscode JSON is the generate tasks above.
+          scripts.cursor-sync-extensions.exec = idesLib.mkSyncScript {
+            extensionsDir = "$HOME/.cursor/extensions";
+            logPrefix = "cursor";
+            inherit selected;
+          };
+          scripts.vscode-sync-extensions.exec = idesLib.mkSyncScript {
+            extensionsDir = "$HOME/.vscode/extensions";
+            logPrefix = "ides";
+            inherit selected;
+          };
+
+          enterShell = ''
+            cursor-sync-extensions
+          '';
+        }
+        (lib.mkIf (options ? tasks) {
+          tasks."ides:update-extensions-json".exec = generate.mkSyncFileExec {
+            storePath = extensionsJson;
+            relPath = ".vscode/extensions.json";
+          };
+          tasks."ides:update-settings-json".exec = generate.mkSyncFileExec {
+            storePath = settingsJson;
+            relPath = ".vscode/settings.json";
+          };
+        })
+      ];
+    };
+
+  # Sequential writer for every stdlib.generated entry (PATH scripts, in order).
+  generatedTasksModule =
+    {
+      config,
+      lib,
+      options,
+      ...
+    }:
+    let
+      files = config.stdlib.generated or [ ];
+      body =
+        if files == [ ] then
+          "true"
+        else
+          ''
+            set -euo pipefail
+            status=0
+            ${lib.concatMapStringsSep "\n" (g: ''
+              echo "==> ${g.task} (${g.path})"
+              if ! ${g.script} "$@"; then
+                status=1
+              fi
+            '') files}
+            exit "$status"
+          '';
+    in
+    {
+      config = lib.mkIf (options ? tasks) {
+        tasks."stdlib:update-generated".exec = body;
       };
     };
 
   # Forced summary after all presets realize. warnings = end of eval;
-  # enterShell = Nix-built echo (not a wrapper script).
+  # enterShell = Nix-built echo (not a wrapper script) plus generated-file dry-run.
   reportModule =
     {
       config,
@@ -551,6 +675,7 @@ let
               gitHooks = (config.git-hooks or { }).hooks or { };
               treefmtPrograms = ((config.treefmt or { }).config or { }).programs or { };
               matrix = config.stdlib.markers.ciMatrix or null;
+              generated = config.stdlib.generated or [ ];
               inherit unusedCategories;
             }
           );
@@ -629,6 +754,7 @@ in
       ++ [
         lower
         categoryWarnings.module
+        generatedTasksModule
         reportModule
       ];
 }

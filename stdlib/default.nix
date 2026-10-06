@@ -16,6 +16,7 @@ in
   inherit (versionInfo) version apiVersion;
 
   inherit log report;
+  generate = import ./generate.nix { inherit lib; };
 
   project = import ./project.nix { inherit lib; };
   versions =

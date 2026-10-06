@@ -19,6 +19,7 @@ _: {
       config,
       lib,
       pkgs,
+      options,
       ...
     }:
     let
@@ -79,30 +80,33 @@ _: {
 
       problemList = versions.problems snapshot;
 
+      generate = import ../../../stdlib/generate.nix { inherit lib; };
       workflowFile = lib.throwIf (problemList != [ ]) (lib.concatStringsSep "\n" problemList) (
-        pkgs.writeText "test.yml" (versions.workflowText snapshot)
+        pkgs.writeText "test.yml" (generate.ensureTrailingNewline (versions.workflowText snapshot))
       );
+      syncExec = generate.mkSyncFileExec {
+        storePath = workflowFile;
+        relPath = ".github/workflows/test.yml";
+      };
     in
-    {
-      # Structured matrix for stdlib.report (devenv evaluator).
-      stdlib.markers.ciMatrix = versions.matrixReport snapshot;
+    lib.mkMerge [
+      {
+        # Structured matrix for stdlib.report (devenv evaluator).
+        stdlib.markers.ciMatrix = versions.matrixReport snapshot;
 
-      scripts.sync-language-versions-workflow.exec = ''
-        set -euo pipefail
-        dest="$DEVENV_ROOT/.github/workflows/test.yml"
-        mkdir -p "$(dirname "$dest")"
-        tmp="$(mktemp)"
-        cp ${lib.escapeShellArg workflowFile} "$tmp"
-        if ! cmp -s "$tmp" "$dest" 2>/dev/null; then
-          mv "$tmp" "$dest"
-          echo "wrote .github/workflows/test.yml"
-        else
-          rm -f "$tmp"
-        fi
-      '';
+        stdlib.generated = [
+          {
+            path = ".github/workflows/test.yml";
+            task = "ci:update-language-matrix";
+            script = "sync-language-versions-workflow";
+            source = workflowFile;
+          }
+        ];
 
-      enterShell = ''
-        sync-language-versions-workflow
-      '';
-    };
+        scripts.sync-language-versions-workflow.exec = syncExec;
+      }
+      (lib.mkIf (options ? tasks) {
+        tasks."ci:update-language-matrix".exec = syncExec;
+      })
+    ];
 }
