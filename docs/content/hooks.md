@@ -10,7 +10,7 @@ Linting is first-class under `linters.*` (parallel to `languages.*`). Most forma
 | **prek**       | `commitlint`, `gitleaks`, `proselint`, `check-json`, `check-toml`, `taplo-lint`, `trim-trailing-whitespace`, `end-of-file-fixer`, `check-added-large-files`, `check-case-conflicts`, `check-merge-conflicts` | Commit-msg, secrets, prose, JSON/TOML syntax, hygiene                                            |
 | **prek (off)** | `lychee`                                                                                                                                                                                                     | Link checker — keep `lychee.toml` / retry wrapper; set `linters.lychee.enable = true` to turn on |
 
-Toggle any of them with `linters.<name>.enable` in `devenv.local.nix` (or `devenv.nix`). Catalog and backends live in `stdlib/linters.nix`; wiring is `modules/linters` (treefmt) + `modules/hooks/common.nix` (prek residual). `trim-trailing-whitespace` skips `devenv.lock` so lock refreshes are not rewritten by the hygiene fixer.
+Toggle any of them with `linters.<name>.enable` in `devenv.local.nix` (or `devenv.nix`). Catalog and backends live in `stdlib/linters.nix`; wiring is `modules/linters` (treefmt) + `modules/hooks/common.nix` (prek residual). `trim-trailing-whitespace` and `end-of-file-fixer` skip `devenv.lock` so lock refreshes are not rewritten by the hygiene fixers.
 
 ## Language formatters
 
