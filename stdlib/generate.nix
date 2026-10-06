@@ -58,7 +58,6 @@ in
     '';
 
   # Keep on-disk contents; only add a trailing newline when it is missing.
-  # Used for devenv.lock so a write never reverts pin updates from `devenv update`.
   mkEnsureTrailingNewlineExec =
     { relPath }:
     ''

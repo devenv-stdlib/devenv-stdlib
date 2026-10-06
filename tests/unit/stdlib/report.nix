@@ -273,15 +273,15 @@ in
     };
   };
 
-  testReportEnsureNewlineDryRunDoesNotCmpLock = {
+  testReportEnsureNewlineDryRunDoesNotCmpSource = {
     expr =
       let
         inv = stdlib.report.inventory {
           generated = [
             {
-              path = "devenv.lock";
-              task = "lock:update-devenv-lock";
-              script = "sync-devenv-lock";
+              path = "example.lock";
+              task = "example:ensure-newline";
+              script = "sync-example-lock";
               mode = "ensure-newline";
             }
           ];
@@ -291,13 +291,13 @@ in
       {
         inherit ((builtins.head inv.generated)) mode;
         usesTail = contains "tail -c1" enter;
-        namesLock = contains "devenv.lock is stale" enter;
+        namesFile = contains "example.lock is stale" enter;
         noCmpAgainstEmptySource = !(contains "cmp -s ''" enter);
       };
     expected = {
       mode = "ensure-newline";
       usesTail = true;
-      namesLock = true;
+      namesFile = true;
       noCmpAgainstEmptySource = true;
     };
   };
