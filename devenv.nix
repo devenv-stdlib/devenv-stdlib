@@ -9,6 +9,11 @@ _: {
   # CI: cachix-action). devenv's own pull would add it again and Nix warns.
   cachix.enable = false;
 
+  # Language-matrix CI cells enable languages.javascript via --option without
+  # being able to pass list-typed supported.javascript.runtimes on the CLI.
+  supported.javascript.runtimes = [ "nodejs" ];
+  supported.javascript.nodejs.min = "22";
+
   # Codespaces / VS Code Dev Containers: writes .devcontainer/devcontainer.json
   # (committed). See https://devenv.sh/integrations/codespaces-devcontainer/
   # Upstream default updateContentCommand is `devenv test`; here that is the
