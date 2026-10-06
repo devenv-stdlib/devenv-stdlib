@@ -51,6 +51,8 @@ That is `home-manager switch -b backup --flake .#developer --impure`. `home-swit
 | `devenv update` | devenv CLI: flake inputs in `devenv.lock` only (`nixpkgs`, `git-hooks`, …) |
 | `devenv shell` | Enter the project toolchain. Status report dry-runs tracked generated files; it does not write them. |
 | `ci:update-language-matrix` | Write `.github/workflows/test.yml` (`devenv tasks run ci:update-language-matrix`; `--dry-run` compares only). |
+| `ci:update-anti-slop` | Write `.github/workflows/pr-quality.yml` when `ci.github_actions.anti-slop` is enabled. |
+| `ci:update-pr-metrics` | Write `.github/workflows/pr-metrics.yml` when `ci.github_actions.pr-metrics` is enabled. |
 | `ides:update-extensions-json` | Write `.vscode/extensions.json`. |
 | `ides:update-settings-json` | Write `.vscode/settings.json`. |
 | `stdlib:update-generated` | Run the generation tasks above in order. |
