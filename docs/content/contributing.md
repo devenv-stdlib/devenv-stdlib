@@ -69,7 +69,7 @@ Tracked generated files are **not** written on `enterShell`, except the opt-in `
 | `.github/workflows/pr-metrics.yml` | `ci.github_actions.pr-metrics` | committed | `enterShell` (`sync-pr-metrics-workflow`) |
 | `.vscode/extensions.json` | `stdlib.devenv.load` | gitignored | `devenv tasks run ides:update-extensions-json` |
 | `.vscode/settings.json` | `stdlib.devenv.load` | committed when it changes | `devenv tasks run ides:update-settings-json` |
-| `test.yml`, `extensions.json`, `settings.json` | `stdlib:update-generated` | — | `devenv tasks run stdlib:update-generated` |
+| language-matrix + IDE JSON above | `stdlib:update-generated` | — | `devenv tasks run stdlib:update-generated` |
 | `.devcontainer/devcontainer.json` | devenv `devcontainer.enable` | committed | devenv built-in |
 | `.serena/project.yml` | `stdlib.devenv.load` (`files`) | gitignored | `devenv:files` |
 | `.debtmap.toml` | `modules/debtmap/` | gitignored | `devenv:files` |
