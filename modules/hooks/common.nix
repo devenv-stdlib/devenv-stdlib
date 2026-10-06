@@ -87,6 +87,7 @@ in
 
     end-of-file-fixer = lib.mkIf cfg.end-of-file-fixer.enable {
       enable = true;
+      excludes = lintersLib.catalog.end-of-file-fixer.excludes;
     };
 
     check-added-large-files = lib.mkIf cfg.check-added-large-files.enable {
