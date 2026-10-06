@@ -28,6 +28,26 @@ in
     expected = [ "^devenv\\.lock$" ];
   };
 
+  testEndOfFileFixerExcludesDevenvLock = {
+    expr = linters.catalog.end-of-file-fixer.excludes;
+    expected = [ "^devenv\\.lock$" ];
+  };
+
+  testHygieneHookWiringPassesCatalogExcludes = {
+    expr =
+      let
+        text = builtins.readFile ../../../modules/hooks/common.nix;
+      in
+      {
+        trim = lib.hasInfix "trim-trailing-whitespace.excludes" text;
+        eof = lib.hasInfix "end-of-file-fixer.excludes" text;
+      };
+    expected = {
+      trim = true;
+      eof = true;
+    };
+  };
+
   testLintersAlwaysOnSplit = {
     expr = {
       treefmtHasNixfmt = lib.elem "nixfmt" linters.alwaysOnTreefmt;
