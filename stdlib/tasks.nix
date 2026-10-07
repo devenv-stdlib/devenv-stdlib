@@ -18,13 +18,15 @@ let
   };
 
   # Nested refs so callers write `tasks.mr-boxington.gc` after refsFromSpecs.
+  # Pass moduleArgs: a function-valued tasks declaration is resolved before
+  # its leaf names are listed. Attrset declarations ignore moduleArgs.
   refsFromSpecs =
-    discovered:
+    discovered: moduleArgs:
     lib.foldl' (
       tree: d:
       let
         inherit (d.spec) name;
-        leaves = builtins.attrNames (d.spec.tasks or { });
+        leaves = builtins.attrNames (resolve moduleArgs (d.spec.tasks or { }));
       in
       if leaves == [ ] then
         tree
