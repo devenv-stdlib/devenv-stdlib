@@ -709,7 +709,7 @@ let
 
   # One root per devenv language dir under presets/, plus services/, ci/,
   # fixtures/, cache/ (compile-cache / cleaner presets such as mr-boxington),
-  # and ide/ and host/ (not devenv language names). Missing dirs are skipped so
+  # and ide/, host/, and terminal/ (not devenv language names). Missing dirs are skipped so
   # scaffolds can land before leaves exist.
   defaultRoots =
     root:
@@ -723,7 +723,8 @@ let
     ++ existing (root + "/fixtures")
     ++ existing (root + "/cache")
     ++ existing (root + "/ide")
-    ++ existing (root + "/host");
+    ++ existing (root + "/host")
+    ++ existing (root + "/terminal");
 in
 {
   inherit
