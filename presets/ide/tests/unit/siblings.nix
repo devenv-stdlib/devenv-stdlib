@@ -7,7 +7,7 @@ in
   testIdePresetDoesNotExcludeSiblingIdes = {
     expr =
       let
-        inherit ((eval (import <devenv4monorepo/presets/ide.nix>) { }).config.presets.ide) result;
+        inherit ((eval (import <devenv4monorepo/presets/ide/default.nix>) { }).config.presets.ide) result;
       in
       {
         includeTools = sort result.includeTools;

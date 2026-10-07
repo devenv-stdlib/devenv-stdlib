@@ -1,10 +1,10 @@
 # Any-of IDE policy: B2's home-cursor rule generalised to cursor / vscode / neovim.
 { lib, ... }:
 let
-  inherit (import ../stdlib/preset.nix { inherit lib; }) mkPreset;
-  toolLib = import ../stdlib/tool.nix { inherit lib; };
-  loadLib = import ../stdlib/load.nix { inherit lib; };
-  tools = toolLib.refsFromSpecs (toolLib.specs (loadLib.discover [ ../tools ]));
+  inherit (import ../../stdlib/preset.nix { inherit lib; }) mkPreset;
+  toolLib = import ../../stdlib/tool.nix { inherit lib; };
+  loadLib = import ../../stdlib/load.nix { inherit lib; };
+  tools = toolLib.refsFromSpecs (toolLib.specs (loadLib.discover [ ../../tools ]));
 in
 {
   imports = [
