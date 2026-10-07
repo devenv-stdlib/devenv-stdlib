@@ -62,10 +62,6 @@ let
       type = lib.types.attrsOf freeform;
       default = { };
     };
-    tasks = lib.mkOption {
-      type = freeform;
-      default = { };
-    };
   };
 
   eval =
@@ -380,6 +376,15 @@ in
       hasTask = true;
       exec = "echo mock-check-verify";
     };
+  };
+
+  testMockFunctionProjectReceivesOptions = {
+    expr =
+      let
+        cfg = eval { };
+      in
+      cfg.stdlib.markers.functionProjectSawName or false;
+    expected = true;
   };
 
   testMockPresetExportsAndComposesTasks = {
