@@ -74,4 +74,21 @@
       }
     ];
   };
+
+  # presets/terminal is not a devenv language name.
+  testDefaultRootsLoadTerminalPresets = {
+    expr =
+      let
+        devenv = import ../../../stdlib/devenv.nix { inherit lib; };
+        loadLib = import ../../../stdlib/load.nix { inherit lib; };
+        roots = devenv.defaultRoots ../../../presets;
+        terminalRoots = lib.filter (root: baseNameOf root == "terminal") roots;
+        names = map baseNameOf (loadLib.discover terminalRoots);
+      in
+      lib.sort (a: b: a < b) names;
+    expected = [
+      "alacritty-atuin.nix"
+      "quake.nix"
+    ];
+  };
 }
