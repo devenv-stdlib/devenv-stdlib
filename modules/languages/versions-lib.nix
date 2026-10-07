@@ -12,6 +12,10 @@ let
     versions = [ ];
     unsupported = [ ];
   };
+
+  # `listOf` options concatenate across modules. Each runtime is expanded once,
+  # in first-seen order (JavaScript runtimes and Python implementations).
+  uniqueRuntimes = lib.unique;
 in
 rec {
   jsRuntimes = [
@@ -440,7 +444,7 @@ rec {
           inherit version;
           python_version = if impl == "pypy" then "pypy${cycleLabel version}" else version;
         }) (resolvedVersionsFor "python" py)
-      ) py.implementations
+      ) (uniqueRuntimes py.implementations)
     );
 
   rustRows =
@@ -469,7 +473,7 @@ rec {
           pkg = if runtime == "nodejs" then nodePackage version else "";
         }) (resolvedVersionsFor runtime js.${runtime})
       )
-    ) js.runtimes;
+    ) (uniqueRuntimes js.runtimes);
 
   padJob = text: "  " + lib.replaceStrings [ "\n" ] [ "\n  " ] (lib.removeSuffix "\n" text);
 
