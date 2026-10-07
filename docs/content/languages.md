@@ -15,7 +15,7 @@ Each enabled language requires `supported.<lang>.min`. Optional `max` and `unsup
 
 When min/max omit a patch (`3.12`, `22`), CI uses the latest patch of each non-EOL cycle in that range from `modules/languages/catalog.json` (refresh with `refresh-toolchain-latest`). Evaluation fails if min or max is EOL or missing from the catalog. Suggested max defaults in `includes/toolchain-latest.yml` are aligned so min and max differ in at most one component (so that range can be enumerated).
 
-When a patch is set (`1.80.0`–`1.85.0`), CI steps the one component that changes, minus `unsupported`. Set `versions` to list them explicitly when min and max differ in more than one component.
+When a patch is set (`1.80.0`–`1.85.0`), CI steps the one component that changes, minus `unsupported`. Set `versions` to list them explicitly when min and max differ in more than one component. Evaluation fails when that leaves no version to test.
 
 ## Rust edition
 
