@@ -11,6 +11,11 @@ let
 
   eval =
     extra:
+    let
+      # A list is separate modules (devenv.nix and devenv.local.nix). One
+      # attrset stays a single module.
+      parts = if builtins.isList extra then extra else [ extra ];
+    in
     (lib.evalModules {
       modules = [
         {
@@ -71,9 +76,9 @@ let
               default = { };
             };
           };
-          config = extra;
         }
       ]
+      ++ map (config: { inherit config; }) parts
       ++ devenvLoad.load {
         presets = devenvLoad.defaultRoots presetRoot;
         tools = [ toolsRoot ];
@@ -136,19 +141,16 @@ in
     };
   };
 
-  # listOf concatenates. The same multi-runtime lists in two modules
-  # (nodejs+bun+deno, cpython+pypy) must not double those matrix rows.
+  # Two modules each add part of the runtime set. The merged options keep
+  # one entry per value, in first-seen order, and the workflow matches one
+  # module that listed that set.
   testCiLanguageMatrixDuplicateMultiRuntimesCollapse = {
     expr =
       let
-        shared = {
+        bounds = {
           languages.javascript.enable = true;
           languages.python.enable = true;
-          supported.javascript.runtimes = [
-            "nodejs"
-            "bun"
-            "deno"
-          ];
+          languages.rust.enable = true;
           supported.javascript.nodejs.min = "22";
           supported.javascript.nodejs.max = "22";
           supported.javascript.bun.min = "1";
@@ -157,18 +159,58 @@ in
           supported.javascript.deno.max = "2.9";
           supported.python.min = "3.12";
           supported.python.max = "3.12";
-          supported.python.implementations = [
+          supported.rust.min = "1.85.0";
+        };
+        withLists =
+          lists:
+          lib.recursiveUpdate bounds {
+            supported.javascript.runtimes = lists.runtimes;
+            supported.python.implementations = lists.implementations;
+            supported.rust.channels = lists.channels;
+          };
+        once = eval (withLists {
+          runtimes = [
+            "nodejs"
+            "bun"
+            "deno"
+          ];
+          implementations = [
             "cpython"
             "pypy"
           ];
-        };
-        once = eval shared;
-        twice = eval (
-          lib.mkMerge [
-            shared
-            shared
-          ]
-        );
+          channels = [
+            "stable"
+            "beta"
+            "nightly"
+          ];
+        });
+        twice = eval [
+          (withLists {
+            runtimes = [
+              "nodejs"
+              "bun"
+            ];
+            implementations = [ "cpython" ];
+            channels = [
+              "stable"
+              "beta"
+            ];
+          })
+          (withLists {
+            runtimes = [
+              "bun"
+              "deno"
+            ];
+            implementations = [
+              "pypy"
+              "cpython"
+            ];
+            channels = [
+              "nightly"
+              "stable"
+            ];
+          })
+        ];
         rows = cfg: lang: cfg.stdlib.markers.ciMatrix.languages.${lang}.rows;
         yml =
           cfg:
@@ -177,31 +219,35 @@ in
           } cfg.stdlib.generated).source.text;
       in
       {
-        jsListedTwice =
+        jsMerged =
           twice.supported.javascript.runtimes == [
             "nodejs"
             "bun"
             "deno"
-            "nodejs"
-            "bun"
-            "deno"
           ];
-        pyListedTwice =
+        pyMerged =
           twice.supported.python.implementations == [
             "cpython"
             "pypy"
-            "cpython"
-            "pypy"
+          ];
+        rustMerged =
+          twice.supported.rust.channels == [
+            "stable"
+            "beta"
+            "nightly"
           ];
         jsRows = rows once "javascript" == rows twice "javascript";
         pyRows = rows once "python" == rows twice "python";
+        rustRows = rows once "rust" == rows twice "rust";
         workflow = yml once == yml twice;
       };
     expected = {
-      jsListedTwice = true;
-      pyListedTwice = true;
+      jsMerged = true;
+      pyMerged = true;
+      rustMerged = true;
       jsRows = true;
       pyRows = true;
+      rustRows = true;
       workflow = true;
     };
   };

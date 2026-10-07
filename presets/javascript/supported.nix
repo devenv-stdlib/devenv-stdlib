@@ -5,6 +5,7 @@
 let
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
   versionPolicy = import ../_shared/_version-policy.nix { inherit lib; };
+  uniqueListOf = import ../_shared/unique-list.nix { inherit lib; };
 in
 {
   path = [
@@ -17,9 +18,9 @@ in
       type = lib.types.submodule {
         options = {
           runtimes = lib.mkOption {
-            type = lib.types.listOf (lib.types.enum versions.jsRuntimes);
+            type = uniqueListOf (lib.types.enum versions.jsRuntimes);
             default = [ ];
-            description = "JS runtimes when javascript or typescript is on: nodejs, bun, deno.";
+            description = "JS runtimes when javascript or typescript is on: nodejs, bun, deno. Repeated entries are kept once, in first-seen order.";
           };
           nodejs = lib.mkOption {
             type = lib.types.submodule { options = versionPolicy { }; };
