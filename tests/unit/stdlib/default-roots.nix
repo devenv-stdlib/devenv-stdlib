@@ -40,4 +40,18 @@
       "ide.neovim"
     ];
   };
+
+  # presets/host is not a devenv language name.
+  testDefaultRootsLoadHostPresets = {
+    expr =
+      let
+        devenv = import ../../../stdlib/devenv.nix { inherit lib; };
+        loadLib = import ../../../stdlib/load.nix { inherit lib; };
+        roots = devenv.defaultRoots ../../../presets;
+        hostRoots = lib.filter (root: baseNameOf root == "host") roots;
+        names = map baseNameOf (loadLib.discover hostRoots);
+      in
+      lib.sort (a: b: a < b) names;
+    expected = [ "hm-only-guard.nix" ];
+  };
 }
