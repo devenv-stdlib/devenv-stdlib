@@ -281,9 +281,14 @@ rec {
       (lib.optional (
         !(lib.all (inRange pol) resolved)
       ) "${label}.versions must sit between min and max and omit unsupported")
+      # A catalog EOL or missing min already has its own message. Every other
+      # empty result (for example the only enumerated version is unsupported)
+      # must fail here, or the workflow is generated with an empty include list.
       (lib.optional (
-        resolved == [ ] && rmin != null && !rmin.eol
-      ) "${label} has no supported non-EOL versions between min and max")
+        resolved == [ ]
+        && (pol.max == null || !lib.versionOlder pol.max pol.min)
+        && !((active && rmin == null) || (rmin != null && rmin.eol))
+      ) "${label} has no supported versions between min and max")
     ];
 
   problems =
