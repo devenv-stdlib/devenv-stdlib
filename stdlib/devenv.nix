@@ -355,6 +355,7 @@ let
       config,
       lib,
       pkgs ? { },
+      options,
       ...
     }@moduleArgs:
     let
