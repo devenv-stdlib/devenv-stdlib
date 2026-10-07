@@ -115,10 +115,18 @@ let
         name: entries.${name} == "directory" && !(lib.hasPrefix "_" name) && name != "tests"
       ) names;
     in
-    map (name: {
-      file = root + "/${name}";
-      path = prefix ++ [ (lib.removeSuffix ".nix" name) ];
-    }) files
+    # default.nix is the directory attrpath (presets/ide/default.nix → ide).
+    # Any other file adds its stem (presets/ide/neovim.nix → ide.neovim).
+    map (
+      name:
+      let
+        segment = lib.removeSuffix ".nix" name;
+      in
+      {
+        file = root + "/${name}";
+        path = if segment == "default" then prefix else prefix ++ [ segment ];
+      }
+    ) files
     ++ lib.concatMap (name: collect (root + "/${name}") (prefix ++ [ name ])) dirs;
 
   isPreset =

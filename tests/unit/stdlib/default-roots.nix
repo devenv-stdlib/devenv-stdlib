@@ -21,4 +21,23 @@
       "neovim.nix"
     ];
   };
+
+  # discover only checks filenames. declsOf imports each file the way
+  # modules/devenv.nix does, so a default.nix hub whose path is the directory
+  # (ide, not ide.default) must load with its siblings.
+  testDefaultRootsIdeDeclarations = {
+    expr =
+      let
+        devenv = import ../../../stdlib/devenv.nix { inherit lib; };
+        roots = lib.filter (root: baseNameOf root == "ide") (devenv.defaultRoots ../../../presets);
+        tools = devenv.refsOfTools [ ../../../tools ];
+        decls = devenv.declsOf roots tools;
+      in
+      lib.sort (a: b: a < b) (map (decl: decl.name) decls);
+    expected = [
+      "ide"
+      "ide.coderabbit"
+      "ide.neovim"
+    ];
+  };
 }
