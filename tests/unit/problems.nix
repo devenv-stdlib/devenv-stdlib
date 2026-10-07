@@ -107,6 +107,20 @@ in
     expected = [ "supported.python.versions must sit between min and max and omit unsupported" ];
   };
 
+  # A min/max that enumerates one version, then lists that version in
+  # unsupported, must fail. This does not need a catalog release.
+  testProblemsUnsupportedRemovesOnlyVersion = {
+    expr = versions.problems {
+      pythonOn = true;
+      python = versions.emptyPython // {
+        min = "3.12";
+        max = "3.12";
+        unsupported = [ "3.12" ];
+      };
+    };
+    expected = [ "supported.python has no supported versions between min and max" ];
+  };
+
   testProblemsPythonOk = {
     expr = versions.problems {
       pythonOn = true;
