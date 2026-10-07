@@ -136,4 +136,74 @@ in
     };
   };
 
+  # listOf concatenates. The same multi-runtime lists in two modules
+  # (nodejs+bun+deno, cpython+pypy) must not double those matrix rows.
+  testCiLanguageMatrixDuplicateMultiRuntimesCollapse = {
+    expr =
+      let
+        shared = {
+          languages.javascript.enable = true;
+          languages.python.enable = true;
+          supported.javascript.runtimes = [
+            "nodejs"
+            "bun"
+            "deno"
+          ];
+          supported.javascript.nodejs.min = "22";
+          supported.javascript.nodejs.max = "22";
+          supported.javascript.bun.min = "1";
+          supported.javascript.bun.max = "1";
+          supported.javascript.deno.min = "2.9";
+          supported.javascript.deno.max = "2.9";
+          supported.python.min = "3.12";
+          supported.python.max = "3.12";
+          supported.python.implementations = [
+            "cpython"
+            "pypy"
+          ];
+        };
+        once = eval shared;
+        twice = eval (
+          lib.mkMerge [
+            shared
+            shared
+          ]
+        );
+        rows = cfg: lang: cfg.stdlib.markers.ciMatrix.languages.${lang}.rows;
+        yml =
+          cfg:
+          (lib.findFirst (g: g.path == ".github/workflows/test.yml") {
+            source.text = "";
+          } cfg.stdlib.generated).source.text;
+      in
+      {
+        jsListedTwice =
+          twice.supported.javascript.runtimes == [
+            "nodejs"
+            "bun"
+            "deno"
+            "nodejs"
+            "bun"
+            "deno"
+          ];
+        pyListedTwice =
+          twice.supported.python.implementations == [
+            "cpython"
+            "pypy"
+            "cpython"
+            "pypy"
+          ];
+        jsRows = rows once "javascript" == rows twice "javascript";
+        pyRows = rows once "python" == rows twice "python";
+        workflow = yml once == yml twice;
+      };
+    expected = {
+      jsListedTwice = true;
+      pyListedTwice = true;
+      jsRows = true;
+      pyRows = true;
+      workflow = true;
+    };
+  };
+
 }
