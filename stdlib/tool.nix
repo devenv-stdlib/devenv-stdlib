@@ -276,12 +276,17 @@ let
       rendered = if builtins.isFunction raw then raw moduleArgs else raw;
       deps = checked.dependsOn;
       policyAssertions = categoryPolicy.toolAssertions moduleArgs.config (policyArgOf checked);
-      loweredTasks = tasksLib.lower {
-        inherit (checked) name tasks;
-        inherit moduleArgs;
-      };
       taskConfig =
-        if loweredTasks != { } && tasksLib.hostHasTasks moduleArgs then { tasks = loweredTasks; } else { };
+        if tasksLib.hostHasTasks moduleArgs then
+          let
+            loweredTasks = tasksLib.lower {
+              inherit (checked) name tasks;
+              inherit moduleArgs;
+            };
+          in
+          if loweredTasks != { } then { tasks = loweredTasks; } else { }
+        else
+          { };
     in
     assert require checked.isLocal "mkTool ${checked.name}: applyLocal is for local (project) tools";
     {

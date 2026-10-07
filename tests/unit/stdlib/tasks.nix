@@ -215,9 +215,61 @@ in
   testRefsFromSpecs = {
     expr =
       let
-        refs = tasks.refsFromSpecs discovered;
+        refs = tasks.refsFromSpecs discovered { };
       in
       refs.mock-cpu.sample.id;
     expected = "mock-cpu:sample";
+  };
+
+  # A function-valued declaration is resolved before leaf names are listed.
+  testRefsFromSpecsResolvesFunction = {
+    expr =
+      let
+        refs = tasks.refsFromSpecs [
+          {
+            spec = {
+              name = "mbx";
+              tasks =
+                { pkgs, ... }:
+                {
+                  gc.exec = pkgs.hello;
+                };
+            };
+          }
+        ] { pkgs.hello = "hello-bin"; };
+      in
+      refs.mbx.gc.id;
+    expected = "mbx:gc";
+  };
+
+  # Lowering must not run until the host declares options.tasks. A declaration
+  # that reads that option would throw on hosts that omit it.
+  testApplyLocalSkipsTaskLowerWithoutHostTasks = {
+    expr =
+      let
+        spec = {
+          name = "mock-fn";
+          category = "shell";
+          install.kind = "project";
+          upgrade = "none";
+          project = { };
+          tasks =
+            moduleArgs:
+            if (moduleArgs.options or { }) ? tasks then
+              {
+                leaf.exec = "ok";
+              }
+            else
+              throw "tasks option missing";
+        };
+        mod = toolLib.applyLocal {
+          config.tools.mock-fn.enable = true;
+          options = { };
+          inherit lib;
+          pkgs = { };
+        } spec;
+      in
+      (builtins.tryEval (lib.evalModules { modules = [ mod ]; })).success;
+    expected = true;
   };
 }
