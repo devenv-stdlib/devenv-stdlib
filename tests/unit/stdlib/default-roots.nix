@@ -2,57 +2,45 @@
   lib,
   ...
 }:
+let
+  mock = import ../../lib/mock-framework.nix { inherit lib; };
+  devenv = import ../../../stdlib/devenv.nix { inherit lib; };
+  loadLib = import ../../../stdlib/load.nix { inherit lib; };
+  roots = devenv.defaultRoots mock.presets;
+  rootsNamed = name: lib.filter (root: baseNameOf root == name) roots;
+  discovered = name: lib.sort (a: b: a < b) (map baseNameOf (loadLib.discover (rootsNamed name)));
+in
 {
   # presets/ide is not a devenv language name. defaultRoots must still
-  # pass that directory to the loader, including the hub preset.
+  # pass that directory to the loader.
   testDefaultRootsLoadIdePresets = {
-    expr =
-      let
-        devenv = import ../../../stdlib/devenv.nix { inherit lib; };
-        loadLib = import ../../../stdlib/load.nix { inherit lib; };
-        roots = devenv.defaultRoots ../../../presets;
-        ideRoots = lib.filter (root: baseNameOf root == "ide") roots;
-        names = map baseNameOf (loadLib.discover ideRoots);
-      in
-      lib.sort (a: b: a < b) names;
+    expr = discovered "ide";
     expected = [
-      "coderabbit.nix"
       "default.nix"
-      "neovim.nix"
+      "mock-ide.nix"
     ];
   };
 
-  # discover only checks filenames. declsOf imports each file the way
-  # modules/devenv.nix does, so a default.nix hub whose path is the directory
-  # (ide, not ide.default) must load with its siblings.
+  # declsOf imports each file the way modules/devenv.nix does, so a
+  # default.nix hub whose path is the directory (ide, not ide.default)
+  # must load with its sibling.
   testDefaultRootsIdeDeclarations = {
     expr =
       let
-        devenv = import ../../../stdlib/devenv.nix { inherit lib; };
-        roots = lib.filter (root: baseNameOf root == "ide") (devenv.defaultRoots ../../../presets);
-        tools = devenv.refsOfTools [ ../../../tools ];
-        decls = devenv.declsOf roots tools;
+        tools = devenv.refsOfTools [ mock.tools ];
+        decls = devenv.declsOf (rootsNamed "ide") tools;
       in
       lib.sort (a: b: a < b) (map (decl: decl.name) decls);
     expected = [
       "ide"
-      "ide.coderabbit"
-      "ide.neovim"
+      "ide.mock-ide"
     ];
   };
 
   # presets/host is not a devenv language name.
   testDefaultRootsLoadHostPresets = {
-    expr =
-      let
-        devenv = import ../../../stdlib/devenv.nix { inherit lib; };
-        loadLib = import ../../../stdlib/load.nix { inherit lib; };
-        roots = devenv.defaultRoots ../../../presets;
-        hostRoots = lib.filter (root: baseNameOf root == "host") roots;
-        names = map baseNameOf (loadLib.discover hostRoots);
-      in
-      lib.sort (a: b: a < b) names;
-    expected = [ "hm-only-guard.nix" ];
+    expr = discovered "host";
+    expected = [ "mock-guard.nix" ];
   };
 
   testDefaultRootsHostDeclarations = {
@@ -77,18 +65,7 @@
 
   # presets/terminal is not a devenv language name.
   testDefaultRootsLoadTerminalPresets = {
-    expr =
-      let
-        devenv = import ../../../stdlib/devenv.nix { inherit lib; };
-        loadLib = import ../../../stdlib/load.nix { inherit lib; };
-        roots = devenv.defaultRoots ../../../presets;
-        terminalRoots = lib.filter (root: baseNameOf root == "terminal") roots;
-        names = map baseNameOf (loadLib.discover terminalRoots);
-      in
-      lib.sort (a: b: a < b) names;
-    expected = [
-      "alacritty-atuin.nix"
-      "quake.nix"
-    ];
+    expr = discovered "terminal";
+    expected = [ "mock-quake.nix" ];
   };
 }
