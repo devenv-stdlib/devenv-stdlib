@@ -3,6 +3,7 @@
 let
   versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
   versionPolicy = import ../_shared/_version-policy.nix { inherit lib; };
+  uniqueListOf = import ../_shared/unique-list.nix { inherit lib; };
 in
 {
   path = [
@@ -15,9 +16,9 @@ in
       type = lib.types.submodule {
         options = versionPolicy {
           channels = lib.mkOption {
-            type = lib.types.listOf (lib.types.enum versions.rustChannels);
+            type = uniqueListOf (lib.types.enum versions.rustChannels);
             default = [ "stable" ];
-            description = "Rust channels. stable is required; beta and nightly are optional extras.";
+            description = "Rust channels. stable is required; beta and nightly are optional extras. Repeated entries are kept once, in first-seen order.";
           };
           edition = lib.mkOption {
             type = lib.types.nullOr (lib.types.enum versions.rustEditions);
