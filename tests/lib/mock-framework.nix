@@ -11,8 +11,8 @@ in
   tools = toolsRoot;
   presets = presetsRoot;
 
-  # Explicit preset category roots (defaultRoots only lists devenv languages +
-  # services/ci/fixtures — mock terminal/ide/demo need to be named).
+  # Explicit preset category roots passed to devenv.load. demo/ is not a
+  # defaultRoots category, so it has to be named. ide/, host/, and terminal/ are.
   presetRoots = [
     (presetsRoot + "/python")
     (presetsRoot + "/terminal")
