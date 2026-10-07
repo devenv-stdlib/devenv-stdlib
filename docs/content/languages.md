@@ -27,6 +27,7 @@ Rust always includes `stable` and may add `beta` / `nightly`.
 
 - JavaScript or TypeScript must pick at least one of `nodejs`, `bun`, or `deno`.
 - Python is 3+ only, with `cpython` and/or `pypy`.
+- A repeated JavaScript runtime or Python implementation is included once, in first-seen order. Nix list options concatenate, so setting the same list in `devenv.nix` and `devenv.local.nix` does not double those matrix jobs.
 - Pinning `languages.python.version` (including the generated per-version `test.yml` matrix) needs the `nixpkgs-python` input in `devenv.yaml` (this package already includes it).
 - Enabling Python (or other Cursor language packs) needs `nixpkgs.allow_unfree` in `devenv.yaml` so Pylance and similar extensions can evaluate.
 - `python.extensionToolchain` puts `cc`, `c++`, `make`, `pkg-config`, `rustc`, and `cargo` on PATH for pip/uv source builds. It does not enable `languages.c` or `languages.rust`.
