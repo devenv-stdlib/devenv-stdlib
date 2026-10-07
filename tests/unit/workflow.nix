@@ -78,6 +78,40 @@
     };
   };
 
+  testWorkflowDuplicateRuntimeMatchesUniqueList = {
+    expr =
+      let
+        shared = versions.emptyJavascript // {
+          nodejs = policy {
+            min = "22";
+            max = "22";
+          };
+          bun = policy { min = "1.2.0"; };
+          deno = policy { min = "2.1.0"; };
+        };
+        yaml =
+          runtimes:
+          versions.workflowText {
+            javascriptOn = true;
+            javascript = shared // {
+              inherit runtimes;
+            };
+          };
+      in
+      yaml [
+        "deno"
+        "nodejs"
+        "deno"
+        "bun"
+        "nodejs"
+      ] == yaml [
+        "deno"
+        "nodejs"
+        "bun"
+      ];
+    expected = true;
+  };
+
   testWorkflowRustGoJavascriptJobs = {
     expr =
       let
