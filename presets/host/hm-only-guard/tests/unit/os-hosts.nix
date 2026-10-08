@@ -49,4 +49,17 @@ in
       coversSelected = true;
     };
   };
+
+  # stdlib.devenv.load passes `tools` and reads this declaration path.
+  testHostHmOnlyGuardIsPresetDeclaration = {
+    expr =
+      (import <devenv4monorepo/presets/host/hm-only-guard.nix> {
+        inherit lib;
+        tools = { };
+      }).path;
+    expected = [
+      "host"
+      "hm-only-guard"
+    ];
+  };
 }

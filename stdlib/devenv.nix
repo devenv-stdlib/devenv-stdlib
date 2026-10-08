@@ -272,7 +272,10 @@ let
         internal = true;
         description = "Realize decision for ${id} (stdlib.report).";
       };
-    };
+    }
+    # Declarations may add options beside enable/strict/result
+    # (presets.terminal.quake.provider). Tool selection reads them during realize.
+    // (decl.extraOptions or { });
 
   presetOptions =
     decls:

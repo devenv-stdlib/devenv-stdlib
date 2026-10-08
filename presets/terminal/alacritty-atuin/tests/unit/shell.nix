@@ -109,4 +109,17 @@ in
       blesh = false;
     };
   };
+
+  # stdlib.devenv.load passes `tools` and reads this declaration path.
+  testAlacrittyAtuinIsPresetDeclaration = {
+    expr =
+      (import <devenv4monorepo/presets/terminal/alacritty-atuin.nix> {
+        inherit lib;
+        tools = { };
+      }).path;
+    expected = [
+      "terminal"
+      "alacritty-atuin"
+    ];
+  };
 }
