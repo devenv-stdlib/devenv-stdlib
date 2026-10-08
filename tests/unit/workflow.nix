@@ -130,7 +130,7 @@ in
   testWorkflowJavascriptTestRunMatchesOtherBlockIndent = {
     expr =
       let
-        yaml = versions.workflowText {
+        yaml = render {
           javascriptOn = true;
           javascript = versions.emptyJavascript // {
             runtimes = [ "deno" ];
@@ -152,7 +152,7 @@ in
   testWorkflowJavascriptRunBlockHasNoPaddedBlankLines = {
     expr =
       let
-        yaml = versions.workflowText {
+        yaml = render {
           javascriptOn = true;
           javascript = versions.emptyJavascript // {
             runtimes = [ "deno" ];
