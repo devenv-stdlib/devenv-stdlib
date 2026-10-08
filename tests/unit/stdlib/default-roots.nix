@@ -66,6 +66,9 @@ in
   # presets/terminal is not a devenv language name.
   testDefaultRootsLoadTerminalPresets = {
     expr = discovered "terminal";
-    expected = [ "mock-quake.nix" ];
+    expected = [
+      "mock-provider.nix"
+      "mock-quake.nix"
+    ];
   };
 }

@@ -31,4 +31,17 @@ in
       crosses = [ ];
     };
   };
+
+  # stdlib.devenv.load passes `tools` and reads this declaration path.
+  testTerminalQuakeIsPresetDeclaration = {
+    expr =
+      (import <devenv4monorepo/presets/terminal/quake.nix> {
+        inherit lib;
+        tools = { };
+      }).path;
+    expected = [
+      "terminal"
+      "quake"
+    ];
+  };
 }

@@ -354,4 +354,9 @@ in
       ];
     };
   };
+
+  testMockPresetExtraOptionIsDeclared = {
+    expr = (eval { }).presets.terminal.mock-provider.provider;
+    expected = "alacritty";
+  };
 }

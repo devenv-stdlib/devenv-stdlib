@@ -1,5 +1,7 @@
 # B3 re-homed: HM-only terminal aspects stay off nixos and darwin hosts.
-# stdlib.devenv.load passes `tools` and reads the declaration; Den imports mkPreset.
+# Same file serves both loaders:
+#   - stdlib.devenv.load passes `tools` → thin preset declaration
+#   - Den / evalModules import without `tools` → mkPreset module
 args@{ lib, ... }:
 let
   inherit (import ../../stdlib/preset.nix { inherit lib; }) mkPreset hostClass;
