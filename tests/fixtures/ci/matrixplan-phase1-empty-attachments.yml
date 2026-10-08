@@ -3,6 +3,9 @@ name: Test
 # Each language is tested independently for its supported versions.
 on:
   workflow_call:
+# devenv test runs mise install; github: tools hit the GitHub API.
+env:
+  MISE_GITHUB_TOKEN: ${{ github.token }}
 jobs:
   python:
     name: Python ${{ matrix.python_version }} (${{ matrix.os }})
