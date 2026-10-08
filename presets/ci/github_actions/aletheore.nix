@@ -13,7 +13,9 @@
 # the `Security review (Aletheore)` check; require that context on the branch
 # ruleset to stop merge (not the bare job id).
 #
-# Opt out with presets.ci.github_actions.aletheore.enable = false and remove
+# Does not write on enterShell; run `devenv tasks run ci:update-aletheore` (or
+# stdlib:update-generated). Opt out with
+# presets.ci.github_actions.aletheore.enable = false and remove
 # .github/workflows/aletheore.yml (also drops tools.aletheore). Aletheore
 # Community is PolyForm Noncommercial — org/commercial use needs a separate
 # license from upstream. Paid Aletheore AIR plans: https://www.aletheore.com
@@ -29,8 +31,9 @@ in
     "aletheore"
   ];
   description = ''
-    Generate .github/workflows/aletheore.yml for Aletheore/Aletheore (GHA-only
-    evidence-grounded PR review diffs) and enable the local Aletheore CLI
+    Own .github/workflows/aletheore.yml for Aletheore/Aletheore (GHA-only
+    evidence-grounded PR review diffs; does not write on enterShell — run
+    `devenv tasks run ci:update-aletheore`) and enable the local Aletheore CLI
     (tools.scanners.aletheore; catalog pipx:aletheore). Runs in parallel with
     Lint (prek); check context `Security review (Aletheore)` fails on configured
     fail-on-* gates — add it to the branch ruleset after merge to block merge.
@@ -118,47 +121,52 @@ in
       config,
       lib,
       pkgs,
+      options,
       ...
     }:
     let
       cfg = config.presets.ci.github_actions.aletheore;
-      text = workflowText cfg;
+      generate = import ../../../stdlib/generate.nix { inherit lib; };
+      text = generate.ensureTrailingNewline (workflowText cfg);
       workflowFile = pkgs.writeText "aletheore.yml" text;
-    in
-    {
-      # Structured marker for tests / future stdlib.report sections.
-      stdlib.markers.aletheore = {
-        enable = true;
-        inherit (cfg)
-          action
-          actionComment
-          failOnNewSecrets
-          failOnNewVulnerabilities
-          failOnNewLayerViolations
-          full
-          postPrComment
-          ;
-        workflow = "aletheore.yml";
+      syncExec = generate.mkSyncFileExec {
+        storePath = workflowFile;
+        relPath = ".github/workflows/aletheore.yml";
       };
+    in
+    lib.mkMerge [
+      {
+        stdlib = {
+          # Structured marker for tests / future stdlib.report sections.
+          markers.aletheore = {
+            enable = true;
+            inherit (cfg)
+              action
+              actionComment
+              failOnNewSecrets
+              failOnNewVulnerabilities
+              failOnNewLayerViolations
+              full
+              postPrComment
+              ;
+            workflow = "aletheore.yml";
+          };
 
-      scripts.sync-aletheore-workflow.exec = ''
-        set -euo pipefail
-        dest="$DEVENV_ROOT/.github/workflows/aletheore.yml"
-        mkdir -p "$(dirname "$dest")"
-        # Same filesystem as dest so mv is an atomic rename (not cross-fs copy).
-        tmp="$(mktemp "$(dirname "$dest")/.aletheore.yml.XXXXXX")"
-        cp ${lib.escapeShellArg workflowFile} "$tmp"
-        chmod 0644 "$tmp"
-        if ! cmp -s "$tmp" "$dest" 2>/dev/null; then
-          mv "$tmp" "$dest"
-          echo "wrote .github/workflows/aletheore.yml"
-        else
-          rm -f "$tmp"
-        fi
-      '';
+          generated = [
+            {
+              path = ".github/workflows/aletheore.yml";
+              task = "ci:update-aletheore";
+              script = "sync-aletheore-workflow";
+              source = workflowFile;
+            }
+          ];
+        };
 
-      enterShell = ''
-        sync-aletheore-workflow
-      '';
-    };
+        scripts.sync-aletheore-workflow.exec = syncExec;
+      }
+      # mkIf false still defines `tasks` and breaks fixtures without that option.
+      (lib.optionalAttrs (options ? tasks) {
+        tasks."ci:update-aletheore".exec = syncExec;
+      })
+    ];
 }
