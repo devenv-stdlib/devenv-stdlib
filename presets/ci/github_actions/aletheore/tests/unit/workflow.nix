@@ -150,9 +150,10 @@ in
         postPrComment = marker.postPrComment or false;
         hasSync = cfg.scripts ? sync-aletheore-workflow;
         syncCopiesAletheore = contains "aletheore.yml" sync;
-        # Temp file stays on dest's filesystem for atomic mv rename.
-        syncMktempInDest = contains ".aletheore.yml.XXXXXX" sync;
-        enterHasSync = contains "sync-aletheore-workflow" cfg.enterShell;
+        hasUpdateTask = cfg.tasks ? "ci:update-aletheore";
+        enterWritesWorkflow = contains "sync-aletheore-workflow" cfg.enterShell;
+        generatedPath =
+          (lib.findFirst (g: g.path == ".github/workflows/aletheore.yml") null cfg.stdlib.generated) != null;
         # Preset enables the local Aletheore CLI catalog leaf.
         inherit includeTools;
         toolEnable = (cfg.tools.aletheore or { }).enable or false;
@@ -178,8 +179,9 @@ in
       postPrComment = true;
       hasSync = true;
       syncCopiesAletheore = true;
-      syncMktempInDest = true;
-      enterHasSync = true;
+      hasUpdateTask = true;
+      enterWritesWorkflow = false;
+      generatedPath = true;
       includeTools = [ "aletheore" ];
       toolEnable = true;
       hasAletheorePackage = true;
