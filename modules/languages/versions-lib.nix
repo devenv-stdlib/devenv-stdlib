@@ -550,6 +550,9 @@ rec {
         # Each language is tested independently for its supported versions.
         on:
           workflow_call:
+        # devenv test runs mise install; github: tools hit the GitHub API.
+        env:
+          MISE_GITHUB_TOKEN: ''${{ github.token }}
         jobs:
         ${jobs}
       '';

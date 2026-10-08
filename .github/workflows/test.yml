@@ -3,6 +3,9 @@ name: Test
 # Each language is tested independently for its supported versions.
 on:
   workflow_call:
+# devenv test runs mise install; github: tools hit the GitHub API.
+env:
+  MISE_GITHUB_TOKEN: ${{ github.token }}
 jobs:
   python:
     name: Python ${{ matrix.python_version }} (${{ matrix.os }})
@@ -133,7 +136,6 @@ jobs:
           else
             devenv --option languages.javascript.enable:bool true --option languages.deno.enable:bool true test
           fi
-
       - name: Save Nix store
         if: ${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
         uses: nix-community/cache-nix-action/save@v7

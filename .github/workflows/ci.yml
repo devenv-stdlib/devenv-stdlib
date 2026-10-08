@@ -9,6 +9,11 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Every devenv shell / devenv test runs mise install; github: tools (debtmap)
+# hit the GitHub API, which allows 60 unauthenticated requests per hour per IP.
+env:
+  MISE_GITHUB_TOKEN: ${{ github.token }}
+
 jobs:
   # Path filters on pull_request only; push to main/master always runs the full suite
   # (release gate). Path-skipped jobs report as skipped (ruleset uses real job names).
@@ -152,7 +157,8 @@ jobs:
 
       - name: Run prek
         id: prek
-        # Unset tokens so PR-controlled hooks cannot call the GitHub API.
+        # Unset gh/git tokens for PR-controlled hooks. MISE_GITHUB_TOKEN stays set
+        # for mise install; this job's token is contents: read.
         env:
           GITHUB_TOKEN: ""
           GH_TOKEN: ""
