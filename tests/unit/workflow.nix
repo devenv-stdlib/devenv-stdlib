@@ -59,6 +59,7 @@
         policyMin = contains "supported.python.min" yaml;
         cache = contains "cache-nix-action/restore" yaml;
         cacheSave = contains "cache-nix-action/save" yaml;
+        miseToken = contains "MISE_GITHUB_TOKEN: \${{ github.token }}" yaml;
         # Own-workspace chown must tolerate vanished /nix store locks under act.
         actOwnFallback = contains ''if ! sudo chown -R "$(id -u):$(id -g)" /nix; then'' yaml;
       };
@@ -74,6 +75,7 @@
       policyMin = true;
       cache = true;
       cacheSave = true;
+      miseToken = true;
       actOwnFallback = true;
     };
   };
