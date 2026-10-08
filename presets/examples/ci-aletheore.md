@@ -2,7 +2,8 @@
 
 Not loaded by `modules/devenv.nix`. Copy into consumer config if you want
 explicit knobs; the template already applies `ci.github_actions.aletheore` by
-default (writes `.github/workflows/aletheore.yml`, enables `tools.aletheore` /
+default (owns `.github/workflows/aletheore.yml` — refresh with
+`devenv tasks run ci:update-aletheore`; enables `tools.aletheore` /
 catalog `pipx:aletheore` for local `aletheore scan`) and dogfoods the Cursor
 MCP via `cursor.llmContext.aletheore.enable = true` on the `cursor-llm` aspect.
 
