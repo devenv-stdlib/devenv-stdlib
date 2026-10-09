@@ -86,12 +86,14 @@ in
       quakeApplied = cfg.presets.terminal.quake.result.applied;
       atuinApplied = cfg.presets.terminal.alacritty-atuin.result.applied;
       hostApplied = cfg.presets.host.hm-only-guard.result.applied;
+      ideLeaves = cfg.presets.ide ? neovim && cfg.presets.ide ? coderabbit;
     };
     expected = {
       provider = "alacritty";
       quakeApplied = true;
       atuinApplied = false;
       hostApplied = true;
+      ideLeaves = true;
     };
   };
 }
