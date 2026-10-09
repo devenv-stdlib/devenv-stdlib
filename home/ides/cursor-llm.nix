@@ -21,6 +21,18 @@ let
       bin = if e == null then name else nonNix.binName e;
       miseKey = if e == null then null else e.mise;
       installName = if miseKey == null then null else lib.replaceStrings [ ":" "/" ] [ "-" "-" ] miseKey;
+      # Catalog pin first, then latest, then any installed version; bin/ before root.
+      versions = lib.optional ((e.pin or null) != null) (lib.escapeShellArg e.pin) ++ [
+        "latest"
+        "*"
+      ];
+      candidates = lib.concatMapStrings (
+        v:
+        let
+          dir = ''"$installs"/${lib.escapeShellArg installName}/${v}'';
+        in
+        " \\\n            ${dir}/bin/${lib.escapeShellArg bin} \\\n            ${dir}/${lib.escapeShellArg bin}"
+      ) versions;
     in
     if e != null && e.via == "nix" then
       lib.getExe e.package
@@ -29,12 +41,8 @@ let
         set -euo pipefail
         installs="''${XDG_DATA_HOME:-$HOME/.local/share}/mise/installs"
         ${lib.optionalString (installName != null) ''
-          for cand in \
-            "$installs"/${lib.escapeShellArg installName}/latest/${lib.escapeShellArg bin} \
-            "$installs"/${lib.escapeShellArg installName}/latest/bin/${lib.escapeShellArg bin} \
-            "$installs"/${lib.escapeShellArg installName}/*/${lib.escapeShellArg bin} \
-            "$installs"/${lib.escapeShellArg installName}/*/bin/${lib.escapeShellArg bin}; do
-            if [ -x "$cand" ]; then
+          for cand in${candidates}; do
+            if [ -f "$cand" ] && [ -x "$cand" ]; then
               exec "$cand" "$@"
             fi
           done
@@ -71,7 +79,7 @@ let
   '';
   loadSecrets = ../load-secrets.sh;
   watchMcpSecrets = ../watch-mcp-secrets.sh;
-  hostConfigDir = "$HOME/.config/devenv4monorepo";
+  hostConfigDir = "\${XDG_CONFIG_HOME:-$HOME/.config}/devenv4monorepo";
 in
 {
   options.cursor.llmContext.enable = lib.mkOption {
@@ -152,7 +160,7 @@ in
             "$HOME/.cursor/permissions.json" "$HOME/.cursor/bin/rtk" || true
           rm -f "$HOME/.cursor/bin/rtk" "$HOME/.cursor/rules/rtk-passthrough.mdc"
 
-          mkdir -p ${hostConfigDir}
+          mkdir -p "${hostConfigDir}"
           umask 077
           printf 'BRAVE_MCP=%s\nFIRECRAWL_MCP=%s\n' \
             ${lib.escapeShellArg (toString mcp.braveMcp)} \
@@ -172,7 +180,7 @@ in
         '';
 
         writeDevenvRoot = lib.hm.dag.entryBefore [ "reloadSystemd" ] ''
-          mkdir -p ${hostConfigDir}
+          mkdir -p "${hostConfigDir}"
           if [ -n "''${DEVENV_ROOT:-}" ]; then
             printf '%s\n' "$DEVENV_ROOT" >"${hostConfigDir}/devenv-root"
           fi
