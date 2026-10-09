@@ -51,6 +51,28 @@ EOF
   grep -q 'name="teeLiveStdout"' "$out"
 }
 
+@test "nix-unit shim adds the repo include next to unrelated includes" {
+  fake="$BATS_TEST_TMPDIR/fake-nix-unit"
+  out="$BATS_TEST_TMPDIR/nix-unit.xml"
+  cat >"$fake" <<'EOF'
+#!/usr/bin/env bash
+echo "args: $*"
+echo '✅ includeArgs'
+echo '🎉 1/1 successful'
+EOF
+  chmod +x "$fake"
+  run python3 "$REPORT" nix-unit \
+    -I other=/tmp \
+    --nix-unit "$fake" \
+    --suite "$REPO_DIR/tests/unit/default.nix" \
+    --unit-dir "$REPO_DIR/tests/unit" \
+    --root "$REPO_DIR" \
+    --output "$out"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"devenv4monorepo=$REPO_DIR"* ]]
+  [[ "$output" == *"other=/tmp"* ]]
+}
+
 @test "nix-unit --quiet hides pass lines and still shows failures" {
   fake="$BATS_TEST_TMPDIR/fake-nix-unit"
   out="$BATS_TEST_TMPDIR/nix-unit.xml"
