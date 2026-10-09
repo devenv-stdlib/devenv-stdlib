@@ -1,5 +1,6 @@
 # Example composition only — not loaded by modules/devenv.nix defaultRoots.
-# Opt-in: load presets/examples (or copy the workflows into a consumer preset).
+# Opt-in: load presets/examples and set presets.examples.rust-mbx-cache.enable = true
+# (or copy the workflows into a consumer preset).
 #
 # Intent: with cache.mr-boxington local + a rust:build task (#73), run
 #   doctor before build; gc + stats after.
