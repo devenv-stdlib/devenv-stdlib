@@ -528,19 +528,7 @@ rec {
   languageJobs =
     args:
     let
-      plan = languageMatrixPlan args;
-      inherit (plan) jobs;
-      langOrder = [
-        "python"
-        "rust"
-        "go"
-        "javascript"
-      ];
-      ordered = lib.filter (n: (jobs.${n}.cells or [ ]) != [ ]) (
-        lib.filter (n: jobs ? ${n}) langOrder
-        ++ lib.filter (n: !(lib.elem n langOrder)) (lib.attrNames jobs)
-      );
-      rawJobs = lib.concatMapStrings (n: gha.jobYaml plan jobs.${n}) ordered;
+      rawJobs = gha.jobsYaml (languageMatrixPlan args);
     in
     if rawJobs == "" then "" else padJob rawJobs;
 
