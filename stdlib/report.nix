@@ -18,7 +18,18 @@ let
     let
       walk =
         path: value:
-        if !(builtins.isAttrs value) then
+        let
+          children = lib.concatLists (
+            lib.mapAttrsToList (name: child: walk (path ++ [ name ]) child) (
+              builtins.removeAttrs value [
+                "strict"
+                "enable"
+                "result"
+              ]
+            )
+          );
+        in
+        if !(builtins.isAttrs value) || lib.isDerivation value then
           [ ]
         else if value ? enable || value ? result then
           [
@@ -34,12 +45,10 @@ let
                 };
             }
           ]
+          # Hub presets (e.g. presets.ide) also carry child leaves.
+          ++ children
         else
-          lib.concatLists (
-            lib.mapAttrsToList (name: child: walk (path ++ [ name ]) child) (
-              builtins.removeAttrs value [ "strict" ]
-            )
-          );
+          children;
     in
     walk [ ] (builtins.removeAttrs (asAttrs presets) [ "strict" ]);
 
