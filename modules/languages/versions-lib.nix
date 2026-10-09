@@ -413,15 +413,13 @@ rec {
       processes ? [ ],
       # Architectures whose runner profiles participate. Default x86_64-only.
       arches ? [ "x86_64" ],
-      # Override profile catalog; null → default (+ aarch64 when arches asks for it).
+      # Override profile catalog (still filtered by arches); null → built-in catalog.
       runnerProfiles ? null,
     }:
     let
-      baseProfiles =
-        if runnerProfiles != null then
-          runnerProfiles
-        else
-          matrix.profilesForArches matrix.allRunnerProfiles arches;
+      baseProfiles = matrix.profilesForArches (
+        if runnerProfiles != null then runnerProfiles else matrix.allRunnerProfiles
+      ) arches;
       runners = matrix.runnerIds baseProfiles;
       anyLang = pythonOn || rustOn || goOn || javascriptOn;
       # Empty runners (e.g. arches = ["arm64"] instead of aarch64) would drop
