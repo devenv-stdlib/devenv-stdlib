@@ -99,7 +99,7 @@ To add another language after a devenv bump: append the id to `stdlib/devenv-sup
 | `lang.<id>.linters` | `<id>.lint.*` | same as `lang.<id>` |
 | `services.<id>` | `services.<id>.*` | `services.<id>.enable` or `categoryPolicies."services.<id>".available` |
 
-**Shared any-of groups:** languages in `categoryPolicy.anyOfLanguageGroups` (today `javascript` + `typescript`) share usage. An applied `javascript.lint.prettier` (or an enabled tool under `lang.javascript.linters`) also counts as usage for `lang.typescript` / `lang.typescript.linters` when TypeScript is available — so the docs site (TypeScript-only + shared Prettier) does not false-positive on `lang.typescript.linters`.
+**Shared any-of groups:** languages in `categoryPolicy.anyOfLanguageGroups` (today `javascript` and `typescript`) share usage. An applied preset or enabled tool under one language also counts for the other, for both `lang.<id>` and `lang.<id>.linters`. For example, the docs site enables only TypeScript and is formatted by `javascript.lint.prettier`, so `lang.typescript.linters` is not reported as unused.
 
 Warnings go through module `warnings`, `stdlib.log.warn'` during the status inventory, and the report section **Unused available categories**. Opt out with `stdlib.categoryWarnings.enable = false`. Optional tool inventory: `stdlib.categoryWarnings.toolIndex` (`[ { name, category, enable } ]`) so enabled tools count as usage.
 
