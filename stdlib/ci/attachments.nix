@@ -145,11 +145,9 @@ let
     {
       empty = all == [ ];
       ids = map (a: a.id) all;
-      inherit (attachmentPlan)
-        caches
-        coverage
-        reporting
-        ;
+      caches = attachmentPlan.caches or [ ];
+      coverage = attachmentPlan.coverage or [ ];
+      reporting = attachmentPlan.reporting or [ ];
       count = lib.length all;
     };
 in

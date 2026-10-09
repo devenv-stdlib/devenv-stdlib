@@ -343,6 +343,20 @@ in
     };
   };
 
+  testAttachmentsReportPartialPlan = {
+    expr = attachments.report {
+      caches = [ { id = "c"; } ];
+    };
+    expected = {
+      empty = false;
+      ids = [ "c" ];
+      caches = [ { id = "c"; } ];
+      coverage = [ ];
+      reporting = [ ];
+      count = 1;
+    };
+  };
+
   # CodeRabbit: pre-toolchain before nix/devenv bootstrap; pre-command before Test.
   testGhaPreToolchainBeforeBootstrap = {
     expr =
