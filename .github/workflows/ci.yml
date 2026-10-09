@@ -471,6 +471,8 @@ jobs:
     needs: check-language-matrix-workflow
     if: needs.check-language-matrix-workflow.outputs.exists == 'true'
     uses: ./.github/workflows/test.yml
+    # Attachment steps read named secrets from the reusable workflow.
+    secrets: inherit
 
   release:
     name: Semantic release
