@@ -40,7 +40,7 @@ in
     Complements anti-slop / CodeRabbit; not a local hook. Product site / paid
     plans: https://www.aletheore.com
   '';
-  # Always available; presets.ci.github_actions.aletheore.enable turns it off.
+  # Always discoverable; enable is opt-in (mkDefault false below).
   when = _: true;
 
   # Local CLI leaf (mise/pipx catalog pin) — same pattern as ide.coderabbit → CLI.
@@ -114,6 +114,9 @@ in
           };
         };
       };
+
+      # PolyForm Noncommercial CLI + write-permission workflow: opt-in.
+      config.presets.ci.github_actions.aletheore.enable = lib.mkDefault false;
     };
 
   project =

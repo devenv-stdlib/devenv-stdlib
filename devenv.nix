@@ -32,6 +32,10 @@ _: {
   # enable the same way. See docs/content/ci.md and presets/examples/.
   presets.ci.github_actions.anti-slop.enable = true;
 
+  # Dogfood: opt-in CI preset ci.github_actions.aletheore (Aletheore/Aletheore →
+  # .github/workflows/aletheore.yml + local CLI). Framework default is off.
+  presets.ci.github_actions.aletheore.enable = true;
+
   enterShell = ''
     echo "devenv4monorepo ready: ''${USER:-unknown}@$(uname -n)"
 
