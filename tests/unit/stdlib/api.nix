@@ -239,6 +239,7 @@ in
       "ci.backends.github_actions.emptyWorkflow"
       "ci.backends.github_actions.ghaOs"
       "ci.backends.github_actions.jobYaml"
+      "ci.backends.github_actions.jobsYaml"
       "ci.backends.github_actions.matrixRow"
       "ci.backends.github_actions.padJob"
       "ci.backends.github_actions.render"

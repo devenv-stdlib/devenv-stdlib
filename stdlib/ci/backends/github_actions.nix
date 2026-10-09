@@ -237,8 +237,8 @@ let
             - run: echo "No languages enabled; skipping per-version devenv test."
     '';
 
-  # Render MatrixPlan → workflow YAML text (compatible with former versions.workflowText).
-  render =
+  # Unpadded YAML for every job with cells: languages first, then other jobs by name.
+  jobsYaml =
     plan:
     let
       jobs = plan.jobs or { };
@@ -252,7 +252,14 @@ let
         lib.filter (n: jobs ? ${n}) langOrder
         ++ lib.filter (n: !(lib.elem n langOrder)) (lib.attrNames jobs)
       );
-      rawJobs = lib.concatMapStrings (n: jobYaml plan jobs.${n}) ordered;
+    in
+    lib.concatMapStrings (n: jobYaml plan jobs.${n}) ordered;
+
+  # Render MatrixPlan → workflow YAML text (compatible with former versions.workflowText).
+  render =
+    plan:
+    let
+      rawJobs = jobsYaml plan;
     in
     if rawJobs == "" then
       emptyWorkflow plan
@@ -276,6 +283,7 @@ in
     matrixRow
     padJob
     jobYaml
+    jobsYaml
     emptyWorkflow
     render
     ghaOs
