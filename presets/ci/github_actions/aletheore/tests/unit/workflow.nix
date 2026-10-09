@@ -119,6 +119,8 @@ let
 
   contains = needle: haystack: lib.hasInfix needle haystack;
 
+  on.presets.ci.github_actions.aletheore.enable = true;
+
   defaultCfg = {
     action = "Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30";
     actionComment = "v0.9.22";
@@ -134,7 +136,7 @@ in
   testCiAletheorePresetOwnsWorkflow = {
     expr =
       let
-        cfg = eval { };
+        cfg = eval on;
         marker = cfg.stdlib.markers.aletheore or { };
         sync = cfg.scripts.sync-aletheore-workflow.exec or "";
         includeTools = cfg.presets.ci.github_actions.aletheore.result.includeTools or [ ];
@@ -190,16 +192,14 @@ in
     };
   };
 
-  testCiAletheoreDisableRemovesWriter = {
+  testCiAletheoreDefaultOffRemovesWriter = {
     expr =
       let
-        cfg = eval { };
-        disabled = eval {
-          presets.ci.github_actions.aletheore.enable = false;
-        };
+        cfg = eval on;
+        disabled = eval { };
       in
       {
-        defaultApplied = cfg.presets.ci.github_actions.aletheore.result.applied or false;
+        enabledApplied = cfg.presets.ci.github_actions.aletheore.result.applied or false;
         disabledApplied = disabled.presets.ci.github_actions.aletheore.result.applied or false;
         disabledHasMarker = disabled.stdlib.markers ? aletheore;
         disabledHasSync = disabled.scripts ? sync-aletheore-workflow;
@@ -211,7 +211,7 @@ in
         disabledHasInstallTask = disabled.tasks ? "aletheore:install";
       };
     expected = {
-      defaultApplied = true;
+      enabledApplied = true;
       disabledApplied = false;
       disabledHasMarker = false;
       disabledHasSync = false;
@@ -283,6 +283,7 @@ in
         );
         cfg = eval {
           presets.ci.github_actions.aletheore = {
+            enable = true;
             failOnNewSecrets = false;
             failOnNewVulnerabilities = true;
             extraWith = {
