@@ -62,7 +62,16 @@
         roots = lib.filter (root: baseNameOf root == "host") (devenv.defaultRoots ../../../presets);
         tools = devenv.refsOfTools [ ../../../tools ];
       in
-      map (decl: decl.name) (devenv.declsOf roots tools);
-    expected = [ "host.hm-only-guard" ];
+      map (decl: {
+        inherit (decl) name defaultEnable;
+        active = decl.when { };
+      }) (devenv.declsOf roots tools);
+    expected = [
+      {
+        name = "host.hm-only-guard";
+        defaultEnable = false;
+        active = false;
+      }
+    ];
   };
 }

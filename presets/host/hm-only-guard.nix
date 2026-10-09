@@ -53,7 +53,13 @@ let
   };
 in
 if args ? tools then
+  # Host classes and aspects exist only under Den / Home Manager, so the devenv
+  # declaration stays off and inert.
   spec
+  // {
+    defaultEnable = false;
+    when = _: false;
+  }
 else
   {
     imports = [ (mkPreset spec) ];
