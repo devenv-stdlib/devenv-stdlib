@@ -402,6 +402,8 @@ in
         uploadStep = contains ''- name: "Upload junit"'' yaml;
         uploadUses = contains "uses: actions/upload-artifact@v4" yaml;
         quotedPath = contains ''path: "junit/**/*.xml"'' yaml;
+        # Unique per job and matrix cell (upload-artifact@v4 rejects duplicates).
+        cellName = contains ''name: "junit-''${{ github.job }}-''${{ strategy.job-index }}"'' yaml;
         # Column-zero upload would sit outside steps.
         flushLeft = contains "\n- name: \"Upload junit\"" yaml;
       in
@@ -410,6 +412,7 @@ in
           uploadStep
           uploadUses
           quotedPath
+          cellName
           flushLeft
           ;
       };
@@ -417,6 +420,7 @@ in
       uploadStep = true;
       uploadUses = true;
       quotedPath = true;
+      cellName = true;
       flushLeft = false;
     };
   };

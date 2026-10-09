@@ -182,7 +182,8 @@ let
         + "      if: \${{ always() }}\n"
         + "      uses: actions/upload-artifact@v4\n"
         + "      with:\n"
-        + "        name: ${yamlScalar artName}\n"
+        # upload-artifact@v4 names must be unique across the whole run.
+        + "        name: ${yamlScalar "${artName}-\${{ github.job }}-\${{ strategy.job-index }}"}\n"
         + "        path: ${yamlScalar path}\n"
       ) (attachment.artifacts or [ ]);
     in
