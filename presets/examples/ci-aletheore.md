@@ -1,8 +1,8 @@
 # Example: Aletheore CI review + local CLI + Cursor MCP
 
 Not loaded by `modules/devenv.nix`. Copy into consumer config if you want
-explicit knobs; the template already applies `ci.github_actions.aletheore` by
-default (owns `.github/workflows/aletheore.yml` — refresh with
+explicit knobs. `ci.github_actions.aletheore` is opt-in; this template's
+`devenv.nix` enables it (owns `.github/workflows/aletheore.yml` — refresh with
 `devenv tasks run ci:update-aletheore`; enables `tools.aletheore` /
 catalog `pipx:aletheore` for local `aletheore scan`) and dogfoods the Cursor
 MCP via `cursor.llmContext.aletheore.enable = true` on the `cursor-llm` aspect.
@@ -10,9 +10,8 @@ MCP via `cursor.llmContext.aletheore.enable = true` on the `cursor-llm` aspect.
 Product site / paid Aletheore AIR plans: <https://www.aletheore.com>
 
 ```nix
-# GHA Action + local CLI — opt out
-presets.ci.github_actions.aletheore.enable = false;
-# then remove .github/workflows/aletheore.yml (also drops tools.aletheore)
+# GHA Action + local CLI — opt in (PolyForm Noncommercial; commercial use needs a license)
+presets.ci.github_actions.aletheore.enable = true;
 
 # GHA Action — tune
 presets.ci.github_actions.aletheore = {
