@@ -54,4 +54,15 @@
       lib.sort (a: b: a < b) names;
     expected = [ "hm-only-guard.nix" ];
   };
+
+  testDefaultRootsHostDeclarations = {
+    expr =
+      let
+        devenv = import ../../../stdlib/devenv.nix { inherit lib; };
+        roots = lib.filter (root: baseNameOf root == "host") (devenv.defaultRoots ../../../presets);
+        tools = devenv.refsOfTools [ ../../../tools ];
+      in
+      map (decl: decl.name) (devenv.declsOf roots tools);
+    expected = [ "host.hm-only-guard" ];
+  };
 }
