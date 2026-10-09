@@ -97,22 +97,28 @@ let
     else
       "run: ${builtins.toJSON command}";
 
-  # YAML-safe scalar (same toJSON approach as matrixRow). secret:NAME → ${{ secrets.NAME }}.
+  # YAML-safe scalar (same toJSON approach as matrixRow).
   yamlScalar =
     raw:
-    if builtins.isString raw && lib.hasPrefix "secret:" raw then
-      "\${{ secrets.${lib.removePrefix "secret:" raw} }}"
-    else if builtins.isBool raw then
+    if builtins.isBool raw then
       (if raw then "true" else "false")
     else if builtins.isInt raw then
       toString raw
     else
       builtins.toJSON raw;
 
+  # Only with:/env: values expand `secret:NAME`; run/uses/if never do.
+  secretOrScalar =
+    raw:
+    if builtins.isString raw && lib.hasPrefix "secret:" raw then
+      "\${{ secrets.${lib.removePrefix "secret:" raw} }}"
+    else
+      yamlScalar raw;
+
   # Format a with:/env: map. Secret *names* become ${{ secrets.NAME }} only.
   kvBlock =
     indent: attrs:
-    lib.concatMapStrings (name: "\n${indent}${name}: ${yamlScalar attrs.${name}}") (
+    lib.concatMapStrings (name: "\n${indent}${name}: ${secretOrScalar attrs.${name}}") (
       lib.attrNames attrs
     );
 

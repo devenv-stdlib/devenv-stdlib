@@ -311,6 +311,22 @@ in
     };
   };
 
+  # A `secret:` string in run must stay literal (never ${{ secrets.X }} as shell).
+  testGhaRunNeverExpandsSecret = {
+    expr = gha.attachmentStepYaml {
+      id = "x";
+      providers.github_actions = {
+        run = "secret:DEPLOY_TOKEN";
+        env.TOKEN = "secret:DEPLOY_TOKEN";
+      };
+    };
+    expected =
+      "    - name: \"x\"\n"
+      + "      run: \"secret:DEPLOY_TOKEN\"\n"
+      + "      env:\n"
+      + "        TOKEN: \${{ secrets.DEPLOY_TOKEN }}\n";
+  };
+
   # CodeRabbit: pre-toolchain before nix/devenv bootstrap; pre-command before Test.
   testGhaPreToolchainBeforeBootstrap = {
     expr =
