@@ -18,6 +18,9 @@ let
       nixPathRootName,
       junitDir ? "$DEVENV_ROOT/junit",
       includeMain ? true,
+      # Prepended to PATH so the task finds nix-unit/python3 without adding
+      # them to the consumer shell.
+      binPath ? "",
     }:
     let
       mainBlock =
@@ -36,6 +39,7 @@ let
     ''
       set -euo pipefail
       cd "$DEVENV_ROOT"
+      ${if binPath != "" then "export PATH=\"${binPath}:$PATH\"" else ""}
       export TERM="''${TERM:-dumb}"
       export PYTHONUNBUFFERED=1
 
@@ -99,7 +103,7 @@ let
       exit "$status"
     '';
 
-  # Devenv module: packages + `nix-unit:test` task. Imported via stdlib.devenv.load.
+  # Devenv module: `nix-unit:test` task. Imported via stdlib.devenv.load.
   module =
     {
       config,
@@ -121,6 +125,9 @@ let
       runScript = mkRunScript {
         nixPathRootName = rootName;
         includeMain = cfg.includeMain or true;
+        binPath = lib.makeBinPath (
+          lib.optional (pkgs ? nix-unit) pkgs.nix-unit ++ lib.optional (pkgs ? python3) pkgs.python3
+        );
       };
     in
     {
@@ -153,13 +160,10 @@ let
       # condition is false — fixtures that omit options.tasks (e.g.
       # language-matrix) then fail with "The option `tasks' does not exist".
       # Only merge the config attrs when the host declares those options.
-      # Stub pkgs in unit evals often omit nix-unit/python3; skip missing attrs.
       config = lib.mkMerge (
         lib.optionals hasTasks [
           (lib.mkIf enabled (
             {
-              packages =
-                lib.optional (pkgs ? nix-unit) pkgs.nix-unit ++ lib.optional (pkgs ? python3) pkgs.python3;
               tasks.${taskId} = {
                 exec = if options ? scripts then "nix-unit-test" else runScript;
                 showOutput = true;
