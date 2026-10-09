@@ -716,6 +716,26 @@ in
     };
   };
 
+  testExpansionProfileJobOverlayMatchAny = {
+    expr =
+      let
+        full = matrix.plan {
+          runnerProfiles = matrix.defaultRunnerProfiles;
+          jobs.python = {
+            command = "true";
+            dimensions.runner = [
+              "ubuntu-lts-prev"
+              "ubuntu-lts-curr"
+            ];
+            seeds = [ { version = "3.12"; } ];
+            expansionProfiles.pr.matchAny = [ { runner = "ubuntu-lts-prev"; } ];
+          };
+        };
+      in
+      map (cell: cell.runner) (matrix.forProfile full "pr").jobs.python.cells;
+    expected = [ "ubuntu-lts-prev" ];
+  };
+
   # Unmatched pr overlay must throw (not return a zero-cell plan / green empty workflow).
   testExpansionProfileUnmatchedOverlayThrows = {
     expr = builtins.tryEval (
