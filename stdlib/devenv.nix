@@ -438,7 +438,11 @@ let
               composed
             ];
           in
-          lib.optionalAttrs (merged != { }) { tasks = merged; };
+          # Static key (see tool.applyLocal): a non-applied preset must not
+          # evaluate its exports.
+          {
+            tasks = merged;
+          };
     in
     {
       imports = lib.optional (decl ? module && decl.module != null) decl.module;
