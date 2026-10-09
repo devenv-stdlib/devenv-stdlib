@@ -327,6 +327,22 @@ in
       + "        TOKEN: \${{ secrets.DEPLOY_TOKEN }}\n";
   };
 
+  testGhaBlankSecretNameThrows = {
+    expr = builtins.tryEval (
+      gha.attachmentStepYaml {
+        id = "x";
+        providers.github_actions = {
+          run = "true";
+          env.TOKEN = "secret:";
+        };
+      }
+    );
+    expected = {
+      success = false;
+      value = false;
+    };
+  };
+
   # CodeRabbit: pre-toolchain before nix/devenv bootstrap; pre-command before Test.
   testGhaPreToolchainBeforeBootstrap = {
     expr =

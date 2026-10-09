@@ -111,7 +111,13 @@ let
   secretOrScalar =
     raw:
     if builtins.isString raw && lib.hasPrefix "secret:" raw then
-      "\${{ secrets.${lib.removePrefix "secret:" raw} }}"
+      let
+        name = lib.removePrefix "secret:" raw;
+      in
+      if builtins.match "[A-Za-z_][A-Za-z0-9_]*" name == null then
+        throw "ci.backends.github_actions: invalid secret name in '${raw}'"
+      else
+        "\${{ secrets.${name} }}"
     else
       yamlScalar raw;
 
