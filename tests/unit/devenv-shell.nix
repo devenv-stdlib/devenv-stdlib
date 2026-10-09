@@ -92,7 +92,7 @@ in
       provider = "alacritty";
       quakeApplied = true;
       atuinApplied = false;
-      hostApplied = true;
+      hostApplied = false;
       ideLeaves = true;
     };
   };
