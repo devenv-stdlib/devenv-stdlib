@@ -152,6 +152,8 @@ Bump the input (and `flake.lock`) when you want a newer framework revision. Den 
 
 `terminal.quake`, `terminal.alacritty-atuin`, `ide`, `ide.coderabbit`, `host.hm-only-guard`.
 
+`host.hm-only-guard` acts only under Den / Home Manager. A devenv shell declares `presets.host.hm-only-guard` but keeps it disabled and inert.
+
 Language support is **not** a megapreset named Python/Rust/…. Local language leaves are first-class `mkTool` modules under `tools/lang/<lang>/…` (same public API as global tools: `tools.<name>.enable`). Thin framework presets under `presets/<lang>/<category>/` keep attrpath identity (`python.lint.ruff`, `rust.lint.rustfmt`, …) and declare `tools = [ tools.python.lint.ruff ]` (plus an explicit `when` when needed); language gating comes from the category policy, not a copied `when` on every leaf. When applied, thin presets set `tools.<name>.enable = true`. Non-tool presets (serena, debtmap, ide, supported, bundler, ci presets, fixtures, …) stay as presets. `languages.*.enable` in the consumer `devenv.local.nix` decides which languages are on; disable one building block with `presets.python.lint.ruff.enable = false`. Opinionated multi-tool stacks belong in the consumer repo (see `presets/examples/`).
 
 ## Community tools and presets
