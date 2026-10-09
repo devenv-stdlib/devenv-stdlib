@@ -215,7 +215,14 @@ def cmd_nix_unit(args: list[str]) -> int:
     # Legacy harness passed `--suite` etc. after the `nix-unit` verb; also
     # inject devenv4monorepo include when callers omit -I (repo bats fixtures).
     forwarded = list(args)
-    if not any(a == "-I" or a.startswith("--include") for a in forwarded):
+    includes = [
+        forwarded[i + 1]
+        if a in ("-I", "--include") and i + 1 < len(forwarded)
+        else a.removeprefix("--include=")
+        for i, a in enumerate(forwarded)
+        if a in ("-I", "--include") or a.startswith("--include=")
+    ]
+    if not any(v.startswith("devenv4monorepo=") for v in includes):
         root = Path(".")
         for i, a in enumerate(forwarded):
             if a == "--root" and i + 1 < len(forwarded):
