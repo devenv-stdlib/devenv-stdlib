@@ -64,11 +64,9 @@ let
           config = extra;
         }
       ]
-      # Cache tool specs needed so exportTasks can resolve declared leaves
-      # (global binary leaves are not loaded as local modules).
       ++ devenvLoad.load {
         presets = [ <devenv4monorepo/presets/cache> ];
-        tools = [ <devenv4monorepo/tools/cache> ];
+        tools = [ ];
       };
     }).config;
 in
