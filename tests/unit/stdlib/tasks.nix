@@ -6,6 +6,14 @@ let
   load = import ../../../stdlib/load.nix { inherit lib; };
   mock = import ../../lib/mock-framework.nix { inherit lib; };
   discovered = toolLib.specs (load.discover [ mock.tools ]);
+  mockThrowSpec = name: {
+    inherit name;
+    category = "shell";
+    install.kind = "project";
+    upgrade = "none";
+    project = { };
+    tasks = _: throw "tasks evaluated";
+  };
 in
 {
   testTaskIdQualifiesLeaf = {
@@ -271,5 +279,39 @@ in
       in
       (builtins.tryEval (lib.evalModules { modules = [ mod ]; })).success;
     expected = true;
+  };
+
+  # A disabled tool's task declaration must not be evaluated.
+  testApplyLocalDisabledToolSkipsTasks = {
+    expr =
+      let
+        mod = toolLib.applyLocal {
+          config.tools.mock-throw.enable = false;
+          options.tasks = { };
+          inherit lib;
+          pkgs = { };
+        } (mockThrowSpec "mock-throw");
+        cfg =
+          (lib.evalModules {
+            modules = [
+              {
+                options.tasks = lib.mkOption {
+                  type = lib.types.attrsOf lib.types.anything;
+                  default = { };
+                };
+                options.assertions = lib.mkOption {
+                  type = lib.types.listOf lib.types.anything;
+                  default = [ ];
+                };
+              }
+              mod
+            ];
+          }).config;
+      in
+      builtins.tryEval (builtins.deepSeq cfg.tasks cfg.tasks);
+    expected = {
+      success = true;
+      value = { };
+    };
   };
 }

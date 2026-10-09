@@ -276,15 +276,16 @@ let
       rendered = if builtins.isFunction raw then raw moduleArgs else raw;
       deps = checked.dependsOn;
       policyAssertions = categoryPolicy.toolAssertions moduleArgs.config (policyArgOf checked);
+      # Static `tasks` key: mkIf pushes down attr names even when disabled, so
+      # testing the lowered value here would evaluate disabled declarations.
       taskConfig =
         if tasksLib.hostHasTasks moduleArgs then
-          let
-            loweredTasks = tasksLib.lower {
+          {
+            tasks = tasksLib.lower {
               inherit (checked) name tasks;
               inherit moduleArgs;
             };
-          in
-          if loweredTasks != { } then { tasks = loweredTasks; } else { }
+          }
         else
           { };
     in
