@@ -208,16 +208,12 @@ let
     attachmentPlan:
     {
       language ? null,
-      provider ? "github_actions",
       forge ? null,
     }:
     let
       ctx = {
-        inherit
-          provider
-          language
-          forge
-          ;
+        provider = "github_actions";
+        inherit language forge;
       };
       slotted = attachmentsLib.bySlot attachmentPlan ctx;
     in
