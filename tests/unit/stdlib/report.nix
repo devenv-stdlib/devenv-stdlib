@@ -427,4 +427,24 @@ in
     expr = (versions.matrixReport { }).empty;
     expected = true;
   };
+
+  testFlattenPresetLeavesIncludesHubChildren = {
+    expr = map (l: l.id) (
+      stdlib.report.flattenPresetLeaves {
+        strict = false;
+        hub = {
+          enable = true;
+          result.applied = true;
+          child = {
+            enable = false;
+            result.applied = false;
+          };
+        };
+      }
+    );
+    expected = [
+      "hub"
+      "hub.child"
+    ];
+  };
 }
