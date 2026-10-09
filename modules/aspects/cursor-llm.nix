@@ -1,6 +1,6 @@
 # Feature aspect: Cursor LLM / MCP stack (mcp-stack).
 # Imperative merge scripts + SecretSpec watch stay outside Den; this only composes HM modules.
-{ den, ... }:
+{ den, lib, ... }:
 let
   cascade = import ../den/_cascades/cursor-cascade.nix;
 in
@@ -20,7 +20,7 @@ in
         enable = true;
         llmContext = {
           enable = true;
-          aletheore.enable = true;
+          aletheore.enable = lib.mkDefault true;
         };
       };
     };
