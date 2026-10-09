@@ -11,10 +11,9 @@ Product site / paid Aletheore AIR plans: <https://www.aletheore.com>
 
 ```nix
 # GHA Action + local CLI — opt in (PolyForm Noncommercial; commercial use needs a license)
-presets.ci.github_actions.aletheore.enable = true;
-
-# GHA Action — tune
 presets.ci.github_actions.aletheore = {
+  enable = true;
+  # Tune the GHA step
   action = "Aletheore/Aletheore@24f816e9297f87853b09fe514081863dc6604d30";
   actionComment = "v0.9.22";
   failOnNewSecrets = true;
