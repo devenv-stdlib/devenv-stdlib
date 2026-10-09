@@ -71,8 +71,8 @@ rec {
 
   # Host policy: the current Ubuntu LTS and the previous one.
   ubuntuLts = {
-    previous = "24.04";
-    current = "26.04";
+    previous = matrix.defaultRunnerProfiles.ubuntu-lts-prev.release;
+    current = matrix.defaultRunnerProfiles.ubuntu-lts-curr.release;
   };
 
   ubuntuRunners = [
