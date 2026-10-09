@@ -622,4 +622,20 @@ in
       value = false;
     };
   };
+
+  testLanguagePlanArchesFilterRunnerProfilesOverride = {
+    expr =
+      let
+        plan = versions.languageMatrixPlan {
+          pythonOn = true;
+          python = versions.emptyPython // {
+            min = "3.12";
+          };
+          arches = [ "aarch64" ];
+          runnerProfiles = matrix.allRunnerProfiles;
+        };
+      in
+      lib.unique (map (c: matrix.allRunnerProfiles.${c.runner}.arch) plan.jobs.python.cells);
+    expected = [ "aarch64" ];
+  };
 }
