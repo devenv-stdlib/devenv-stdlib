@@ -234,13 +234,13 @@ let
         else
           profileOrName;
       # Job overlay keys replace base; lists are replaced wholesale (not concatenated).
-      # An overlay match/matchAny drops the base selectCurrentLts unless the
-      # overlay sets selectCurrentLts itself.
+      # A non-empty overlay match/matchAny drops the base selectCurrentLts unless
+      # the overlay sets selectCurrentLts itself.
       mergeRaw =
         job:
         let
           overlay = if profileName != null then (job.expansionProfiles or { }).${profileName} or { } else { };
-          selectsRunners = overlay ? match || overlay ? matchAny;
+          selectsRunners = (overlay.match or { }) != { } || (overlay.matchAny or [ ]) != [ ];
           base = if selectsRunners then builtins.removeAttrs rawBase [ "selectCurrentLts" ] else rawBase;
         in
         base // overlay;
