@@ -7,7 +7,7 @@
 }:
 let
   devenv = import ../../stdlib/devenv.nix { inherit lib; };
-  pkgs = import <nixpkgs> { };
+  pkgs = throw "devenv-shell test must not force pkgs";
   supported = import ../../stdlib/devenv-supported.nix;
   enableOpt = {
     enable = lib.mkOption {
