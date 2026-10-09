@@ -2,30 +2,22 @@
 # Dimensions → cartesian / explicit allow → exclude → include → cells.
 { lib }:
 let
-  # Default host profiles: current Ubuntu LTS + previous (matches versions-lib.ubuntuLts).
+  ubuntuProfile = release: {
+    os = "linux";
+    distro = "ubuntu";
+    inherit release;
+    arch = "x86_64";
+    providers = {
+      github_actions = {
+        runs-on = [ "ubuntu-${release}" ];
+      };
+    };
+  };
+
+  # Default host profiles: current Ubuntu LTS + previous. versions-lib.ubuntuLts reads these releases.
   defaultRunnerProfiles = {
-    ubuntu-lts-prev = {
-      os = "linux";
-      distro = "ubuntu";
-      release = "24.04";
-      arch = "x86_64";
-      providers = {
-        github_actions = {
-          runs-on = [ "ubuntu-24.04" ];
-        };
-      };
-    };
-    ubuntu-lts-curr = {
-      os = "linux";
-      distro = "ubuntu";
-      release = "26.04";
-      arch = "x86_64";
-      providers = {
-        github_actions = {
-          runs-on = [ "ubuntu-26.04" ];
-        };
-      };
-    };
+    ubuntu-lts-prev = ubuntuProfile "24.04";
+    ubuntu-lts-curr = ubuntuProfile "26.04";
   };
 
   defaultStrategy = {
