@@ -152,9 +152,9 @@
       gitHooks = lib.length project.alwaysOnGitHookNames;
     };
     expected = {
-      # 8 treefmt + 11 residual prek (lychee stays catalogued but off by default).
-      logical = 19;
-      treefmt = 8;
+      # 9 treefmt + 11 residual prek (lychee stays catalogued but off by default).
+      logical = 20;
+      treefmt = 9;
       prek = 11;
       # git-hooks exposes one `treefmt` entry plus the 11 residual hooks.
       gitHooks = 12;

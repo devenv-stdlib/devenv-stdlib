@@ -33,6 +33,9 @@ let
     nixfmt = mkTreefmt "nixfmt" true "Format Nix with nixfmt (RFC style).";
     statix = mkTreefmt "statix" true "Lint Nix with statix.";
     deadnix = mkTreefmt "deadnix" true "Find unused Nix bindings with deadnix.";
+    nixf-diagnose =
+      mkTreefmt "nixf-diagnose" true
+        "Diagnose Nix with nixf-diagnose (nixd's nixf-tidy).";
     shellcheck = mkTreefmt "shellcheck" true "Lint shell scripts with ShellCheck.";
     yamlfmt = mkTreefmt "yamlfmt" true "Format YAML with yamlfmt.";
     typos = mkTreefmt "typos" true "Spell-check source with typos.";

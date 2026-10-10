@@ -20,6 +20,11 @@ let
         ${meta.program} = {
           enable = true;
         }
+        // lib.optionalAttrs (name == "nixf-diagnose") {
+          # nixf does not know experimental builtins such as builtins.getFlake;
+          # evaluation still rejects genuinely unknown builtins.
+          ignore = [ "sema-primop-unknown" ];
+        }
         // lib.optionalAttrs (name == "yamlfmt") {
           # Nested under the program — do not `//` a sibling yamlfmt.settings
           # attrset or it replaces `{ enable = true; }` entirely.
