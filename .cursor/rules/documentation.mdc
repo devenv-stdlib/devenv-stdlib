@@ -21,6 +21,7 @@ User-facing behavior changes are unfinished until **`docs/content/`** matches. U
 | Workflows, BATS, JUnit, Pages URL | `docs/content/ci.md` |
 | Package / consumer layout reference | `docs/content/reference.md` |
 | Architecture / motivation | `docs/content/architecture.md`, `overview.md` |
+| Vendored agent skills (`.agents/skills/`) | `docs/content/skills.md` |
 | New or retired shipped tool | `docs/content/tools.md` (docs + donate link if the project publishes one) |
 | Package development, tests, catalog, layout, Pages | `docs/content/contributing.md` |
 | New top-level topic | new `docs/content/<id>.md`, import `?raw` in `docs/src/sections.ts` |
