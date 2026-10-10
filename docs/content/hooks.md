@@ -6,11 +6,13 @@ Linting is first-class under `linters.*` (parallel to `languages.*`). Most forma
 
 | Backend        | Always-on (defaults)                                                                                                                                                                                         | Role                                                                                             |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| **treefmt**    | `nixfmt`, `statix`, `deadnix`, `shellcheck`, `yamlfmt`, `typos`, `actionlint`, `taplo`                                                                                                                       | Format / lint files via one `treefmt` config and one git-hooks entry (`treefmt`)                 |
+| **treefmt**    | `nixfmt`, `statix`, `deadnix`, `nixf-diagnose`, `shellcheck`, `yamlfmt`, `typos`, `actionlint`, `taplo`                                                                                                                       | Format / lint files via one `treefmt` config and one git-hooks entry (`treefmt`)                 |
 | **prek**       | `commitlint`, `gitleaks`, `proselint`, `check-json`, `check-toml`, `taplo-lint`, `trim-trailing-whitespace`, `end-of-file-fixer`, `check-added-large-files`, `check-case-conflicts`, `check-merge-conflicts` | Commit-msg, secrets, prose, JSON/TOML syntax, hygiene                                            |
 | **prek (off)** | `lychee`                                                                                                                                                                                                     | Link checker — keep `lychee.toml` / retry wrapper; set `linters.lychee.enable = true` to turn on |
 
 Toggle any of them with `linters.<name>.enable` in `devenv.local.nix` (or `devenv.nix`). Catalog and backends live in `stdlib/linters.nix`; wiring is `modules/linters` (treefmt) + `modules/hooks/common.nix` (prek residual). `trim-trailing-whitespace` and `end-of-file-fixer` skip `devenv.lock` so lock refreshes are not rewritten by the hygiene fixers.
+
+`nixf-diagnose` runs nixd's `nixf-tidy` checks with `--auto-fix`, so the hook rewrites fixable findings (such as a needless `builtins.` prefix) and fails on the rest. It ignores `sema-primop-unknown` by default because nixf does not know experimental builtins such as `builtins.getFlake`. Add more diagnostic IDs with `linters.nixf-diagnose.settings.ignore = [ "…" ];`.
 
 ## Language formatters
 
