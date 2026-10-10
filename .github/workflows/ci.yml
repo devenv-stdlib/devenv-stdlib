@@ -516,8 +516,8 @@ jobs:
           # exec + git (stdlib/version.nix bump) resolve via NODE_PATH.
           plugins="${RUNNER_TEMP}/semantic-release-plugins"
           nix shell nixpkgs#nodejs --command npm install --prefix "$plugins" \
-            @semantic-release/exec@7 \
-            @semantic-release/git@10
+            @semantic-release/exec@7.1.0 \
+            @semantic-release/git@10.0.1
           export NODE_PATH="${plugins}/node_modules${NODE_PATH:+:$NODE_PATH}"
           nix shell nixpkgs#semantic-release --command semantic-release
 
