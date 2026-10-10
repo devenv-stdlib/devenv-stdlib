@@ -2,7 +2,7 @@
 
 This repository publishes **devenv-stdlib**: a Nix flake package for a Linux monorepo — a [devenv](https://devenv.sh/) project toolchain plus a [Home Manager](https://nix-community.github.io/home-manager/) module for the user-global terminal, Starship, and Cursor.
 
-Consumers pin `github:thedrow/devenv4monorepo/<tag-or-sha>` and compose presets/tools against that revision. Clone this repo to develop or dogfood the package itself; see the [Contribution guide](#contributing).
+Consumers pin `github:devenv-stdlib/devenv-stdlib/<tag-or-sha>` and compose presets/tools against that revision. Clone this repo to develop or dogfood the package itself; see the [Contribution guide](#contributing).
 
 The dropdown terminal is **not** part of the devenv PATH: you already have a terminal open to enter it.
 

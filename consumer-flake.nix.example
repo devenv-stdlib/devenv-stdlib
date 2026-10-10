@@ -6,7 +6,7 @@
 
   inputs = {
     # Prefer a release tag once published; otherwise a commit SHA.
-    devenv-stdlib.url = "github:thedrow/devenv4monorepo/<tag-or-sha>";
+    devenv-stdlib.url = "github:devenv-stdlib/devenv-stdlib/<tag-or-sha>";
 
     # `follows` is flake lockfile wiring, not a binary cache / substituter.
     # It reuses the same nixpkgs (and companions) the pin already locked, so
