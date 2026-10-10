@@ -18,7 +18,7 @@ Paths in **this package repository** (publisher / dogfood checkout). Consumer tr
 | `.cursor/rules/nix-module-split.mdc` | Split long or duplicated Nix modules under `modules/` / `home/` |
 | `.cursor/rules/headroom-compress.mdc` | Call Headroom MCP only for large tool output or pastes |
 | `.cursor/rules/navi-cheatsheets.mdc` | Prefer extending `cheats/*.cheat`; navi syntax; no community-sheet copies |
-| `.agents/skills/` / `skills-lock.json` | 54 vendored Cursor skills (Vercel skills CLI); `README.md` there lists sources and licenses |
+| `.agents/skills/` / `skills-lock.json` | 85 vendored Cursor skills (Vercel skills CLI); `README.md` there lists sources and licenses |
 | `cheats/` | Repo-local [navi](https://github.com/denisidoro/navi) sheets (`NAVI_PATH` in `devenv shell`) |
 | `flake.nix` | Publisher flake: exposes `stdlib` / `lib` and Den `homeConfigurations` |
 | `presets/omer.nix` | Names of the framework presets this dogfood checkout enables |
