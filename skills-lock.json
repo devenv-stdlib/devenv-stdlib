@@ -7,11 +7,47 @@
       "skillPath": "plugins/agentic-actions-auditor/skills/agentic-actions-auditor/SKILL.md",
       "computedHash": "fd250af84db06c1c0848976e4221aef164ec99ab827a8652644243eb0d10416d"
     },
+    "analyze-feature-requests": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/analyze-feature-requests/SKILL.md",
+      "computedHash": "c0c1815f750b4a0ff6dccd5accdec50659ddc4015de80a4dc51e0608b6d71587"
+    },
     "blast-radius": {
       "source": "cursor/plugins",
       "sourceType": "github",
       "skillPath": "pstack/skills/blast-radius/SKILL.md",
       "computedHash": "29c76d37a04163f5005cec955e4cdd0311783322d0c6bf478577955b6fefea40"
+    },
+    "brainstorm-experiments-existing": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/brainstorm-experiments-existing/SKILL.md",
+      "computedHash": "0dc5c020f11b04efc82e303a880e998c9a2622a80e889ff3a55b197b2d1cce24"
+    },
+    "brainstorm-experiments-new": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/brainstorm-experiments-new/SKILL.md",
+      "computedHash": "368ea29bee623228b631f2e7d9c3e8f8a130e35976dc5e90aac831583383d17e"
+    },
+    "brainstorm-ideas-existing": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/brainstorm-ideas-existing/SKILL.md",
+      "computedHash": "32644235ef2da3916692b0b817aca226309bcc8c4b5007c892d41226fa7a0fd9"
+    },
+    "brainstorm-ideas-new": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/brainstorm-ideas-new/SKILL.md",
+      "computedHash": "d996451909bfe18cce853f1838d640505ee00d564fdf8818e3563b790ad8b492"
+    },
+    "brainstorm-okrs": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/brainstorm-okrs/SKILL.md",
+      "computedHash": "fe967be0462ec0fc3b8ccea1922e9eda1ecf08bdda14f5db5ae37d499467109d"
     },
     "brainstorming": {
       "source": "obra/superpowers",
@@ -43,6 +79,12 @@
       "skillPath": "skills/engineering/codebase-design/SKILL.md",
       "computedHash": "5a17552cc1482f1a40124bf4e6c9dbd90ac0dbb47e71c07d47369f9e5f2ae3b5"
     },
+    "create-prd": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/create-prd/SKILL.md",
+      "computedHash": "d2601bab05668d84ee1c03865ffcd8f5b95ff0dd8e369161d89e73dd2f567718"
+    },
     "deslop": {
       "source": "cursor/plugins",
       "sourceType": "github",
@@ -60,6 +102,12 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
       "computedHash": "a11713c0ff7870efa3c331b2e273f09116158485246edc89ae5088eefd1b0b48"
+    },
+    "dummy-dataset": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/dummy-dataset/SKILL.md",
+      "computedHash": "1354aa148920680d38cf78eb49c258a100cccd344d751ad445f419ba6dc436e4"
     },
     "executing-plans": {
       "source": "obra/superpowers",
@@ -115,6 +163,18 @@
       "skillPath": "skills/productivity/handoff/SKILL.md",
       "computedHash": "20e5f4afdef502637510bc5c64d27645d3c85c88df9cb006824bbb0980166319"
     },
+    "identify-assumptions-existing": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/identify-assumptions-existing/SKILL.md",
+      "computedHash": "157566069c0d49a600abef80e05549f6d0c62a19e39fd2814e18392597b55ccc"
+    },
+    "identify-assumptions-new": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/identify-assumptions-new/SKILL.md",
+      "computedHash": "863667c0d27c925650ebf43fbb755e0f5586ea804bc051eedbf6e92f6785df28"
+    },
     "implement": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -126,6 +186,18 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "computedHash": "2449db6ab1ded9581f69fcc56c1f64818112d05e271fd4c5da23c6523f9d3d9d"
+    },
+    "interview-script": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/interview-script/SKILL.md",
+      "computedHash": "867f90ce30998d6a3120f689dcccbd56d38204da679a0c7f35a3b60d5fcc5bfb"
+    },
+    "job-stories": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/job-stories/SKILL.md",
+      "computedHash": "8b4a0d96bffd81266981e7ed0ed979d415995f6734d65e3cf6293cd28399d3a3"
     },
     "loop-on-ci": {
       "source": "cursor/plugins",
@@ -144,6 +216,12 @@
       "sourceType": "github",
       "skillPath": "skills/mcp-builder/SKILL.md",
       "computedHash": "826e46adf81e1372282e205c34e1a2ee876e72148007726e4a2512599d2fef7b"
+    },
+    "metrics-dashboard": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/metrics-dashboard/SKILL.md",
+      "computedHash": "23943ae9700288342b146c60664107bd5533918348ea3888b7ae96b5e4e1fe7e"
     },
     "modern-python": {
       "source": "trailofbits/skills",
@@ -169,6 +247,24 @@
       "skillPath": "pstack/skills/no-comments/SKILL.md",
       "computedHash": "20c90a85f23d4c9732b0db771d2825c1c58993b4187aac0f62094def66d60511"
     },
+    "opportunity-solution-tree": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/opportunity-solution-tree/SKILL.md",
+      "computedHash": "0bbc9c2da81f4e6143d17de9e34fa9b275a6c408bf5f351ccc0a76c9ea50b11e"
+    },
+    "outcome-roadmap": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/outcome-roadmap/SKILL.md",
+      "computedHash": "12abd68e440a17578d5dce8d9e80fbaadfb603134ec58ce38f622da7075ef668"
+    },
+    "pre-mortem": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/pre-mortem/SKILL.md",
+      "computedHash": "19ae048852f8e0ea4009e519e6ad6d0627e4c051858ddd31cb229deb64eea68f"
+    },
     "principle-fix-root-causes": {
       "source": "cursor/plugins",
       "sourceType": "github",
@@ -187,6 +283,36 @@
       "skillPath": "pstack/skills/principle-subtract-before-you-add/SKILL.md",
       "computedHash": "bc86d43626770c780551730a180de8ffb91ab16f193647047644c606d01874c8"
     },
+    "prioritization-frameworks": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/prioritization-frameworks/SKILL.md",
+      "computedHash": "c3a9efeb0aff02df481fc5c624b91709e6b21de167b2867e93a2d08bb4b4fa84"
+    },
+    "prioritize-assumptions": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/prioritize-assumptions/SKILL.md",
+      "computedHash": "189b8e88c6654505d91a4b068144197a39c4f8fccf8f5e1ba91952f2ca85e7e3"
+    },
+    "prioritize-features": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/prioritize-features/SKILL.md",
+      "computedHash": "0cd2f0bf0a1440b12aec601470c30d86dafd1bb0f8a507d7caced94f4bc8a2f8"
+    },
+    "product-strategy": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-strategy/skills/product-strategy/SKILL.md",
+      "computedHash": "3c3caf28c064bdd863027fb7737133e6efd545682c82ba21beaf85ac9b21da81"
+    },
+    "product-vision": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-strategy/skills/product-vision/SKILL.md",
+      "computedHash": "6db8717df816928ce4f77e54fc42467f35892967aae84ab0eec8ca5f9edd2c88"
+    },
     "property-based-testing": {
       "source": "trailofbits/skills",
       "sourceType": "github",
@@ -199,11 +325,23 @@
       "skillPath": "skills/receiving-code-review/SKILL.md",
       "computedHash": "59361179fc9225173e0c145ffd9bafbf9fdbf8b43ce3dc308497a0b4f83a6063"
     },
+    "release-notes": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/release-notes/SKILL.md",
+      "computedHash": "375e01b5114d4ec892db0129cfb4cb3788fbfa9f2ff0262cdfd2166d77b3108a"
+    },
     "requesting-code-review": {
       "source": "obra/superpowers",
       "sourceType": "github",
       "skillPath": "skills/requesting-code-review/SKILL.md",
       "computedHash": "004f340ae65811095d6a9bb0a759c87d0a8085c5e705dbb019b011626293d2e9"
+    },
+    "retro": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/retro/SKILL.md",
+      "computedHash": "7f71997df63d73af6d0e732148b524fa6c314dacaaf0d383dc0da3e34523dc81"
     },
     "review-and-ship": {
       "source": "cursor/plugins",
@@ -235,6 +373,36 @@
       "skillPath": "plugins/sharp-edges/skills/sharp-edges/SKILL.md",
       "computedHash": "8aa5c8ad250215a5b8f40c4e386dcd045b4a7a31c67952d1685d906aa7571843"
     },
+    "sprint-plan": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/sprint-plan/SKILL.md",
+      "computedHash": "c24b2cef87ecf404548da46dc8f6d473f7b1fc3e2477edc9de7b1e8ab04adad7"
+    },
+    "stakeholder-map": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/stakeholder-map/SKILL.md",
+      "computedHash": "a721f2737863b48f26cd1d6cc3de3150977fc7a994645d2303cd412ed3315887"
+    },
+    "strategy-red-team": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/strategy-red-team/SKILL.md",
+      "computedHash": "1e3dca0eb964bf63fd72b15efc0f7a574855412f8901b07288ea96a7386e36fd"
+    },
+    "summarize-interview": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/summarize-interview/SKILL.md",
+      "computedHash": "4ff332927f929257cda8d6b030a541bb086493b9409ace146cad2973bd874e47"
+    },
+    "summarize-meeting": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/summarize-meeting/SKILL.md",
+      "computedHash": "505e6223ea9bcb274bde412e6b4d1d0e4ff8597e688d43ab5f3789c19ac05860"
+    },
     "supply-chain-risk-auditor": {
       "source": "trailofbits/skills",
       "sourceType": "github",
@@ -264,6 +432,12 @@
       "sourceType": "github",
       "skillPath": "skills/test-driven-development/SKILL.md",
       "computedHash": "a4126a9c5f17be3c228aa9e5755898ade283448b86099f56f40852e8c14532be"
+    },
+    "test-scenarios": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/test-scenarios/SKILL.md",
+      "computedHash": "a65c9547fb66a7383323ba6986b18f682a3fa010d6b0b030abc4e68ccb56a54e"
     },
     "to-spec": {
       "source": "mattpocock/skills",
@@ -295,6 +469,12 @@
       "skillPath": "pstack/skills/unslop/SKILL.md",
       "computedHash": "78f45b785f543d1bd82f55cd7be018239c769dc1462848a720b62a6d214ffc6d"
     },
+    "user-stories": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/user-stories/SKILL.md",
+      "computedHash": "b9ba16cb7178e3e71b84cfb6d8e8226244bd04c1a7a957cf41cb793e567dd0d5"
+    },
     "using-git-worktrees": {
       "source": "obra/superpowers",
       "sourceType": "github",
@@ -324,6 +504,12 @@
       "sourceType": "github",
       "skillPath": "skills/writing-plans/SKILL.md",
       "computedHash": "27c75044e444a4fc68798c3f799dc23eaff3a6bfabff32e6ad75bb20f881c094"
+    },
+    "wwas": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-execution/skills/wwas/SKILL.md",
+      "computedHash": "962c1ff4d5d9d5affc9bf6c3f30baa156de85dec71f8379f92de1a256995a4f8"
     }
   }
 }
