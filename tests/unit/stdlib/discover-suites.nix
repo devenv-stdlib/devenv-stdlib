@@ -46,7 +46,7 @@ in
   };
 
   testStdlibDiscoverSkipsTestsDirectories = {
-    expr = map builtins.baseNameOf (stdlib.discover [ ../../fixtures/stdlib-discover ]);
+    expr = map baseNameOf (stdlib.discover [ ../../fixtures/stdlib-discover ]);
     expected = [ "leaf.nix" ];
   };
 }

@@ -517,10 +517,7 @@ let
           repoDir = dirOf presetsDir;
           toolsDir = repoDir + "/tools";
         in
-        if builtins.baseNameOf presetsDir == "presets" && builtins.pathExists toolsDir then
-          [ toolsDir ]
-        else
-          [ ]
+        if baseNameOf presetsDir == "presets" && builtins.pathExists toolsDir then [ toolsDir ] else [ ]
       ) presetRoots
     );
 

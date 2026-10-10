@@ -21,7 +21,7 @@ let
         let
           children = lib.concatLists (
             lib.mapAttrsToList (name: child: walk (path ++ [ name ]) child) (
-              builtins.removeAttrs value [
+              removeAttrs value [
                 "strict"
                 "enable"
                 "result"
@@ -50,7 +50,7 @@ let
         else
           children;
     in
-    walk [ ] (builtins.removeAttrs (asAttrs presets) [ "strict" ]);
+    walk [ ] (removeAttrs (asAttrs presets) [ "strict" ]);
 
   enabledHookNames =
     hooks:

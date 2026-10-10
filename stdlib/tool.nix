@@ -116,7 +116,7 @@ let
       dupes = lib.unique (lib.filter (id: lib.count (x: x == id) ids > 1) ids);
     in
     if dupes != [ ] then
-      throw "mkTool: duplicate tool attrpaths: ${builtins.toString dupes}"
+      throw "mkTool: duplicate tool attrpaths: ${toString dupes}"
     else
       lib.foldl' (
         tree: d:
@@ -145,9 +145,9 @@ let
       path = if spec ? path then normalizePath spec.path else pathFromCategory category name;
     in
     assert require (builtins.elem kind installKinds)
-      "mkTool ${name}: install.kind ${kind} is not one of ${builtins.toString installKinds}";
+      "mkTool ${name}: install.kind ${kind} is not one of ${toString installKinds}";
     assert require (builtins.elem upgrade upgradeKinds)
-      "mkTool ${name}: upgrade ${upgrade} is not one of ${builtins.toString upgradeKinds}";
+      "mkTool ${name}: upgrade ${upgrade} is not one of ${toString upgradeKinds}";
     assert require (node ? cardinality) "mkTool ${name}: unknown category ${category}";
     assert require (
       scopes != [ ]
@@ -415,10 +415,7 @@ let
       names = map (d: d.spec.name) discovered;
       dupes = lib.unique (lib.filter (n: lib.count (x: x == n) names > 1) names);
     in
-    if dupes != [ ] then
-      throw "mkTool: duplicate tool name(s): ${builtins.toString dupes}"
-    else
-      discovered;
+    if dupes != [ ] then throw "mkTool: duplicate tool name(s): ${toString dupes}" else discovered;
 in
 {
   inherit

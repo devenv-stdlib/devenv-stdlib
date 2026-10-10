@@ -663,7 +663,7 @@ in
   };
 
   testStdlibDiscoverSkipsUnderscore = {
-    expr = map builtins.baseNameOf (stdlib.discover [ ../../fixtures/stdlib-discover ]);
+    expr = map baseNameOf (stdlib.discover [ ../../fixtures/stdlib-discover ]);
     # fixtures/stdlib-discover/tests/not-a-tool.nix is skipped (tests/ dirs).
     expected = [ "leaf.nix" ];
   };

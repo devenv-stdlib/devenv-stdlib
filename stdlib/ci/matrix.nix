@@ -241,7 +241,7 @@ let
         let
           overlay = if profileName != null then (job.expansionProfiles or { }).${profileName} or { } else { };
           selectsRunners = (overlay.match or { }) != { } || (overlay.matchAny or [ ]) != [ ];
-          base = if selectsRunners then builtins.removeAttrs rawBase [ "selectCurrentLts" ] else rawBase;
+          base = if selectsRunners then removeAttrs rawBase [ "selectCurrentLts" ] else rawBase;
         in
         base // overlay;
       # Resolve selectCurrentLts after overlay merge so a job can opt in, and strip
@@ -249,7 +249,7 @@ let
       resolveProfile =
         raw:
         let
-          withoutControl = builtins.removeAttrs raw [ "selectCurrentLts" ];
+          withoutControl = removeAttrs raw [ "selectCurrentLts" ];
         in
         if raw.selectCurrentLts or false then
           withoutControl
