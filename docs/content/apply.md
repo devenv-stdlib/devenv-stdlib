@@ -4,7 +4,7 @@ This repository publishes **devenv-stdlib** as a Nix flake. Consumers pin it; th
 
 ```nix
 # flake.nix (see consumer-flake.nix.example)
-inputs.devenv-stdlib.url = "github:thedrow/devenv4monorepo/<tag-or-sha>";
+inputs.devenv-stdlib.url = "github:devenv-stdlib/devenv-stdlib/<tag-or-sha>";
 # follows (nixpkgs, den, …) reuse the pin's locked inputs — not a binary cache
 # then: inputs.devenv-stdlib.stdlib / .lib
 # packaging: import "${inputs.devenv-stdlib}/packaging/den-outputs.nix" { …; root = ./.; }

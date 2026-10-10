@@ -20,7 +20,7 @@ Ubuntu 26.04 LTS and 24.04 LTS (x86_64 or aarch64) are the supported hosts.
 
 ```nix
 # flake.nix — see consumer-flake.nix.example
-inputs.devenv-stdlib.url = "github:thedrow/devenv4monorepo/<tag-or-sha>";
+inputs.devenv-stdlib.url = "github:devenv-stdlib/devenv-stdlib/<tag-or-sha>";
 ```
 
 Import `${inputs.devenv-stdlib}/packaging/den-outputs.nix`, load `"${inputs.devenv-stdlib}/presets"` plus local `./presets`, and enable languages in your own `devenv.local.nix`.

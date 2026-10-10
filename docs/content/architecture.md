@@ -24,7 +24,7 @@ The terminal is user-global because you already have a terminal open to run `dev
 
 ## How a consumer wires the pin
 
-1. Add `devenv-stdlib.url = "github:thedrow/devenv4monorepo/<tag-or-sha>"` (see `consumer-flake.nix.example`).
+1. Add `devenv-stdlib.url = "github:devenv-stdlib/devenv-stdlib/<tag-or-sha>"` (see `consumer-flake.nix.example`).
 2. Import `${inputs.devenv-stdlib}/packaging/den-outputs.nix` with `stdlib = inputs.devenv-stdlib.stdlib` and `root = ./.` (overlay). Framework Den modules and cache presets come from the pin (`frameworkRoot`), not from copied paths under `root`.
 3. Load `"${inputs.devenv-stdlib}/presets"` and local `./presets` (later paths override).
 4. Enable languages and version bounds in committed `devenv.local.nix` (start from `devenv.local.nix.example`). In this publisher checkout that file stays gitignored so experiments do not leak.

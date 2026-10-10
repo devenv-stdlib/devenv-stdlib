@@ -7,7 +7,7 @@
 Nix in this repo imports `stdlib/default.nix`, or a shim that re-exports it. `flake.nix` evaluates `packaging/den-outputs.nix` and publishes that attrset as both `stdlib` and `lib`:
 
 ```nix
-inputs.devenv-stdlib.url = "github:thedrow/devenv4monorepo/<commit>";
+inputs.devenv-stdlib.url = "github:devenv-stdlib/devenv-stdlib/<commit>";
 # inputs.devenv-stdlib.stdlib.version
 # inputs.devenv-stdlib.stdlib.apiVersion
 # inputs.devenv-stdlib.stdlib.mkTool
@@ -105,11 +105,11 @@ Warnings go through module `warnings`, `stdlib.log.warn'` during the status inve
 
 ## Coding harnesses
 
-`stdlib/harness.nix` is the shared foundation from [issue #32](https://github.com/thedrow/devenv4monorepo/issues/32): option shapes, a config path under `$HOME`, install kinds (`nix`, `catalog`, `self`), and a split between a devenv `project` payload and a Home Manager payload.
+`stdlib/harness.nix` is the shared foundation from [issue #32](https://github.com/devenv-stdlib/devenv-stdlib/issues/32): option shapes, a config path under `$HOME`, install kinds (`nix`, `catalog`, `self`), and a split between a devenv `project` payload and a Home Manager payload.
 
 `secretEnv` entries are environment variable names. A literal is rejected. Values are not written into the Nix store.
 
-OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.com/thedrow/devenv4monorepo/issues/33), [issue #34](https://github.com/thedrow/devenv4monorepo/issues/34), and [issue #35](https://github.com/thedrow/devenv4monorepo/issues/35). This file does not install them. Follow-up tools land at `tools/harness/<name>.nix`.
+OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.com/devenv-stdlib/devenv-stdlib/issues/33), [issue #34](https://github.com/devenv-stdlib/devenv-stdlib/issues/34), and [issue #35](https://github.com/devenv-stdlib/devenv-stdlib/issues/35). This file does not install them. Follow-up tools land at `tools/harness/<name>.nix`.
 
 ## Logging
 
@@ -141,7 +141,7 @@ never shipped.
 See `consumer-flake.nix.example`. A consumer flake typically looks like:
 
 ```nix
-devenv-stdlib.url = "github:thedrow/devenv4monorepo/<tag-or-sha>";
+devenv-stdlib.url = "github:devenv-stdlib/devenv-stdlib/<tag-or-sha>";
 # follows = lockfile reuse of the pin's inputs (not a binary cache)
 nixpkgs.follows = "devenv-stdlib/nixpkgs";
 ```
