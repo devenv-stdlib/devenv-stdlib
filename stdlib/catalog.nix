@@ -31,7 +31,7 @@ let
   readTools =
     path:
     if builtins.pathExists path then
-      map normalize ((builtins.fromTOML (builtins.readFile path)).tool or [ ])
+      map normalize ((fromTOML (builtins.readFile path)).tool or [ ])
     else
       [ ];
 

@@ -28,7 +28,7 @@ let
       inherit cardinality description tools;
       children = extra.children or { };
     }
-    // builtins.removeAttrs extra [
+    // removeAttrs extra [
       "tools"
       "children"
     ];
