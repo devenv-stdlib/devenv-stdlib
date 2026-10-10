@@ -8,6 +8,7 @@ import hooks from "../content/hooks.md?raw";
 import languages from "../content/languages.md?raw";
 import overview from "../content/overview.md?raw";
 import reference from "../content/reference.md?raw";
+import skills from "../content/skills.md?raw";
 import terminal from "../content/terminal.md?raw";
 import tools from "../content/tools.md?raw";
 import { slug } from "./slug";
@@ -42,6 +43,7 @@ export const sections: DocSection[] = [
   section("apply", "Consume the package", apply),
   section("bootstrap", "Bootstrap", bootstrap),
   section("tools", "Tools and CLI", tools),
+  section("skills", "Agent skills", skills),
   section("languages", "Languages and versions", languages),
   section("hooks", "Hooks and commits", hooks),
   section("terminal", "Terminal and Cursor", terminal),

@@ -250,17 +250,7 @@ Docker images (when present in the catalogs) and the devenv VS Code extension sh
 
 ### Agent skills
 
-`.agents/skills/` ships 85 upstream Cursor skills (project scope; Cursor reads that directory natively), vendored with the [Vercel skills CLI](https://github.com/vercel-labs/skills). `skills-lock.json` records each skill's source and content hash. Only a skill's name and description sit in context until the agent decides it is relevant; bodies load on demand. Sources: [obra/superpowers](https://github.com/obra/superpowers) (brainstorming, plans, TDD, debugging, code review, worktrees), [mattpocock/skills](https://github.com/mattpocock/skills) (spec/tickets/triage, codebase design, grill-me, handoff), [cursor/plugins](https://github.com/cursor/plugins) (`cursor-team-kit` PR/CI flows, `pstack` unslop/no-comments/principles, `cli-for-agents`), [trailofbits/skills](https://github.com/trailofbits/skills) (Python/Rust review, property-based and mutation testing, differential review, supply-chain and Actions auditors, second opinion), Anthropic's `mcp-builder`, and [phuryn/pm-skills](https://github.com/phuryn/pm-skills) release planning (`pm-execution` PRDs, roadmaps, prioritization, pre-mortems, sprints, release notes, retros; `pm-product-discovery` feature-request triage and assumption testing; `product-vision`, `product-strategy`). The per-skill table with licenses (MIT, CC-BY-SA-4.0, Apache-2.0) is `.agents/skills/README.md`.
-
-```bash
-skills add owner/repo --skill <name> -a cursor -y   # add one (repo root; mise PATH)
-skills remove <name>
-skills list
-```
-
-In this publisher checkout, `update` runs `includes/update/skills.sh` (`skills update -y -p` after project `mise install`); review the diff before committing, since skills run with the agent's permissions. Consumers receive skill/pin changes by bumping `devenv-stdlib`. Git hooks skip `.agents/skills/` (vendored text). Excluded on purpose: duplicate TDD/debugging skills, Claude-Code-only bootstrap and subagent skills, hook-driven plugins (`ralph-loop`, `advisor`, `continual-learning`), Anthropic document/Claude-API skills, vendor-product skills, smart-contract and fuzzing suites, and rule bundles such as awesome-cursorrules (always-apply, stale). The rest of pm-skills (go-to-market, marketing, market research, analytics, toolkit, AI shipping) is tracked in [#194](https://github.com/devenv-stdlib/devenv-stdlib/issues/194).
-
-- Docs: [Cursor skills](https://cursor.com/docs/skills), [agentskills.io](https://agentskills.io), [skills.sh](https://skills.sh/)
+`.agents/skills/` ships vendored Cursor skills, managed by the project-scope `skills` CLI. See [Agent skills](#skills).
 
 ### Headroom
 
