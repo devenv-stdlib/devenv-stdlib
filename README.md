@@ -4,7 +4,7 @@ Published **devenv-stdlib** package: a [devenv](https://devenv.sh/) project tool
 
 Pin the flake in your monorepo. Compose presets and tools against that revision. Stop pasting `devenv.nix` between trees and hoping the laptops still agree.
 
-**[Documentation](https://devenv4monorepo.github.io/)** · **[Contribution guide](https://devenv4monorepo.github.io/#contributing)**
+**[Documentation](https://devenv-stdlib.github.io/devenv-stdlib/)** · **[Contribution guide](https://devenv-stdlib.github.io/devenv-stdlib/#contributing)**
 
 ## Why not rustup + nvm + a wiki page?
 
@@ -25,4 +25,4 @@ inputs.devenv-stdlib.url = "github:devenv-stdlib/devenv-stdlib/<tag-or-sha>";
 
 Import `${inputs.devenv-stdlib}/packaging/den-outputs.nix`, load `"${inputs.devenv-stdlib}/presets"` plus local `./presets`, and enable languages in your own `devenv.local.nix`.
 
-Full walkthrough: [Consume](https://devenv4monorepo.github.io/#apply) · [Bootstrap](https://devenv4monorepo.github.io/#bootstrap) · [Architecture](https://devenv4monorepo.github.io/#architecture) · [Tools](https://devenv4monorepo.github.io/#tools)
+Full walkthrough: [Consume](https://devenv-stdlib.github.io/devenv-stdlib/#apply) · [Bootstrap](https://devenv-stdlib.github.io/devenv-stdlib/#bootstrap) · [Architecture](https://devenv-stdlib.github.io/devenv-stdlib/#architecture) · [Tools](https://devenv-stdlib.github.io/devenv-stdlib/#tools)

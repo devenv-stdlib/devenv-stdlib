@@ -390,7 +390,7 @@ refresh-toolchain-latest
 
 ## This documentation site
 
-Live site: [devenv4monorepo.github.io](https://devenv4monorepo.github.io/). Vite + React, [Spectrum](https://spectrum.adobe.com/) web components via [`@lit/react`](https://lit.dev/docs/frameworks/react/), and `react-markdown` + `remark-gfm`. Content is `docs/content/*.md` imported with `?raw`. How to edit it: [Contribution guide](#contributing).
+Live site: [devenv-stdlib.github.io/devenv-stdlib](https://devenv-stdlib.github.io/devenv-stdlib/). Vite + React, [Spectrum](https://spectrum.adobe.com/) web components via [`@lit/react`](https://lit.dev/docs/frameworks/react/), and `react-markdown` + `remark-gfm`. Content is `docs/content/*.md` imported with `?raw`. How to edit it: [Contribution guide](#contributing).
 
 ```bash
 docs-dev             # http://localhost:5173

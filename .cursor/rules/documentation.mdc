@@ -7,7 +7,7 @@ alwaysApply: true
 
 User-facing behavior changes are unfinished until **`docs/content/`** matches. Update those pages in the same session as the code. When committing, keep a separate `docs:` commit (see the commits rule).
 
-`README.md` is marketing for GitHub. It links to [devenv4monorepo.github.io](https://devenv4monorepo.github.io/) and the [contribution guide](https://devenv4monorepo.github.io/#contributing). Do **not** copy option tables, command matrices, or layout dumps into the README. A one-line pitch change does not require a docs edit.
+`README.md` is marketing for GitHub. It links to [devenv-stdlib.github.io/devenv-stdlib](https://devenv-stdlib.github.io/devenv-stdlib/) and the [contribution guide](https://devenv-stdlib.github.io/devenv-stdlib/#contributing). Do **not** copy option tables, command matrices, or layout dumps into the README. A one-line pitch change does not require a docs edit.
 
 ## Where the docs live
 
@@ -31,7 +31,7 @@ User-facing behavior changes are unfinished until **`docs/content/`** matches. U
 - Name the real option, script, workflow, or file.
 - Add or drop sidenav headings by editing `##` lines; `sections.ts` derives ids from those titles.
 - Document package-first consumption (flake pin), not Copier template copy.
-- Link the live site as `https://devenv4monorepo.github.io/` (section hashes like `#contributing`).
+- Link the live site as `https://devenv-stdlib.github.io/devenv-stdlib/` (section hashes like `#contributing`).
 
 ```
 # ❌ BAD — rustc floor changed, languages.md still says 1.80
