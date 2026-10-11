@@ -235,7 +235,7 @@ let
       extensionSet = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
-        description = "home/ides/ext-lib.nix pack name to symlink, or null.";
+        description = "stdlib/ide-ext.nix pack name to symlink, or null.";
       };
       settings = lib.mkOption {
         type = lib.types.attrsOf lib.types.anything;

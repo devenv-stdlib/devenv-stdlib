@@ -582,8 +582,11 @@ in
     expected = (stdlib.catalog.entryByName "navi").name;
   };
 
-  testStdlibDevenvExtensionHashSynced = {
-    expr = firstQuoted ../../../home/ides/ext-lib.nix "sha256";
-    expected = firstQuoted ../../../stdlib/ide-ext.nix "defaultDevenvExtensionSha256";
+  testStdlibDevenvExtensionHashIsNix32 = {
+    expr =
+      builtins.match "[0-9a-df-np-sv-z]{52}" (
+        firstQuoted ../../../stdlib/ide-ext.nix "defaultDevenvExtensionSha256"
+      ) != null;
+    expected = true;
   };
 }

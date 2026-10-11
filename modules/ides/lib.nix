@@ -6,7 +6,7 @@
   lib,
 }:
 let
-  ext = import ../../home/ides/ext-lib.nix { inherit pkgs; };
+  ext = import ../../stdlib/ide-ext.nix { inherit pkgs; };
 in
 {
   inherit ext;
