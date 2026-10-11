@@ -26,7 +26,6 @@ let
     ++ names "categories" stdlib.categories
     ++ names "categoryPolicy" stdlib.categoryPolicy
     ++ names "categoryWarnings" stdlib.categoryWarnings
-    ++ names "harness" stdlib.harness
     ++ names "shell" stdlib.shell
     ++ names "linters" stdlib.linters
     ++ names "log" stdlib.log
@@ -309,17 +308,6 @@ in
       "generate.ensureTrailingNewline"
       "generate.mkEnsureTrailingNewlineExec"
       "generate.mkSyncFileExec"
-      "harness"
-      "harness.cardinality"
-      "harness.category"
-      "harness.configPath"
-      "harness.installKinds"
-      "harness.knownTools"
-      "harness.multiCardinality"
-      "harness.options"
-      "harness.payloads"
-      "harness.presetPath"
-      "harness.toolPath"
       "ideExt"
       "linters"
       "linters.alwaysOn"
@@ -566,88 +554,6 @@ in
         "litellm"
       ];
     };
-  };
-
-  testStdlibHarnessFoundations = {
-    expr = {
-      inherit (stdlib.harness) cardinality;
-      multi = stdlib.harness.multiCardinality;
-      tools = stdlib.harness.knownTools;
-      install = stdlib.harness.installKinds;
-      config = stdlib.harness.configPath "opencode" "config.json";
-      tool = stdlib.harness.toolPath "opencode";
-      preset = stdlib.harness.presetPath "opencode";
-      secretDefault = (stdlib.harness.options "demo").secretEnv.default;
-      inherit
-        (stdlib.harness.payloads {
-          name = "demo";
-          secretEnv = [ "OPENAI_API_KEY" ];
-        })
-        project
-        ;
-      inherit
-        ((stdlib.harness.payloads {
-          name = "demo";
-          secretEnv = [ "OPENAI_API_KEY" ];
-        }).homeManager
-        )
-        secretEnv
-        ;
-    };
-    expected = {
-      cardinality = "exactly-one";
-      multi = "any-of";
-      tools = [
-        "opencode"
-        "claude-code"
-        "codex"
-      ];
-      install = [
-        "nix"
-        "catalog"
-        "self"
-      ];
-      config = ".config/opencode/config.json";
-      tool = "tools/harness/opencode.nix";
-      preset = "presets/harness/opencode.nix";
-      secretDefault = [ ];
-      project = {
-        name = "demo";
-      };
-      secretEnv = [ "OPENAI_API_KEY" ];
-    };
-  };
-
-  testStdlibHarnessRejectsSecretLiteral = {
-    expr =
-      (builtins.tryEval (
-        stdlib.harness.payloads {
-          name = "demo";
-          secretEnv = [ "not-an-env" ];
-        }
-      )).success;
-    expected = false;
-  };
-
-  testStdlibHarnessRejectsOverriddenSecretEnv = {
-    expr =
-      (builtins.tryEval (
-        stdlib.harness.payloads {
-          name = "demo";
-          homeManager.secretEnv = [ "not-an-env" ];
-        }
-      )).success;
-    expected = false;
-  };
-
-  testStdlibHarnessKeepsValidSecretOverride = {
-    expr =
-      (stdlib.harness.payloads {
-        name = "demo";
-        secretEnv = [ "OPENAI_API_KEY" ];
-        homeManager.secretEnv = [ "ANTHROPIC_API_KEY" ];
-      }).homeManager.secretEnv;
-    expected = [ "ANTHROPIC_API_KEY" ];
   };
 
   testStdlibLoadersEmpty = {

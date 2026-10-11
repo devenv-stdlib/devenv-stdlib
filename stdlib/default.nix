@@ -41,7 +41,6 @@ in
   categoryWarnings = import ./category-warnings.nix { inherit lib; };
   # Flat lists of devenv languages.* / services.* ids (category scaffold source).
   devenvSupported = import ./devenv-supported.nix;
-  harness = import ./harness.nix { inherit lib categories; };
   shell = import ./shell.nix { inherit lib; };
 
   # First-class linter catalog (treefmt vs prek backends). Options live at
