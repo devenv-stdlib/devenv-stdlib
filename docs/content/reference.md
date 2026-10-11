@@ -44,6 +44,6 @@ Paths in **this package repository** (publisher / dogfood checkout). Consumer tr
 
 | `.devcontainer/devcontainer.json` | Written when `devcontainer.enable`; **commit** for Codespaces / Dev Containers |
 
-Live docs: [devenv4monorepo.github.io](https://devenv4monorepo.github.io/).
+Live docs: [devenv-stdlib.github.io/devenv-stdlib](https://devenv-stdlib.github.io/devenv-stdlib/).
 
 Consumers read the framework from the `devenv-stdlib` input (`stdlib/`, `packaging/`, publisher `flake.nix`). Details: [Standard library](#stdlib).
