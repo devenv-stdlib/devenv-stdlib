@@ -1,90 +1,28 @@
-# devenv
+# devenv4monorepo
 
-Portable [devenv](https://devenv.sh/) configuration for a reproducible Linux development toolchain.
+Published **devenv-stdlib** package: a [devenv](https://devenv.sh/) project toolchain that matches CI, plus a [Home Manager](https://nix-community.github.io/home-manager/) desktop (dropdown terminal, Starship, Cursor) that is **not** trapped inside `devenv shell`.
 
-Clone this repository on any Linux machine, install Nix and devenv, then enter the shell. Packages, git hooks, and tests are pinned in `devenv.lock`.
+Pin the flake in your monorepo. Compose presets and tools against that revision. Stop pasting `devenv.nix` between trees and hoping the laptops still agree.
 
-## Prerequisites
+**[Documentation](https://devenv4monorepo.github.io/)** · **[Contribution guide](https://devenv4monorepo.github.io/#contributing)**
 
-- Linux (x86_64 or aarch64)
-- `curl` and a user that can create `/nix` (the Nix installer typically needs `sudo` once)
+## Why not rustup + nvm + a wiki page?
 
-## Bootstrap on a fresh machine
+A monorepo is several languages and several products in one git history. Per-laptop installers drift. A GUI terminal is not a project dependency — you already have a window open to enter the shell. This package keeps those lifetimes apart:
 
-### 1. Install Nix
+- **devenv** — compilers, hooks, and a generated version matrix for *this* tree
+- **Home Manager** — Alacritty + Zellij (F12), Cursor, and the CLIs you want everywhere
+- **Flake pin** — one `devenv-stdlib` revision so frameworks, presets, and tools move together
 
-```bash
-curl -sSfL https://artifacts.nixos.org/nix-installer | sh -s -- install
-```
+Ubuntu 26.04 LTS and 24.04 LTS (x86_64 or aarch64) are the supported hosts.
 
-Open a new shell so `nix` is on `PATH`, or source the profile the installer prints.
-
-Enable flakes if they are not already on (the installer usually does this):
-
-```bash
-mkdir -p ~/.config/nix
-cat >> ~/.config/nix/nix.conf <<'EOF'
-experimental-features = nix-command flakes
-extra-substituters = https://devenv.cachix.org
-extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
-EOF
-```
-
-### 2. Install devenv
-
-```bash
-nix profile install nixpkgs#devenv
-```
-
-### 3. Clone and enter the environment
-
-```bash
-git clone <this-repo-url> ~/Projects/devenv
-cd ~/Projects/devenv
-devenv allow          # trust this directory for devenv's shell hook
-# or, with direnv: direnv allow
-devenv shell
-```
-
-You should see `devenv ready: <user>@<hostname>`. After that, `git`, `gh`, `jq`, `rg`, `fd`, `direnv`, and `nixfmt` are on `PATH`.
-
-## Everyday commands
-
-| Command | Purpose |
-| --- | --- |
-| `devenv shell` | Enter the environment |
-| `devenv test` | Build the env and run `enterTest` |
-| `devenv update` | Refresh `devenv.lock` from `devenv.yaml` inputs |
-| `devenv gc` | Delete unused environment generations |
-
-Optional auto-activation:
-
-- **devenv hook** (no extra tools): add `eval "$(devenv hook bash)"` to `~/.bashrc`, then `devenv allow` in this repo.
-- **direnv**: install direnv, hook it in your shell, then `direnv allow` here (`.envrc` is committed).
-
-## Layout
-
-| Path | Role |
-| --- | --- |
-| `devenv.nix` | Shell banner, Cachix pull, tests |
-| `devenv.yaml` | Inputs, module imports, CLI version pin |
-| `devenv.lock` | Pinned inputs (commit this) |
-| `modules/packages.nix` | Shared CLI packages |
-| `modules/git-hooks.nix` | `nixfmt-rfc-style`, `statix`, `deadnix` |
-| `modules/languages.nix` | Commented language examples (off by default) |
-| `devenv.local.nix` | Gitignored machine-specific overrides |
-
-## Local overrides
-
-Copy options you do not want to share into `devenv.local.nix`:
+## Use in a monorepo
 
 ```nix
-{ ... }:
-{
-  # packages = [ pkgs.hello ];
-}
+# flake.nix — see consumer-flake.nix.example
+inputs.devenv-stdlib.url = "github:devenv-stdlib/devenv-stdlib/<tag-or-sha>";
 ```
 
-## CI
+Import `${inputs.devenv-stdlib}/packaging/den-outputs.nix`, load `"${inputs.devenv-stdlib}/presets"` plus local `./presets`, and enable languages in your own `devenv.local.nix`.
 
-GitHub Actions installs Nix and devenv, then runs `devenv test` on every push and pull request to `main`/`master`.
+Full walkthrough: [Consume](https://devenv4monorepo.github.io/#apply) · [Bootstrap](https://devenv4monorepo.github.io/#bootstrap) · [Architecture](https://devenv4monorepo.github.io/#architecture) · [Tools](https://devenv4monorepo.github.io/#tools)

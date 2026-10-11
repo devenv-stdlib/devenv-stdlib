@@ -1,0 +1,61 @@
+---
+description: Pin non-Nix tools in catalog.toml with docs comments; refresh via non-nix.sh
+globs: modules/non-nix/**,modules/mise/**,modules/update/**,includes/update/**,home/**
+alwaysApply: false
+---
+
+# Non-Nix catalog (package authors + monorepo teams)
+
+Shipped: `modules/non-nix/catalog.toml`. Team extras:
+`modules/non-nix/catalog.local.toml` (committed in monorepos; gitignored in
+this publisher checkout; start from repo-root `catalog.local.toml.example`).
+Same `[[tool]]` shape. Do not reuse a shipped `name`.
+
+CLI tools install via mise (or Nix when `versionAtLeast` + homepage identity
+match). Docker images and the devenv VS Code extension share the catalogs
+but are not mise `[tools]`.
+
+## Every `[[tool]]` needs a docs comment
+
+Immediately above each `[[tool]]`, put **one** `#` line that states what the
+tool does and points at upstream docs (URL or docs site path). Pin bumps must
+not strip those comments (`catalog_set_pin` is line-local on purpose).
+
+```
+# ❌ BAD — bare table, no purpose or docs pointer
+[[tool]]
+name = "serena"
+pin = "1.7.0"
+
+# ✅ GOOD
+# Code-memory MCP (symbol graph) for Cursor. Docs: https://oraios.github.io/serena/
+[[tool]]
+name = "serena"
+kind = "cli"
+scope = "user"
+pin = "1.7.0"
+mise = "pipx:serena-agent"  # installs via uv when uv is on PATH
+```
+
+## Add / remove entries
+
+Prefer the flag-first tasks (docs comment via `--docs`, no leading `#`):
+
+```
+# ✅ GOOD — monorepo: non-nix:add-local / non-nix:remove-local
+# ✅ GOOD — publisher: non-nix:add / non-nix:remove (needs includes/update/)
+# ❌ BAD — hand-edit generated mise.toml or reuse a shipped name in catalog.local.toml
+```
+
+## Pins
+
+```
+# ❌ BAD — edit generated mise.toml or override a shipped name in catalog.local.toml
+
+# ✅ GOOD — shipped pin: includes/update/non-nix.sh (publisher `update`)
+# ✅ GOOD — team pin: modules/non-nix/catalog.local.toml + consumer `update`
+```
+
+`update` in this checkout runs shipped refreshers. In a consumer tree it runs
+`devenv update`, then `modules/update/local-catalog.sh` (bump local pins;
+Nix when promotable, else `mise install`).

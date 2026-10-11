@@ -1,0 +1,7 @@
+% warp, terminal
+
+# Switch Quake provider to Warp — set terminal.provider = "warp" in home.local.nix first, then:
+home-switch
+
+# Enable the warp tool leaf — add tools.warp.enable = true; when needed
+echo "tools.warp.enable = true;"

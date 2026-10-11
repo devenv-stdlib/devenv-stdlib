@@ -1,0 +1,12 @@
+{
+  "layer_markers": {},
+  "cluster_resolution": 1.0,
+  "dead_code_entry_points": [],
+  "accepted_secrets": [
+    {
+      "path": ".agents/skills/mcp-builder/reference/evaluation.md",
+      "pattern": "generic_credential_assignment",
+      "match_preview": "sha256:766deb6ead1d"
+    }
+  ]
+}

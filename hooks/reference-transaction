@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Git has no pre-tag hook, but reference-transaction is invoked for every ref
+# update and aborts the transaction when it exits non-zero during "prepared".
+# That makes it the only hook that can stop `git tag` locally, so this is where
+# the setup.sh test suite runs: a faulty bootstrap script can never be tagged.
+#
+# devenv's enterShell copies this file to $(git rev-parse --git-path hooks).
+# Set DEVENV_SKIP_TAG_TESTS=1 to bypass it.
+
+set -uo pipefail
+
+GREEN=$'\033[0;32m'
+RED=$'\033[0;31m'
+RESET=$'\033[0m'
+
+state=${1:-}
+[[ $state == prepared ]] || exit 0
+[[ -z ${DEVENV_SKIP_TAG_TESTS:-} ]] || exit 0
+# semantic-release tags from CI; local hook must not block those jobs.
+[[ -z ${CI:-} && -z ${GITHUB_ACTIONS:-} ]] || exit 0
+
+# Fetching or cloning also creates tag refs; only guard tags made here.
+case ${GIT_REFLOG_ACTION:-} in
+  fetch* | pull* | clone* | *"remote update"*) exit 0 ;;
+esac
+
+new_tag=""
+while read -r _old_value new_value ref_name; do
+  [[ $ref_name == refs/tags/* ]] || continue
+  # git reports an all-zero old value for plain creations *and* deletions, so
+  # the new value is what distinguishes them: all zeros means the tag is going
+  # away and there is nothing to verify.
+  [[ $new_value =~ ^0+$ ]] && continue
+  new_tag=${ref_name#refs/tags/}
+  break
+done
+
+[[ -n $new_tag ]] || exit 0
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+cd "$repo_root" || exit 0
+[[ -d tests ]] || exit 0
+
+if command -v bats >/dev/null 2>&1; then
+  runner=(bats --print-output-on-failure --recursive tests)
+elif command -v devenv >/dev/null 2>&1; then
+  runner=(devenv shell -- bats --print-output-on-failure --recursive tests)
+else
+  printf '%s✗ cannot verify tag %s: neither bats nor devenv is on PATH%s\n' \
+    "$RED" "$new_tag" "$RESET" >&2
+  exit 1
+fi
+
+printf '→ running the setup.sh test suite before creating tag %s\n' "$new_tag"
+if "${runner[@]}"; then
+  printf '%s✓ tests passed; creating tag %s%s\n' "$GREEN" "$new_tag" "$RESET"
+  exit 0
+fi
+
+printf '%s✗ tests failed; refusing to create tag %s%s\n' "$RED" "$new_tag" "$RESET" >&2
+printf 'Fix setup.sh (or re-run with DEVENV_SKIP_TAG_TESTS=1 to override).\n' >&2
+exit 1

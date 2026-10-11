@@ -1,0 +1,7 @@
+% bash, shell
+
+# Confirm bash is the interactive shell from Home Manager
+echo "$BASH_VERSION"
+
+# Enable the bash tool leaf (default on)
+echo "tools.bash.enable = true;"

@@ -1,0 +1,73 @@
+{
+  # Required only if USER/HOME are unset during evaluation.
+  # home.username = "omer";
+  # home.homeDirectory = "/home/omer";
+
+  # Default is Alacritty + Zellij + Quake Terminal, plus Atuin
+  # (daemon-fuzzy) and ble.sh. Warp is optional: it does not start
+  # under VMware Workstation, and it skips Atuin/ble.sh.
+  # terminal.provider = "warp";
+
+  # Cursor from nixpkgs, plus common editor extensions.
+  # Language packs follow devenv languages.* (see devenv.local.nix).
+  # cursor.enable = false;
+
+  # mr-boxington (mbx) Cargo build cache for this user (home-switch).
+  # HM options come from home/cache-presets.nix (not Den mkPreset).
+  # For repository-only install, enable the preset in devenv.local.nix with
+  # scope = "local" (the default) instead.
+  # presets.cache.mr-boxington.enable = true;
+  # presets.cache.mr-boxington.scope = "global";
+  # # Or flip the tool leaf directly (always global setup):
+  # tools.mr-boxington.enable = true;
+
+  # build-cleaner for this user (home-switch).
+  # HM options come from home/cache-presets.nix (not Den mkPreset).
+  # For repository-only install, enable the preset in devenv.local.nix with
+  # scope = "local" (the default) instead.
+  # presets.cache.build-cleaner.enable = true;
+  # presets.cache.build-cleaner.scope = "global";
+  # # Or flip the tool leaf directly:
+  # tools.build-cleaner.enable = true;
+
+  # Serena / Headroom / MCP catalog for Cursor (default: cursor.enable).
+  # cursor.llmContext.enable = false;
+
+  # Rootless Docker is the default (act).
+  # export DOCKER_HOST=unix:///var/run/docker.sock to use a rootful daemon,
+  # or turn the helper off:
+  # docker.rootless.enable = false;
+
+  # Bump your own uv/npx tools in gitignored update.local.sh (repo root).
+  # Framework pins (Serena, Headroom, Brave, …) move with the devenv-stdlib flake pin.
+
+  # terminal.quakeKeybinding = "ctrl-`";
+  # terminal.heightPercent = 40;
+  # terminal.pinToGnomeDash = false;
+
+  # alacritty.zellijSession = "quake";
+  # alacritty.zellijGuiSession = "main";
+  # alacritty.zellijTheme = "nord";
+
+  # Home Manager owns ~/.gitconfig when delta is enabled.
+  # programs.git.userName = "Omer";
+  # programs.git.userEmail = "omer@example.com";
+
+  # Host-only bash. The template writes ~/.bashrc.d/00-nix.sh and
+  # ~/.bashrc.d/90-home-manager.sh only. See the docs site Terminal page.
+  # home.file.".bashrc.d/10-host.sh".text = ''
+  #   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
+  #   eval "$(pyenv init -)"
+  # '';
+
+  # warp.extraSettings = ''
+  #   [appearance.text]
+  #   font_size = 15.0
+  # '';
+
+  # Home Manager replaces the GNOME custom-keybindings array. List any other
+  # shortcut paths that should stay when Warp is the provider:
+  # terminal.gnomeExtraCustomKeybindings = [
+  #   "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
+  # ];
+}

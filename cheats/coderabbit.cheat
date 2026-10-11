@@ -1,0 +1,9 @@
+% coderabbit, ide
+
+# Enable the CodeRabbit Open VSX extension tool — add tools.coderabbit.enable = true; to home.local.nix, then:
+home-switch
+
+# Preset: extension + CLI — add presets.ide.coderabbit.enable = true; to home.local.nix when needed
+
+# Disable the extension after opting out — set tools.coderabbit.enable = false; in home.local.nix, then:
+home-switch

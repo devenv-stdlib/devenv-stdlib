@@ -5,24 +5,525 @@ on:
     branches: [main, master]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Every devenv shell / devenv test runs mise install; github: tools (debtmap)
+# hit the GitHub API, which allows 60 unauthenticated requests per hour per IP.
+env:
+  MISE_GITHUB_TOKEN: ${{ github.token }}
+
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  # Path filters on pull_request only; push to main/master always runs the full suite
+  # (release gate). Path-skipped jobs report as skipped (ruleset uses real job names).
+  changes:
+    name: Detect path changes
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      unit: ${{ steps.flags.outputs.unit }}
+      integration: ${{ steps.flags.outputs.integration }}
+      language: ${{ steps.flags.outputs.language }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: cachix/install-nix-action@v31
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'pull_request'
         with:
-          extra_nix_config: |
-            extra-substituters = https://devenv.cachix.org
-            extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
+          filters: |
+            unit:
+              - '**/*.nix'
+              - '**/*.jinja'
+              - 'devenv.lock'
+              - 'devenv.yaml'
+              - 'devenv.nix'
+              - 'flake.nix'
+              - 'flake.lock'
+              - 'copier.yml'
+              - 'modules/**'
+              - 'stdlib/**'
+              - 'presets/**'
+              - 'packaging/**'
+              - 'tools/**'
+              - 'home/**'
+              - 'includes/**'
+              - '.agents/skills/**'
+              - 'skills-lock.json'
+              # Keep tests/** inclusive: dorny/paths-filter@v3 default quantifier
+              # "some" makes a lone '!tests/setup/**' match unrelated paths.
+              - 'tests/**'
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/test.yml'
+            integration:
+              - '**/*.nix'
+              - 'devenv.lock'
+              - 'devenv.yaml'
+              - 'devenv.nix'
+              - 'flake.nix'
+              - 'flake.lock'
+              - 'modules/**'
+              - 'stdlib/**'
+              - 'presets/**'
+              - 'packaging/**'
+              - 'tests/integration/**'
+              - 'tests/act/**'
+              - 'tests/unit/workflow.nix'
+              - 'tests/fixtures/**'
+              - '.github/**'
+              - '.actrc'
+            language:
+              - '**/*.nix'
+              - 'devenv.lock'
+              - 'devenv.yaml'
+              - 'devenv.nix'
+              - 'modules/languages/**'
+              - 'presets/**'
+              - '.github/workflows/test.yml'
+              - '.github/workflows/ci.yml'
+
+      - id: flags
+        name: Resolve suite flags
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            {
+              echo "unit=true"
+              echo "integration=true"
+              echo "language=true"
+            } >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "unit=${{ steps.filter.outputs.unit }}"
+              echo "integration=${{ steps.filter.outputs.integration }}"
+              echo "language=${{ steps.filter.outputs.language }}"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+  # Fail-fast gate: lint before unit/integration/language matrix/release.
+  # Read-only: PR head hooks must not see write-scoped tokens (report job below).
+  lint:
+    name: Lint (prek)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name != 'pull_request'
+        with:
+          # Do not write GITHUB_TOKEN into .git/config for PR-controlled hooks.
+          persist-credentials: false
+
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Own workspace under act
+        if: ${{ env.ACT }}
+        run: |
+          sudo mkdir -p /home/runner/.cache/nix /nix
+          # Nested act matrix cells share one /nix volume; recursive chown races with
+          # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
+          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}" /home/runner/.cache
+          if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
+            sudo chown "$(id -u):$(id -g)" /nix
+          fi
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Restore Nix store
+        if: ${{ !env.ACT }}
+        uses: nix-community/cache-nix-action/restore@v7
+        with:
+          primary-key: nix-${{ runner.os }}-lint-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix', 'modules/hooks/**', 'modules/debtmap/hooks.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-lint-
 
       - uses: cachix/cachix-action@v16
         with:
           name: devenv
 
       - name: Install devenv
-        run: nix profile install nixpkgs#devenv
+        run: |
+          # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
+          rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
+          nix profile add "github:cachix/devenv/${rev}"
 
-      - name: Test
-        run: devenv test
+      - name: Run prek
+        id: prek
+        # Unset gh/git tokens for PR-controlled hooks. MISE_GITHUB_TOKEN stays set
+        # for mise install; this job's token is contents: read.
+        env:
+          GITHUB_TOKEN: ""
+          GH_TOKEN: ""
+        run: |
+          set -uo pipefail
+          unset GITHUB_TOKEN GH_TOKEN || true
+
+          set +e
+          devenv shell -- prek run --all-files --show-diff-on-failure --color=never \
+            2>&1 | tee prek.log
+          status=${PIPESTATUS[0]}
+          set -e
+
+          if [ "$status" -ne 0 ]; then
+            {
+              bt='`'
+              fence='````'
+              printf '%s\n\n' '<!-- prek-hooks-report -->'
+              printf '%s\n\n' "## prek failed on this pull request"
+              printf '%s\n\n' "${bt}prek run --all-files${bt} did not pass. Output:"
+              printf '%s\n' "$fence"
+              if [ -s prek.log ]; then
+                head -c 50000 prek.log
+                echo
+              else
+                echo "(prek produced no output)"
+              fi
+              printf '%s\n\n' "$fence"
+              printf '%s\n' "Fix locally with ${bt}devenv shell${bt} and ${bt}prek run --all-files${bt}, or commit on the host so hooks run."
+            } >prek-comment.md
+          fi
+          exit "$status"
+
+      - name: Upload prek log
+        if: ${{ always() && !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: prek.log
+          path: prek.log
+          if-no-files-found: ignore
+
+      - name: Upload prek failure comment body
+        if: ${{ failure() && !env.ACT && github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: prek-comment
+          path: prek-comment.md
+          if-no-files-found: ignore
+
+      - uses: pre-commit-ci/lite-action@v1.1.0
+        if: ${{ always() && !env.ACT && github.event_name == 'pull_request' }}
+        with:
+          msg: "chore: apply hook autofixes"
+
+  # Write-scoped PR comments stay out of the job that executes PR-head hooks.
+  report-prek:
+    name: Report prek on pull request
+    needs: lint
+    if: always() && !cancelled() && github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Skip under act
+        if: ${{ env.ACT }}
+        run: echo "Skipping PR comment under act"
+
+      - name: Download prek failure comment body
+        id: download
+        if: ${{ !env.ACT }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: prek-comment
+          path: report
+
+      - name: Upsert or clear prek report comment
+        if: ${{ !env.ACT }}
+        env:
+          LINT_RESULT: ${{ needs.lint.result }}
+        run: |
+          set -euo pipefail
+          repo='${{ github.repository }}'
+          comment_ids() {
+            gh api --paginate "repos/${repo}/issues/${PR_NUMBER}/comments" \
+              --jq '.[] | select(.body | startswith("<!-- prek-hooks-report -->")) | .id'
+          }
+          delete_report_comments() {
+            local id
+            while read -r id; do
+              [ -z "$id" ] && continue
+              gh api --method DELETE "repos/${repo}/issues/comments/${id}" >/dev/null
+            done < <(comment_ids)
+          }
+          upsert_report_comment() {
+            local payload id extras
+            payload=$(jq -n --rawfile body "$1" '{body: $body}')
+            id=$(comment_ids | head -n1 || true)
+            if [ -n "$id" ]; then
+              gh api --method PATCH "repos/${repo}/issues/comments/${id}" --input - <<<"$payload" >/dev/null
+              extras=$(comment_ids | tail -n +2 || true)
+              while read -r id; do
+                [ -z "$id" ] && continue
+                gh api --method DELETE "repos/${repo}/issues/comments/${id}" >/dev/null
+              done <<<"$extras"
+            else
+              gh api --method POST "repos/${repo}/issues/${PR_NUMBER}/comments" --input - <<<"$payload" >/dev/null
+            fi
+          }
+
+          if [ "$LINT_RESULT" = "success" ]; then
+            delete_report_comments || true
+            exit 0
+          fi
+          if [ -f report/prek-comment.md ]; then
+            upsert_report_comment report/prek-comment.md \
+              || echo "::warning::Could not comment on the pull request with prek output"
+          fi
+
+  unit-tests:
+    name: Unit tests (${{ matrix.os }})
+    needs: [lint, changes]
+    if: needs.lint.result == 'success' && needs.changes.outputs.unit == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-26.04]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      issues: read
+      actions: write
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Own workspace under act
+        if: ${{ env.ACT }}
+        run: |
+          sudo mkdir -p /home/runner/.cache/nix /nix
+          # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
+          # Nested act matrix cells share one /nix volume; recursive chown races with
+          # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
+          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}" /home/runner/.cache
+          if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
+            sudo chown "$(id -u):$(id -g)" /nix
+          fi
+
+      - uses: cachix/install-nix-action@v31
+
+      # Combined cache-nix-action only saves on success(); failed jobs never
+      # populated test-devenv keys. Restore + always-save fills Actions cache.
+      - name: Restore Nix store
+        id: nix-cache
+        if: ${{ !env.ACT }}
+        uses: nix-community/cache-nix-action/restore@v7
+        with:
+          primary-key: nix-${{ matrix.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix') }}
+          restore-prefixes-first-match: nix-${{ matrix.os }}-${{ github.job }}-
+
+      - uses: cachix/cachix-action@v16
+        with:
+          name: devenv
+
+      - name: Install devenv
+        run: |
+          # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
+          rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
+          nix profile add "github:cachix/devenv/${rev}"
+
+      - name: Nix unit suite
+        # Public task: discovers tools/** + presets/** (+ tests/unit) via the
+        # private JUnit reporter (stdlib/private/nix-unit-junit.py).
+        run: devenv tasks run --show-output nix-unit:test
+
+      - name: BATS suite
+        # Still run after nix-unit:test failure (same as former combined
+        # test-devenv-unit script). Job stays failed if either suite failed.
+        if: ${{ success() || failure() }}
+        # --show-output: devenv tasks hide captured stdout unless showOutput / this flag
+        run: devenv tasks run --show-output devenv:test-devenv-bats
+
+      - name: Upload JUnit reports
+        if: ${{ always() && !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-unit-tests-${{ matrix.os }}
+          path: junit/**/*.xml
+          if-no-files-found: ignore
+
+      - name: Publish test results
+        if: ${{ always() && !env.ACT }}
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          check_name: Unit tests results (${{ matrix.os }})
+          files: |
+            junit/**/*.xml
+          comment_mode: always
+          check_run_annotations: none
+
+      - name: Save Nix store
+        if: ${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
+          gc-max-store-size-linux: 5G
+
+  # Integration runs when its paths match; waits for unit only if unit also ran.
+  integration-tests:
+    name: Integration tests (${{ matrix.os }})
+    needs: [lint, changes, unit-tests]
+    if: >-
+      always() && !cancelled() && needs.lint.result == 'success' && needs.changes.outputs.integration == 'true' && (needs.changes.outputs.unit != 'true' || needs.unit-tests.result == 'success')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-26.04]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      issues: read
+      actions: write
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Own workspace under act
+        if: ${{ env.ACT }}
+        run: |
+          sudo mkdir -p /home/runner/.cache/nix /nix
+          # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
+          # Nested act matrix cells share one /nix volume; recursive chown races with
+          # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
+          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}" /home/runner/.cache
+          if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
+            sudo chown "$(id -u):$(id -g)" /nix
+          fi
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Restore Nix store
+        id: nix-cache
+        if: ${{ !env.ACT }}
+        uses: nix-community/cache-nix-action/restore@v7
+        with:
+          primary-key: nix-${{ matrix.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix') }}
+          restore-prefixes-first-match: nix-${{ matrix.os }}-${{ github.job }}-
+
+      - uses: cachix/cachix-action@v16
+        with:
+          name: devenv
+
+      - name: Install devenv
+        run: |
+          # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
+          rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
+          nix profile add "github:cachix/devenv/${rev}"
+
+      - name: Integration suite
+        # --show-output: devenv tasks hide captured stdout unless showOutput / this flag
+        # GITHUB_TOKEN: nested act forwards this (and MISE_GITHUB_TOKEN/GH_TOKEN) so mise
+        # can install github:/ubi: release tools (debtmap). Empty/dummy tokens → 401/403.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: devenv tasks run --show-output devenv:test-devenv-integration
+
+      - name: Upload JUnit reports
+        if: ${{ always() && !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-integration-tests-${{ matrix.os }}
+          path: junit/**/*.xml
+          if-no-files-found: ignore
+
+      - name: Publish test results
+        if: ${{ always() && !env.ACT }}
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          check_name: Integration tests results (${{ matrix.os }})
+          files: |
+            junit/**/*.xml
+          comment_mode: always
+          check_run_annotations: none
+
+      - name: Save Nix store
+        if: ${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
+          gc-max-store-size-linux: 5G
+
+  check-language-matrix-workflow:
+    name: Check language-matrix workflow exists
+    needs: [changes, integration-tests]
+    if: >-
+      always() && !cancelled() && needs.changes.outputs.language == 'true' && (needs.changes.outputs.integration != 'true' || needs.integration-tests.result == 'success')
+    runs-on: ubuntu-24.04
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        name: Detect .github/workflows/test.yml
+        run: |
+          if [ -f .github/workflows/test.yml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  language-matrix:
+    name: Language matrix
+    needs: check-language-matrix-workflow
+    if: needs.check-language-matrix-workflow.outputs.exists == 'true'
+    uses: ./.github/workflows/test.yml
+    # Attachment steps read named secrets from the reusable workflow.
+    secrets: inherit
+
+  release:
+    name: Semantic release
+    needs: [changes, integration-tests]
+    if: >-
+      github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && needs.integration-tests.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Restore Nix store
+        id: nix-cache
+        uses: nix-community/cache-nix-action/restore@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ github.job }}-
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEVENV_SKIP_TAG_TESTS: "1"
+        run: |
+          # nixpkgs semantic-release ships analyzer, notes, npm, and github.
+          # exec + git (stdlib/version.nix bump) resolve via NODE_PATH.
+          plugins="${RUNNER_TEMP}/semantic-release-plugins"
+          nix shell nixpkgs#nodejs --command npm install --prefix "$plugins" \
+            @semantic-release/exec@7.1.0 \
+            @semantic-release/git@10.0.1
+          export NODE_PATH="${plugins}/node_modules${NODE_PATH:+:$NODE_PATH}"
+          nix shell nixpkgs#semantic-release --command semantic-release
+
+      - name: Save Nix store
+        if: ${{ always() && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
+          gc-max-store-size-linux: 5G

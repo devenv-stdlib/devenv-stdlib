@@ -1,0 +1,16 @@
+% coderabbit-cli, ide
+
+# Review local changes with the CodeRabbit CLI
+coderabbit review
+
+# Agent-oriented structured findings
+coderabbit review --agent
+
+# Check CLI install / local review readiness
+coderabbit doctor
+
+# Enable the CLI tool leaf (also in presets.ide.coderabbit) — add tools.coderabbit-cli.enable = true; to home.local.nix, then:
+home-switch
+
+# Disable the CLI after opting out — set tools.coderabbit-cli.enable = false; in home.local.nix, then:
+home-switch

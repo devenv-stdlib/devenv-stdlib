@@ -1,0 +1,77 @@
+{ ... }:
+{
+  # Extra options for devenv.local.nix. Set `name` and enabled languages
+  # yourself (there is no questionnaire). Add max/unsupported, debtmap,
+  # or packages as needed.
+  #
+  # After devenv shell, `update` runs devenv update, refreshes
+  # modules/non-nix/catalog.local.toml (Nix if promotable, else mise),
+  # then update.local.sh if executable (gitignored). Put host-only
+  # extras in update.local.sh. Team tools belong in catalog.local.toml.
+  # Do not edit modules/non-nix/catalog.toml; those pins move with the
+  # devenv-stdlib flake pin.
+
+  # packages = [ pkgs.hello ];
+
+  # languages.rust.enable = true;
+  # supported.rust.min = "1.85.0";
+  # supported.rust.max = "1.98.0";
+  # supported.rust.unsupported = [ "1.86.0" ];
+  # supported.rust.channels = [ "stable" "beta" ];
+  # supported.rust.edition = "2024"; # rustfmt + rust-analyzer; 2024 needs rustc 1.85+
+
+  # mr-boxington (mbx) Cargo build cache for this repository only.
+  # For user-global install, set scope = "global" in home.local.nix instead.
+  # presets.cache.mr-boxington.enable = true;
+  # presets.cache.mr-boxington.scope = "local"; # default
+
+  # build-cleaner: reclaim disk from build artifacts / caches (this repo only).
+  # For user-global install, set scope = "global" in home.local.nix instead.
+  # presets.cache.build-cleaner.enable = true;
+  # presets.cache.build-cleaner.scope = "local"; # default
+
+  # languages.go.enable = true;
+  # supported.go.min = "1.22.0";
+  # supported.go.max = "1.24.0";
+
+  # languages.python = {
+  #   enable = true;
+  #   version = "3.12";
+  #   venv.enable = true;
+  # };
+  # supported.python.min = "3.12";
+  # supported.python.max = "3.13";
+  # supported.python.implementations = [ "cpython" "pypy" ];
+  # python.extensionToolchain = true; # C/C++/Rust for source builds
+  # pythonTypeChecker = "ty"; # default is pyright
+
+  # languages.javascript = {
+  #   enable = true;
+  #   npm.enable = true;
+  # };
+  # supported.javascript.runtimes = [ "nodejs" ]; # nodejs | bun | deno
+  # supported.javascript.nodejs.min = "22";
+
+  # languages.typescript.enable = true;
+  # typescript.bundler = "vite"; # required: vite | turbopack | rspack | tsup | tsdown
+
+  # .debtmap.toml is generated from these options. Do not edit that file.
+  # Defaults match https://github.com/iepathos/debtmap/blob/master/.debtmap.toml
+  # debtmap.thresholds.complexity = 15;
+  # debtmap.thresholds.duplication = 50;
+  # debtmap.thresholds.maxFileLength = 500;
+  # debtmap.thresholds.maxFunctionLength = 50;
+  # debtmap.thresholds.minimumDebtScore = 2.0;
+  # debtmap.thresholds.validation.maxAverageComplexity = 10.0;
+  # debtmap.thresholds.validation.maxDebtDensity = 40.0;
+  # debtmap.thresholds.validation.maxCodebaseRiskScore = 7.0;
+  # debtmap.output.defaultFormat = "json"; # default is terminal; also markdown
+  # debtmap.ignore.patterns = [ "vendor/**" "dist/**" ];
+  # debtmap.godObjectDetection.rust.maxMethods = 25;
+  # debtmap.godObjectDetection.python.maxMethods = 25;
+  # debtmap.godObjectDetection.javascript.maxFields = 10;
+  # debtmap.godObjectDetection.go.maxMethods = 20;
+  # debtmap.scoring.coverage = 0.50;
+  # debtmap.scoring.complexity = 0.35;
+  # debtmap.scoring.dependency = 0.15;
+}

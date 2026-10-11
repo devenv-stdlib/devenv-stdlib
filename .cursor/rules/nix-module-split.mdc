@@ -1,0 +1,57 @@
+---
+description: Keep Nix modules short; split by concern and DRY shared patterns
+globs: modules/**/*.nix,home/**/*.nix
+alwaysApply: true
+---
+
+# Nix module size and DRY
+
+When adding or editing Nix under `modules/` or `home/`, treat module
+complexity as a first-class constraint. Prefer a small barrel that
+`imports` focused files over one growing attrset.
+
+## When to split
+
+Split (or refuse to grow) a module when any of:
+
+- The file mixes unrelated concerns (e.g. always-on hooks + language hooks).
+- It is past ~100 lines of real config (not comments/examples) and still
+  growing.
+- Two or more modules in the same directory repeat the same `let` /
+  enable logic, option shape, or package wiring.
+
+```
+# ❌ BAD — one file owns every language's git-hooks
+# modules/git-hooks.nix  (rust + go + python + prettier + debtmap + …)
+
+# ✅ GOOD — topical dirs; one concern per file; barrel imports
+# modules/hooks/common.nix
+# modules/hooks/rust.nix
+# modules/debtmap/hooks.nix
+# modules/devenv.nix  →  imports = [ ./hooks/common.nix ./hooks/rust.nix … ];
+```
+
+## How to split
+
+- **Obvious cut** (new language hooks, new sibling package block, clear
+  duplicated `let`): do it in the same change. Match the nearest topical
+  folder (`modules/hooks/`, `modules/languages/`, `modules/debtmap/`, …).
+- **Shared helpers**: put reusable pure functions in `modules/lib/` (or a
+  local `lib.nix` next to the topic). Do not copy-paste enable checks.
+- **Ambiguous or large move** (many call sites, unclear folder ownership,
+  behavior change risk): stop and propose the tree (or ask) before
+  rewriting. Do not invent a second parallel layout.
+
+## Do
+
+- Wire new modules through the existing barrel (`modules/devenv.nix` or
+  `home.nix` imports).
+- Update docs/tests that hard-code old paths in the same session.
+- Keep `mkIf` / `enable = …` close to the feature they gate.
+
+## Do not
+
+- Add "just one more" block to a module that is already a grab-bag.
+- Create abstractions (`mkLanguageHooks`, mega-options) unless two
+  call sites already share the same shape.
+- Leave dead paths or duplicate barrels after a move.

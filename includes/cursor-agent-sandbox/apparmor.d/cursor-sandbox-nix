@@ -1,0 +1,114 @@
+# Cursor Agent terminal sandbox (cursorsandbox) for Nixpkgs Cursor and
+# Cursor Agent CLI helpers. Ubuntu's unprivileged_userns profile denies
+# capabilities inside new user namespaces; without a dedicated profile that
+# grants userns + net_admin, loopback setup fails (RTM_NEWADDR EPERM).
+#
+# Installed by includes/cursor-agent-sandbox/install.sh (setup.sh) as root.
+# Not the Electron --no-sandbox launcher flag (that is Chromium, not Agent).
+
+abi <abi/5.0>,
+include <tunables/global>
+
+# Nixpkgs code-cursor / cursor helper (hash in store path changes on upgrade).
+profile cursor_sandbox_nix /nix/store/*-cursor-*/lib/cursor/resources/app/resources/helpers/cursorsandbox {
+  file,
+  /** ix,
+
+  capability sys_admin,
+  capability net_admin,
+  capability chown,
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  capability dac_override,
+
+  network unix,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+  network netlink dgram,
+
+  signal (receive) peer=unconfined,
+
+  userns,
+
+  mount,
+  remount,
+  umount,
+
+  /nix/store/*-cursor-*/lib/cursor/resources/app/resources/helpers/cursorsandbox mr,
+
+  include if exists <local/cursor-sandbox-nix>
+}
+
+# Cursor IDE Agent worker embeds agent-cli under globalStorage.
+profile cursor_sandbox_agent_worker /home/*/.config/Cursor/User/globalStorage/anysphere.cursor-agent-worker/agent-cli/.local/share/cursor-agent/versions/*/cursorsandbox {
+  file,
+  /** ix,
+
+  capability sys_admin,
+  capability net_admin,
+  capability chown,
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  capability dac_override,
+
+  network unix,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+  network netlink dgram,
+
+  signal (receive) peer=unconfined,
+
+  userns,
+
+  mount,
+  remount,
+  umount,
+
+  /home/*/.config/Cursor/User/globalStorage/anysphere.cursor-agent-worker/agent-cli/.local/share/cursor-agent/versions/*/cursorsandbox mr,
+
+  include if exists <local/cursor-sandbox-nix>
+}
+
+# Upstream agent-cli default install path (non-Nix / remote helpers).
+profile cursor_sandbox_agent_cli /home/*/.local/share/cursor-agent/versions/*/cursorsandbox {
+  file,
+  /** ix,
+
+  capability sys_admin,
+  capability net_admin,
+  capability chown,
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  capability dac_override,
+
+  network unix,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+  network netlink dgram,
+
+  signal (receive) peer=unconfined,
+
+  userns,
+
+  mount,
+  remount,
+  umount,
+
+  /home/*/.local/share/cursor-agent/versions/*/cursorsandbox mr,
+
+  include if exists <local/cursor-sandbox-nix>
+}
+
+# Let the Nix Cursor Electron binary create user namespaces without falling
+# into the system unprivileged_userns profile (same pattern as /etc/apparmor.d/code).
+profile cursor_nix /nix/store/*-cursor-*/lib/cursor/cursor flags=(unconfined) {
+  userns,
+
+  include if exists <local/cursor-nix>
+}

@@ -1,0 +1,21 @@
+---
+description: Call Headroom MCP only for large context, not every edit
+alwaysApply: true
+---
+
+# When to call Headroom
+
+`headroom_compress` / `headroom_retrieve` / `headroom_stats` are on-demand. They do not run after every prompt.
+
+Call `headroom_compress` only when a tool result or pasted blob is large enough to waste context (roughly thousands of tokens): long logs, fat search/crawl dumps, huge file reads, big JSON.
+
+Do **not** call Headroom for ordinary edits — code or not (docs, Nix, commit messages, short files).
+
+```
+# ❌ BAD — compress a 20-line docs tweak or a one-hunk Nix change
+# ✅ GOOD — compress a 5k-line test log or a full-repo ripgrep dump, then keep working
+```
+
+Call `headroom_retrieve` only after a successful `headroom_compress`, using that response’s `hash`. Use it when the compressed text is not enough (a specific error line, a file path, a JSON field). Optional `query` searches inside the original. Local MCP originals expire after about an hour. Do not invent hashes. Do not retrieve “just in case.”
+
+`headroom_stats` is optional, for checking savings — not part of the edit loop.

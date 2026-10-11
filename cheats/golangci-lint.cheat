@@ -1,0 +1,7 @@
+% golangci-lint, go, lint
+
+# Lint Go with golangci-lint
+golangci-lint run
+
+# Enable the golangci-lint tool leaf
+echo "tools.golangci-lint.enable = true;"

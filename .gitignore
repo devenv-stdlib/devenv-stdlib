@@ -1,8 +1,22 @@
+# Local git worktrees (agent / developer isolation)
+.worktrees/
+
 # Devenv
 .devenv
 .devenv*
+# devenv.local.nix is gitignored here (publisher dogfood). Consumers
+# commit their own devenv.local.nix.
 devenv.local.nix
 devenv.local.yaml
+home.local.nix
+# Consumer extras live in catalog.local.toml (committed in monorepos).
+modules/non-nix/catalog.local.toml
+
+# SecretSpec dotenv (Brave / Firecrawl).
+.env
+
+# Consumer hook for `update` (host extras). Framework pins live on the flake pin.
+update.local.sh
 
 # direnv
 .direnv
@@ -13,3 +27,38 @@ devenv.local.yaml
 # Nix build leftovers
 result
 result-*
+
+# Generated from languages.* by modules/ides
+.vscode/extensions.json
+
+# Generated from languages.* by modules/serena-languages.nix
+.serena/project.yml
+# User override (Serena merges this over project.yml)
+.serena/project.local.yml
+
+# Generated from languages.* and debtmap.* by modules/debtmap/
+.debtmap.toml
+
+# Generated from modules/non-nix/catalog.toml by modules/mise/
+mise.toml
+
+# lychee link-check cache (git-hooks)
+.lycheecache
+
+# JUnit reports from test-devenv
+/junit/
+
+# Local act / test-devenv transcripts
+/act_run.log
+
+# Documentation site
+/docs/node_modules/
+/docs/dist/
+
+# Nix fetcher cache (local) / stray relative store (bad XDG_CACHE_HOME)
+nix/fetcher-cache*.sqlite*
+/nix/
+.aletheore/
+
+__pycache__/
+*.py[cod]

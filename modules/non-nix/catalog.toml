@@ -1,0 +1,128 @@
+# Non-Nix tool pins. Do not hand-edit pins to "upgrade" — run `update`
+# (includes/update/non-nix.sh) or bump the devenv-stdlib flake pin.
+# Each [[tool]] needs a one-line comment: what it does + where to read more.
+
+# Fast Python package installer; mise pipx: tools use `uv tool install`. Docs: https://docs.astral.sh/uv/
+[[tool]]
+name = "uv"
+kind = "cli"
+scope = "user"
+pin = "0.12.17"
+mise = "ubi:astral-sh/uv"
+nixAttr = ["uv"]
+homepageContains = "astral-sh/uv"
+
+# Code-memory MCP (symbol graph) for Cursor. Docs: https://oraios.github.io/serena/
+[[tool]]
+name = "serena"
+kind = "cli"
+scope = "user"
+pin = "1.7.0"
+mise = "pipx:serena-agent"
+
+# Evidence-grounded repo MCP for Cursor (scan/query secrets, vulns, graph).
+# Product / paid plans: https://www.aletheore.com
+# Docs: https://github.com/Aletheore/Aletheore
+[[tool]]
+name = "aletheore"
+kind = "cli"
+scope = "user"
+pin = "0.9.22"
+mise = "pipx:aletheore"
+
+# Context-compression MCP (compress/retrieve/stats). Docs: https://docs.headroomlabs.ai/docs
+[[tool]]
+name = "headroom"
+kind = "cli"
+scope = "user"
+pin = "0.37.0"
+mise = "pipx:headroom-ai[mcp]"
+
+# Brave Search MCP (needs BRAVE_API_KEY). Docs: https://github.com/brave/brave-search-mcp-server
+[[tool]]
+name = "brave-search-mcp"
+kind = "cli"
+scope = "user"
+pin = "2.1.3"
+mise = "npm:@brave/brave-search-mcp-server"
+bin = "brave-search-mcp-server"
+
+# Firecrawl MCP local binary — only for FIRECRAWL_MCP_PROFILE=full.
+# Default (slim) uses hosted keyless https://mcp.firecrawl.dev/v2/mcp (no pin).
+# Docs: https://docs.firecrawl.dev/mcp-server/keyless
+[[tool]]
+name = "firecrawl-mcp"
+kind = "cli"
+scope = "user"
+pin = "3.24.0"
+mise = "npm:firecrawl-mcp"
+bin = "firecrawl-mcp"
+
+# Interactive cheatsheet browser. Docs: https://github.com/denisidoro/navi
+[[tool]]
+name = "navi"
+kind = "cli"
+scope = "user"
+pin = "2.24.0"
+mise = "ubi:denisidoro/navi"
+nixAttr = ["navi"]
+homepageContains = "denisidoro/navi"
+
+# Technical-debt analyzer for enabled languages. Docs: https://github.com/iepathos/debtmap
+[[tool]]
+name = "debtmap"
+kind = "cli"
+scope = "project"
+pin = "0.23.0"
+mise = "github:iepathos/debtmap"
+nixAttr = ["debtmap"]
+homepageContains = "iepathos/debtmap"
+
+# Vercel skills CLI for vendored .agents/skills. Docs: https://skills.sh/
+[[tool]]
+name = "skills"
+kind = "cli"
+scope = "project"
+pin = "1.5.25"
+mise = "npm:skills"
+
+# Merge-conflict MCP (WebUI + agent tools). Docs: https://github.com/mattyatea/git-conflict-mcp
+# 1.12.5 dropped npm provenance vs 1.11.10 (same publisher); low download count trips aube.
+# Reviewed 2026-09-22 — trust exclude + allow builds/low downloads for non-interactive install.
+[[tool]]
+name = "git-conflict-mcp"
+kind = "cli"
+scope = "user"
+pin = "1.12.5"
+mise = "npm:git-conflict-mcp"
+trustPolicyExcludes = ["git-conflict-mcp@1.12.5"]
+allowBuilds = true
+allowLowDownloads = true
+
+# Agent-safe rebase / conflict driver (not on PyPI). Docs: https://github.com/aaron-riact/git-rebase-mcp
+[[tool]]
+name = "git-rebase-mcp"
+kind = "cli"
+scope = "user"
+pin = "4d65fcbab0e528db4a2caf6d0d4230e4c717a647"
+mise = "pipx:aaron-riact/git-rebase-mcp"
+
+# devenv VS Code/Cursor extension (Marketplace). Docs: https://marketplace.visualstudio.com/items?itemName=datakurre.devenv
+[[tool]]
+name = "devenv-vscode"
+kind = "vscode-extension"
+scope = "user"
+pin = "0.7.0"
+publisher = "datakurre"
+extension = "devenv"
+
+# CodeRabbit AI review (Open VSX). Docs: https://open-vsx.org/extension/coderabbit/coderabbit-vscode
+[[tool]]
+name = "coderabbit-vscode"
+kind = "vscode-extension"
+scope = "user"
+pin = "0.21.9"
+publisher = "coderabbit"
+extension = "coderabbit-vscode"
+registry = "open-vsx"
+sha256 = "0cfn8l7q8cn3d69spkf78p86d153cl3683lj38glkyi23206kwrw"

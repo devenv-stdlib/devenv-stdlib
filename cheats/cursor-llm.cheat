@@ -1,0 +1,36 @@
+% cursor, llm
+
+# Re-apply Cursor LLM stack (Serena, Headroom MCP, catalog MCPs)
+home-switch
+
+# List MCP servers upserted into ~/.cursor/mcp.json
+jq -r '.mcpServers | keys[]' ~/.cursor/mcp.json
+
+# Authenticate GitHub MCP (uses gh auth token)
+gh auth login
+
+# Serena MCP help (symbol graph; upserted in ~/.cursor/mcp.json)
+serena start-mcp-server --help
+
+# Global Serena excludes search_for_pattern (home-switch merges this)
+grep -A5 '^excluded_tools:' ~/.serena/serena_config.yml
+
+# Headroom MCP help (on-demand compress/retrieve)
+headroom --help
+
+# Show Brave/Firecrawl wrapper paths written by home-switch
+cat ~/.config/devenv4monorepo/mcp-wrappers.env
+
+# Skip entire LLM / MCP stack
+# home.local.nix: cursor.llmContext.enable = false;
+
+% cursor, secrets
+
+; Brave/Firecrawl keys live in SecretSpec (default dotenv .env)
+; mcp-secrets-watch re-upserts when .env changes or every 30s
+
+# Force a one-shot MCP secrets sync from the devenv root
+bash home/watch-mcp-secrets.sh sync
+
+# Inspect the secrets fingerprint (hash only; no secret values)
+cat ~/.config/devenv4monorepo/secrets.fingerprint

@@ -1,0 +1,14 @@
+# Repo-shared non-Nix tools for this monorepo (committed).
+# Same [[tool]] shape as modules/non-nix/catalog.toml. Do not reuse a name from
+# the shipped catalog. Each [[tool]] needs a one-line # comment (what + docs).
+# `update` bumps pins here and installs via Nix when promotable, else mise.
+#
+# Copy/rename this file to modules/non-nix/catalog.local.toml and add entries:
+#
+# # Example CLI. Docs: https://example.com
+# [[tool]]
+# name = "example-cli"
+# kind = "cli"
+# scope = "project"
+# pin = "1.0.0"
+# mise = "ubi:owner/example-cli"

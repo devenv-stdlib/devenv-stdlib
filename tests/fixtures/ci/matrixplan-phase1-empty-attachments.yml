@@ -1,0 +1,55 @@
+name: Test
+# TODO: cross-language version matrices (Rust × Python, …) are not supported.
+# Each language is tested independently for its supported versions.
+on:
+  workflow_call:
+# devenv test runs mise install; github: tools hit the GitHub API.
+env:
+  MISE_GITHUB_TOKEN: ${{ github.token }}
+jobs:
+  python:
+    name: Python ${{ matrix.python_version }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: "ubuntu-24.04"
+            version: "3.12"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Own workspace under act
+        if: ${{ env.ACT }}
+        run: |
+          sudo mkdir -p /home/runner/.cache/nix /nix
+          # Volume-mounted /nix is root-owned; single-user install-nix needs runner.
+          # Nested act matrix cells share one /nix volume; recursive chown races with
+          # concurrent nix creating/removing .lock files (ENOENT → non-zero under bash -e).
+          sudo chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}" /home/runner/.cache
+          if ! sudo chown -R "$(id -u):$(id -g)" /nix; then
+            sudo chown "$(id -u):$(id -g)" /nix
+          fi
+      - uses: cachix/install-nix-action@v31
+      - name: Restore Nix store
+        id: nix-cache
+        if: ${{ !env.ACT }}
+        uses: nix-community/cache-nix-action/restore@v7
+        with:
+          primary-key: nix-${{ matrix.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml') }}
+          restore-prefixes-first-match: nix-${{ matrix.os }}-${{ github.job }}-
+      - uses: cachix/cachix-action@v16
+        with:
+          name: devenv
+      - name: Install devenv
+        run: |
+          # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
+          rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
+          nix profile add "github:cachix/devenv/${rev}"
+      - name: Test
+        run: "true"
+      - name: Save Nix store
+        if: ${{ always() && !env.ACT && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
+          gc-max-store-size-linux: 5G

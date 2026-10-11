@@ -1,0 +1,10 @@
+% ruff, python, lint
+
+# Lint the current tree with ruff (prek also runs ruff / ruff-format when enabled)
+ruff check .
+
+# Format Python with ruff
+ruff format .
+
+# Enable the ruff tool leaf (or apply presets.python.lint.ruff)
+echo "tools.ruff.enable = true;"

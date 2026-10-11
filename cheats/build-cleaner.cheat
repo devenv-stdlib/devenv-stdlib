@@ -1,0 +1,29 @@
+% build-cleaner, cache, disk
+
+# Preview cleanable artifacts (dry-run)
+build-cleaner --dry-run
+
+# Preview including user caches (AI models, package managers, IDEs)
+build-cleaner --dry-run --user-caches
+
+# Clean current tree (prompts for confirmation)
+build-cleaner
+
+# Filter by ecosystem and age
+build-cleaner --lang node --lang rust --min-age 30
+
+# Generate a reviewable cleanup script
+build-cleaner --script cleanup.sh
+
+# Open the web dashboard
+build-cleaner --serve
+
+# Enable for this repository only (devenv.local.nix), then re-enter the shell:
+#   presets.cache.build-cleaner.enable = true;
+#   # scope defaults to "local"
+devenv shell
+
+# Enable user-global via home-switch (home.local.nix):
+#   presets.cache.build-cleaner.enable = true;
+#   presets.cache.build-cleaner.scope = "global";
+home-switch

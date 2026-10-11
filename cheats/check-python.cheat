@@ -1,0 +1,7 @@
+% check-python, python, hooks
+
+# Run the check-python git hook via prek
+prek run check-python
+
+# Enable the check-python tool leaf
+echo "tools.check-python.enable = true;"

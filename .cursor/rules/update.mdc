@@ -1,0 +1,30 @@
+---
+description: update refreshes your lock; framework tools move with the flake pin
+alwaysApply: true
+---
+
+# update vs devenv-stdlib pin
+
+`update` / `devenv update` refresh **your** `devenv.lock`, then
+`modules/non-nix/catalog.local.toml` (team tools: Nix if promotable, else
+mise), then optional `update.local.sh`. Framework-shipped tools (Serena,
+Headroom, MCP pins, debtmap, vendored `.agents/skills/`) move when you bump
+the `devenv-stdlib` flake input.
+
+```
+# ❌ BAD — fighting the next pin bump
+# modules/non-nix/catalog.toml
+pin = "9.9.9"
+
+# ✅ GOOD — team tools
+# modules/non-nix/catalog.local.toml  (committed in the monorepo)
+# then: update
+
+# ✅ GOOD — framework pins
+nix flake update devenv-stdlib
+# or edit inputs.devenv-stdlib.url and refresh flake.lock
+```
+
+Do not edit shipped `modules/non-nix/catalog.toml` pins (or generated
+`mise.toml`) to "upgrade" the stack. `devenv update` is the devenv CLI
+(flake inputs). `update` is our script; it wraps that CLI in consumer mode.

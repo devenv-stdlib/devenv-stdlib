@@ -1,0 +1,131 @@
+# build-cleaner preset: install the CLI for this repository (local) or the user
+# profile via home-switch (global). Same file serves both loaders:
+#   - stdlib.devenv.load passes `tools` → thin preset declaration
+#   - Den / evalModules import without `tools` → mkPreset module
+#
+# Global via home.local.nix is NOT this mkPreset path: Den evaluates before HM
+# imports home.local.nix. HM options live in home/cache-presets.nix (home-cli).
+#
+# Local wiring is a `module` config (mkIf), not a `project` function that
+# reads config while applyPreset builds config (infinite recursion).
+# No setup task: the binary is ready once it is on PATH.
+args@{ lib, ... }:
+let
+  inherit (import ../../stdlib/preset.nix { inherit lib; }) mkPreset;
+  toolLib = import ../../stdlib/tool.nix { inherit lib; };
+  loadLib = import ../../stdlib/load.nix { inherit lib; };
+  toolRefs = toolLib.refsFromSpecs (toolLib.specs (loadLib.discover [ ../../tools ]));
+
+  scopeOption = lib.mkOption {
+    type = lib.types.enum [
+      "local"
+      "global"
+    ];
+    default = "local";
+    description = ''
+      Where to enable build-cleaner.
+
+      - `local` — this repository only (devenv module payload; package on PATH).
+      - `global` — user profile via home-switch (Home Manager tool leaf).
+
+      Matches mkTool local vs global vocabulary (catalog scopes use project/user).
+    '';
+  };
+
+  # Package recipe lives on the tool leaf (install.package); prefer stubs in tests.
+  bcPackage =
+    (import ../../tools/cache/build-cleaner.nix {
+      inherit lib;
+      pkgs = { };
+      config = { };
+      __stdlibMeta = true;
+    }).install.package;
+
+  localModule =
+    {
+      lib,
+      config,
+      pkgs,
+      options,
+      ...
+    }@moduleArgs:
+    let
+      cfg = config.presets.cache.build-cleaner;
+      enabled = cfg.enable && cfg.scope == "local";
+      tasksLib = import ../../stdlib/tasks.nix { inherit lib; };
+      # Scope-gate here (mkIf), not via exportTasks = cfg: … in applyPreset —
+      # reading config while building applyPreset's taskConfig cycles.
+      # Only emit `tasks` when the host declares that option — mkIf does not
+      # suppress "option does not exist" for fixtures that omit it (e.g.
+      # language-matrix unit eval via defaultRoots + cache/).
+      exported =
+        if options ? tasks then
+          tasksLib.export {
+            items = [ toolRefs.cache.build-cleaner ];
+            # tool-ref carries tasks from refsFromSpecs; load tool roots optional.
+            discovered = [ ];
+            inherit moduleArgs;
+          }
+        else
+          { };
+    in
+    {
+      options.presets.cache.build-cleaner.scope = scopeOption;
+      config = lib.mkMerge (
+        [
+          (lib.mkIf enabled {
+            packages = [ (bcPackage pkgs) ];
+          })
+        ]
+        ++ lib.optionals (options ? tasks) [
+          (lib.mkIf (enabled && exported != { }) {
+            tasks = exported;
+          })
+        ]
+      );
+    };
+
+  # Thin (devenv): local install via module mkIf; no local mkTool leaf.
+  # Tool-declared dry-run is exported from localModule when scope=local.
+  thin = {
+    path = [
+      "cache"
+      "build-cleaner"
+    ];
+    description = "build-cleaner — reclaim disk from build artifacts and caches (local or global).";
+    defaultEnable = false;
+    categoryPolicy = false;
+    when = _: true;
+    module = localModule;
+    tools = [ ];
+  };
+
+  # Den / HM: only enable the global tool when scope=global.
+  denModule = mkPreset {
+    path = [
+      "cache"
+      "build-cleaner"
+    ];
+    description = "build-cleaner — reclaim disk from build artifacts and caches (local or global).";
+    defaultEnable = false;
+    when = _: true;
+    policyId = false;
+    extraOptions.scope = scopeOption;
+    tools =
+      cfg:
+      lib.optional (
+        (cfg.presets.cache.build-cleaner.scope or "local") == "global"
+      ) toolRefs.cache.build-cleaner;
+    configure =
+      cfg:
+      lib.optionalAttrs ((cfg.presets.cache.build-cleaner.scope or "local") == "global") {
+        tools.build-cleaner.enable = true;
+      };
+  };
+in
+if args ? tools then
+  thin
+else
+  {
+    imports = [ denModule ];
+  }

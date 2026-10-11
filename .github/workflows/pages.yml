@@ -1,0 +1,97 @@
+name: Docs
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+# Default read-only; elevated Pages perms stay on build/deploy jobs only.
+permissions:
+  contents: read
+  pull-requests: read
+
+# Per-ref groups so stacked PR Docs builds do not cancel each other.
+# A shared `pages` group made required `build` fail with:
+# "Canceling since a higher priority waiting request for pages exists".
+concurrency:
+  group: pages-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect docs path changes
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      docs: ${{ steps.flags.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          filters: |
+            docs:
+              - 'docs/**'
+              - '.github/workflows/pages.yml'
+
+      - id: flags
+        name: Resolve docs flag
+        run: |
+          set -euo pipefail
+          # Always build on trunk push / manual dispatch (deploy needs the artifact).
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs=${{ steps.filter.outputs.docs }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-docs:
+    name: Build docs site
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    defaults:
+      run:
+        working-directory: docs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Build docs
+        run: npm run build
+        env:
+          VITE_BASE: /
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/dist
+
+  deploy-pages:
+    name: Deploy docs to GitHub Pages
+    if: >-
+      github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && needs.changes.outputs.docs == 'true' && needs.build-docs.result == 'success'
+    needs: [changes, build-docs]
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        name: Deploy pages artifact
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,53 @@
+# The Pages site 404s until the first successful deploy of pages.yml.
+# Open Collective often 403s CI crawlers (stable block, not a transient flake).
+exclude = [
+  '^https://devenv4monorepo\.github\.io',
+  '^https://opencollective\.com/',
+]
+
+# Prefer HTTPS when both schemes exist; fail plain HTTP that has an HTTPS twin.
+require_https = true
+
+# Lychee only exposes global max_retries/timeout (no per-URL overrides).
+# Connection *resets*/timeouts are retried; reqwest "Connection failed" is not
+# (see lychee-lib retry.rs is_connect → false). Still raise globals for the
+# retryable cases, and keep host pressure low so connects succeed first try.
+# Process-level retries for connect failures live in modules/hooks/common.nix.
+# See https://lychee.cli.rs/guides/config/ and
+# https://lychee.cli.rs/troubleshooting/network-errors/
+max_retries = 12
+retry_wait_time = 4
+timeout = 120
+accept_timeouts = true
+
+# Serialize most of the run so flaky hosts (esp. nixos.org/donate → /backing/)
+# are less likely to hit connect failures under CI/nested act.
+max_concurrency = 4
+host_concurrency = 1
+host_request_interval = "500ms"
+
+[hosts."www.conventionalcommits.org"]
+concurrency = 1
+request_interval = "1s"
+
+[hosts."conventionalcommits.org"]
+concurrency = 1
+request_interval = "1s"
+
+[hosts."endoflife.date"]
+concurrency = 1
+request_interval = "1s"
+
+# nixos.org/donate/ is the known CI flake (Connection failed). Same host serves
+# /manual and /backing; keep a single in-flight request and a long gap.
+[hosts."nixos.org"]
+concurrency = 1
+request_interval = "2s"
+
+[hosts."brave.com"]
+concurrency = 1
+request_interval = "1s"
+
+[hosts."www.brave.com"]
+concurrency = 1
+request_interval = "1s"

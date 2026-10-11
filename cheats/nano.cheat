@@ -1,0 +1,9 @@
+% nano, ide
+
+# Edit a file with nano (syntax files from tools.nano)
+nano <file>
+
+$ file: fd --type f | head -n 20
+
+# Enable the nano tool leaf
+echo "tools.nano.enable = true;"

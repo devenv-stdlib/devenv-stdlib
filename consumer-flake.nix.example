@@ -1,0 +1,55 @@
+# Example consumer flake. Pin devenv-stdlib (this package) and build Den
+# outputs with `root` = the consumer tree. Copy into your repo as flake.nix
+# (or merge the input + packaging import into an existing flake).
+{
+  description = "example-monorepo (devenv-stdlib consumer)";
+
+  inputs = {
+    # Prefer a release tag once published; otherwise a commit SHA.
+    devenv-stdlib.url = "github:devenv-stdlib/devenv-stdlib/<tag-or-sha>";
+
+    # `follows` is flake lockfile wiring, not a binary cache / substituter.
+    # It reuses the same nixpkgs (and companions) the pin already locked, so
+    # packaging/den-outputs.nix and your tree evaluate one shared set of inputs
+    # instead of fetching a second nixpkgs. No Cachix or extra substituters.
+    nixpkgs.follows = "devenv-stdlib/nixpkgs";
+    home-manager.follows = "devenv-stdlib/home-manager";
+    den.follows = "devenv-stdlib/den";
+    import-tree.follows = "devenv-stdlib/import-tree";
+    # Neovim tool (tools/ide/neovim.nix) imports inputs.nixvim.homeModules.nixvim.
+    nixvim.follows = "devenv-stdlib/nixvim";
+  };
+
+  outputs =
+    inputs:
+    let
+      lib = inputs.nixpkgs.lib;
+      stdlib = inputs.devenv-stdlib.stdlib;
+      # Framework preset files ship in the pin. Local presets/ holds your
+      # selection and community files; later paths override the same name.
+      # Add ./tools once that directory exists (a missing path literal fails eval).
+      localDirs = [
+        "${inputs.devenv-stdlib}/presets"
+        ./presets
+      ];
+      project = import "${inputs.devenv-stdlib}/packaging/den-outputs.nix" {
+        inherit
+          inputs
+          lib
+          stdlib
+          ;
+        # Consumer overlay only. Framework modules/home/tools/cache presets
+        # resolve from the pin (frameworkRoot defaults to packaging/../.).
+        root = ./.;
+      };
+    in
+    project
+    // {
+      # Your selection and any local tools/presets, loaded from this tree.
+      # Framework sources are the flake input, not files under stdlib/.
+      stdlibPresets = {
+        den = stdlib.den.load localDirs;
+        devenv = stdlib.devenv.load localDirs;
+      };
+    };
+}

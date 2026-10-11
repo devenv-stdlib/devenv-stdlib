@@ -1,0 +1,16 @@
+% aletheore, scanners
+
+# Evidence-grounded local scan (secrets / vulns / layers)
+aletheore scan .
+
+# Query findings after a scan
+aletheore query vulnerabilities
+aletheore query layer-violations
+aletheore query dead-code
+
+# Paid / hosted Aletheore AIR plans
+# https://www.aletheore.com
+
+# Enabled by presets.ci.github_actions.aletheore (tools.aletheore.enable).
+# Opt out of the GHA workflow + CLI together:
+#   presets.ci.github_actions.aletheore.enable = false;

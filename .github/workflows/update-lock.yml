@@ -1,0 +1,76 @@
+name: Update lock
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+  pull-requests: write
+
+jobs:
+  refresh-git-hooks-lock:
+    name: Refresh git-hooks lock
+    if: ${{ !github.event.repository.fork }}
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BRANCH: chore/git-hooks-lock
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Restore Nix store
+        id: nix-cache
+        uses: nix-community/cache-nix-action/restore@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'devenv.yaml', 'devenv.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ github.job }}-
+
+      - uses: cachix/cachix-action@v16
+        with:
+          name: devenv
+
+      - name: Install devenv
+        run: |
+          # Pin CLI to the locked modules rev (matches devenv.yaml require_version).
+          rev="$(jq -r '.nodes.devenv.locked.rev' devenv.lock)"
+          nix profile add "github:cachix/devenv/${rev}"
+
+      - name: Refresh the git-hooks lock and open a pull request
+        run: |
+          set -euo pipefail
+          devenv update git-hooks
+          git add devenv.lock
+          if git diff --cached --quiet; then
+            echo "git-hooks lock is already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: refresh the git-hooks lock"
+          git push --force origin "HEAD:refs/heads/${BRANCH}"
+          if [ -z "$(gh pr list --head "${BRANCH}" --json number --jq '.[0].number')" ]; then
+            gh pr create \
+              --base "${{ github.event.repository.default_branch }}" \
+              --head "${BRANCH}" \
+              --title "chore: refresh the git-hooks lock" \
+              --body "$(cat <<'EOF'
+          Weekly `devenv update git-hooks` only. Leaves `nixpkgs` and `devenv` pins
+          unchanged. `.pre-commit-config.yaml` is generated and is not versioned.
+
+          `GITHUB_TOKEN` opened this PR, so Checks may not start until you re-run
+          workflows or close and reopen the PR.
+          EOF
+          )"
+          fi
+
+      - name: Save Nix store
+        if: ${{ always() && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
+          gc-max-store-size-linux: 5G

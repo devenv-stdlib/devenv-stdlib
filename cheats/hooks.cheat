@@ -1,0 +1,78 @@
+% hooks, git
+
+# Generate hook config and enter the dev shell
+devenv shell
+
+# Run hooks on staged files
+prek run
+
+# Run hooks on all files (same as CI hooks.yml)
+prek run --all-files
+
+# Run hooks on all files; show diffs when a hook fails
+prek run --all-files --show-diff-on-failure
+
+# List configured hooks
+prek list
+
+# Run one hook by name
+prek run <hook>
+
+$ hook: prek list --hook-id | awk '{print $1}'
+
+# Install prek git hooks (host; commit on host, not in Docker)
+prek install
+
+# Refresh only the git-hooks lock input
+devenv update git-hooks
+
+# Create a tag (reference-transaction runs tests first)
+git tag <tag>
+
+$ tag: git tag -l
+
+# Bypass tag-guard tests when creating a tag locally
+DEVENV_SKIP_TAG_TESTS=1 git tag <tag>
+
+; Always-on hooks (modules/hooks/common.nix): nixfmt, statix, deadnix,
+; shellcheck, typos, proselint, lychee, actionlint, yamlfmt, check-json,
+; check-toml, taplo, taplo-lint, trim-trailing-whitespace, end-of-file-fixer,
+; check-added-large-files, check-case-conflicts, check-merge-conflicts, gitleaks.
+; commitlint runs on commit-msg. Language hooks (rustfmt, ruff, prettier, …)
+; follow languages.*. reference-transaction is installed on enterShell (not prek);
+; it is a no-op when CI or GITHUB_ACTIONS is set.
+
+% hooks, commitlint
+
+# feat commit (minor release on main via semantic-release)
+git commit -m "feat: <summary>"
+
+# fix commit (patch release on main)
+git commit -m "fix: <summary>"
+
+# docs, ci, test, or chore commit
+git commit -m "<type>: <summary>"
+
+$ type: echo "docs ci test chore" | tr ' ' '\n'
+
+# Conventional subject shape (<type>: <imperative summary>)
+git commit -m "<type>: <imperative summary>"
+
+# Commit with body (why, not what; wrap at 100 characters)
+git commit -m "$(cat <<'EOF'
+<type>: <imperative summary>
+
+<body>
+EOF
+)"
+
+# Breaking change footer (major release on main)
+git commit -m "$(cat <<'EOF'
+feat: <imperative summary>
+
+BREAKING CHANGE: <what changed>
+EOF
+)"
+
+; One topic per commit. Types: feat, fix, docs, ci, test, chore.
+; commitlint rejects other subjects (@commitlint/config-conventional).

@@ -1,0 +1,7 @@
+% rustfmt, rust, lint
+
+# Format Rust with rustfmt
+cargo fmt --all
+
+# Enable the rustfmt tool leaf (or presets.rust.lint.rustfmt)
+echo "tools.rustfmt.enable = true;"

@@ -1,0 +1,94 @@
+name: setup.sh tests
+
+# Deliberately no branches/tags filter: with neither defined the workflow runs
+# for branch pushes and tag pushes alike, and GitHub skips path filters on tag
+# pushes. So this runs when the bootstrap script changes, and on every tag.
+on:
+  push:
+    paths:
+      - setup.sh
+      - devenv.lock
+      - tests/setup/**
+      - tests/tag-hook.bats
+      - hooks/**
+      - includes/cursor-agent-sandbox/**
+      - .github/workflows/setup-tests.yml
+  # Always on PRs so required `setup.sh BATS (ubuntu-…)` checks exist; path-filter
+  # skips the suite when setup paths are untouched (job reports skipped).
+  pull_request:
+
+# Read-only by default; only setup-bats needs actions: write for cache saves.
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  changes:
+    name: Detect setup path changes
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      setup: ${{ steps.flags.outputs.setup }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          filters: |
+            setup:
+              - 'setup.sh'
+              - 'devenv.lock'
+              - 'tests/setup/**'
+              - 'tests/tag-hook.bats'
+              - 'hooks/**'
+              - 'includes/cursor-agent-sandbox/**'
+              - '.github/workflows/setup-tests.yml'
+
+      - id: flags
+        name: Resolve setup flag
+        run: |
+          set -euo pipefail
+          # Push/tag already path-filtered at the workflow level; always run then.
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "setup=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "setup=${{ steps.filter.outputs.setup }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  setup-bats:
+    name: setup.sh BATS (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.setup == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-26.04]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Restore Nix store
+        id: nix-cache
+        uses: nix-community/cache-nix-action/restore@v7
+        with:
+          primary-key: nix-${{ matrix.os }}-${{ github.job }}-${{ hashFiles('devenv.lock', 'setup.sh', 'tests/setup/**', 'hooks/**', 'includes/cursor-agent-sandbox/**') }}
+          restore-prefixes-first-match: nix-${{ matrix.os }}-${{ github.job }}-
+
+      - name: Run the setup.sh test suite
+        run: nix shell nixpkgs#bats nixpkgs#shellcheck --command bats --print-output-on-failure tests/setup tests/tag-hook.bats
+
+      - name: Save Nix store
+        if: ${{ always() && steps.nix-cache.outputs.hit-primary-key != 'true' }}
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: ${{ steps.nix-cache.outputs.primary-key }}
+          gc-max-store-size-linux: 5G

@@ -1,12 +1,47 @@
 # yaml-language-server: $schema=https://devenv.sh/devenv.schema.json
 inputs:
+  # Latest stable release. Tag ships latest-version=2.3.1; we override to 2.4.0 in
+  # devenv.nix so require_version: true matches the release CLI.
+  devenv:
+    url: github:cachix/devenv/v2.4.0?dir=src/modules
   nixpkgs:
     url: github:cachix/devenv-nixpkgs/rolling
   git-hooks:
     url: github:cachix/git-hooks.nix
+  # devenv treefmt integration — https://devenv.sh/integrations/treefmt/
+  treefmt-nix:
+    url: github:numtide/treefmt-nix
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+  # Required by generated test.yml when languages.python.version is set (act + CI).
+  nixpkgs-python:
+    url: github:cachix/nixpkgs-python
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+  # Private backend for stdlib.log — tools/presets must use stdlib.log, not this input.
+  nix-log:
+    url: github:rvolosatovs/nix-log
 
+# Explicit barrel — Den lives under modules/{aspects,den} via flake import-tree;
+# do not import the whole modules/ directory into devenv (avoids double-import).
 imports:
-  - ./modules
+  - ./modules/devenv.nix
 
-# Keep the devenv CLI aligned with the module set it evaluates.
+# Pylance (and other Cursor language packs) are unfree; enabling Python
+# evaluates those packs for .vscode / cursor-sync.
+nixpkgs:
+  allow_unfree: true
+
+# CLI must match modules (devenv.latestVersion). CI/setup install the locked rev.
 require_version: true
+
+# Optional secrets (Brave, Firecrawl). Never in Nix or
+# required = false so eval / tests work when unset.
+# Default provider is dotenv (CI-safe). Override with SECRETSPEC_PROVIDER
+# or devenv.local.yaml (keyring, env, onepassword, …). home-switch runs
+# `secretspec export` then falls back to sourcing .env.
+secretspec:
+  enable: true
+  provider: dotenv
