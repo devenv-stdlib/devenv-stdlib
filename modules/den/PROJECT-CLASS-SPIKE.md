@@ -29,7 +29,7 @@ shell/CI and trip criterion 3).
 ## What landed after cutover (Phase 4)
 
 - `languages.*.enable` remains the enable gate (W4.4).
-- `modules/lib/project.nix` keeps pure hooks/serena/vscode/debtmap helpers.
+- `stdlib/project.nix` keeps pure hooks/serena/vscode/debtmap helpers.
 - Dual adapters (`den-language-shim`, `den-project-bridge`) **deleted**.
 - HM path: `home-switch` → flake `#developer` only (no `home-switch-den`).
 

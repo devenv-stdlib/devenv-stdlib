@@ -2,7 +2,7 @@
 
 **Den owns composition.** Aspects + `includes` are the cascade source of truth.
 `home-switch` is Den-only (`den.homes` → flake `#developer`). Pure helpers in
-`modules/lib/project.nix` still map `languages.*.enable` → hooks / serena
+`stdlib/project.nix` still map `languages.*.enable` → hooks / serena
 / vscode / debtmap lists.
 
 ## Prefer: new feature as an aspect

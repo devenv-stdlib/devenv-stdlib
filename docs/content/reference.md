@@ -30,7 +30,7 @@ Paths in **this package repository** (publisher / dogfood checkout). Consumer tr
 | `home.local.nix` | Gitignored host overrides |
 | `secretspec.toml` | Optional Brave / Firecrawl secret names and `FIRECRAWL_MCP_PROFILE` (values stay out of git) |
 | `.env` | Gitignored dotenv for SecretSpec keys |
-| `stdlib/` | Framework import (`version`, categories, harness foundations, loaders). The same helpers are also reachable from the historical `modules/` and `home/` paths. |
+| `stdlib/` | Framework import (`version`, categories, loaders, pure helpers such as `project.nix` and `versions.nix`). |
 | `packaging/` | Shared Den flake body for publisher and consumers |
 
 | `modules/` | Languages, versions, hooks, debtmap, packages, `update` |

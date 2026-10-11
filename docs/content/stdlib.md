@@ -32,18 +32,9 @@ A breaking change to exported attribute paths needs a `BREAKING CHANGE:` footer.
 
 ## Helpers
 
-`tests/integration/default.nix` copies `modules/lib/project.nix` and `modules/languages/versions-lib.nix` into the Nix store as single files and evaluates those copies on their own. Those two bodies stay in the historical files. `stdlib/project.nix` and `stdlib/versions.nix` re-export them.
+`tests/integration/default.nix` copies `stdlib/project.nix` and `stdlib/versions.nix` into the Nix store as single files and evaluates those copies on their own.
 
-The other pure helpers live under `stdlib/`. The old paths re-export them:
-
-| Implementation | Re-export |
-| --- | --- |
-| `modules/lib/project.nix` | `stdlib/project.nix` |
-| `modules/languages/versions-lib.nix` | `stdlib/versions.nix` |
-| `stdlib/terminal.nix` | `home/terminal-lib.nix` |
-| `stdlib/ide-ext.nix` | `home/ides/ext-lib.nix` |
-| `stdlib/catalog.nix` | `modules/non-nix/lib.nix` |
-| `stdlib/debtmap.nix` | `modules/debtmap/lib.nix` |
+Pure helpers live only under `stdlib/`: `project.nix`, `versions.nix`, `terminal.nix`, `ide-ext.nix`, `catalog.nix`, and `debtmap.nix`.
 
 `mkTool` is `stdlib/tool.nix`, exported as `stdlib.mkTool`. `mkPreset` is not part of this export.
 
@@ -102,14 +93,6 @@ To add another language after a devenv bump: append the id to `stdlib/devenv-sup
 **Shared any-of groups:** languages in `categoryPolicy.anyOfLanguageGroups` (today `javascript` and `typescript`) share usage. An applied preset or enabled tool under one language also counts for the other, for both `lang.<id>` and `lang.<id>.linters`. For example, the docs site enables only TypeScript and is formatted by `javascript.lint.prettier`, so `lang.typescript.linters` is not reported as unused.
 
 Warnings go through module `warnings`, `stdlib.log.warn'` during the status inventory, and the report section **Unused available categories**. Opt out with `stdlib.categoryWarnings.enable = false`. Optional tool inventory: `stdlib.categoryWarnings.toolIndex` (`[ { name, category, enable } ]`) so enabled tools count as usage.
-
-## Coding harnesses
-
-`stdlib/harness.nix` is the shared foundation from [issue #32](https://github.com/devenv-stdlib/devenv-stdlib/issues/32): option shapes, a config path under `$HOME`, install kinds (`nix`, `catalog`, `self`), and a split between a devenv `project` payload and a Home Manager payload.
-
-`secretEnv` entries are environment variable names. A literal is rejected. Values are not written into the Nix store.
-
-OpenCode, Claude Code, and Codex product modules are [issue #33](https://github.com/devenv-stdlib/devenv-stdlib/issues/33), [issue #34](https://github.com/devenv-stdlib/devenv-stdlib/issues/34), and [issue #35](https://github.com/devenv-stdlib/devenv-stdlib/issues/35). This file does not install them. Follow-up tools land at `tools/harness/<name>.nix`.
 
 ## Logging
 
