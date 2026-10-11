@@ -124,7 +124,7 @@ bump_vscode() {
       ;;
     marketplace | "")
       # devenv-vscode keeps sha256 in stdlib/ide-ext.nix.
-      if [[ $name == devenv-vscode && -f $root/stdlib/ide-ext.nix ]]; then
+      if [[ $name == devenv-vscode ]]; then
         replace_nix_string_assign "$root/stdlib/ide-ext.nix" defaultDevenvExtensionSha256 "$hash"
       fi
       ;;
