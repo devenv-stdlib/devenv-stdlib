@@ -19,7 +19,7 @@ still grep `project.nix` instead of `includes` DAGs.
 ```
 
 Cascade readability: `modules/den/_cascades/*-cascade.nix` + `modules/aspects/*` `includes`.
-`modules/lib/project.nix` keeps **pure** enable→list helpers for debtmap /
+`stdlib/project.nix` keeps **pure** enable→list helpers for debtmap /
 serena / vscode / hooks — not a fan-out god-table.
 
 **Verdict:** Criterion 2 does **not** fire after cutover (shim tax cleared).

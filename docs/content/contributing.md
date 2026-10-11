@@ -122,7 +122,7 @@ build-act-image              # devenv-act:24.04 for local act
 | `tests/update.bats` | `update` publisher vs consumer; pin helpers; skills refresher (stubbed `npx`); no live registry |
 | `tests/skills.bats` | `.agents/skills/` ↔ `skills-lock.json` consistency; every source attributed in `.agents/skills/README.md` |
 | `tests/toolchain-latest.bats` | catalog alignment, no network |
-| `tests/home/terminal-lib.bats` | eval `home/terminal-lib.nix` |
+| `tests/home/terminal.bats` | eval `stdlib/terminal.nix` |
 | `tests/home/bashrc-d.bats` | `ensure-bashrc-d.sh` (Ubuntu `~/.bashrc` + `~/.bashrc.d`) |
 | `tests/home/cursor-llm.bats` | `home/ides/merge-cursor-llm.sh` + MCP catalog merge (Serena, Headroom MCP, Context7, optional Brave/Firecrawl; preserves user MCP keys; retires github/docker; legacy RTK hook/allowlist cleanup) |
 | `tests/home/ensure-serena-config.bats` | `home/ides/ensure-serena-config.py` merges global `excluded_tools: [search_for_pattern]` without wiping Serena-managed keys |
@@ -191,7 +191,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `home/watch-mcp-secrets.sh` | Re-upsert Brave/Firecrawl MCP when SecretSpec keys change |
 | `home/nix-path.sh` | `nixpkgs=flake:nixpkgs` fallback, drops missing `NIX_PATH` dirs; used by `setup.sh`, `home-switch`, `test-devenv` |
 | `home/docker-rootless.sh` | Default `DOCKER_HOST` to `$XDG_RUNTIME_DIR/docker.sock` |
-| `stdlib/` | Framework API (`default.nix`, `version.nix`, categories, harness foundations). Import path is `stdlib`, not `lib/` |
+| `stdlib/` | Framework API (`default.nix`, `version.nix`, categories, loaders, pure helpers). Import path is `stdlib`, not `lib/` |
 | `modules/` | Barrel `devenv.nix` plus topical packages, languages, ides, hooks, debtmap, mise, non-nix, update, test, lib |
 | `hooks/reference-transaction` | Tag guard |
 | `commitlint.config.mjs` / `.releaserc.json` | Commits and releases |
