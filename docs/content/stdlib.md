@@ -28,11 +28,11 @@ On a release, semantic-release runs `includes/update/stdlib-version.sh` and comm
 
 A breaking change to exported attribute paths needs a `BREAKING CHANGE:` footer. semantic-release uses the angular preset, which reads that footer and bumps the major, so `apiVersion` follows. New attributes that keep the old paths use `feat(stdlib):`.
 
-`tests/unit/stdlib-api.nix` snapshots every exported path. An API edit that does not update that list fails nix-unit.
+`tests/unit/stdlib/api.nix` snapshots every exported path. An API edit that does not update that list fails nix-unit.
 
 ## Helpers
 
-`tests/integration/default.nix` copies `stdlib/project.nix` and `stdlib/versions.nix` into the Nix store as single files and evaluates those copies on their own.
+`tests/integration/default.nix` copies the repository root into the Nix store and evaluates `stdlib/project.nix` and `stdlib/versions.nix` from that copy, so their relative imports resolve.
 
 Pure helpers live only under `stdlib/`: `project.nix`, `versions.nix`, `terminal.nix`, `ide-ext.nix`, `catalog.nix`, and `debtmap.nix`.
 
