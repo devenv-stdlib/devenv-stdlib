@@ -15,7 +15,7 @@ let
     };
   };
 
-  # Default host profiles: current Ubuntu LTS + previous. versions-lib.ubuntuLts reads these releases.
+  # Default host profiles: current Ubuntu LTS + previous. versions.ubuntuLts reads these releases.
   # x86_64-only so empty / default language matrices stay byte-stable.
   defaultRunnerProfiles = {
     ubuntu-lts-prev = ubuntuProfile "24.04";

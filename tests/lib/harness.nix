@@ -6,8 +6,8 @@ in
 {
   inherit lib stdlib;
   inherit (stdlib) ci;
-  versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
-  project = import ../../modules/lib/project.nix { inherit lib; };
+  versions = import ../../stdlib/versions.nix { inherit lib; };
+  project = import ../../stdlib/project.nix { inherit lib; };
   debtmap = import ../../modules/debtmap/lib.nix { inherit lib; };
   term = import ../../home/terminal-lib.nix { inherit lib; };
   terminalCascade = import ../../modules/den/_cascades/terminal-cascade.nix;

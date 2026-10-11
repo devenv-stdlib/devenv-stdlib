@@ -192,7 +192,7 @@ let
 
   # --- Phase 4: Den/project goldens (aspect includes + pure helpers) ---
   cascade = import (frameworkRoot + "/modules/den/_cascades/language-cascade.nix");
-  project = import (frameworkRoot + "/modules/lib/project.nix") { inherit lib; };
+  project = import (frameworkRoot + "/stdlib/project.nix") { inherit lib; };
   pythonOnFixture = {
     languages.python.enable = true;
   };

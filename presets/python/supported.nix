@@ -1,7 +1,7 @@
 # Thin language-scoped options + CI matrix flag.
 { lib, ... }:
 let
-  versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
+  versions = import ../../stdlib/versions.nix { inherit lib; };
   versionPolicy = import ../_shared/_version-policy.nix { inherit lib; };
   uniqueListOf = import ../_shared/unique-list.nix { inherit lib; };
 in

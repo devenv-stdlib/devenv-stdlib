@@ -4,7 +4,7 @@
   ...
 }:
 let
-  project = import ../lib/project.nix { inherit lib; };
+  project = import ../../stdlib/project.nix { inherit lib; };
   stdlibDevenv = import ../../stdlib/devenv.nix { inherit lib; };
   dlib = import ./lib.nix { inherit lib; };
   enabled =

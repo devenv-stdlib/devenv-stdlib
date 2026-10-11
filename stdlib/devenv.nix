@@ -33,7 +33,7 @@ let
   tasksLib = import ./tasks.nix { inherit lib; };
   loadLib = import ./load.nix { inherit lib; };
   categoryPolicy = import ./category-policy.nix { inherit lib; };
-  projectLib = import ../modules/lib/project.nix { inherit lib; };
+  projectLib = import ./project.nix { inherit lib; };
   log = import ./log.nix { inherit lib nix-log; };
   report = import ./report.nix { inherit lib log; };
   generate = import ./generate.nix { inherit lib; };

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  project = import ../lib/project.nix { inherit lib; };
+  project = import ../../stdlib/project.nix { inherit lib; };
   stdlibDevenv = import ../../stdlib/devenv.nix { inherit lib; };
   nonNix = import ../non-nix/lib.nix { inherit lib; };
   debtmapEntry = nonNix.resolvedByName pkgs "debtmap";

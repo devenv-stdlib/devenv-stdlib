@@ -5,8 +5,6 @@
 }:
 let
   stdlib = import ../../../stdlib { inherit lib; };
-  oldProject = import ../../../modules/lib/project.nix { inherit lib; };
-  oldVersions = import ../../../modules/languages/versions-lib.nix { inherit lib; };
   oldTerminal = import ../../../home/terminal-lib.nix { inherit lib; };
   oldDebtmap = import ../../../modules/debtmap/lib.nix { inherit lib; };
   oldCatalog = import ../../../modules/non-nix/lib.nix { inherit lib; };
@@ -573,22 +571,6 @@ in
     expr = map baseNameOf (stdlib.discover [ ../../fixtures/stdlib-discover ]);
     # fixtures/stdlib-discover/tests/not-a-tool.nix is skipped (tests/ dirs).
     expected = [ "leaf.nix" ];
-  };
-
-  testStdlibShimProject = {
-    expr = oldProject.debtmapLanguages {
-      rust.enable = true;
-      python.enable = true;
-    };
-    expected = stdlib.project.debtmapLanguages {
-      rust.enable = true;
-      python.enable = true;
-    };
-  };
-
-  testStdlibShimVersions = {
-    expr = oldVersions.ubuntuLts;
-    expected = (stdlib.versions { }).ubuntuLts;
   };
 
   testStdlibShimTerminal = {

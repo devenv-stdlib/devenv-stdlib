@@ -3,7 +3,7 @@
 { lib }:
 let
   inherit (import ../../stdlib { inherit lib; }) ci;
-  versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
+  versions = import ../../stdlib/versions.nix { inherit lib; };
   inherit (ci) matrix;
   gha = ci.backends.github_actions;
   contains = needle: hay: lib.hasInfix needle hay;

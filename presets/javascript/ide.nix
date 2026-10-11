@@ -1,7 +1,7 @@
 # Shared JS/TS editor pack. Uses javascript-or-typescript category policy.
 { lib, ... }:
 let
-  project = import ../../modules/lib/project.nix { inherit lib; };
+  project = import ../../stdlib/project.nix { inherit lib; };
 in
 {
   path = [
