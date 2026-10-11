@@ -170,14 +170,15 @@ let
     };
 in
 {
+  # semantic-release rewrites stdlib/version.nix on main, so assert shape, not a value.
   testStdlibVersion = {
-    expr = stdlib.version;
-    expected = "0.1.0";
+    expr = builtins.match "[0-9]+\\.[0-9]+\\.[0-9]+" stdlib.version != null;
+    expected = true;
   };
 
   testStdlibApiVersion = {
     expr = stdlib.apiVersion;
-    expected = "0";
+    expected = builtins.head (builtins.match "([0-9]+)\\..*" stdlib.version);
   };
 
   testStdlibApiPaths = {

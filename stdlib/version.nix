@@ -3,7 +3,7 @@
 # breaking changes need a BREAKING CHANGE: footer so the angular preset
 # bumps the major and apiVersion follows.
 let
-  version = "0.1.0";
+  version = "1.0.0";
 in
 {
   inherit version;
