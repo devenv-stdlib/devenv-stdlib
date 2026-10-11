@@ -69,7 +69,7 @@ else
             ...
           }:
           let
-            terminalLib = import ../../home/terminal-lib.nix { inherit lib; };
+            terminalLib = import ../../stdlib/terminal.nix { inherit lib; };
             extension = pkgs.gnomeExtensions.quake-terminal;
             desktopId = terminalLib.desktopIds.alacritty;
             quakeDesktopId = terminalLib.desktopIds.alacrittyQuake;

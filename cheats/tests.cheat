@@ -9,7 +9,7 @@ bats -r tests
 # setup.sh only
 bats tests/setup
 
-# Home Manager tests (terminal-lib, bashrc.d, Cursor LLM)
+# Home Manager tests (terminal, bashrc.d, Cursor LLM)
 bats tests/home
 
 # update dispatcher (publisher vs consumer)

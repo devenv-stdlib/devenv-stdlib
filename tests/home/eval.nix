@@ -1,11 +1,11 @@
-# Pure checks for home/terminal-lib.nix. Needs <nixpkgs> only for lib.
+# Pure checks for stdlib/terminal.nix. Needs <nixpkgs> only for lib.
 # Import lib alone — `import <nixpkgs> { }` evaluates the whole package set and
 # can hang for many minutes on flake:nixpkgs (CI looks stuck, then cancelled).
 let
   lib = import <nixpkgs/lib>;
-  term = import ../../home/terminal-lib.nix { inherit lib; };
+  term = import ../../stdlib/terminal.nix { inherit lib; };
 
-  must = name: cond: if cond then true else throw "terminal-lib: ${name}";
+  must = name: cond: if cond then true else throw "terminal: ${name}";
 
   toml = term.warpSettingsToml {
     keybinding = "f12";

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  terminalLib = import ./terminal-lib.nix { inherit lib; };
+  terminalLib = import ../stdlib/terminal.nix { inherit lib; };
   cfg = config.terminal;
 
   activeDesktopId = terminalLib.desktopIds.${cfg.provider};
