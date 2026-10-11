@@ -168,7 +168,7 @@ EOF
 
 @test "non-nix refresher rewrites catalog pins without hitting the live registry" {
   command -v python3 >/dev/null || skip "python3 not installed"
-  mkdir -p "$FIXTURE/modules/non-nix" "$FIXTURE/home/ides"
+  mkdir -p "$FIXTURE/modules/non-nix"
   cat >"$FIXTURE/modules/non-nix/catalog.toml" <<'EOF'
 # Brave Search MCP. Docs: https://example.test/brave
 [[tool]]
@@ -186,7 +186,6 @@ scope = "user"
 pin = "0.0.0"
 mise = "npm:firecrawl-mcp"
 EOF
-  printf 'sha256 = "old";\n' >"$FIXTURE/home/ides/ext-lib.nix"
 
   cat >"$BIN/curl" <<'EOF'
 #!/usr/bin/env bash

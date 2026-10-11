@@ -5,7 +5,7 @@
   ...
 }:
 let
-  ext = import ./ext-lib.nix { inherit pkgs; };
+  ext = import ../../stdlib/ide-ext.nix { inherit pkgs; };
   link = e: {
     name = ".vscode/extensions/${ext.id e}";
     value.source = ext.root e;

@@ -37,7 +37,7 @@ else
           description = ''
             Install Cursor from nixpkgs plus common editor extensions under
             ~/.cursor/extensions. Specializes the shared VS Code extension packs
-            (home/ides/ext-lib.nix). Language packs are installed by devenv when
+            (stdlib/ide-ext.nix). Language packs are installed by devenv when
             languages.* is enabled. Does not enable vscode.enable.
             programs.cursor is not used: it replaces ~/.config/Cursor/User/settings.json.
           '';

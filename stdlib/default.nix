@@ -29,12 +29,7 @@ in
   terminal = import ./terminal.nix { inherit lib; };
   debtmap = import ./debtmap.nix { inherit lib; };
   catalog = import ./catalog.nix { inherit lib; };
-  ideExt =
-    {
-      pkgs,
-      devenvExtensionSha256 ? null,
-    }:
-    import ./ide-ext.nix { inherit pkgs devenvExtensionSha256; };
+  ideExt = import ./ide-ext.nix;
 
   inherit categories;
   categoryPolicy = import ./category-policy.nix { inherit lib; };

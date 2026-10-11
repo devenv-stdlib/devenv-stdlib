@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Refresh modules/non-nix/catalog.toml pins (and a few install-side hashes).
 # CLI tools install via mise (or Nix when promoted); images via docker pull;
-# devenv VS Code extension hash: home/ides/ext-lib.nix (shim) and
-# stdlib/ide-ext.nix defaultDevenvExtensionSha256.
+# devenv VS Code extension hash: stdlib/ide-ext.nix defaultDevenvExtensionSha256.
 # Pin edits are line-local so per-tool comments stay intact.
 set -euo pipefail
 
@@ -124,12 +123,9 @@ bump_vscode() {
       catalog_set_string_field "$name" sha256 "$hash"
       ;;
     marketplace | "")
-      # devenv-vscode keeps sha256 in the HM shim + stdlib fallback assign.
-      if [[ $name == devenv-vscode ]]; then
-        replace_nix_string_assign "$root/home/ides/ext-lib.nix" sha256 "$hash"
-        if [[ -f $root/stdlib/ide-ext.nix ]]; then
-          replace_nix_string_assign "$root/stdlib/ide-ext.nix" defaultDevenvExtensionSha256 "$hash"
-        fi
+      # devenv-vscode keeps sha256 in stdlib/ide-ext.nix.
+      if [[ $name == devenv-vscode && -f $root/stdlib/ide-ext.nix ]]; then
+        replace_nix_string_assign "$root/stdlib/ide-ext.nix" defaultDevenvExtensionSha256 "$hash"
       fi
       ;;
   esac
