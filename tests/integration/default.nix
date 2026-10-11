@@ -2,8 +2,8 @@
 let
   pkgs = import <nixpkgs> { };
   inherit (pkgs) lib;
-  versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
-  project = import ../../modules/lib/project.nix { inherit lib; };
+  versions = import ../../stdlib/versions.nix { inherit lib; };
+  project = import ../../stdlib/project.nix { inherit lib; };
   gha = (import ../../stdlib/ci { inherit lib; }).backends.github_actions;
   render = args: gha.render (versions.languageMatrixPlan args);
   evalOk = import ./eval.nix { inherit lib versions project; };
@@ -23,17 +23,17 @@ let
       value.source = pkgs.writeText "matrix-${name}.yml" matrixShapes.fixtures.${name};
     }) matrixShapes.names
   );
-  # Copy repo root into the store so eval.nix / versions-lib / project
+  # Copy repo root into the store so eval.nix / stdlib/versions / stdlib/project
   # relative imports (stdlib/ci, stdlib/linters) resolve. A lone
   # `${./file.nix}` store file makes `../../stdlib/...` resolve as
   # `/stdlib/...`.
   evalNix = pkgs.writeText "eval.nix" ''
     import (${../..} + "/tests/integration/eval.nix") {
       lib = (import <nixpkgs> { }).lib;
-      versions = import (${../..} + "/modules/languages/versions-lib.nix") {
+      versions = import (${../..} + "/stdlib/versions.nix") {
         lib = (import <nixpkgs> { }).lib;
       };
-      project = import (${../..} + "/modules/lib/project.nix") {
+      project = import (${../..} + "/stdlib/project.nix") {
         lib = (import <nixpkgs> { }).lib;
       };
       matrixShapes = import (${../..} + "/tests/integration/matrix-shapes.nix") {

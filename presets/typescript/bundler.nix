@@ -2,7 +2,7 @@
 # when inherits typescript category policy; bundler assertion stays leaf-specific.
 { lib, ... }:
 let
-  project = import ../../modules/lib/project.nix { inherit lib; };
+  project = import ../../stdlib/project.nix { inherit lib; };
   bundlers = project.typescriptBundlers;
 in
 {

@@ -1,7 +1,7 @@
 # Editor pack / language-server settings not owned by a single CLI tool.
 { lib, ... }:
 let
-  project = import ../../modules/lib/project.nix { inherit lib; };
+  project = import ../../stdlib/project.nix { inherit lib; };
 in
 {
   path = [

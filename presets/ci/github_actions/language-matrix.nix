@@ -24,7 +24,7 @@ _: {
     }:
     let
       catalogFile = ../../../modules/languages/catalog.json;
-      versions = import ../../../modules/languages/versions-lib.nix {
+      versions = import ../../../stdlib/versions.nix {
         inherit lib;
         catalog =
           if builtins.pathExists catalogFile then builtins.fromJSON (builtins.readFile catalogFile) else { };

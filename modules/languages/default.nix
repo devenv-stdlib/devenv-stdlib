@@ -5,7 +5,7 @@
   ...
 }:
 let
-  project = import ../lib/project.nix { inherit lib; };
+  project = import ../../stdlib/project.nix { inherit lib; };
   bundlers = project.typescriptBundlers;
 in
 {

@@ -4,7 +4,7 @@
 }:
 let
   inherit (pkgs) lib;
-  versions = import ../../modules/languages/versions-lib.nix { inherit lib; };
+  versions = import ../../stdlib/versions.nix { inherit lib; };
   gha = (import ../../stdlib/ci { inherit lib; }).backends.github_actions;
   render = args: gha.render (versions.languageMatrixPlan args);
   matrixShapes = import ./matrix-shapes.nix { inherit lib; };

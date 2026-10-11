@@ -1,7 +1,7 @@
 # when inherits go category policy (languages.go.enable or override).
 { lib, ... }:
 let
-  project = import ../../modules/lib/project.nix { inherit lib; };
+  project = import ../../stdlib/project.nix { inherit lib; };
 in
 {
   path = [
