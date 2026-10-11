@@ -12,7 +12,7 @@ if false then
 else
   let
     tool = import ../../stdlib/tool.nix { inherit lib; };
-    nonNix = import ../../modules/non-nix/lib.nix { inherit lib; };
+    nonNix = import ../../stdlib/catalog.nix { inherit lib; };
     entry = nonNix.entryByName "aletheore";
     pin = if entry == null then "0.9.22" else entry.pin;
     miseKey = if entry == null then "pipx:aletheore" else entry.mise;

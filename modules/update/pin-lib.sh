@@ -274,7 +274,7 @@ catalog_tool_via() {
     let
       pkgs = import <nixpkgs> { };
       lib = pkgs.lib;
-      nonNix = import ${root}/modules/non-nix/lib.nix { inherit lib; };
+      nonNix = import ${root}/stdlib/catalog.nix { inherit lib; };
       e = nonNix.resolvedByName pkgs \"${name}\";
     in
     if e == null then \"missing\" else e.via

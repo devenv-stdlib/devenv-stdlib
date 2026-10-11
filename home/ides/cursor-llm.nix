@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.cursor.llmContext;
-  nonNix = import ../../modules/non-nix/lib.nix { inherit lib; };
+  nonNix = import ../../stdlib/catalog.nix { inherit lib; };
   resolved = nonNix.resolve pkgs;
   entry = name: lib.findFirst (e: e.name == name) null resolved;
   mise = lib.getExe pkgs.mise;

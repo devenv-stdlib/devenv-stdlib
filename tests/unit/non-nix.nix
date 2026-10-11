@@ -1,6 +1,6 @@
 { lib, ... }:
 let
-  nonNix = import ../../modules/non-nix/lib.nix { inherit lib; };
+  nonNix = import ../../stdlib/catalog.nix { inherit lib; };
 
   fakePkg =
     {
