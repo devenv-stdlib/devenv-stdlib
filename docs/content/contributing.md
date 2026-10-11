@@ -82,14 +82,14 @@ Tracked generated files are **not** written on `enterShell`. Dry-run on shell en
 
 ## Documentation site
 
-Published at [devenv4monorepo.github.io](https://devenv4monorepo.github.io/). The app lives in `docs/` (Vite, React, Spectrum web components, markdown via `?raw`, fenced `bash`/`nix` blocks highlighted with [Shiki](https://shiki.style/)).
+Published at [devenv-stdlib.github.io/devenv-stdlib](https://devenv-stdlib.github.io/devenv-stdlib/). The app lives in `docs/` (Vite, React, Spectrum web components, markdown via `?raw`, fenced `bash`/`nix` blocks highlighted with [Shiki](https://shiki.style/)).
 
 ```bash
 docs-dev                     # http://localhost:5173
 docs-build                   # docs/dist
 ```
 
-Edit `docs/content/*.md`. New top-level topics: add the file, import it in `docs/src/sections.ts`. Sidenav headings are the `##` lines. `pages.yml` builds with `VITE_BASE=/` for the GitHub Pages hostname.
+Edit `docs/content/*.md`. New top-level topics: add the file, import it in `docs/src/sections.ts`. Sidenav headings are the `##` lines. `pages.yml` builds with `VITE_BASE=/devenv-stdlib/` for the GitHub Pages project path.
 
 The README is marketing. Do not mirror these pages into `README.md`.
 

@@ -83,7 +83,7 @@ export function App() {
     <SpTheme system="spectrum-two" color="light" scale="medium">
       <div className="docs-app">
         <header className="docs-header">
-          <strong>devenv4monorepo</strong>
+          <strong>devenv-stdlib</strong>
           <span>Documentation</span>
         </header>
         <aside
