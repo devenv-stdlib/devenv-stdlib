@@ -1,6 +1,6 @@
-# devenv4monorepo
+# devenv-stdlib
 
-Published **devenv-stdlib** package: a [devenv](https://devenv.sh/) project toolchain that matches CI, plus a [Home Manager](https://nix-community.github.io/home-manager/) desktop (dropdown terminal, Starship, Cursor) that is **not** trapped inside `devenv shell`.
+A [devenv](https://devenv.sh/) project toolchain that matches CI, plus a [Home Manager](https://nix-community.github.io/home-manager/) desktop (dropdown terminal, Starship, Cursor) that is **not** trapped inside `devenv shell`.
 
 Pin the flake in your monorepo. Compose presets and tools against that revision. Stop pasting `devenv.nix` between trees and hoping the laptops still agree.
 
