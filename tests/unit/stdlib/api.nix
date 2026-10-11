@@ -5,8 +5,6 @@
 }:
 let
   stdlib = import ../../../stdlib { inherit lib; };
-  oldDebtmap = import ../../../modules/debtmap/lib.nix { inherit lib; };
-  oldCatalog = import ../../../modules/non-nix/lib.nix { inherit lib; };
 
   sort = lib.sort (a: b: a < b);
 
@@ -570,16 +568,6 @@ in
     expr = map baseNameOf (stdlib.discover [ ../../fixtures/stdlib-discover ]);
     # fixtures/stdlib-discover/tests/not-a-tool.nix is skipped (tests/ dirs).
     expected = [ "leaf.nix" ];
-  };
-
-  testStdlibShimDebtmap = {
-    expr = oldDebtmap.godObjectKey "typescript";
-    expected = stdlib.debtmap.godObjectKey "typescript";
-  };
-
-  testStdlibShimCatalog = {
-    expr = (oldCatalog.entryByName "navi").name;
-    expected = (stdlib.catalog.entryByName "navi").name;
   };
 
   testStdlibDevenvExtensionHashIsNix32 = {

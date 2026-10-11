@@ -7,7 +7,7 @@
 let
   project = import ../../stdlib/project.nix { inherit lib; };
   stdlibDevenv = import ../../stdlib/devenv.nix { inherit lib; };
-  nonNix = import ../non-nix/lib.nix { inherit lib; };
+  nonNix = import ../../stdlib/catalog.nix { inherit lib; };
   debtmapEntry = nonNix.resolvedByName pkgs "debtmap";
   # binName treats missing catalog.bin as null (normalize), not e.name.
   bin =

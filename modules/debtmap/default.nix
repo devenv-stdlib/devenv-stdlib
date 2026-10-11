@@ -6,7 +6,7 @@
 let
   project = import ../../stdlib/project.nix { inherit lib; };
   stdlibDevenv = import ../../stdlib/devenv.nix { inherit lib; };
-  dlib = import ./lib.nix { inherit lib; };
+  dlib = import ../../stdlib/debtmap.nix { inherit lib; };
   enabled =
     if config ? stdlib.lang then
       stdlibDevenv.debtmapLanguages config.stdlib.lang

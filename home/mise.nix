@@ -4,7 +4,7 @@
   ...
 }:
 let
-  nonNix = import ../modules/non-nix/lib.nix { inherit lib; };
+  nonNix = import ../stdlib/catalog.nix { inherit lib; };
   resolved = nonNix.resolve pkgs;
   user = nonNix.filterScope "user" resolved;
   userNix = nonNix.nixPackages user;
