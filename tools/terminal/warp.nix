@@ -47,7 +47,7 @@ else
             ...
           }:
           let
-            terminalLib = import ../../home/terminal-lib.nix { inherit lib; };
+            terminalLib = import ../../stdlib/terminal.nix { inherit lib; };
             warp-terminal = terminalLib.warpPackage pkgs;
             warpExe = lib.getExe warp-terminal;
             desktopId = terminalLib.desktopIds.warp;

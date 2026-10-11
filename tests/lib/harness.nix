@@ -9,7 +9,7 @@ in
   versions = import ../../stdlib/versions.nix { inherit lib; };
   project = import ../../stdlib/project.nix { inherit lib; };
   debtmap = import ../../modules/debtmap/lib.nix { inherit lib; };
-  term = import ../../home/terminal-lib.nix { inherit lib; };
+  term = import ../../stdlib/terminal.nix { inherit lib; };
   terminalCascade = import ../../modules/den/_cascades/terminal-cascade.nix;
   languageCascade = import ../../modules/den/_cascades/language-cascade.nix;
   ideCascade = import ../../modules/den/_cascades/ide-cascade.nix;
