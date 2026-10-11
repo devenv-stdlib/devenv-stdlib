@@ -74,7 +74,7 @@ jobs:
       - name: Build docs
         run: npm run build
         env:
-          VITE_BASE: /
+          VITE_BASE: /devenv-stdlib/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/dist
