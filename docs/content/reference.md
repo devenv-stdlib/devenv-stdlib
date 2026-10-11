@@ -33,7 +33,7 @@ Paths in **this package repository** (publisher / dogfood checkout). Consumer tr
 | `stdlib/` | Framework import (`version`, categories, loaders, pure helpers such as `project.nix` and `versions.nix`). |
 | `packaging/` | Shared Den flake body for publisher and consumers |
 
-| `modules/` | Languages, versions, hooks, debtmap, packages, `update` |
+| `modules/` | Languages, hooks, debtmap, packages, `update` |
 | `modules/languages/catalog.json` | Cycle → latest patch and EOL |
 | `hooks/reference-transaction` | Tag guard, installed on `devenv shell` |
 | `.github/workflows/ci.yml` | Lint (prek) first (treefmt + residual), then unit tests, integration tests, generated `test.yml`, semantic-release |

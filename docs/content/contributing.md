@@ -192,7 +192,7 @@ Types: `feat`, `fix`, `docs`, `ci`, `test`, `chore`. Breaking changes use a `BRE
 | `home/nix-path.sh` | `nixpkgs=flake:nixpkgs` fallback, drops missing `NIX_PATH` dirs; used by `setup.sh`, `home-switch`, `test-devenv` |
 | `home/docker-rootless.sh` | Default `DOCKER_HOST` to `$XDG_RUNTIME_DIR/docker.sock` |
 | `stdlib/` | Framework API (`default.nix`, `version.nix`, categories, loaders, pure helpers). Import path is `stdlib`, not `lib/` |
-| `modules/` | Barrel `devenv.nix` plus topical packages, languages, ides, hooks, debtmap, mise, non-nix, update, test, lib |
+| `modules/` | Barrel `devenv.nix` plus topical packages, languages, ides, hooks, debtmap, mise, non-nix, update, test |
 | `hooks/reference-transaction` | Tag guard |
 | `commitlint.config.mjs` / `.releaserc.json` | Commits and releases |
 | `tests/` | nix-unit, BATS, nixosTest, act image |
